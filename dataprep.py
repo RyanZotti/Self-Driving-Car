@@ -41,7 +41,7 @@ def process_session(session_path):
     prev_command = None
     for item in commands:
         command, ts = item[0], item[1]
-        if command != prev_command and command != 'no command':
+        if command != prev_command and command != 'no command' and command != 'down':
             compact_commands.append([command, ts])
             prev_command = command
     commands = compact_commands
@@ -75,7 +75,6 @@ def process_session(session_path):
                     else:
                         future_command = "END"
                         future_command_ts = end_time
-                    print(current_command)
                 predictors.append(frame)
                 target = [0, 0, 0]  # in order: left, up, right
                 key_image = None
