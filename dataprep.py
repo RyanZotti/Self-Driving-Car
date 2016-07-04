@@ -4,8 +4,13 @@ import re
 import os
 from datetime import datetime
 
-
 def process_session(session_path):
+
+    # Overlay target images for visual troubleshooting of processed video
+    image_path = str(os.path.dirname(os.path.realpath(__file__))) + "/arrow_key_images"
+    up_arrow = cv2.imread(image_path + '/UpArrow.tif')
+    left_arrow = cv2.imread(image_path + '/LeftArrow.tif')
+    right_arrow = cv2.imread(image_path + '/Right Arrow.tif')
 
     cap = cv2.VideoCapture(session_path + "/output.mov")
     video_timestamps = []
@@ -71,16 +76,43 @@ def process_session(session_path):
                         future_command = "END"
                         future_command_ts = end_time
                     print(current_command)
-                cv2.imshow('frame', frame)
                 predictors.append(frame)
                 target = [0, 0, 0]  # in order: left, up, right
+                key_image = None
                 if current_command == 'left':
                     target[0] = 1
+                    key_image = left_arrow
                 elif current_command == 'up':
                     target[1] = 1
+                    key_image = up_arrow
                 elif current_command == 'right':
                     target[2] = 1
+                    key_image = right_arrow
                 targets.append(target)
+
+                # Display target key for visual debugging
+                # The original image is huge, so I need to rescale it
+                scale = 0.125
+                resized_image = cv2.resize(key_image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+
+                # Thresholding requires grayscale only, so that threshold only needs to happen in one dimension
+                img2gray = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
+
+                # Create mask where anything greater than 240 bright is made super white (255) / selected
+                ret, mask = cv2.threshold(img2gray, 240, 255, cv2.THRESH_BINARY)
+
+                # TODO: understand how this copy-pasted OpenCV masking code works
+                mask_inv = cv2.bitwise_not(mask) # invert the mask
+                rows, cols, channels = resized_image.shape # get size of image
+                region_of_interest = frame[0:rows, 0:cols]
+                img1_bg = cv2.bitwise_and(region_of_interest, region_of_interest, mask=mask) # ???
+                img2_fg = cv2.bitwise_and(resized_image, resized_image, mask=mask_inv) # ???
+                dst = cv2.add(img1_bg, img2_fg) # ???
+                frame[0:rows, 0:cols] = dst
+
+                # Finally, show image with the an overlay of identified target key image
+                cv2.imshow('frame', frame)
+
             else:
                 cap.release()
                 cv2.destroyAllWindows()
@@ -116,6 +148,6 @@ def data_prep(data_path):
              validation_targets = validation_targets_np)
 
 if __name__ == '__main__':
-    data_path = str(os.path.dirname(os.path.realpath(__file__))) + "/data"
+    data_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
     data_prep(data_path)
     print("Finished.")
