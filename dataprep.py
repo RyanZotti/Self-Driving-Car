@@ -127,18 +127,22 @@ def data_prep(data_path):
     train_predictors = []
     train_targets = []
     for folder in data_folders[:train_folder_size]:
+        print("Started session: " + str(folder))
         predictors, targets = process_session(data_path+'/'+folder)
         train_predictors.append(predictors)
         train_targets.append(targets)
+        print("Completed session: "+str(folder))
     train_predictors_np = np.array(predictors)
     train_targets_np = np.array(targets)
 
     validation_predictors = []
     validation_targets = []
     for folder in data_folders[train_folder_size:]:
+        print("Started session: " + str(folder))
         predictors, targets = process_session(data_path + '/' + folder)
         validation_predictors.append(predictors)
         validation_targets.append(targets)
+        print("Completed session: " + str(folder))
     validation_predictors_np = np.array(predictors)
     validation_targets_np = np.array(targets)
 
