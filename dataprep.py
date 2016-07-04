@@ -102,10 +102,15 @@ def process_session(session_path):
                     key_image = right_arrow
                 targets.append(target)
 
+                # Uncomment below if you want to increase display (looks very pixelated/ugly)
+                #frame_scale = 2
+                #arrow_key_scale = 0.25v
+                #frame = cv2.resize(frame, None, fx=frame_scale, fy=frame_scale, interpolation=cv2.INTER_CUBIC)
+
                 # Display target key for visual debugging
                 # The original image is huge, so I need to rescale it
-                scale = 0.125
-                resized_image = cv2.resize(key_image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+                arrow_key_scale = 0.125
+                resized_image = cv2.resize(key_image, None, fx=arrow_key_scale, fy=arrow_key_scale, interpolation=cv2.INTER_CUBIC)
 
                 # Thresholding requires grayscale only, so that threshold only needs to happen in one dimension
                 img2gray = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
