@@ -24,6 +24,19 @@ def process_session(session_path):
     with open(session_path + '/clean_session.txt') as clean_session_reader:
         for line in clean_session_reader:
             line = line.replace("\n", "")
+
+            # data quality checks
+            if "down" in line:
+                continue
+            if "left" in line and "right" in line:
+                continue
+            if "left" in line and "up" in line:
+                continue
+            if "right" in line and "up" in line:
+                continue
+            if "left" in line and "up" in line and "right" in line:
+                continue
+
             match = re.match(r"^.*\['(.*)'\].*$", line)
             if match is not None:
                 command = match.group(1)
