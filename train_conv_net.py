@@ -105,12 +105,12 @@ tfboard_dir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_da
 train_writer = tf.train.SummaryWriter(tfboard_dir,sess.graph)
 
 sess.run(tf.initialize_all_variables())
-for i in range(6):
+for i in range(2000):
     predictors, target = next_batch(50, train_predictors, train_targets)
     if i%100 == 0:
         train_accuracy = accuracy.eval(feed_dict={
             x:predictors, y_: target, keep_prob: 1.0})
-    print("step %d, training accuracy %g"%(i, train_accuracy))
+        print("step %d, training accuracy %g"%(i, train_accuracy))
     train_step.run(feed_dict={x: predictors, y_: target, keep_prob: 0.5})
     run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
     run_metadata = tf.RunMetadata()
