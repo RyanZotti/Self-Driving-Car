@@ -4,7 +4,7 @@ import re
 import os
 from datetime import datetime
 
-def process_session(session_path):
+def process_session(session_path,rgb=True):
 
     # Overlay target images for visual troubleshooting of processed video
     image_path = str(os.path.dirname(os.path.realpath(__file__))) + "/arrow_key_images"
@@ -88,7 +88,13 @@ def process_session(session_path):
                     else:
                         future_command = "END"
                         future_command_ts = end_time
-                predictors.append(frame)
+
+                if rgb == True:
+                    predictors.append(frame)
+                else:
+                    bw_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    predictors.append(bw_frame)
+
                 target = [0, 0, 0]  # in order: left, up, right
                 key_image = None
                 if current_command == 'left':
@@ -137,7 +143,7 @@ def process_session(session_path):
     return predictors, targets
 
 
-def data_prep(data_path):
+def data_prep(data_path,rgb=True):
 
     data_folders = os.listdir(data_path)
     train_folder_size = int(len(data_folders) * 0.8)
@@ -146,7 +152,7 @@ def data_prep(data_path):
     train_targets = []
     for folder in data_folders[:train_folder_size]:
         print("Started session: " + str(folder))
-        predictors, targets = process_session(data_path+'/'+folder)
+        predictors, targets = process_session(data_path+'/'+folder,rgb)
         train_predictors.append(predictors)
         train_targets.append(targets)
         print("Completed session: "+str(folder))
@@ -157,7 +163,7 @@ def data_prep(data_path):
     validation_targets = []
     for folder in data_folders[train_folder_size:]:
         print("Started session: " + str(folder))
-        predictors, targets = process_session(data_path + '/' + folder)
+        predictors, targets = process_session(data_path + '/' + folder,rgb)
         validation_predictors.append(predictors)
         validation_targets.append(targets)
         print("Completed session: " + str(folder))
@@ -170,5 +176,5 @@ def data_prep(data_path):
 
 if __name__ == '__main__':
     data_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
-    data_prep(data_path)
+    data_prep(data_path,rgb=False)
     print("Finished.")
