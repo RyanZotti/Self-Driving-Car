@@ -31,7 +31,7 @@ train_targets = npzfile['train_targets']
 validation_predictors = npzfile['validation_predictors']
 validation_targets = npzfile['validation_targets']
 
-sess = tf.InteractiveSession()
+sess = tf.InteractiveSession(config=tf.ConfigProto())
 
 def next_batch(size, predictors, targets):
     record_count = predictors.shape[0]
@@ -105,12 +105,15 @@ tfboard_dir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_da
 train_writer = tf.train.SummaryWriter(tfboard_dir,sess.graph)
 
 sess.run(tf.initialize_all_variables())
-for i in range(2000):
+for i in range(1000):
     predictors, target = next_batch(50, train_predictors, train_targets)
+    v_predictors, v_target = next_batch(50, validation_predictors, validation_targets)
     if i%100 == 0:
         train_accuracy = accuracy.eval(feed_dict={
             x:predictors, y_: target, keep_prob: 1.0})
         print("step %d, training accuracy %g"%(i, train_accuracy))
+        print("validation accuracy %g" % accuracy.eval(
+            feed_dict={x: v_predictors, y_: v_target, keep_prob: 1.0}))
     train_step.run(feed_dict={x: predictors, y_: target, keep_prob: 0.5})
     run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
     run_metadata = tf.RunMetadata()
@@ -121,5 +124,7 @@ for i in range(2000):
     train_writer.add_run_metadata(run_metadata, 'step%03d' % i)
     train_writer.add_summary(summary, i)
 
-print("test accuracy %g"%accuracy.eval(feed_dict={
-    x: validation_predictors, y_: validation_targets, keep_prob: 1.0}))
+# Save the trained model to a file
+saver = tf.train.Saver()
+save_path = saver.save(sess, "/Users/ryanzotti/Documents/repos/Self-Driving-Car/trained_model/model.ckpt")
+#print("validation accuracy %g" % accuracy.eval(feed_dict={x: validation_predictors, y_: validation_targets, keep_prob: 1.0}))
