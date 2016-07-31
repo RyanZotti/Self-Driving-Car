@@ -3,8 +3,25 @@ import cv2
 import re
 import os
 from datetime import datetime
+import collections
+from random import shuffle
 
-def process_session(session_path,rgb=True):
+def make_gamma_tables(gammas):
+    gamma_map = collections.OrderedDict()
+    for gamma in gammas:
+        # build a lookup table mapping the pixel values [0, 255] to
+        # their adjusted gamma values
+        invGamma = 1.0 / gamma
+        table = np.array([((i / 255.0) ** invGamma) * 255
+                          for i in np.arange(0, 256)]).astype("uint8")
+        gamma_map[gamma] = table
+    return gamma_map
+
+def adjust_gamma(image, table):
+	# apply gamma correction using the lookup table
+	return cv2.LUT(image, table)
+
+def process_session(session_path,gamma_map,rgb=True):
 
     # Overlay target images for visual troubleshooting of processed video
     image_path = str(os.path.dirname(os.path.realpath(__file__))) + "/arrow_key_images"
@@ -25,7 +42,7 @@ def process_session(session_path,rgb=True):
         for line in clean_session_reader:
             line = line.replace("\n", "")
 
-            # data quality checks
+            # Ignore / skip all invalid commands
             if "down" in line:
                 continue
             if "left" in line and "right" in line:
@@ -89,12 +106,6 @@ def process_session(session_path,rgb=True):
                         future_command = "END"
                         future_command_ts = end_time
 
-                if rgb == True:
-                    predictors.append(frame)
-                else:
-                    bw_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    predictors.append(bw_frame)
-
                 target = [0, 0, 0]  # in order: left, up, right
                 key_image = None
                 if current_command == 'left':
@@ -106,7 +117,25 @@ def process_session(session_path,rgb=True):
                 elif current_command == 'right':
                     target[2] = 1
                     key_image = right_arrow
-                targets.append(target)
+
+                if rgb == True:
+                    for gamma, gamma_table in gamma_map.items():
+                        gamma_image = adjust_gamma(frame, gamma_table)
+                        targets.append(target)
+                        predictors.append(gamma_image)
+                else:
+                    for gamma, gamma_table in gamma_map.items():
+                        bw_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                        half_image = bw_frame[120:, :]
+                        #cv2.imshow(str(gamma), half_image)
+                        #print(half_image.shape)
+                        bw_frame = half_image
+                        gamma_image = adjust_gamma(bw_frame, gamma_table)
+                        gamma_image = np.reshape(gamma_image, [120, 320, 1])
+                        #gamma_image = np.reshape(gamma_image, [240, 320, 1])
+                        targets.append(target)
+                        predictors.append(gamma_image)
+                        #cv2.imshow(str(gamma), gamma_image)
 
                 # Uncomment below if you want to increase display (looks very pixelated/ugly)
                 #frame_scale = 2
@@ -145,30 +174,35 @@ def process_session(session_path,rgb=True):
 
 def data_prep(data_path,rgb=True):
 
+    #gamma_map = make_gamma_tables(np.arange(1.0,3.0,0.5))
+    gamma_map = make_gamma_tables([1])
+
     data_folders = os.listdir(data_path)
+    shuffle(data_folders)
+    data_folders = data_folders[:10]
     train_folder_size = int(len(data_folders) * 0.8)
 
     train_predictors = []
     train_targets = []
     for folder in data_folders[:train_folder_size]:
         print("Started session: " + str(folder))
-        predictors, targets = process_session(data_path+'/'+folder,rgb)
-        train_predictors.append(predictors)
-        train_targets.append(targets)
+        predictors, targets = process_session(data_path+'/'+folder,gamma_map,rgb)
+        train_predictors.extend(predictors)
+        train_targets.extend(targets)
         print("Completed session: "+str(folder))
-    train_predictors_np = np.array(predictors)
-    train_targets_np = np.array(targets)
+    train_predictors_np = np.array(train_predictors)
+    train_targets_np = np.array(train_targets)
 
     validation_predictors = []
     validation_targets = []
     for folder in data_folders[train_folder_size:]:
         print("Started session: " + str(folder))
-        predictors, targets = process_session(data_path + '/' + folder,rgb)
-        validation_predictors.append(predictors)
-        validation_targets.append(targets)
+        predictors, targets = process_session(data_path + '/' + folder,gamma_map,rgb)
+        validation_predictors.extend(predictors)
+        validation_targets.extend(targets)
         print("Completed session: " + str(folder))
-    validation_predictors_np = np.array(predictors)
-    validation_targets_np = np.array(targets)
+    validation_predictors_np = np.array(validation_predictors)
+    validation_targets_np = np.array(validation_targets)
 
     np.savez(data_path+'/final_processed_data', train_predictors=train_predictors_np,
              train_targets=train_targets_np,validation_predictors = validation_predictors_np,
@@ -176,5 +210,5 @@ def data_prep(data_path,rgb=True):
 
 if __name__ == '__main__':
     data_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
-    data_prep(data_path,rgb=False)
+    data_prep(data_path,rgb=True)
     print("Finished.")
