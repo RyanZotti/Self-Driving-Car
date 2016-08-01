@@ -94,8 +94,6 @@ for i in range(1000):
     predictors = train_predictors[data_index:data_index+50]
     target = train_targets[data_index:data_index+50]
 
-    random_idx = random.randint(0, validation_predictors.shape[0] - 50)
-    v_predictors, v_target = validation_predictors[random_idx:random_idx+50], validation_targets[random_idx:random_idx+50]
     if i%100 == 0:
 
         # Not sure what these two lines do
@@ -110,7 +108,7 @@ for i in range(1000):
         train_writer.add_summary(train_summary, i)
 
         validation_summary, validation_accuracy = sess.run([merged, accuracy],
-                                                 feed_dict={x: v_predictors, y_: v_target},
+                                                 feed_dict={x: validation_predictors[:1000], y_: validation_targets[:1000]},
                                                  options=run_opts,
                                                  run_metadata=run_opts_metadata)
         validation_writer.add_run_metadata(run_opts_metadata, 'step%03d' % i)
