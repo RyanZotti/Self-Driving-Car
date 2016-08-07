@@ -5,7 +5,6 @@ def dir_count(dir):
     shell_cmd = 'ls -ltr {dir} | wc -l'.format(dir=dir)
     cmd_result = subprocess.check_output(shell_cmd, shell=True).strip()
     cmd_result = str(cmd_result).replace('b', '').replace("\'", "")
-    print(cmd_result)
     return cmd_result
 
 
