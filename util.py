@@ -22,6 +22,14 @@ def mkdir_tfboard_run_dir(tf_basedir,):
     return new_run_dir
 
 
+def cp(a,b):
+    shell_cmd = 'cp {from_here} {to_there}'.format(from_here=a,to_there=b)
+    cmd_result = subprocess.check_output(shell_cmd, shell=True).strip()
+
+def shell_command(cmd):
+    cmd_result = subprocess.check_output(cmd, shell=True).strip()
+    return cmd_result
+
 if __name__ == '__main__':
     tensorboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/'
     mkdir_tfboard_run_dir(tensorboard_basedir)

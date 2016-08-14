@@ -1,6 +1,8 @@
 import tensorflow as tf
 import numpy as np
 import random
+import os
+from util import mkdir_tfboard_run_dir,mkdir,shell_command
 
 '''
 Helpful notes
@@ -70,15 +72,24 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 # To view graph: tensorboard --logdir=/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/1/
 tf.scalar_summary('accuracy', accuracy)
 merged = tf.merge_all_summaries()
-tfboard_dir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/4/'
-train_writer = tf.train.SummaryWriter(tfboard_dir+"/train/",sess.graph)
-validation_writer = tf.train.SummaryWriter(tfboard_dir+"/validation/",sess.graph)
 
+tfboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/'
+tfboard_run_dir = mkdir_tfboard_run_dir(tfboard_basedir)
+train_dir = mkdir(tfboard_run_dir+"/trn/glm/")
+validation_dir = mkdir(tfboard_run_dir+"/vld/glm/")
+script_nm = os.path.basename(__file__)
+
+# Archive this script to document model design in event of good results that need to be replicated
+model_file_path = os.path.dirname(os.path.realpath(__file__))+'/'+os.path.basename(__file__)
+shell_command('cp {model_file} {archive_path}'.format(model_file=model_file_path,archive_path=tfboard_run_dir+'/'))
+
+train_writer = tf.train.SummaryWriter(train_dir,sess.graph)
+validation_writer = tf.train.SummaryWriter(validation_dir,sess.graph)
 
 sess.run(tf.initialize_all_variables())
 batch_index = 0
 batches_per_epoch = (train_predictors.shape[0] - train_predictors.shape[0] % 50)/50
-for i in range(2000):
+for i in range(1000):
 
     # Shuffle in the very beginning and after each epoch
     if batch_index % batches_per_epoch == 0:
