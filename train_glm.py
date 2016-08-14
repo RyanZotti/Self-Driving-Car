@@ -129,3 +129,6 @@ for i in range(1000):
 saver = tf.train.Saver()
 save_path = saver.save(sess, "/Users/ryanzotti/Documents/repos/Self-Driving-Car/trained_model/model.ckpt")
 #print("validation accuracy %g" % accuracy.eval(feed_dict={x: validation_predictors, y_: validation_targets, keep_prob: 1.0}))
+
+# Marks unambiguous successful completion to prevent deletion by cleanup script
+shell_command('touch '+tfboard_run_dir+'/SUCCESS')
