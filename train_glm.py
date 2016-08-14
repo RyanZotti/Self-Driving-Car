@@ -4,22 +4,7 @@ import random
 import os
 from util import mkdir_tfboard_run_dir,mkdir,shell_command
 
-'''
-Helpful notes
-- Excellent source explaining convoluted neural networks:
-  http://cs231n.github.io/convolutional-networks/
-- Output size of a conv layer is computed by (W−F+2P)/S+1
-  W = input volumne size
-  F = field size of conv neuron
-  S = stride size
-  P = zero padding size
-(240-6+2)/2=118
-(320-6+2)/2=158
-(28-5+2)/2
-'''
-
 input_file_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/final_processed_data_3_channels.npz'
-#input_file_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/final_processed_half_gamma_data.npz'
 npzfile = np.load(input_file_path)
 
 # training data
@@ -69,7 +54,7 @@ train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-# To view graph: tensorboard --logdir=/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/1/
+# To view graph: tensorboard --logdir=/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/
 tf.scalar_summary('accuracy', accuracy)
 merged = tf.merge_all_summaries()
 
@@ -128,7 +113,6 @@ for i in range(1000):
 # Save the trained model to a file
 saver = tf.train.Saver()
 save_path = saver.save(sess, "/Users/ryanzotti/Documents/repos/Self-Driving-Car/trained_model/model.ckpt")
-#print("validation accuracy %g" % accuracy.eval(feed_dict={x: validation_predictors, y_: validation_targets, keep_prob: 1.0}))
 
 # Marks unambiguous successful completion to prevent deletion by cleanup script
 shell_command('touch '+tfboard_run_dir+'/SUCCESS')
