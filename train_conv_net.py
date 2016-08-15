@@ -1,11 +1,11 @@
 import tensorflow as tf
 import numpy as np
 import random
+from util import mkdir_tfboard_run_dir,mkdir,shell_command
+import os
 
 '''
-
 Helpful notes
-
 - Excellent source explaining convoluted neural networks:
   http://cs231n.github.io/convolutional-networks/
 - Output size of a conv layer is computed by (W−F+2P)/S+1
@@ -13,12 +13,9 @@ Helpful notes
   F = field size of conv neuron
   S = stride size
   P = zero padding size
-
 (240-6+2)/2=118
 (320-6+2)/2=158
-
 (28-5+2)/2
-
 '''
 
 input_file_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/final_processed_data_3_channels.npz'
@@ -61,51 +58,36 @@ def max_pool_2x2(x):
 x = tf.placeholder(tf.float32, shape=[None, 240, 320, 3])
 y_ = tf.placeholder(tf.float32, shape=[None, 3])
 
-W_conv1 = weight_variable([3, 3, 3, 16])
+W_conv1 = weight_variable([6, 6, 3, 16])
 b_conv1 = bias_variable([16])
 h_conv1 = tf.nn.relu(conv2d(x, W_conv1) + b_conv1)
-#h_pool1 = max_pool_2x2(h_conv1)
+h_pool1 = max_pool_2x2(h_conv1)
 
-W_conv2 = weight_variable([3, 3, 16, 16])
-b_conv2 = bias_variable([16])
-#h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-#h_pool2 = max_pool_2x2(h_conv2)
-h_conv2 = tf.nn.relu(conv2d(h_conv1, W_conv2) + b_conv2)
+W_conv2 = weight_variable([6, 6, 16, 4])
+b_conv2 = bias_variable([4])
+h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
+h_pool2 = max_pool_2x2(h_conv2)
 
-W_conv3 = weight_variable([3, 3, 16, 16])
-b_conv3 = bias_variable([16])
-#h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-#h_pool3 = max_pool_2x2(h_conv3)
-h_conv3 = tf.nn.relu(conv2d(h_conv2, W_conv3) + b_conv3)
+W_conv3 = weight_variable([6, 6, 4, 4])
+b_conv3 = bias_variable([4])
+h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
+h_pool3 = max_pool_2x2(h_conv3)
 
-W_conv4 = weight_variable([3, 3, 16, 16])
-b_conv4 = bias_variable([16])
-#h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-#h_pool3 = max_pool_2x2(h_conv3)
-h_conv4 = tf.nn.relu(conv2d(h_conv3, W_conv4) + b_conv4)
+W_conv4 = weight_variable([6, 6, 4, 4])
+b_conv4 = bias_variable([4])
+h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
+h_pool4 = max_pool_2x2(h_conv4)
 
-W_conv5 = weight_variable([3, 3, 16, 16])
-b_conv5 = bias_variable([16])
-#h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-#h_pool3 = max_pool_2x2(h_conv3)
-h_conv5 = tf.nn.relu(conv2d(h_conv4, W_conv5) + b_conv5)
+W_fc1 = weight_variable([15 * 20 * 4, 4])
+b_fc1 = bias_variable([4])
 
-W_conv6 = weight_variable([3, 3, 16, 16])
-b_conv6 = bias_variable([16])
-#h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-#h_pool3 = max_pool_2x2(h_conv3)
-h_conv6 = tf.nn.relu(conv2d(h_conv5, W_conv6) + b_conv6)
-
-W_fc1 = weight_variable([240 * 320 * 16, 256])
-b_fc1 = bias_variable([256])
-
-h_pool4_flat = tf.reshape(h_conv6, [-1, 240 * 320 * 16])
+h_pool4_flat = tf.reshape(h_pool4, [-1, 15 * 20 * 4])
 h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
 
 keep_prob = tf.placeholder(tf.float32)
 h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
-W_fc2 = weight_variable([256, 3])
+W_fc2 = weight_variable([4, 3])
 b_fc2 = bias_variable([3])
 
 y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
@@ -118,10 +100,17 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 # To view graph: tensorboard --logdir=/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/1/
 tf.scalar_summary('accuracy', accuracy)
 merged = tf.merge_all_summaries()
-tfboard_dir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/4/'
-train_writer = tf.train.SummaryWriter(tfboard_dir+"/train/",sess.graph)
-validation_writer = tf.train.SummaryWriter(tfboard_dir+"/validation/",sess.graph)
+tfboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/'
+tfboard_run_dir = mkdir_tfboard_run_dir(tfboard_basedir)
+train_dir = mkdir(tfboard_run_dir+"/trn/convnet/")
+validation_dir = mkdir(tfboard_run_dir+"/vld/convnet/")
 
+# Archive this script to document model design in event of good results that need to be replicated
+model_file_path = os.path.dirname(os.path.realpath(__file__))+'/'+os.path.basename(__file__)
+shell_command('cp {model_file} {archive_path}'.format(model_file=model_file_path,archive_path=tfboard_run_dir+'/'))
+
+train_writer = tf.train.SummaryWriter(train_dir,sess.graph)
+validation_writer = tf.train.SummaryWriter(validation_dir,sess.graph)
 
 sess.run(tf.initialize_all_variables())
 batch_index = 0
@@ -154,7 +143,7 @@ for i in range(1000):
         train_writer.add_summary(train_summary, i)
 
         validation_summary, validation_accuracy = sess.run([merged, accuracy],
-                                                 feed_dict={x: v_predictors, y_: v_target, keep_prob: 1.0},
+                                                 feed_dict={x: validation_predictors[:200], y_: validation_targets[:200], keep_prob: 1.0},
                                                  options=run_opts,
                                                  run_metadata=run_opts_metadata)
         validation_writer.add_run_metadata(run_opts_metadata, 'step%03d' % i)
@@ -168,3 +157,6 @@ for i in range(1000):
 saver = tf.train.Saver()
 save_path = saver.save(sess, "/Users/ryanzotti/Documents/repos/Self-Driving-Car/trained_model/model.ckpt")
 #print("validation accuracy %g" % accuracy.eval(feed_dict={x: validation_predictors, y_: validation_targets, keep_prob: 1.0}))
+
+# Marks unambiguous successful completion to prevent deletion by cleanup script
+shell_command('touch '+tfboard_run_dir+'/SUCCESS')
