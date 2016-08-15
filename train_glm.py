@@ -62,7 +62,6 @@ tfboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visua
 tfboard_run_dir = mkdir_tfboard_run_dir(tfboard_basedir)
 train_dir = mkdir(tfboard_run_dir+"/trn/glm/")
 validation_dir = mkdir(tfboard_run_dir+"/vld/glm/")
-script_nm = os.path.basename(__file__)
 
 # Archive this script to document model design in event of good results that need to be replicated
 model_file_path = os.path.dirname(os.path.realpath(__file__))+'/'+os.path.basename(__file__)
