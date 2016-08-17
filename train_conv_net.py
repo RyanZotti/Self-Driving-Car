@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import random
-from util import mkdir_tfboard_run_dir,mkdir,shell_command
+from util import mkdir_tfboard_run_dir,mkdir,shell_command, shuffle_dataset
 import os
 
 '''
@@ -29,16 +29,10 @@ train_targets = npzfile['train_targets']
 # validation/test data
 validation_predictors = npzfile['validation_predictors']
 validation_targets = npzfile['validation_targets']
+validation_predictors, validation_targets = shuffle_dataset(validation_predictors, validation_targets)
+
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
-
-def shuffle_dataset(predictors, targets):
-    record_count = predictors.shape[0]
-    shuffle_index = np.arange(record_count)
-    np.random.shuffle(shuffle_index)
-    predictors = predictors[shuffle_index]
-    targets = targets[shuffle_index]
-    return predictors, targets
 
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
@@ -127,8 +121,6 @@ for i in range(1000):
     predictors = train_predictors[data_index:data_index+50]
     target = train_targets[data_index:data_index+50]
 
-    random_idx = random.randint(0, validation_predictors.shape[0] - 50)
-    v_predictors, v_target = validation_predictors[random_idx:random_idx+50], validation_targets[random_idx:random_idx+50]
     if i%100 == 0:
 
         # Not sure what these two lines do
