@@ -55,21 +55,26 @@ y_ = tf.placeholder(tf.float32, shape=[None, 3])
 W_conv1 = weight_variable([6, 6, 3, 16])
 b_conv1 = bias_variable([16])
 h_conv1 = tf.nn.relu(conv2d(x, W_conv1) + b_conv1)
+tf.histogram_summary('activations_layer_1', h_conv1)
 h_pool1 = max_pool_2x2(h_conv1)
+
 
 W_conv2 = weight_variable([6, 6, 16, 4])
 b_conv2 = bias_variable([4])
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
+tf.histogram_summary('activations_layer_2', h_conv2)
 h_pool2 = max_pool_2x2(h_conv2)
 
 W_conv3 = weight_variable([6, 6, 4, 4])
 b_conv3 = bias_variable([4])
 h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
+tf.histogram_summary('activations_layer_3', h_conv3)
 h_pool3 = max_pool_2x2(h_conv3)
 
 W_conv4 = weight_variable([6, 6, 4, 4])
 b_conv4 = bias_variable([4])
 h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
+tf.histogram_summary('activations_layer_4', h_conv4)
 h_pool4 = max_pool_2x2(h_conv4)
 
 W_fc1 = weight_variable([15 * 20 * 4, 4])
@@ -97,6 +102,11 @@ merged = tf.merge_all_summaries()
 tfboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/'
 tfboard_run_dir = mkdir_tfboard_run_dir(tfboard_basedir)
 train_dir = mkdir(tfboard_run_dir+"/trn/convnet/")
+train_activation_layer_1 = mkdir(tfboard_run_dir+"/trn_actvtn_lyr1")
+train_activation_layer_2 = mkdir(tfboard_run_dir+"/trn_actvtn_lyr2")
+train_activation_layer_3 = mkdir(tfboard_run_dir+"/trn_actvtn_lyr3")
+train_activation_layer_4 = mkdir(tfboard_run_dir+"/trn_actvtn_lyr4")
+
 validation_dir = mkdir(tfboard_run_dir+"/vld/convnet/")
 
 # Archive this script to document model design in event of good results that need to be replicated
@@ -109,7 +119,7 @@ validation_writer = tf.train.SummaryWriter(validation_dir,sess.graph)
 sess.run(tf.initialize_all_variables())
 batch_index = 0
 batches_per_epoch = (train_predictors.shape[0] - train_predictors.shape[0] % 50)/50
-for i in range(1000):
+for i in range(200):
 
     # Shuffle in the very beginning and after each epoch
     if batch_index % batches_per_epoch == 0:
@@ -121,7 +131,7 @@ for i in range(1000):
     predictors = train_predictors[data_index:data_index+50]
     target = train_targets[data_index:data_index+50]
 
-    if i%100 == 0:
+    if i%1 == 0:
 
         # Not sure what these two lines do
         run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
