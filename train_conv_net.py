@@ -97,6 +97,7 @@ train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
+# My filters look random, but apparently other people get random-looking filters too (https://github.com/tensorflow/tensorflow/issues/908)
 W_conv1_transposed = tf.transpose(W_conv1, [3, 0, 1, 2]) # I think this means make the batch the first dimension
 W_conv1_visual_summary = tf.image_summary("W_conv1",W_conv1_transposed,max_images=1000)
 
