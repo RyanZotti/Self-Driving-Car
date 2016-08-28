@@ -1,7 +1,8 @@
 import tensorflow as tf
 import numpy as np
 import random
-from util import mkdir_tfboard_run_dir,mkdir,shell_command, shuffle_dataset
+from util import (mkdir_tfboard_run_dir,mkdir,shell_command,
+                  shuffle_dataset, dead_ReLU_pct, custom_summary)
 import os
 
 '''
@@ -55,7 +56,7 @@ y_ = tf.placeholder(tf.float32, shape=[None, 3])
 W_conv1 = weight_variable([6, 6, 3, 16])
 b_conv1 = bias_variable([16])
 h_conv1 = tf.nn.relu(conv2d(x, W_conv1) + b_conv1)
-tf.histogram_summary('activations_layer_1', h_conv1)
+dead_ReLUs1 = tf.placeholder(tf.float32,shape=[1])
 h_pool1 = max_pool_2x2(h_conv1)
 
 
@@ -96,6 +97,11 @@ train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
+W_conv1_transposed = tf.transpose(W_conv1, [3, 0, 1, 2]) # I think this means make the batch the first dimension
+W_conv1_visual_summary = tf.image_summary("W_conv1",W_conv1_transposed,max_images=1000)
+
+tf_ReLU_layers = [h_conv1]
+
 # To view graph: tensorboard --logdir=/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/1/
 tf.scalar_summary('accuracy', accuracy)
 merged = tf.merge_all_summaries()
@@ -116,10 +122,12 @@ shell_command('cp {model_file} {archive_path}'.format(model_file=model_file_path
 train_writer = tf.train.SummaryWriter(train_dir,sess.graph)
 validation_writer = tf.train.SummaryWriter(validation_dir,sess.graph)
 
+
+
 sess.run(tf.initialize_all_variables())
 batch_index = 0
 batches_per_epoch = (train_predictors.shape[0] - train_predictors.shape[0] % 50)/50
-for i in range(200):
+for i in range(4):
 
     # Shuffle in the very beginning and after each epoch
     if batch_index % batches_per_epoch == 0:
@@ -136,22 +144,31 @@ for i in range(200):
         # Not sure what these two lines do
         run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
         run_opts_metadata = tf.RunMetadata()
-
+        train_feed = {x: predictors, y_: target, keep_prob: 1.0}
         train_summary, train_accuracy = sess.run([merged, accuracy],
-                              feed_dict={x: predictors, y_: target, keep_prob: 1.0},
+                              feed_dict=train_feed,
                               options=run_opts,
                               run_metadata=run_opts_metadata)
         train_writer.add_run_metadata(run_opts_metadata, 'step%03d' % i)
         train_writer.add_summary(train_summary, i)
 
+        validation_feed = {x: validation_predictors[:200], y_: validation_targets[:200], keep_prob: 1.0}
         validation_summary, validation_accuracy = sess.run([merged, accuracy],
-                                                 feed_dict={x: validation_predictors[:200], y_: validation_targets[:200], keep_prob: 1.0},
+                                                 feed_dict=validation_feed,
                                                  options=run_opts,
                                                  run_metadata=run_opts_metadata)
         validation_writer.add_run_metadata(run_opts_metadata, 'step%03d' % i)
         validation_writer.add_summary(validation_summary, i)
 
+        ReLU_layers = sess.run(tf_ReLU_layers,feed_dict=train_feed)
+        for layer_index, ReLU_layer in enumerate(ReLU_layers):
+            dead_ReLU_percentage = dead_ReLU_pct(ReLU_layer)
+            relu_summary_str = "dead_ReLUs_layer"+str(layer_index+1)
+            summary = custom_summary(relu_summary_str,dead_ReLU_percentage)
+            train_writer.add_summary(summary,i)
+
         print("{i} training accuracy: {train_acc}, validation accuracy: {validation_acc}".format(train_acc=train_accuracy,validation_acc=validation_accuracy,i=i))
+
 
     train_step.run(feed_dict={x: predictors, y_: target, keep_prob: 0.5})
 
