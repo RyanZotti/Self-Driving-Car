@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-import random
+import argparse
 from util import (mkdir_tfboard_run_dir,mkdir,shell_command,
                   shuffle_dataset, dead_ReLU_pct, custom_summary)
 import os
@@ -19,8 +19,22 @@ Helpful notes
 (28-5+2)/2
 '''
 
-input_file_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/final_processed_data_3_channels.npz'
-#input_file_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/final_processed_half_gamma_data.npz'
+ap = argparse.ArgumentParser()
+ap.add_argument("-d", "--datapath", required = False,
+    help = "path to where the face cascade resides",
+    default='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car')
+ap.add_argument("-b", "--batches", required = False,
+    help = "quantity of batch iterations to run",
+    default='1000')
+args = vars(ap.parse_args())
+data_path = args["datapath"]
+batch_iterations = int(args["batches"])
+
+input_file_path = data_path+'/final_processed_data_3_channels.npz'
+tfboard_basedir = mkdir(data_path+'/tf_visual_data/runs/')
+tfboard_run_dir = mkdir_tfboard_run_dir(tfboard_basedir)
+model_checkpoint_path = mkdir(tfboard_run_dir+'/trained_model')
+
 npzfile = np.load(input_file_path)
 
 # training data
@@ -106,8 +120,8 @@ tf_ReLU_layers = [h_conv1]
 # To view graph: tensorboard --logdir=/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/1/
 tf.scalar_summary('accuracy', accuracy)
 merged = tf.merge_all_summaries()
-tfboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/'
-tfboard_run_dir = mkdir_tfboard_run_dir(tfboard_basedir)
+
+
 train_dir = mkdir(tfboard_run_dir+"/trn/convnet/")
 train_activation_layer_1 = mkdir(tfboard_run_dir+"/trn_actvtn_lyr1")
 train_activation_layer_2 = mkdir(tfboard_run_dir+"/trn_actvtn_lyr2")
@@ -128,7 +142,7 @@ validation_writer = tf.train.SummaryWriter(validation_dir,sess.graph)
 sess.run(tf.initialize_all_variables())
 batch_index = 0
 batches_per_epoch = (train_predictors.shape[0] - train_predictors.shape[0] % 50)/50
-for i in range(4):
+for i in range(batch_iterations):
 
     # Shuffle in the very beginning and after each epoch
     if batch_index % batches_per_epoch == 0:
@@ -175,7 +189,7 @@ for i in range(4):
 
 # Save the trained model to a file
 saver = tf.train.Saver()
-save_path = saver.save(sess, "/Users/ryanzotti/Documents/repos/Self-Driving-Car/trained_model/model.ckpt")
+save_path = saver.save(sess, model_checkpoint_path+"/model.ckpt")
 #print("validation accuracy %g" % accuracy.eval(feed_dict={x: validation_predictors, y_: validation_targets, keep_prob: 1.0}))
 
 # Marks unambiguous successful completion to prevent deletion by cleanup script
