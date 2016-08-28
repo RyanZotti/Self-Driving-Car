@@ -3,6 +3,17 @@ from os import listdir
 from os.path import isfile
 import numpy as np
 import os
+import tensorflow as tf
+
+def dead_ReLU_pct(matrix):
+    zeros = (matrix.size - matrix[matrix > 0].size)
+    dead_ReLU_percent = zeros / matrix.size
+    return dead_ReLU_percent
+
+def custom_summary(summary_name,summary_value):
+    # Got this from here: http://stackoverflow.com/questions/37902705/how-to-manually-create-a-tf-summary
+    summary = tf.Summary(value=[tf.Summary.Value(tag=summary_name, simple_value=summary_value)])
+    return summary
 
 def remove_file_if_exists(file_path):
     if os.path.exists(file_path):
@@ -80,6 +91,7 @@ def windowed_dataset(inpt,otpt,bindx,pred_nm,trgt_nm):
 def record_count(file_path):
     result = int(str(shell_command('cat '+file_path)).replace("b","").replace("'",""))
     return result
+
 
 if __name__ == '__main__':
     tensorboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/'
