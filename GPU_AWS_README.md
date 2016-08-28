@@ -4,6 +4,7 @@
 * Select a GPU instance, like g2.2xlarge
 * Pick a VPC and subnet
 * Set "Auto-assign Public IP" to "enable"
+* Select IAM role that can write to S3 (I made one called s3_write)
 * Add a healthy amount of storage, like 100 GB
 * Add a meaningful tag, like "Name":"ConvNet-GPU-Instance"
 
@@ -59,4 +60,6 @@ Run the commands below.
     # Install git so you can clone your repo and then run your code
     apt-get install -y git    
     
+    # Get data training and validation data
+    wget https://s3.amazonaws.com/self-driving-car/final_processed_data_3_channels.npz
     
