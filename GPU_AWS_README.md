@@ -40,7 +40,7 @@ Run the commands below.
     echo 'export CUDA_HOME=/usr/local/cuda
     export CUDA_ROOT=/usr/local/cuda
     export PATH=$PATH:$CUDA_ROOT/bin:$HOME/bin
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_ROOT/lib64
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_ROOT/lib64:/usr/local/cuda-7.5/extras/CUPTI/lib64
     ' >> ~/.bashrc
     
     # Install Anaconda
@@ -62,4 +62,6 @@ Run the commands below.
     
     # Get data training and validation data
     wget https://s3.amazonaws.com/self-driving-car/final_processed_data_3_channels.npz
+    wget https://s3.amazonaws.com/self-driving-car/training.npz
+    wget https://s3.amazonaws.com/self-driving-car/validation.npz
     
