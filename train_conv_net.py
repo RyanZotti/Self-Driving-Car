@@ -19,9 +19,10 @@ Helpful notes
 (28-5+2)/2
 '''
 
+# python train_conv_net.py -d /root/data -b 1000
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--datapath", required = False,
-    help = "path to where the face cascade resides",
+    help = "path to all of the data",
     default='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car')
 ap.add_argument("-b", "--batches", required = False,
     help = "quantity of batch iterations to run",
@@ -30,22 +31,20 @@ args = vars(ap.parse_args())
 data_path = args["datapath"]
 batch_iterations = int(args["batches"])
 
-input_file_path = data_path+'/final_processed_data_3_channels.npz'
+#input_file_path = data_path+'/final_processed_data_3_channels.npz'
 tfboard_basedir = mkdir(data_path+'/tf_visual_data/runs/')
 tfboard_run_dir = mkdir_tfboard_run_dir(tfboard_basedir)
 model_checkpoint_path = mkdir(tfboard_run_dir+'/trained_model')
 
-npzfile = np.load(input_file_path)
+training_data = np.load(data_path+'/training.npz')
+train_predictors = training_data['predictors']
+train_targets = training_data['targets']
 
-# training data
-train_predictors = npzfile['train_predictors']
-train_targets = npzfile['train_targets']
+validation_data = np.load(data_path+'/validation.npz')
+validation_predictors = validation_data['predictors']
+validation_targets = validation_data['targets']
 
-# validation/test data
-validation_predictors = npzfile['validation_predictors']
-validation_targets = npzfile['validation_targets']
-validation_predictors, validation_targets = shuffle_dataset(validation_predictors, validation_targets)
-
+print(train_predictors.shape)
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
