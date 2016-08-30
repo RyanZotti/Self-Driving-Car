@@ -155,7 +155,7 @@ for i in range(batch_iterations):
     predictors = train_predictors[data_index:data_index+50]
     target = train_targets[data_index:data_index+50]
 
-    if i%1 == 0:
+    if i%425 == 0:
 
         # Not sure what these two lines do
         run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
