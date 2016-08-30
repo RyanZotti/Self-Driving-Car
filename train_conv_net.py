@@ -138,7 +138,7 @@ shell_command('cp {model_file} {archive_path}'.format(model_file=model_file_path
 train_writer = tf.train.SummaryWriter(train_dir,sess.graph)
 validation_writer = tf.train.SummaryWriter(validation_dir,sess.graph)
 
-
+validation_predictors[:200] = validation_predictors[:200] / 255
 
 sess.run(tf.initialize_all_variables())
 batch_index = 0
@@ -154,6 +154,7 @@ for i in range(batch_iterations):
     data_index = batch_index * 50
     predictors = train_predictors[data_index:data_index+50]
     target = train_targets[data_index:data_index+50]
+    predictors = predictors / 255
 
     if i%425 == 0:
 
