@@ -208,6 +208,12 @@ def data_prep(data_path,rgb=True):
              train_targets=train_targets_np,validation_predictors = validation_predictors_np,
              validation_targets = validation_targets_np)
 
+
+# Built so that a 3D convolution doesn't span multiple sessions (since there is no continuity between sessions)
+def video_to_rgb_npz(session_path,predictors,targets):
+    np.savez(session_path + '/predictors_and_targets', predictors=predictors,targets=targets)
+
+
 if __name__ == '__main__':
     data_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
     data_prep(data_path,rgb=True)
