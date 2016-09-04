@@ -3,18 +3,23 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import accuracy_score
 
-input_file_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/final_processed_data_3_channels.npz'
-npzfile = np.load(input_file_path)
+# turns off some annoying complaints from Pandas
 pd.options.mode.chained_assignment = None
-train_predictors = npzfile['train_predictors'].reshape(21228,230400)[:10000]
-train_targets = pd.DataFrame(npzfile['train_targets'][:10000])
+
+input_file_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car'
+
+train_file = np.load(input_file_path+'/training.npz')
+print(train_file.keys())
+train_predictors = train_file['predictors'].reshape(5000,230400)
+train_targets = pd.DataFrame(train_file['targets'])
 train_targets['target'] = 'down'
 train_targets['target'][train_targets[0] == 1] = 'left'
 train_targets['target'][train_targets[1] == 1] = 'up'
 train_targets['target'][train_targets[2] == 1] = 'down'
 
-validation_predictors = npzfile['validation_predictors'].reshape(6168,230400)[:1000]
-validation_targets = pd.DataFrame(npzfile['validation_targets'][:1000])
+validation_file = np.load(input_file_path+'/validation.npz')
+validation_predictors = validation_file['predictors'].reshape(2000,230400)
+validation_targets = pd.DataFrame(validation_file['targets'])
 validation_targets['target'] = 'down'
 validation_targets['target'][validation_targets[0] == 1] = 'left'
 validation_targets['target'][validation_targets[1] == 1] = 'up'
