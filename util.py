@@ -103,6 +103,7 @@ def move_window(windowed_data,new_frame):
     return windowed_data
 
 
+# Hopefully saves space for 3D convolution
 def first_and_last_window_frames(windowed_data):
     first_frame = windowed_data[0]
     last_frame = windowed_data[len(windowed_data) - 1]
@@ -119,6 +120,7 @@ def random_window(predictors,targets,window_size):
     return random_window_predictors, random_window_targets
 
 
+# randomly selects one window from one randomly selected session
 def random_window_random_session(data_path,window_size):
     data_folders = listdir(data_path)
     random_index = randint(0,len(data_folders)-1)
