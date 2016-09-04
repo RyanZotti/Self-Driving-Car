@@ -4,6 +4,7 @@ from os.path import isfile
 import numpy as np
 import os
 import tensorflow as tf
+from random import randint
 
 def dead_ReLU_pct(matrix):
     zeros = (matrix.size - matrix[matrix > 0].size)
@@ -107,6 +108,15 @@ def first_and_last_window_frames(windowed_data):
     last_frame = windowed_data[len(windowed_data) - 1]
     two_frames = np.concatenate(([first_frame], [last_frame]), axis=0)
     return two_frames
+
+
+# randomly selects a window from a given predictors-targets dataset
+def random_window(predictors,targets,window_size):
+    upper_bound = predictors.shape[0] - window_size
+    random_index = randint(0, upper_bound)
+    random_window_predictors = predictors[random_index:random_index + window_size]
+    random_window_targets = targets[random_index:random_index + window_size]
+    return random_window_predictors, random_window_targets
 
 
 if __name__ == '__main__':
