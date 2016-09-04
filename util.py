@@ -93,6 +93,15 @@ def record_count(file_path):
     return result
 
 
+def move_window(windowed_data,new_frame):
+    # Add frame to end of window.
+    # Oldest window is first and newest is last so that when the video is played it looks normal
+    windowed_data = np.concatenate((windowed_data, new_frame), axis=0)
+    # remove oldest frame, which is the first element.
+    windowed_data = np.delete(windowed_data, 0, 0)
+    return windowed_data
+
+
 if __name__ == '__main__':
     tensorboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/'
     abc = record_count('/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/shape')
