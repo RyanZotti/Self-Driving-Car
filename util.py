@@ -116,7 +116,7 @@ def random_window(predictors,targets,window_size):
     upper_bound = predictors.shape[0] - window_size
     random_index = randint(0, upper_bound)
     random_window_predictors = predictors[random_index:random_index + window_size]
-    random_window_targets = targets[random_index:random_index + window_size]
+    random_window_targets = targets[random_index + window_size]
     return random_window_predictors, random_window_targets
 
 
@@ -140,7 +140,7 @@ def multiple_random_windows_from_random_sessions(data_path,window_size,window_co
         predictors, targets = random_window_random_session(data_path, window_size)
         if hollow_window:
             predictors = first_and_last_window_frames(predictors)
-            targets = first_and_last_window_frames(targets)
+            # Note the absence of targets; they are snapshots and don't need hollowing
         if window_index > 0:
             predictor_windows = np.concatenate((predictor_windows,[predictors]),axis=0)
             target_windows = np.concatenate((target_windows, [targets]), axis=0)
