@@ -102,6 +102,13 @@ def move_window(windowed_data,new_frame):
     return windowed_data
 
 
+def first_and_last_window_frames(windowed_data):
+    first_frame = windowed_data[0]
+    last_frame = windowed_data[len(windowed_data) - 1]
+    two_frames = np.concatenate(([first_frame], [last_frame]), axis=0)
+    return two_frames
+
+
 if __name__ == '__main__':
     tensorboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/'
     abc = record_count('/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/shape')
