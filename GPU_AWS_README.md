@@ -65,3 +65,6 @@ Run the commands below.
     wget https://s3.amazonaws.com/self-driving-car/training.npz
     wget https://s3.amazonaws.com/self-driving-car/validation.npz
     
+    # Donwload an entire S3 folder
+    aws s3 sync s3://self-driving-car /home/ubuntu
+    
