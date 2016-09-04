@@ -116,7 +116,9 @@ def random_window(predictors,targets,window_size):
     upper_bound = predictors.shape[0] - window_size
     random_index = randint(0, upper_bound)
     random_window_predictors = predictors[random_index:random_index + window_size]
-    random_window_targets = targets[random_index + window_size]
+    # -1 for the target index because this type of numpy sub-setting is inclusive whereas for predictors
+    # it wasn't selected only elements before that index
+    random_window_targets = targets[random_index + window_size -1]
     return random_window_predictors, random_window_targets
 
 
