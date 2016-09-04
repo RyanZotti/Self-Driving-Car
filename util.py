@@ -119,6 +119,17 @@ def random_window(predictors,targets,window_size):
     return random_window_predictors, random_window_targets
 
 
+def random_window_random_session(data_path,window_size):
+    data_folders = listdir(data_path)
+    random_index = randint(0,len(data_folders)-1)
+    random_folder = data_folders[random_index]
+    data_file = np.load(data_path +'/' + str(random_folder) + '/predictors_and_targets.npz')
+    predictors = data_file['predictors']
+    targets = data_file['targets']
+    predictors, targets = random_window(predictors,targets,window_size)
+    return predictors, targets
+
+
 if __name__ == '__main__':
     tensorboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/'
     abc = record_count('/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/shape')
