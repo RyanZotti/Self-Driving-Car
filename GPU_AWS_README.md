@@ -68,3 +68,9 @@ Run the commands below.
     # Donwload an entire S3 folder
     aws s3 sync s3://self-driving-car /home/ubuntu
     
+    # Reliable command to print GPU utilization, from Nvidia
+    # Comes pre-installed on Ubuntu 14.04
+    nvidia-smi
+    
+    # Optional command to write sysout and stderr to file
+    nohup python train_3d_conv_net.py 2>&1 | tee /home/ubuntu/log.txt &
