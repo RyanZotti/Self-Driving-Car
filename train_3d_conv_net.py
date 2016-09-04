@@ -24,12 +24,11 @@ Helpful notes
 
 data_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
 window_size = 50 # full size before it is potentially hollowed out. See actual_window_size for true size
-window_count = 1
+window_count = 50
 hollow_window = True
 actual_window_size = window_size
 if hollow_window:
     actual_window_size = 2
-train_predictors, train_targets = random_windows(data_path,window_size,window_count,hollow_window)
 validation_predictors, validation_targets = random_windows(data_path,window_size,window_count,hollow_window)
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
@@ -89,11 +88,15 @@ validation_writer = tf.train.SummaryWriter(tfboard_dir+"/validation/",sess.graph
 sess.run(tf.initialize_all_variables())
 for i in range(1000):
 
+    # creates a new sample every iteration
+    train_predictors, train_targets = random_windows(data_path, window_size, window_count, hollow_window)
+
     if i%1 == 0:
 
         # Not sure what these two lines do
         run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
         run_opts_metadata = tf.RunMetadata()
+
 
         train_feed = {x: train_predictors, y_: train_targets, keep_prob: 1.0}
         train_summary, train_accuracy = sess.run([merged, accuracy],feed_dict=train_feed,options=run_opts,
@@ -114,4 +117,3 @@ for i in range(1000):
 # Save the trained model to a file
 saver = tf.train.Saver()
 save_path = saver.save(sess, "/Users/ryanzotti/Documents/repos/Self-Driving-Car/trained_model/model.ckpt")
-#print("validation accuracy %g" % accuracy.eval(feed_dict={x: validation_predictors, y_: validation_targets, keep_prob: 1.0}))
