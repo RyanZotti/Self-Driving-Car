@@ -49,43 +49,27 @@ def max_pool_2x2(x):
     return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
                           strides=[1, 2, 2, 1], padding='SAME')
 
-x = tf.placeholder(tf.float32, shape=[None, 50, 240, 320, 3])
+x = tf.placeholder(tf.float32, shape=[None, actual_window_size, 240, 320, 3])
 y_ = tf.placeholder(tf.float32, shape=[None, 3])
 
-W_conv1 = weight_variable([3, 3, 3, 3, 16])
+W_conv1 = weight_variable([2, 3, 3, 3, 16])
 b_conv1 = bias_variable([16])
 h_conv1 = tf.nn.relu(conv3d(x, W_conv1) + b_conv1)
 
-W_conv2 = weight_variable([3, 3, 3, 16, 16])
-b_conv2 = bias_variable([16])
+W_conv2 = weight_variable([2, 3, 3, 16, 4])
+b_conv2 = bias_variable([4])
 h_conv2 = tf.nn.relu(conv3d(h_conv1, W_conv2) + b_conv2)
 
-W_conv3 = weight_variable([3, 3, 3, 16, 16])
-b_conv3 = bias_variable([16])
-h_conv3 = tf.nn.relu(conv3d(h_conv2, W_conv3) + b_conv3)
+W_fc1 = weight_variable([actual_window_size * 240 * 320 * 4, 4])
+b_fc1 = bias_variable([4])
 
-W_conv4 = weight_variable([3, 3, 3, 16, 16])
-b_conv4 = bias_variable([16])
-h_conv4 = tf.nn.relu(conv3d(h_conv3, W_conv4) + b_conv4)
-
-W_conv5 = weight_variable([3, 3, 3, 16, 16])
-b_conv5 = bias_variable([16])
-h_conv5 = tf.nn.relu(conv3d(h_conv4, W_conv5) + b_conv5)
-
-W_conv6 = weight_variable([3, 3, 3, 16, 16])
-b_conv6 = bias_variable([16])
-h_conv6 = tf.nn.relu(conv3d(h_conv5, W_conv6) + b_conv6)
-
-W_fc1 = weight_variable([50 * 240 * 320 * 16, 256])
-b_fc1 = bias_variable([256])
-
-h_pool4_flat = tf.reshape(h_conv6, [-1, 50 * 240 * 320 * 16])
+h_pool4_flat = tf.reshape(h_conv2, [-1, actual_window_size * 240 * 320 * 4])
 h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
 
 keep_prob = tf.placeholder(tf.float32)
 h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
-W_fc2 = weight_variable([256, 3])
+W_fc2 = weight_variable([4, 3])
 b_fc2 = bias_variable([3])
 
 y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
