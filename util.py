@@ -142,8 +142,8 @@ def multiple_random_windows_from_random_sessions(data_path,window_size,window_co
             predictors = first_and_last_window_frames(predictors)
             targets = first_and_last_window_frames(targets)
         if window_index > 0:
-            predictor_windows = np.concatenate(([predictor_windows],[predictors]),axis=0)
-            target_windows = np.concatenate(([target_windows], [targets]), axis=0)
+            predictor_windows = np.concatenate((predictor_windows,[predictors]),axis=0)
+            target_windows = np.concatenate((target_windows, [targets]), axis=0)
         else:
             predictor_windows = np.array([predictors])
             target_windows = np.array([targets])
