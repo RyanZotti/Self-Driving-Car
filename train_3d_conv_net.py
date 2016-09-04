@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import random
-import cv2
+from util import multiple_random_windows_from_random_sessions as random_windows
 
 '''
 
@@ -22,51 +22,17 @@ Helpful notes
 
 '''
 
-input_file_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/final_processed_data_3_channels.npz'
-#input_file_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/final_processed_half_gamma_data.npz'
-npzfile = np.load(input_file_path)
-
-# training data
-train_predictors = npzfile['train_predictors']
-train_targets = npzfile['train_targets']
-
-# validation/test data
-validation_predictors = npzfile['validation_predictors']
-validation_targets = npzfile['validation_targets']
+data_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
+window_size = 50 # full size before it is potentially hollowed out. See actual_window_size for true size
+window_count = 1
+hollow_window = True
+actual_window_size = window_size
+if hollow_window:
+    actual_window_size = 2
+train_predictors, train_targets = random_windows(data_path,window_size,window_count,hollow_window)
+validation_predictors, validation_targets = random_windows(data_path,window_size,window_count,hollow_window)
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
-
-def window(batch_index,batch_size,window_size,predictors,targets):
-    frame_index = batch_size * batch_index
-    windowed_predictors = []
-    windowed_targets = []
-    for record_index in range(batch_size):
-        frame_index += record_index
-        windowed_predictors.append(predictors[frame_index:frame_index + window_size])
-        windowed_targets.append(targets[frame_index + window_size])
-
-    windowed_predictors = np.array(windowed_predictors)
-    windowed_targets = np.array(windowed_targets)
-    windowed_predictors, windowed_targets = shuffle_dataset(windowed_predictors,windowed_targets)
-
-    '''
-    for record_index in range(batch_size):
-        for frame_index, frame in enumerate(windowed_predictors[record_index]):
-            cv2.imshow('frame', frame)
-            print()
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-    '''
-
-    return windowed_predictors, windowed_targets
-
-def shuffle_dataset(predictors, targets):
-    record_count = predictors.shape[0]
-    shuffle_index = np.arange(record_count)
-    np.random.shuffle(shuffle_index)
-    predictors = predictors[shuffle_index]
-    targets = targets[shuffle_index]
-    return predictors, targets
 
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
@@ -136,51 +102,30 @@ tfboard_dir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_da
 train_writer = tf.train.SummaryWriter(tfboard_dir+"/train/",sess.graph)
 validation_writer = tf.train.SummaryWriter(tfboard_dir+"/validation/",sess.graph)
 
-
 sess.run(tf.initialize_all_variables())
-batch_index = 0
-batches_per_epoch = (train_predictors.shape[0] - train_predictors.shape[0] % 50)/50
 for i in range(1000):
 
-    # Shuffle in the very beginning and after each epoch
-    if batch_index % batches_per_epoch == 0:
-        #train_predictors, train_targets = shuffle_dataset(train_predictors, train_targets)
-        batch_index = 0
-    batch_index += 1
-
-    data_index = batch_index * 50
-    #predictors = train_predictors[data_index:data_index+50]
-    #target = train_targets[data_index:data_index+50]
-
-    predictors, target = window(batch_index, 50, 50, train_predictors, train_targets)
-
-    random_idx = random.randint(0, validation_predictors.shape[0] - 50)
-
-    v_predictors, v_target = window(1000, 50, 50, validation_predictors, validation_targets)
-    #v_predictors, v_target = validation_predictors[random_idx:random_idx+50], validation_targets[random_idx:random_idx+50]
-    if i%100 == 0:
+    if i%1 == 0:
 
         # Not sure what these two lines do
         run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
         run_opts_metadata = tf.RunMetadata()
 
-        train_summary, train_accuracy = sess.run([merged, accuracy],
-                              feed_dict={x: predictors, y_: target, keep_prob: 1.0},
-                              options=run_opts,
-                              run_metadata=run_opts_metadata)
+        train_feed = {x: train_predictors, y_: train_targets, keep_prob: 1.0}
+        train_summary, train_accuracy = sess.run([merged, accuracy],feed_dict=train_feed,options=run_opts,
+                                                 run_metadata=run_opts_metadata)
         train_writer.add_run_metadata(run_opts_metadata, 'step%03d' % i)
         train_writer.add_summary(train_summary, i)
 
-        validation_summary, validation_accuracy = sess.run([merged, accuracy],
-                                                 feed_dict={x: v_predictors, y_: v_target, keep_prob: 1.0},
-                                                 options=run_opts,
+        validation_feed = {x: validation_predictors, y_: validation_targets, keep_prob: 1.0}
+        validation_summary, validation_accuracy = sess.run([merged, accuracy],feed_dict=validation_feed,options=run_opts,
                                                  run_metadata=run_opts_metadata)
         validation_writer.add_run_metadata(run_opts_metadata, 'step%03d' % i)
         validation_writer.add_summary(validation_summary, i)
 
         print("{i} training accuracy: {train_acc}, validation accuracy: {validation_acc}".format(train_acc=train_accuracy,validation_acc=validation_accuracy,i=i))
 
-    train_step.run(feed_dict={x: predictors, y_: target, keep_prob: 0.5})
+    train_step.run(feed_dict={x: train_predictors, y_: train_targets, keep_prob: 0.5})
 
 # Save the trained model to a file
 saver = tf.train.Saver()
