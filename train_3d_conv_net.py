@@ -91,7 +91,7 @@ for i in range(1000):
     # creates a new sample every iteration
     train_predictors, train_targets = random_windows(data_path, window_size, window_count, hollow_window)
 
-    if i%1 == 0:
+    if i%425 == 0:
 
         # Not sure what these two lines do
         run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
