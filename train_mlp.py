@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
-import random
-from util import mkdir_tfboard_run_dir,mkdir,shell_command
+import argparse
+from util import mkdir_tfboard_run_dir,mkdir,shell_command, shuffle_dataset
 import os
 
 '''
@@ -18,8 +18,23 @@ Helpful notes
 (28-5+2)/2
 '''
 
-input_file_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/final_processed_data_3_channels.npz'
-#input_file_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/final_processed_half_gamma_data.npz'
+# python train_mlp.py -d /root/data -b 1000
+ap = argparse.ArgumentParser()
+ap.add_argument("-d", "--datapath", required = False,
+    help = "path to all of the data",
+    default='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car')
+ap.add_argument("-b", "--batches", required = False,
+    help = "quantity of batch iterations to run",
+    default='10000')
+args = vars(ap.parse_args())
+data_path = args["datapath"]
+batch_iterations = int(args["batches"])
+
+input_file_path = data_path+'/final_processed_data_3_channels.npz'
+tfboard_basedir = mkdir(data_path+'/tf_visual_data/runs/')
+tfboard_run_dir = mkdir_tfboard_run_dir(tfboard_basedir)
+model_checkpoint_path = mkdir(tfboard_run_dir+'/trained_model')
+
 npzfile = np.load(input_file_path)
 
 # training data
@@ -29,6 +44,7 @@ train_targets = npzfile['train_targets']
 # validation/test data
 validation_predictors = npzfile['validation_predictors']
 validation_targets = npzfile['validation_targets']
+validation_predictors, validation_targets = shuffle_dataset(validation_predictors, validation_targets)
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
@@ -92,7 +108,7 @@ validation_writer = tf.train.SummaryWriter(validation_dir,sess.graph)
 sess.run(tf.initialize_all_variables())
 batch_index = 0
 batches_per_epoch = (train_predictors.shape[0] - train_predictors.shape[0] % 50)/50
-for i in range(1000):
+for i in range(batch_iterations):
 
     # Shuffle in the very beginning and after each epoch
     if batch_index % batches_per_epoch == 0:
@@ -101,10 +117,10 @@ for i in range(1000):
     batch_index += 1
 
     data_index = batch_index * 50
-    predictors = train_predictors[data_index:data_index+50]
+    predictors = train_predictors[data_index:data_index+50]/255
     target = train_targets[data_index:data_index+50]
 
-    if i%100 == 0:
+    if i%425 == 0:
 
         # Not sure what these two lines do
         run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
@@ -118,7 +134,7 @@ for i in range(1000):
         train_writer.add_summary(train_summary, i)
 
         validation_summary, validation_accuracy = sess.run([merged, accuracy],
-                                                 feed_dict={x: validation_predictors[:1000], y_: validation_targets[:1000]},
+                                                 feed_dict={x: validation_predictors[:1000]/255, y_: validation_targets[:1000]},
                                                  options=run_opts,
                                                  run_metadata=run_opts_metadata)
         validation_writer.add_run_metadata(run_opts_metadata, 'step%03d' % i)
@@ -130,7 +146,7 @@ for i in range(1000):
 
 # Save the trained model to a file
 saver = tf.train.Saver()
-save_path = saver.save(sess, "/Users/ryanzotti/Documents/repos/Self-Driving-Car/trained_model/model.ckpt")
+save_path = saver.save(sess, model_checkpoint_path+"/model.ckpt")
 #print("validation accuracy %g" % accuracy.eval(feed_dict={x: validation_predictors, y_: validation_targets, keep_prob: 1.0}))
 
 # Marks unambiguous successful completion to prevent deletion by cleanup script
