@@ -1,10 +1,15 @@
 import tensorflow as tf
 import urllib.request
+import requests
 import numpy as np
-import argparse
+from datetime import datetime
 import cv2
+import json
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
+
+def abc():
+    pass
 
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
@@ -61,8 +66,15 @@ while True:
             cv2.imshow("prediction", new_frame[0])
         prediction = tf.argmax(y, 1)
         command_map = {0:"left",1:"up",2:"right"}
-        command = prediction.eval(feed_dict={x: new_frame}, session=sess)[0]
-        print(command_map[command])
+        command_index = prediction.eval(feed_dict={x: new_frame}, session=sess)[0]
+        command = command_map[command_index]
+        now = datetime.now()
+        post_map = {"left": 37, "up": 38, "right": 39}
+        post_command = post_map[command]
+        #r = requests.post('http://192.168.0.35:81/post', data={'command': {post_command:True}})
+        data = {'command':{str(post_command):command}}
+        r = requests.post('http://192.168.0.35:81/post', data=json.dumps(data))
+        print(command + " " + str(now)+" status code: "+str(r.status_code))
         if cv2.waitKey(1) == 27:
             exit(0)
 
