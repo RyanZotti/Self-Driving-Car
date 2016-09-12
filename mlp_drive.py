@@ -61,6 +61,7 @@ while True:
         jpg = bytes[a:b + 2]
         bytes = bytes[b + 2:]
         frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
+        frame = frame / 255
         new_frame = np.array([frame])
         if frame is not None:
             cv2.imshow("prediction", new_frame[0])
