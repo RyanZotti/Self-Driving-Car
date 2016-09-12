@@ -126,13 +126,13 @@ def process_session(session_path,gamma_map,rgb=True):
                 else:
                     for gamma, gamma_table in gamma_map.items():
                         bw_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                        half_image = bw_frame[120:, :]
+                        #half_image = bw_frame[120:, :]
                         #cv2.imshow(str(gamma), half_image)
                         #print(half_image.shape)
-                        bw_frame = half_image
+                        #bw_frame = half_image
                         gamma_image = adjust_gamma(bw_frame, gamma_table)
-                        gamma_image = np.reshape(gamma_image, [120, 320, 1])
-                        #gamma_image = np.reshape(gamma_image, [240, 320, 1])
+                        #gamma_image = np.reshape(gamma_image, [120, 320, 1])
+                        gamma_image = np.reshape(gamma_image, [240, 320, 1])
                         targets.append(target)
                         predictors.append(gamma_image)
                         #cv2.imshow(str(gamma), gamma_image)
@@ -179,7 +179,7 @@ def data_prep(data_path,rgb=True):
 
     data_folders = os.listdir(data_path)
     shuffle(data_folders)
-    data_folders = data_folders[:10]
+    #data_folders = data_folders[:10]
     train_folder_size = int(len(data_folders) * 0.8)
 
     train_predictors = []
@@ -204,7 +204,7 @@ def data_prep(data_path,rgb=True):
     validation_predictors_np = np.array(validation_predictors)
     validation_targets_np = np.array(validation_targets)
 
-    np.savez(data_path+'/final_processed_data', train_predictors=train_predictors_np,
+    np.savez(data_path+'/final_processed_bw_full_data', train_predictors=train_predictors_np,
              train_targets=train_targets_np,validation_predictors = validation_predictors_np,
              validation_targets = validation_targets_np)
 
@@ -216,5 +216,5 @@ def video_to_rgb_npz(session_path,predictors,targets):
 
 if __name__ == '__main__':
     data_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
-    data_prep(data_path,rgb=True)
+    data_prep(data_path,rgb=False)
     print("Finished.")
