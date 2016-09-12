@@ -146,7 +146,7 @@ for i in range(batch_iterations):
 
 # Save the trained model to a file
 saver = tf.train.Saver()
-save_path = saver.save(sess, model_checkpoint_path+"/model.ckpt")
+save_path = saver.save(sess, tfboard_run_dir+"/model.ckpt")
 #print("validation accuracy %g" % accuracy.eval(feed_dict={x: validation_predictors, y_: validation_targets, keep_prob: 1.0}))
 
 # Marks unambiguous successful completion to prevent deletion by cleanup script
