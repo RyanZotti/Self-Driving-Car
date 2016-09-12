@@ -47,8 +47,6 @@ train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-sess.run(tf.initialize_all_variables())
-
 fourcc = cv2.VideoWriter_fourcc(*'jpeg')
 out = cv2.VideoWriter('output.mov', fourcc, 20.0, (320, 240))
 stream = urllib.request.urlopen('http://192.168.0.35/webcam.mjpeg')
