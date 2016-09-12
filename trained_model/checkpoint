@@ -1,2 +1,0 @@
-model_checkpoint_path: "/Users/ryanzotti/Documents/repos/Self-Driving-Car/trained_model/model.ckpt"
-all_model_checkpoint_paths: "/Users/ryanzotti/Documents/repos/Self-Driving-Car/trained_model/model.ckpt"
