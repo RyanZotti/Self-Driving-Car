@@ -19,7 +19,6 @@ def make_int(number):
 
 def smallest_box(raw_squares):
     index_smallest_square = 0
-    print(raw_squares)
     if len(raw_squares) > 1:
         # Assumes you'll only ever see one set of concentric squares, which won't
         # always be true. Would need to test for different square centers
@@ -45,8 +44,6 @@ def box(rects, img):
         if i == index_smallest_square:
             # last arguement is the thickness of the bounding box
             cv2.rectangle(img, (new_x1, y1), (new_x2, y2), (127, 255, 0), 2)
-        else:
-            cv2.rectangle(img, (new_x1, y1), (new_x2, y2), (0, 0, 255), 2)
         i = i + 1
 
 cap = cv2.VideoCapture(0)
