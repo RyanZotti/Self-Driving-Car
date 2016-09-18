@@ -31,13 +31,14 @@ def calculate_distance():
     distance = round(distance, 2)
     return distance
 
-while True:
-    try:
-        distance = calculate_distance()
-        print("Distance:", distance, "cm")
-    except KeyboardInterrupt:
-        sys.exit(0)
-    except:
-        pass
+if __name__ == '__main__':
+    while True:
+        try:
+            distance = calculate_distance()
+            print("Distance:", distance, "cm")
+        except KeyboardInterrupt:
+            sys.exit(0)
+        except:
+            pass
 
-GPIO.cleanup()
+    GPIO.cleanup()
