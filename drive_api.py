@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 from operator import itemgetter
 import RPi.GPIO as GPIO
+from range_sensor import calculate_distance
 import requests
 from time import sleep
 
@@ -68,7 +69,13 @@ class StoreLogEntriesHandler(tornado.web.RequestHandler):
                     writer.write(log_entry+"\n")
                 print(log_entry)
         self.write("Finished")
-   
+
+class DistanceSenor(tornado.web.RequestHandler):
+
+
+    def get(self):
+        self.write(calculate_distance)
+
 class MultipleKeysHandler(tornado.web.RequestHandler):
 
     def get(self):
@@ -209,13 +216,21 @@ class Motor:
 def make_app():
     return tornado.web.Application([
         (r"/drive",MultipleKeysHandler),(r"/post", PostHandler),
-        (r"/StoreLogEntries",StoreLogEntriesHandler)
+        (r"/StoreLogEntries",StoreLogEntriesHandler),
+        ("r/distance",DistanceSenor)
     ])
 
 if __name__ == "__main__":
     GPIO.setmode(GPIO.BOARD)
     command_duration = 0.1
     motor = Motor(16, 18, 22, 19, 21, 23)
+
+    # Range sensor details
+    TRIG = 2
+    ECHO = 3
+    GPIO.setup(TRIG, GPIO.OUT)
+    GPIO.setup(ECHO, GPIO.IN)
+
     log_entries = []
     app = make_app()
     app.listen(81)
