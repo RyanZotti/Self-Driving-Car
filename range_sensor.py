@@ -5,11 +5,7 @@ import sys
 # I got all code from here:
 # http://www.modmypi.com/blog/hc-sr04-ultrasonic-range-sensor-on-the-raspberry-pi
 
-GPIO.setmode(GPIO.BCM)
-TRIG = 2
-ECHO = 3
-GPIO.setup(TRIG,GPIO.OUT)
-GPIO.setup(ECHO,GPIO.IN)
+
 
 def calculate_distance():
 
@@ -32,6 +28,11 @@ def calculate_distance():
     return distance
 
 if __name__ == '__main__':
+    GPIO.setmode(GPIO.BCM)
+    TRIG = 2
+    ECHO = 3
+    GPIO.setup(TRIG, GPIO.OUT)
+    GPIO.setup(ECHO, GPIO.IN)
     while True:
         try:
             distance = calculate_distance()
