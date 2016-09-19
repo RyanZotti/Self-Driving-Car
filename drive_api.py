@@ -71,10 +71,8 @@ class StoreLogEntriesHandler(tornado.web.RequestHandler):
         self.write("Finished")
 
 class DistanceSenor(tornado.web.RequestHandler):
-
-
     def get(self):
-        self.write(calculate_distance)
+        self.write(str(calculate_distance(ECHO,TRIG)))
 
 class MultipleKeysHandler(tornado.web.RequestHandler):
 
@@ -217,7 +215,7 @@ def make_app():
     return tornado.web.Application([
         (r"/drive",MultipleKeysHandler),(r"/post", PostHandler),
         (r"/StoreLogEntries",StoreLogEntriesHandler),
-        ("r/distance",DistanceSenor)
+        (r"/distance",DistanceSenor)
     ])
 
 if __name__ == "__main__":
@@ -226,8 +224,8 @@ if __name__ == "__main__":
     motor = Motor(16, 18, 22, 19, 21, 23)
 
     # Range sensor details
-    TRIG = 2
-    ECHO = 3
+    TRIG = 3
+    ECHO = 5
     GPIO.setup(TRIG, GPIO.OUT)
     GPIO.setup(ECHO, GPIO.IN)
 
