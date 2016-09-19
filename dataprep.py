@@ -216,5 +216,5 @@ def video_to_rgb_npz(session_path,predictors,targets):
 
 if __name__ == '__main__':
     data_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
-    data_prep(data_path,rgb=False)
+    data_prep(data_path,rgb=True)
     print("Finished.")

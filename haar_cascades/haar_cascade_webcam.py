@@ -4,7 +4,7 @@ import cv2
 def detect(img):
     cascade = cv2.CascadeClassifier("/Users/ryanzotti/Documents/repos/Self-Driving-Car/haar_cascades/classifier/cascade.xml")
     rects = cascade.detectMultiScale(img, 1.3, 4, 0, (20,20))
-    print(rects)
+    #print(rects)
     if len(rects) == 0:
         return [], img
     rects[:, 2:] += rects[:, :2]
