@@ -46,14 +46,20 @@ def box(rects, img):
             cv2.rectangle(img, (new_x1, y1), (new_x2, y2), (127, 255, 0), 2)
         i = i + 1
 
-cap = cv2.VideoCapture(0)
-cap.set(3,400)
-cap.set(4,300)
+def detect_stop_sign(frame):
+    rects, img = detect(frame)
+    box(rects, frame)
+    #cv2.imshow("frame", frame)
+    return frame
 
-while(True):
-    ret, img = cap.read()
-    rects, img = detect(img)
-    box(rects, img)
-    cv2.imshow("frame", img)
-    if(cv2.waitKey(1) & 0xFF == ord('q')):
-        break
+if __name__ == '__main__':
+    cap = cv2.VideoCapture(0)
+    cap.set(3,400)
+    cap.set(4,300)
+    while(True):
+        ret, img = cap.read()
+        rects, img = detect(img)
+        box(rects, img)
+        cv2.imshow("frame", img)
+        if(cv2.waitKey(1) & 0xFF == ord('q')):
+            break
