@@ -6,11 +6,9 @@ from datetime import datetime
 import cv2
 import json
 import os
+from haar_cascades.haar_cascade_webcam import detect_stop_sign
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
-
-def abc():
-    pass
 
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
@@ -78,8 +76,15 @@ while True:
             key_image = up_arrow
         elif command == 'right':
             key_image = right_arrow
+
+        distance_api = requests.get('http://192.168.0.35:81/distance')
+        try:
+            obstacle_distance = float(distance_api.text)
+        except:
+            obstacle_distance = 99999.99
+
         if frame is not None:
-            
+
             arrow_key_scale = 0.125
             resized_image = cv2.resize(key_image, None, fx=arrow_key_scale, fy=arrow_key_scale,interpolation=cv2.INTER_CUBIC)
             cv2.imshow("prediction", new_frame[0])
@@ -99,15 +104,19 @@ while True:
             frame[0:rows, 0:cols] = dst
 
             # Finally, show image with the an overlay of identified target key image
+            frame = detect_stop_sign(frame)
             cv2.imshow('frame', frame)
 
         now = datetime.now()
         post_map = {"left": 37, "up": 38, "right": 39}
         post_command = post_map[command]
-        #r = requests.post('http://192.168.0.35:81/post', data={'command': {post_command:True}})
-        data = {'command':{str(post_command):command}}
-        r = requests.post('http://192.168.0.35:81/post', data=json.dumps(data))
-        print(command + " " + str(now)+" status code: "+str(r.status_code))
+        if obstacle_distance > 10.00:
+            data = {'command':{str(post_command):command}}
+            r = requests.post('http://192.168.0.35:81/post', data=json.dumps(data))
+            print(command + " " + str(now)+" status code: "+str(r.status_code))
+        else:
+            command = "STOP! Obstacle detected."
+        print(command + " " + str(now)+" distance: "+str(obstacle_distance))
         if cv2.waitKey(1) == 27:
             exit(0)
 
