@@ -8,7 +8,8 @@ import sys
 
 
 def calculate_distance():
-
+    TRIG = 2
+    ECHO = 3
     # Set output pin to low
     GPIO.output(TRIG, False)
 
