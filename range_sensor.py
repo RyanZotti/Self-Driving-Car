@@ -7,9 +7,7 @@ import sys
 
 
 
-def calculate_distance():
-    TRIG = 2
-    ECHO = 3
+def calculate_distance(ECHO,TRIG):
     # Set output pin to low
     GPIO.output(TRIG, False)
 
@@ -36,7 +34,7 @@ if __name__ == '__main__':
     GPIO.setup(ECHO, GPIO.IN)
     while True:
         try:
-            distance = calculate_distance()
+            distance = calculate_distance(ECHO,TRIG)
             print("Distance:", distance, "cm")
         except KeyboardInterrupt:
             sys.exit(0)
