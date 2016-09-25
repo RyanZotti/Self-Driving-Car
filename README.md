@@ -79,6 +79,8 @@ Now kill the `save_streaming_video_data.py` script. This script should have gene
 
 So, in total, there are four files for each driving session. I usually create a new folder for each session. Note that two of the files are on the Pi and two are on your laptop. However, all four files need to be in the same place for processing, so I usually copy the Pi files over to my laptop. You'll need to generate lots of driving data, and so copying the files from the Pi to your laptop can become tedious. I created `scp_car_data.sh` to make this easier. 
 
+Once all of the files are in the same place, it's time to clean up all of your data and create files that TensorFlow will be able to digest for model training. All of this happens in the `dataprep.py` script. This script does a lot of things that I'll have to expand on later. 
+
 ## FAQ
 
 **Q:** How do I log into the Pi?
