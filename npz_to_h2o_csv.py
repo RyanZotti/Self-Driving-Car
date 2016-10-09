@@ -36,10 +36,7 @@ for folder in data_folders:
     flat_data = predictors.reshape([record_count,240*320*3])
     flat_data = np.concatenate((flat_data, targets_np), axis=1)
     flat_data = pd.DataFrame(flat_data)
-    for row in flat_data.iterrows():
-        with open(output_data_path,'a') as file_writer:
-            line = separate_by_commas(row[1]) # first element is just a pandas index
-            file_writer.write(line)
+    flat_data.to_csv(path_or_buf=data_path + '/' + folder + '/h2o_train.csv')
     print("Processed "+str(folder))
 print("Finished.")
 
