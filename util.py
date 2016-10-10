@@ -5,6 +5,7 @@ import numpy as np
 import os
 import tensorflow as tf
 from random import randint
+import boto3
 
 def dead_ReLU_pct(matrix):
     zeros = (matrix.size - matrix[matrix > 0].size)
@@ -44,6 +45,9 @@ def shell_command(cmd):
     cmd_result = subprocess.check_output(cmd, shell=True).strip()
     return cmd_result
 
+def upload_s3_file(source_path,bucket_name,target_path):
+    s3 = boto3.client('s3')
+    s3.upload_file(source_path, bucket_name, target_path)
 
 def cleanup(dir):
     if 'tf_visual_data/runs/' in dir:
