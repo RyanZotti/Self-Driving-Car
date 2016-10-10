@@ -156,6 +156,16 @@ def multiple_random_windows_from_random_sessions(data_path,window_size,window_co
     return predictor_windows, target_windows
 
 
+def file_is_in_s3(bucket_name,full_path_to_file):
+    s3 = boto3.resource('s3')
+    bucket = s3.Bucket(bucket_name)
+    answer = False
+    for obj in bucket.objects.page_size(100):
+        if full_path_to_file in str(obj):
+            answer = True
+            break
+    return answer
+
 if __name__ == '__main__':
     tensorboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/'
     abc = record_count('/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/shape')
