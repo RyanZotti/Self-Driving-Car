@@ -6,6 +6,7 @@ import os
 import tensorflow as tf
 from random import randint
 import boto3
+from pathlib import Path
 
 def dead_ReLU_pct(matrix):
     zeros = (matrix.size - matrix[matrix > 0].size)
@@ -165,6 +166,14 @@ def file_is_in_s3(bucket_name,full_path_to_file):
             answer = True
             break
     return answer
+
+
+def file_is_stored_locally(full_path_to_file):
+    file_exists = False
+    my_file = Path(full_path_to_file)
+    if my_file.is_file():
+        file_exists = True
+    return file_exists
 
 if __name__ == '__main__':
     tensorboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/'
