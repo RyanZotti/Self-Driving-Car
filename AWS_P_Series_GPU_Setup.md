@@ -108,6 +108,9 @@ If you're starting from the AMI ('tensorflow-0.11.0 p2.xlarge', ami-e4f4cbf3), s
 	cd
 	echo "export PATH=/root/anaconda3/bin/:$PATH" >> ~/.bashrc
 	source ~/.bashrc
+	
+	cd
+	cp -R tensorflow /usr/lib/python3/dist-packages/
 
 	# Start up python and try to import to see if everything worked
 	import tensorflow as tf
