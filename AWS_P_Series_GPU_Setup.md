@@ -22,18 +22,12 @@ See details below.
 	apt-get install -y bazel
 	apt-get upgrade -y bazel
 
-	# Download CUDA 8.0, which is 1.4 GB and takes a super long time to download
-	wget https://developer.nvidia.com/compute/cuda/8.0/prod/local_installers/cuda_8.0.44_linux-run
-	# Install NVIDIA Accelerated Graphics Driver for Linux-x86_64 367.48? n
-	# Install the CUDA 8.0 Toolkit?: y
-	# Enter Toolkit Location: /usr/local/cuda-8.0
-	# Do you want to install a symbolic link at /usr/local/cuda?: y
-	# Install the CUDA 8.0 Samples?: y
-	# Enter CUDA Samples Location: /home/ubuntu
-	sh cuda_8.0.44_linux.run --override # hold s to skip or hit crtl-c
+	# Install A 8.0
+	wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.44-1_amd64.deb
+	dpkg -i cuda-repo-ubuntu1604_8.0.44-1_amd64.deb
+	apt-get update
+	apt-get install -y cuda
 		
-	wget https://developer.nvidia.com/compute/cuda/8.0/prod/local_installers/cuda-repo-ubuntu1604-8-0-local_8.0.44-1_amd64-deb
-	
 	# You'll have to manually download this and then scp it up because of a 403. I think it's because Nvidia wants you to go through their website for marketing
 	wget https://developer.nvidia.com/compute/machine-learning/cudnn/secure/v5.1/prod/8.0/cudnn-8.0-linux-x64-v5.1-tgz
 	tar -xzvf cudnn-8.0-linux-x64-v5.1.tgz
@@ -45,13 +39,8 @@ See details below.
 	
 	vi ~/.bashrc
 	export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"
-	export CUDA_HOME=/usr/loca/cuda
+	export CUDA_HOME=/usr/local/cuda
 	
-	cd ~
-	wget http://repo.continuum.io/archive/Anaconda3-4.0.0-Linux-x86_64.sh
-	bash Anaconda3-4.0.0-Linux-x86_64.sh -b
-	
-	echo "export PATH=/root/anaconda3/bin/:$PATH" >> ~/.bashrc
 	source ~/.bashrc
 	
 	git clone https://github.com/tensorflow/tensorflow
@@ -80,21 +69,16 @@ See details below.
 	bazel build -c opt --config=cuda //tensorflow/tools/pip_package:build_pip_package
 
 	bazel-bin/tensorflow/tools/pip_package/build_pip_package  /tmp/tensorflow_pkg
+	
 	# Hit tab for autocompletion
 	pip3 install /tmp/tensorflow_pkg/tensorflow
 	# tab-completion might show this: pip3 install /tmp/tensorflow_pkg/tensorflow-0.11.0-cp35-cp35m-linux_x86_64.whl
-	
-	export PYTHONPATH=/usr/local/lib/python3.5/dist-packages:$PYTHONPATH
-	export PYTHONPATH=/usr/local/lib/python3.5/dist-packages/tensorflow
-	
-	# If you're using Anaconda 3.5, you need to delete the python 3.4 numpy or you'll get a multiarray error
-	rm -rf /usr/local/lib/python3.4/dist-packages/numpy
 	
 	# Start up python and try to import to see if everything worked
 	import tensorflow as tf
 	
 
-If you're starting from the AMI ('tensorflow-0.11.0 p2.xlarge', ami-e4f4cbf3), some of the settings disappear, and you'll hvae to run the commands below instead of the commands above.
+If you're starting from the AMI ('tensorflow-0.11.0 p2.xlarge v3', ami-01d0d516), some of the settings disappear, and you'll have to run the commands below instead of the commands above.
 
 	sudo su
 	cd /root/tensorflow/
@@ -105,15 +89,17 @@ If you're starting from the AMI ('tensorflow-0.11.0 p2.xlarge', ami-e4f4cbf3), s
 	pip3 install /tmp/tensorflow_pkg/tensorflow
 	# tab-completion might show this: pip3 install /tmp/tensorflow_pkg/tensorflow-0.11.0-cp35-cp35m-linux_x86_64.whl
 	
-	cd
-	echo "export PATH=/root/anaconda3/bin/:$PATH" >> ~/.bashrc
 	source ~/.bashrc
 	
-	cd
-	cp -R tensorflow /usr/lib/python3/dist-packages/
-
 	# Start up python and try to import to see if everything worked
 	import tensorflow as tf
 
+	# The pip3 install doesn't seem to work with Anaconda
+	export PATH=export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
 	
+	
+If you want to see the GPU utilization, open another session on the GPU and type:
+
+	watch -n 0.5 nvidia-smi
+
 	
