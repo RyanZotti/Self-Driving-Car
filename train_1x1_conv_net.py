@@ -19,7 +19,7 @@ Helpful notes
 (28-5+2)/2
 '''
 
-# python train_conv_net.py -d /root/data -b 1000
+# python3 /root/Self-Driving-Car/train_1x1_conv_net.py -d /root -b 1400
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--datapath", required = False,
     help = "path to all of the data",
@@ -69,13 +69,13 @@ def max_pool_2x2(x):
 x = tf.placeholder(tf.float32, shape=[None, 240, 320, 3])
 y_ = tf.placeholder(tf.float32, shape=[None, 3])
 
-W_conv1 = weight_variable([6, 6, 3, 128])
-b_conv1 = bias_variable([128])
+W_conv1 = weight_variable([6, 6, 3, 64])
+b_conv1 = bias_variable([64])
 h_conv1 = tf.tanh(conv2d(x, W_conv1) + b_conv1)
 dead_ReLUs1 = tf.placeholder(tf.float32,shape=[1])
 h_pool1 = max_pool_2x2(h_conv1)
 
-W_conv2 = weight_variable([1, 1, 128, 4])
+W_conv2 = weight_variable([1, 1, 64, 4])
 b_conv2 = bias_variable([4])
 h_conv2 = tf.tanh(conv2d(h_pool1, W_conv2) + b_conv2)
 tf.histogram_summary('activations_layer_2', h_conv2)
@@ -169,7 +169,7 @@ for i in range(batch_iterations):
         train_writer.add_run_metadata(run_opts_metadata, 'step%03d' % i)
         train_writer.add_summary(train_summary, i)
 
-        validation_feed = {x: validation_predictors[:300], y_: validation_targets[:300], keep_prob: 1.0}
+        validation_feed = {x: validation_predictors[:100], y_: validation_targets[:100], keep_prob: 1.0}
         validation_summary, validation_accuracy = sess.run([merged, accuracy],
                                                  feed_dict=validation_feed,
                                                  options=run_opts,
@@ -178,7 +178,7 @@ for i in range(batch_iterations):
         validation_writer.add_summary(validation_summary, i)
 
         ReLU_layers = sess.run(tf_ReLU_layers,feed_dict=train_feed)
-        for layer_index, ReLU_layer in enumerate(ReLU_layers):128
+        for layer_index, ReLU_layer in enumerate(ReLU_layers):
             dead_ReLU_percentage = dead_ReLU_pct(ReLU_layer)
             relu_summary_str = "dead_ReLUs_layer"+str(layer_index+1)
             summary = custom_summary(relu_summary_str,dead_ReLU_percentage)
