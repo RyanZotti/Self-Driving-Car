@@ -3,6 +3,7 @@ import numpy as np
 import argparse
 from util import (mkdir_tfboard_run_dir,mkdir,shell_command,
                   shuffle_dataset, dead_ReLU_pct, custom_summary)
+from data_augmentation import flip_enrichment
 import os
 
 '''
@@ -19,17 +20,26 @@ Helpful notes
 (28-5+2)/2
 '''
 
-# python train_conv_net.py -d /root/data -b 1000
+# GPU: python train_conv_net.py -p /root/data -b 1000
+# Laptop: python train_conv_net.py -p /Users/ryanzotti/Documents/repos/Self_Driving_RC_Car -b 1000 -f y -d y
 ap = argparse.ArgumentParser()
-ap.add_argument("-d", "--datapath", required = False,
+ap.add_argument("-p", "--datapath", required = False,
     help = "path to all of the data",
     default='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car')
 ap.add_argument("-b", "--batches", required = False,
     help = "quantity of batch iterations to run",
     default='1000')
+ap.add_argument("-f", "--flip", required = False,
+    help = "Increase training size by flipping left and right images",
+    default='y')
+ap.add_argument("-d", "--debug", required = False,
+    help = "Print more details for easier debugging",
+    default='n')
 args = vars(ap.parse_args())
 data_path = args["datapath"]
 batch_iterations = int(args["batches"])
+perform_image_flipping = True if args["flip"].lower() == 'y' else False
+debug_mode = True if args["debug"].lower() == 'y' else False
 
 input_file_path = data_path+'/final_processed_data_3_channels.npz'
 tfboard_basedir = mkdir(data_path+'/tf_visual_data/runs/')
@@ -154,6 +164,14 @@ for i in range(batch_iterations):
     data_index = batch_index * 50
     predictors = train_predictors[data_index:data_index+50]
     target = train_targets[data_index:data_index+50]
+
+    if perform_image_flipping and debug_mode:
+        pre_flip_count = len(target)
+        predictors, target = flip_enrichment(predictors,target)
+        post_flip_count = len(target)
+        msg = 'Pre-flip count: {0}, post-flip count: {1}'.format(pre_flip_count,post_flip_count)
+        print(msg)
+
     predictors = predictors / 255
 
     if i%425 == 0:
