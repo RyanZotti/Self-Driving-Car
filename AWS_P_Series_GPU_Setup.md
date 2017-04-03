@@ -77,6 +77,11 @@ See details below.
 	# Start up python and try to import to see if everything worked
 	import tensorflow as tf
 	
+	# Install opencv
+	# Installing Opencv was super easy thanks to the answer link below
+	# http://askubuntu.com/questions/783956/how-to-install-opencv-3-1-for-python-3-5-on-ubuntu-16-04-lts
+	pip3 install opencv-python
+	
 
 If you're starting from the AMI ('tensorflow-0.11.0 p2.xlarge v3', ami-01d0d516), some of the settings disappear, and you'll have to run the commands below instead of the commands above.
 
@@ -92,6 +97,7 @@ If you're starting from the AMI ('tensorflow-0.11.0 p2.xlarge v3', ami-01d0d516)
 	source ~/.bashrc
 	
 	# Start up python and try to import to see if everything worked
+	# cd out of /root/tensorflow to avoid tf import error
 	# IMPORTANT: Make sure to type python3 instead of just python
 	# if you don't type python3 you'll get numpy import errors
 	import tensorflow as tf
@@ -103,5 +109,8 @@ If you're starting from the AMI ('tensorflow-0.11.0 p2.xlarge v3', ami-01d0d516)
 If you want to see the GPU utilization, open another session on the GPU and type:
 
 	watch -n 0.5 nvidia-smi
-
+	
+	# If above fails with "Failed to initialize NVML: Driver/library version mismatch" then try: 
+	sudo reboot
+	
 	
