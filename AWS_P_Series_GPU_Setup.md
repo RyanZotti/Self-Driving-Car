@@ -92,6 +92,8 @@ If you're starting from the AMI ('tensorflow-0.11.0 p2.xlarge v3', ami-01d0d516)
 	source ~/.bashrc
 	
 	# Start up python and try to import to see if everything worked
+	# IMPORTANT: Make sure to type python3 instead of just python
+	# if you don't type python3 you'll get numpy import errors
 	import tensorflow as tf
 
 	# The pip3 install doesn't seem to work with Anaconda
