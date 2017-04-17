@@ -113,4 +113,23 @@ If you want to see the GPU utilization, open another session on the GPU and type
 	# If above fails with "Failed to initialize NVML: Driver/library version mismatch" then try: 
 	sudo reboot
 	
+How to run the training code:
+
+	# Make sure you're in root and not in the Tensorflow install folder
+	sudo su	
+	cd /root
 	
+	# I already have the training data in /root/data but 
+	# the code freezes for 20-30 minutes when I try to read it.
+	# The problem goes away when I download it fresh 
+	wget https://s3.amazonaws.com/self-driving-car/final_processed_data_3_channels.npz
+	
+	# Delete the old cloned repo
+	rm -rf /root/Self-Driving-Car
+	
+	# Clone the new repo
+	git clone https://github.com/RyanZotti/Self-Driving-Car
+	cd Self-Driving-Car/
+	
+	# Run the standard convnet code
+	python3 train_conv_net.py -p /root/ -b 10000 -f n -d y
