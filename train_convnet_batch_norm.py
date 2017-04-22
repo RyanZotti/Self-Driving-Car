@@ -112,8 +112,35 @@ b_fc2 = bias_variable([3])
 
 y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
+validation_predictors[:200] = validation_predictors[:200] / 255
+
 cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y_conv), reduction_indices=[1]))
-train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+
+'''
+    https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/layers/python/layers/layers.py#L396
+    From the official TensorFlow docs:
+
+        Note: When is_training is True the moving_mean and moving_variance need to be
+        updated, by default the update_ops are placed in `tf.GraphKeys.UPDATE_OPS` so
+        they need to be added as a dependency to the `train_op`, example:
+
+            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+            with tf.control_dependencies(update_ops):
+              train_op = optimizer.minimize(loss)
+
+    https://www.tensorflow.org/api_docs/python/tf/Graph#control_dependencies
+    Regarding tf.control_dependencies:
+
+        with g.control_dependencies([a, b, c]):
+          # `d` and `e` will only run after `a`, `b`, and `c` have executed.
+          d = ...
+          e = ...
+
+'''
+update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+with tf.control_dependencies(update_ops):
+    train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+
 correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
@@ -136,8 +163,6 @@ validation_writer = tf.train.SummaryWriter(validation_dir,sess.graph)
 # Data augmentation
 train_predictors = normalize_contrast(train_predictors)
 validation_predictors = normalize_contrast(validation_predictors)
-
-validation_predictors[:200] = validation_predictors[:200] / 255
 
 sess.run(tf.initialize_all_variables())
 batch_index = 0
@@ -168,7 +193,7 @@ for i in range(batch_iterations):
         # Not sure what these two lines do
         run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
         run_opts_metadata = tf.RunMetadata()
-        train_feed = {x: predictors, y_: target, keep_prob: 1.0}
+        train_feed = {x: predictors, y_: target, keep_prob: 1.0, 'phase:0': True}
         train_summary, train_accuracy = sess.run([merged, accuracy],
                               feed_dict=train_feed,
                               options=run_opts,
@@ -187,7 +212,7 @@ for i in range(batch_iterations):
         print("{i} training accuracy: {train_acc}, validation accuracy: {validation_acc}".format(train_acc=train_accuracy,validation_acc=validation_accuracy,i=i))
 
 
-    train_step.run(feed_dict={x: predictors, y_: target, keep_prob: 0.5})
+    train_step.run(feed_dict={x: predictors, y_: target, keep_prob: 0.5, 'phase:0': True})
 
 # Save the trained model to a file
 saver = tf.train.Saver()
