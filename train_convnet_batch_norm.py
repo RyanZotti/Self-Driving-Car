@@ -4,7 +4,7 @@ import os
 import numpy as np
 import tensorflow as tf
 
-from data_augmentation import flip_enrichment
+from data_augmentation import flip_enrichment, normalize_contrast
 from util import (mkdir_tfboard_run_dir, mkdir, shell_command,
                   shuffle_dataset)
 
@@ -132,6 +132,10 @@ shell_command('cp {model_file} {archive_path}'.format(model_file=model_file_path
 
 train_writer = tf.train.SummaryWriter(train_dir,sess.graph)
 validation_writer = tf.train.SummaryWriter(validation_dir,sess.graph)
+
+# Data augmentation
+train_predictors = normalize_contrast(train_predictors)
+validation_predictors = normalize_contrast(validation_predictors)
 
 validation_predictors[:200] = validation_predictors[:200] / 255
 
