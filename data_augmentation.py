@@ -47,3 +47,16 @@ def flip_enrichment(images,labels):
         images = np.vstack((images,new_images))
         labels = np.vstack((labels,new_labels))
     return images, labels
+
+
+def normalize_contrast(images):
+    normalized_images = []
+    for image in images:
+        img_yuv = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+        # equalize the histogram of the Y channel
+        img_yuv[:, :, 0] = cv2.equalizeHist(img_yuv[:, :, 0])
+        # convert the YUV image back to RGB format
+        normalized_image = cv2.cvtColor(img_yuv, cv2.COLOR_YUV2BGR)
+        normalized_images.append(normalized_image)
+    normalized_images = np.array(normalized_images)
+    return normalized_images
