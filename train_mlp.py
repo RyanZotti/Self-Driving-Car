@@ -2,21 +2,8 @@ import tensorflow as tf
 import numpy as np
 import argparse
 from util import mkdir_tfboard_run_dir,mkdir,shell_command, shuffle_dataset
+from data_augmentation import normalize_contrast
 import os
-
-'''
-Helpful notes
-- Excellent source explaining convoluted neural networks:
-  http://cs231n.github.io/convolutional-networks/
-- Output size of a conv layer is computed by (W−F+2P)/S+1
-  W = input volumne size
-  F = field size of conv neuron
-  S = stride size
-  P = zero padding size
-(240-6+2)/2=118
-(320-6+2)/2=158
-(28-5+2)/2
-'''
 
 # python train_mlp.py -d /root/data -b 1000
 ap = argparse.ArgumentParser()
@@ -48,14 +35,6 @@ validation_predictors, validation_targets = shuffle_dataset(validation_predictor
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
-def shuffle_dataset(predictors, targets):
-    record_count = predictors.shape[0]
-    shuffle_index = np.arange(record_count)
-    np.random.shuffle(shuffle_index)
-    predictors = predictors[shuffle_index]
-    targets = targets[shuffle_index]
-    return predictors, targets
-
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial)
@@ -63,13 +42,6 @@ def weight_variable(shape):
 def bias_variable(shape):
     initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial)
-
-def conv2d(x, W):
-    return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
-
-def max_pool_2x2(x):
-    return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-                          strides=[1, 2, 2, 1], padding='SAME')
 
 x = tf.placeholder(tf.float32, shape=[None, 240, 320, 3])
 y_ = tf.placeholder(tf.float32, shape=[None, 3])
@@ -104,6 +76,10 @@ shell_command('cp {model_file} {archive_path}'.format(model_file=model_file_path
 
 train_writer = tf.train.SummaryWriter(train_dir,sess.graph)
 validation_writer = tf.train.SummaryWriter(validation_dir,sess.graph)
+
+# Data augmentation
+train_predictors = normalize_contrast(train_predictors)
+validation_predictors = normalize_contrast(validation_predictors)
 
 sess.run(tf.initialize_all_variables())
 batch_index = 0
