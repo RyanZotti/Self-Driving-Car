@@ -50,15 +50,11 @@ x_shaped = tf.reshape(x, [-1, 240 * 320 * 3])
 
 W1 = weight_variable([240 * 320 * 3, 32])
 b1 = bias_variable([32])
-h1 = tf.tanh(tf.matmul(x_shaped, W1) + b1)
+h1 = tf.sigmoid(tf.matmul(x_shaped, W1) + b1)
 
-W2 = weight_variable([32, 32])
-b2 = bias_variable([32])
-h2 = tf.tanh(tf.matmul(h1, W2) + b2)
-
-W3 = weight_variable([32, 3])
-b3 = bias_variable([3])
-y=tf.nn.softmax(tf.matmul(h2, W3) + b3)
+W2 = weight_variable([32, 3])
+b2 = bias_variable([3])
+y=tf.nn.softmax(tf.matmul(h1, W2) + b2)
 
 cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
 train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
