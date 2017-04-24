@@ -81,8 +81,16 @@ def process_session(session_path,gamma_map,rgb=True):
 
     current_command = commands[0][0]
     command_counter = 1
-    future_command = commands[command_counter][0]
-    future_command_ts = commands[command_counter][1]
+
+    # Fixes bug that arises when only one command type is used the whole session
+    future_command = None
+    future_command_ts = None
+    if command_counter < len(commands):
+        future_command = commands[command_counter][0]
+        future_command_ts = commands[command_counter][1]
+    else:
+        future_command = "END"
+        future_command_ts = end_time
 
     predictors = []
     targets = []
