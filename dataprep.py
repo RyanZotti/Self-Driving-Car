@@ -212,7 +212,13 @@ def data_prep(data_path,rgb=True):
     validation_predictors_np = np.array(validation_predictors)
     validation_targets_np = np.array(validation_targets)
 
-    np.savez(data_path+'/final_processed_bw_full_data', train_predictors=train_predictors_np,
+    max_folder = max([int(folder) for folder in data_folders])
+    new_file_name = None
+    if rgb:
+        new_file_name = '/data_rgb_'+str(max_folder)
+    else:
+        new_file_name = '/data_bw_'+str(max_folder)
+    np.savez(data_path+new_file_name, train_predictors=train_predictors_np,
              train_targets=train_targets_np,validation_predictors = validation_predictors_np,
              validation_targets = validation_targets_np)
 
