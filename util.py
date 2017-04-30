@@ -175,6 +175,25 @@ def file_is_stored_locally(full_path_to_file):
         file_exists = True
     return file_exists
 
+
+def summarize_metadata(data_path):
+    data_folders = os.listdir(data_path)
+    summaries = {}
+    for folder in data_folders:
+        input_file_path = data_path + '/' + folder + '/metadata.csv'
+        with open(input_file_path) as fp:
+            for line in fp:
+                line = line.strip()
+                if ':' in line:
+                    key = line.split(":")[0]
+                    value = int(line.split(":")[1])
+                    if key in summaries:
+                        summaries[key] += value
+                    else:
+                        summaries[key] = value
+    return summaries
+
+
 if __name__ == '__main__':
     tensorboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/'
     abc = record_count('/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/shape')
