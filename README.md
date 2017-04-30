@@ -79,7 +79,13 @@ Now kill the `save_streaming_video_data.py` script. This script should have gene
 
 So, in total, there are four files for each driving session. I usually create a new folder for each session. Note that two of the files are on the Pi and two are on your laptop. However, all four files need to be in the same place for processing, so I usually copy the Pi files over to my laptop. You'll need to generate lots of driving data, and so copying the files from the Pi to your laptop can become tedious. I created `scp_car_data.sh` to make this easier. 
 
-Once all of the files are in the same place, it's time to clean up all of your data and create files that TensorFlow will be able to digest for model training. All of this happens in the `dataprep.py` script. This script does a lot of things that I'll have to expand on later. 
+Once all of the files are in the same place, it's time to clean up all of your data and create files that TensorFlow will be able to digest for model training. All of this happens in the `save_all_runs_as_numpy_files.py` script. This script assigns a label (left, right, straight) to each image and performs basic data cleaning. It saves each driving session separately as a .npz file.
+
+## Data Processing
+
+At the start of my project I relied on `dataprep.py` to aggregate all of my sessions' image and label data into a single file for model training. As my dataset grew, my 16 GB memory laptop started having memory issues when processing all of the files simultaneously. My limit seemed to be 44,000 240x320x3 images.
+
+Since I don't want to spend money on a GPU or Apache Spark cluster, I decided to sample my data using the `Dataset.py` script and `Dataset` class. `Dataset` assumes that you have already run the `save_all_runs_as_numpy_files.py` script. The `Dataset` class has to be instantiated in each model training script, since it now takes care of creating batches as well.
 
 ## FAQ
 
