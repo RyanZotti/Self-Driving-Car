@@ -7,6 +7,7 @@ import tensorflow as tf
 from random import randint
 import boto3
 from pathlib import Path
+from data_augmentation import process_data
 
 def dead_ReLU_pct(matrix):
     zeros = (matrix.size - matrix[matrix > 0].size)

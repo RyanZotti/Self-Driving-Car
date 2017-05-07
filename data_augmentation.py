@@ -60,3 +60,11 @@ def normalize_contrast(images):
         normalized_images.append(normalized_image)
     normalized_images = np.array(normalized_images)
     return normalized_images
+
+
+# Collapses multiple data transformations; primarily used in model training scritps
+def process_data(data):
+    images, labels = data[0], data[1]
+    images = normalize_contrast(images)
+    images = images / 255
+    return images, labels
