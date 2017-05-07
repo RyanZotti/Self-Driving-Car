@@ -1,9 +1,10 @@
 import tensorflow as tf
 import numpy as np
 import argparse
-from util import mkdir_tfboard_run_dir,mkdir,shell_command, shuffle_dataset
-from data_augmentation import normalize_contrast
+from util import mkdir_tfboard_run_dir,mkdir,shell_command
+from data_augmentation import process_data
 import os
+from Dataset import Dataset
 
 # python train_mlp.py -d /root/data -b 1000
 ap = argparse.ArgumentParser()
@@ -21,17 +22,6 @@ input_file_path = data_path+'/final_processed_data_3_channels.npz'
 tfboard_basedir = mkdir(data_path+'/tf_visual_data/runs/')
 tfboard_run_dir = mkdir_tfboard_run_dir(tfboard_basedir)
 model_checkpoint_path = mkdir(tfboard_run_dir+'/trained_model')
-
-npzfile = np.load(input_file_path)
-
-# training data
-train_predictors = npzfile['train_predictors']
-train_targets = npzfile['train_targets']
-
-# validation/test data
-validation_predictors = npzfile['validation_predictors']
-validation_targets = npzfile['validation_targets']
-validation_predictors, validation_targets = shuffle_dataset(validation_predictors, validation_targets)
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
@@ -77,53 +67,43 @@ shell_command('cp {model_file} {archive_path}'.format(model_file=model_file_path
 train_writer = tf.train.SummaryWriter(train_dir,sess.graph)
 validation_writer = tf.train.SummaryWriter(validation_dir,sess.graph)
 
-# Data augmentation
-train_predictors = normalize_contrast(train_predictors)
-validation_predictors = normalize_contrast(validation_predictors)
-
 sess.run(tf.initialize_all_variables())
-batch_index = 0
-batches_per_epoch = (train_predictors.shape[0] - train_predictors.shape[0] % 50)/50
-for i in range(batch_iterations):
 
-    # Shuffle in the very beginning and after each epoch
-    if batch_index % batches_per_epoch == 0:
-        train_predictors, train_targets = shuffle_dataset(train_predictors, train_targets)
-        batch_index = 0
-    batch_index += 1
+dataset = Dataset(input_file_path=data_path+'/data')
+#tf_summarizer = TfSummarizer(sess, train_writer, validation_writer, merged, accuracy, x, y_, dataset)
+#train_accuracy, validation_accuracy = tf_summarizer.summarize(epoch=0)
 
-    data_index = batch_index * 50
-    predictors = train_predictors[data_index:data_index+50]/255
-    target = train_targets[data_index:data_index+50]
+# Not sure what these two lines do
+run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+run_opts_metadata = tf.RunMetadata()
+train_images, train_labels = process_data(dataset.get_sample(train=True))
+train_summary, train_accuracy = sess.run([merged, accuracy], feed_dict={x: train_images, y_: train_labels},
+                                         options=run_opts, run_metadata=run_opts_metadata)
+test_images, test_labels = process_data(dataset.get_sample(train=False))
+test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict={x: test_images, y_: test_labels},
+                                            options=run_opts, run_metadata=run_opts_metadata)
+print("epoch: {0}, training accuracy: {1}, validation accuracy: {2}".format(-1, train_accuracy, test_accuracy))
 
-    if i%425 == 0:
+for epoch in range(10):
+    train_batches = dataset.get_batches(train=True)
+    for batch in train_batches:
+        images, labels = process_data(batch)
+        train_step.run(feed_dict={x: images, y_: labels})
 
-        # Not sure what these two lines do
-        run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-        run_opts_metadata = tf.RunMetadata()
-
-        train_summary, train_accuracy = sess.run([merged, accuracy],
-                              feed_dict={x: predictors, y_: target},
-                              options=run_opts,
-                              run_metadata=run_opts_metadata)
-        train_writer.add_run_metadata(run_opts_metadata, 'step%03d' % i)
-        train_writer.add_summary(train_summary, i)
-
-        validation_summary, validation_accuracy = sess.run([merged, accuracy],
-                                                 feed_dict={x: validation_predictors[:1000]/255, y_: validation_targets[:1000]},
-                                                 options=run_opts,
-                                                 run_metadata=run_opts_metadata)
-        validation_writer.add_run_metadata(run_opts_metadata, 'step%03d' % i)
-        validation_writer.add_summary(validation_summary, i)
-
-        print("{i} training accuracy: {train_acc}, validation accuracy: {validation_acc}".format(train_acc=train_accuracy,validation_acc=validation_accuracy,i=i))
-
-    train_step.run(feed_dict={x: predictors, y_: target})
+    # TODO: remove all this hideous boilerplate
+    run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+    run_opts_metadata = tf.RunMetadata()
+    train_images, train_labels = process_data(dataset.get_sample(train=True))
+    train_summary, train_accuracy = sess.run([merged, accuracy], feed_dict={x: train_images, y_: train_labels},
+                                             options=run_opts, run_metadata=run_opts_metadata)
+    test_images, test_labels = process_data(dataset.get_sample(train=False))
+    test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict={x: test_images, y_: test_labels},
+                                           options=run_opts, run_metadata=run_opts_metadata)
+    print("epoch: {0}, training accuracy: {1}, validation accuracy: {2}".format(epoch, train_accuracy, test_accuracy))
 
 # Save the trained model to a file
 saver = tf.train.Saver()
 save_path = saver.save(sess, tfboard_run_dir+"/model.ckpt")
-#print("validation accuracy %g" % accuracy.eval(feed_dict={x: validation_predictors, y_: validation_targets, keep_prob: 1.0}))
 
 # Marks unambiguous successful completion to prevent deletion by cleanup script
 shell_command('touch '+tfboard_run_dir+'/SUCCESS')
