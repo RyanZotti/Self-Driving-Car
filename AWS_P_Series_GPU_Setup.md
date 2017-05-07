@@ -124,6 +124,10 @@ How to run the training code:
 	# The problem goes away when I download it fresh 
 	wget https://s3.amazonaws.com/self-driving-car/final_processed_data_3_channels.npz
 	
+	# Or download the data for the sampling technique
+	apt install -y awscli
+	aws s3 cp s3://self-driving-car/data /root/data --recursive
+
 	# Delete the old cloned repo
 	rm -rf /root/Self-Driving-Car
 	
