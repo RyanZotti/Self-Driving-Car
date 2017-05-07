@@ -69,7 +69,7 @@ validation_writer = tf.train.SummaryWriter(validation_dir,sess.graph)
 
 sess.run(tf.initialize_all_variables())
 
-dataset = Dataset(input_file_path=data_path+'/data')
+dataset = Dataset(input_file_path=os.path.join(data_path,'data'))
 #tf_summarizer = TfSummarizer(sess, train_writer, validation_writer, merged, accuracy, x, y_, dataset)
 #train_accuracy, validation_accuracy = tf_summarizer.summarize(epoch=0)
 
