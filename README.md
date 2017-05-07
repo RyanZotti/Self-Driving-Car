@@ -81,6 +81,14 @@ So, in total, there are four files for each driving session. I usually create a 
 
 Once all of the files are in the same place, it's time to clean up all of your data and create files that TensorFlow will be able to digest for model training. All of this happens in the `save_all_runs_as_numpy_files.py` script. This script assigns a label (left, right, straight) to each image and performs basic data cleaning. It saves each driving session separately as a .npz file.
 
+## Data Backup
+
+I highly recommend backing up your data somewhere like AWS's S3. Use a command like the one below to sync local data with your S3 bucket. Note that this command won't delete data from S3 but add it if it doesn't exist. The command is also recursive, so it can copy files within nested folders. You can find the official AWS docs on this command [here](http://docs.aws.amazon.com/cli/latest/userguide/using-s3-commands.html).
+
+	LOCAL_FOLDER='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
+	S3_FOLDER='s3://self-driving-car/data'
+	aws s3 sync ${LOCAL_FOLDER} ${S3_FOLDER}
+
 ## Data Processing
 
 At the start of my project I relied on `dataprep.py` to aggregate all of my sessions' image and label data into a single file for model training. As my dataset grew, my 16 GB memory laptop started having memory issues when processing all of the files simultaneously. My limit seemed to be 44,000 240x320x3 images.
