@@ -4,7 +4,6 @@ from datetime import datetime
 import os
 from operator import itemgetter
 import RPi.GPIO as GPIO
-from range_sensor import calculate_distance
 import requests
 from time import sleep
 
@@ -25,13 +24,13 @@ class PostHandler(tornado.web.RequestHandler):
             writer.write(log_entry+"\n")
         print(log_entry)
         command_duration = 0.1
-
+        speed = 100
         if '37' in command:
-            motor.forward_left(100)
+            motor.forward_left(speed)
         elif '38' in command:
-            motor.forward(100)
+            motor.forward(speed)
         elif '39' in command:
-            motor.forward_right(100)
+            motor.forward_right(speed)
         elif '40' in command:
             motor.backward(100)
         else:
@@ -69,11 +68,7 @@ class StoreLogEntriesHandler(tornado.web.RequestHandler):
                     writer.write(log_entry+"\n")
                 print(log_entry)
         self.write("Finished")
-
-class DistanceSenor(tornado.web.RequestHandler):
-    def get(self):
-        self.write(str(calculate_distance(ECHO,TRIG)))
-
+   
 class MultipleKeysHandler(tornado.web.RequestHandler):
 
     def get(self):
@@ -214,21 +209,13 @@ class Motor:
 def make_app():
     return tornado.web.Application([
         (r"/drive",MultipleKeysHandler),(r"/post", PostHandler),
-        (r"/StoreLogEntries",StoreLogEntriesHandler),
-        (r"/distance",DistanceSenor)
+        (r"/StoreLogEntries",StoreLogEntriesHandler)
     ])
 
 if __name__ == "__main__":
     GPIO.setmode(GPIO.BOARD)
     command_duration = 0.1
     motor = Motor(16, 18, 22, 19, 21, 23)
-
-    # Range sensor details
-    TRIG = 3
-    ECHO = 5
-    GPIO.setup(TRIG, GPIO.OUT)
-    GPIO.setup(ECHO, GPIO.IN)
-
     log_entries = []
     app = make_app()
     app.listen(81)
