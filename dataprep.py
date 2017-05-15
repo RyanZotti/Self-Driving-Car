@@ -101,6 +101,8 @@ def process_session(session_path,gamma_map,rgb=True):
         ret, frame = cap.read()
         if cv2.waitKey(1) & 0xFF == ord('q'):  # don't remove this if statement or video feed will die
             break
+        if frame_counter == len(video_timestamps):
+            break  # Fixes bug where video timestamps not as long as video frames
         video_timestamp = video_timestamps[frame_counter]
         if video_timestamp > start_time:
             if video_timestamp < end_time:
@@ -173,10 +175,8 @@ def process_session(session_path,gamma_map,rgb=True):
                 # Finally, show image with the an overlay of identified target key image
                 cv2.imshow('frame', frame)
 
-            else:
-                cap.release()
-                cv2.destroyAllWindows()
-
+    cap.release()
+    cv2.destroyAllWindows()
     return predictors, targets
 
 
