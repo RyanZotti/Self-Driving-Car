@@ -38,7 +38,11 @@ This part of the project is very unintuitive and could probably be designed much
 
 ### Instructions to collect data
 
-Turn on video streaming from the Pi. Log into the Raspberry Pi and enter the following commands:
+First, you'll need to make sure that the timezone on your Raspberry Pi matches that on your laptop. The code won't be able to match the timestamps on the Pi (the driving commands) with those of the video frames on the laptop if the timezones don't match. Enter the command below into the Pi to update its timezone:
+
+	sudo dpkg-reconfigure tzdata
+
+Turn on video streaming from the Pi. Log into the Raspberry Pi if you haven't already and enter the following commands:
 
 	# Go to wherever you installed ffmpeg
 	cd /usr/src/ffmpeg
