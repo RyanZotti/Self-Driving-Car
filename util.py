@@ -30,6 +30,14 @@ def dir_count(dir):
     return cmd_result
 
 
+def sanitize_data_folders(folders):
+    sanitized_folders = []
+    for folder in folders:
+        if folder.isdigit():
+            sanitized_folders.append(folder)
+    return sanitized_folders
+
+
 def mkdir(dir):
     shell_cmd = 'mkdir -p {dir}'.format(dir=dir)
     subprocess.check_output(shell_cmd, shell=True).strip()

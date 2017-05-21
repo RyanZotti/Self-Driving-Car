@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from random import shuffle
-from util import shuffle_dataset, summarize_metadata
+from util import shuffle_dataset, summarize_metadata, sanitize_data_folders
 
 
 class Dataset:
@@ -9,6 +9,7 @@ class Dataset:
     def __init__(self,input_file_path,images_per_batch=50,images_per_sample=3000,train_percentage=0.8):
         self.input_file_path = input_file_path
         folders = os.listdir(self.input_file_path)
+        folders = sanitize_data_folders(folders)
         self.train_folders, self.test_folders = Dataset.train_test_split(folders)
         metadata_summaries = summarize_metadata(self.input_file_path)
         self.train_percentage = train_percentage
