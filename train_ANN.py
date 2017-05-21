@@ -47,7 +47,7 @@ b2 = bias_variable([3])
 y=tf.nn.softmax(tf.matmul(h1, W2) + b2)
 
 cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
-train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+train_step = tf.train.AdamOptimizer(1e-5).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
@@ -84,7 +84,7 @@ test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict={x: test_im
                                             options=run_opts, run_metadata=run_opts_metadata)
 print("epoch: {0}, training accuracy: {1}, validation accuracy: {2}".format(-1, train_accuracy, test_accuracy))
 
-for epoch in range(10):
+for epoch in range(50):
     train_batches = dataset.get_batches(train=True)
     for batch in train_batches:
         images, labels = process_data(batch)
