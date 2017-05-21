@@ -30,7 +30,7 @@ for folder in data_folders:
         video_to_rgb_npz(input_dir_path,predictors,targets)
         print("Completed work on: "+str(folder)+". Created new npz and metadata files.")
         write_metadata(input_dir_path)
-    elif 'metadata.txt' not in dir_contents:
+    elif 'metadata.csv' not in dir_contents:
         write_metadata(input_dir_path)
         print("Added only metadata file for: " + str(folder) + ".")
     else:
