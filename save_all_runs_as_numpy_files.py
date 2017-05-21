@@ -1,7 +1,7 @@
 from dataprep import video_to_rgb_npz, make_gamma_tables, process_session
 import numpy as np
 import os
-from util import shell_command
+from util import shell_command, sanitize_data_folders
 
 
 def write_metadata(input_dir_path):
@@ -15,6 +15,7 @@ def write_metadata(input_dir_path):
 
 data_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
 data_folders = os.listdir(data_path)
+data_folders = sanitize_data_folders(data_folders)
 gamma_map = make_gamma_tables([1]) # I should refactor-out the gamma at some point. It's not needed here
 rgb = True
 
