@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 import collections
 from random import shuffle
+from util import sanitize_data_folders
 
 def make_gamma_tables(gammas):
     gamma_map = collections.OrderedDict()
@@ -186,6 +187,7 @@ def data_prep(data_path,rgb=True):
     gamma_map = make_gamma_tables([1])
 
     data_folders = os.listdir(data_path)
+    data_folders = sanitize_data_folders(data_folders)
     shuffle(data_folders)
     #data_folders = data_folders[:10]
     train_folder_size = int(len(data_folders) * 0.8)
