@@ -42,5 +42,12 @@ train_step = tf.train.AdamOptimizer(1e-5).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-trainer = Trainer(data_path=data_path, epochs=epochs)
-trainer.train(sess=sess, x=x, y_=y_, accuracy=accuracy, train_step=train_step)
+trainer = Trainer(data_path=data_path,
+                  epochs=epochs,
+                  max_sample_records=1000)
+
+trainer.train(sess=sess, x=x, y_=y_,
+              accuracy=accuracy,
+              train_step=train_step,
+              train_feed_dict={},
+              test_feed_dict={})
