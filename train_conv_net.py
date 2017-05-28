@@ -96,5 +96,5 @@ trainer = Trainer(data_path=data_path, epochs=epochs, max_sample_records=100)
 trainer.train(sess=sess, x=x, y_=y_,
               accuracy=accuracy,
               train_step=train_step,
-              train_feed_dict={dropout_keep_prob:50},
-              test_feed_dict={dropout_keep_prob:100})
+              train_feed_dict={dropout_keep_prob:0.5},
+              test_feed_dict={dropout_keep_prob:1.0})
