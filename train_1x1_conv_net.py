@@ -1,6 +1,5 @@
 import tensorflow as tf
-import argparse
-from Trainer import Trainer
+from Trainer import Trainer, parse_args
 '''
 Helpful notes
 - Excellent source explaining convoluted neural networks:
@@ -16,16 +15,7 @@ Helpful notes
 '''
 
 # python3 /root/Self-Driving-Car/train_1x1_conv_net.py -d /root -b 1400
-ap = argparse.ArgumentParser()
-ap.add_argument("-d", "--datapath", required = False,
-    help = "path to all of the data",
-    default='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car')
-ap.add_argument("-e", "--epochs", required = False,
-    help = "quantity of batch iterations to run",
-    default='50')
-args = vars(ap.parse_args())
-data_path = args["datapath"]
-epochs = args["epochs"]
+data_path, epochs = parse_args()
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
