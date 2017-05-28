@@ -3,6 +3,7 @@ from util import mkdir_tfboard_run_dir,mkdir,shell_command
 from data_augmentation import process_data
 import os
 from Dataset import Dataset
+import argparse
 
 
 class Trainer:
@@ -81,3 +82,17 @@ class Trainer:
 
         # Marks unambiguous successful completion to prevent deletion by cleanup script
         shell_command('touch ' + tfboard_run_dir + '/SUCCESS')
+
+
+def parse_args():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-d", "--datapath", required=False,
+                    help="path to all of the data",
+                    default='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car')
+    ap.add_argument("-e", "--epochs", required=False,
+                    help="quantity of batch iterations to run",
+                    default='50')
+    args = vars(ap.parse_args())
+    data_path = args["datapath"]
+    epochs = args["epochs"]
+    return data_path, epochs

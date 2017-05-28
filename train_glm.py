@@ -1,17 +1,7 @@
 import tensorflow as tf
-import argparse
-from Trainer import Trainer
+from Trainer import Trainer, parse_args
 
-ap = argparse.ArgumentParser()
-ap.add_argument("-d", "--datapath", required = False,
-    help = "path to all of the data",
-    default='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car')
-ap.add_argument("-e", "--epochs", required = False,
-    help = "quantity of batch iterations to run",
-    default='50')
-args = vars(ap.parse_args())
-data_path = args["datapath"]
-epochs = args["epochs"]
+data_path, epochs = parse_args()
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
