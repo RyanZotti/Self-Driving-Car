@@ -7,6 +7,10 @@ def flip(images,labels,original_command,debug=False):
         target_index = 0
         new_target_row = [0, 0, 1]
         new_command = 'right'
+    elif original_command.lower() == 'up':
+        target_index = 1
+        new_target_row = [0, 1, 0]
+        new_command = 'up'
     elif original_command.lower() == 'right':
         target_index = 2
         new_target_row = [1, 0, 0]
@@ -31,21 +35,18 @@ def flip(images,labels,original_command,debug=False):
 
 
 def flip_enrichment(images,labels):
-    new_right_predictors, new_right_target = flip(images, labels, 'left', debug=False)
-    new_left_predictors, new_left_target = flip(images, labels, 'right', debug=False)
-    new_images, new_labels = [], []
-    if len(new_right_predictors) > 0 and len(new_left_predictors) > 0:
-        new_images = np.vstack((new_right_predictors, new_left_predictors))
-        new_labels = np.vstack((new_right_target, new_left_target))
-    elif len(new_right_predictors) > 0:
-        new_images = new_right_predictors
-        new_labels = new_right_target
-    elif len(new_left_predictors) > 0:
-        new_images = new_left_predictors
-        new_labels = new_left_target
-    if len(new_images) > 0:
-        images = np.vstack((images,new_images))
-        labels = np.vstack((labels,new_labels))
+    new_right_images, new_right_labels = flip(images, labels, 'left', debug=False)
+    new_left_images, new_left_labels = flip(images, labels, 'right', debug=False)
+    new_up_images, new_up_labes = flip(images, labels, 'up', debug=False)
+    if len(new_right_images) > 0:
+        images = np.vstack((images, new_right_images))
+        labels = np.vstack((labels, new_right_labels))
+    if len(new_left_images) > 0:
+        images = np.vstack((images, new_left_images))
+        labels = np.vstack((labels, new_left_labels))
+    if len(new_up_images) > 0:
+        images = np.vstack((images, new_up_images))
+        labels = np.vstack((labels, new_up_labes))
     return images, labels
 
 
@@ -66,5 +67,6 @@ def normalize_contrast(images):
 def process_data(data):
     images, labels = data[0], data[1]
     images = normalize_contrast(images)
+    images, labels = flip_enrichment(images, labels)
     images = images / 255
     return images, labels
