@@ -1,8 +1,16 @@
+import argparse
 import cv2
 import urllib.request
 import numpy as np
 from datetime import datetime
 import os
+
+
+# Example: python save_streaming_video_data.py --ip 192.168.1.82
+ap = argparse.ArgumentParser()
+ap.add_argument("-i", "--ip", required=True, help="Raspberry Pi IP address")
+args = vars(ap.parse_args())
+ip = args["ip"]
 
 # First log into the raspberry pi, and then do these two things:
 # cd /usr/src/ffmpeg
@@ -11,7 +19,7 @@ import os
 fourcc = cv2.VideoWriter_fourcc(*'jpeg')
 out = cv2.VideoWriter('output.mov',fourcc, 20.0, (320,240))
 file_path = str(os.path.dirname(os.path.realpath(__file__)))+"/video_timestamps.txt"
-stream = urllib.request.urlopen('http://192.168.0.35/webcam.mjpeg')
+stream = urllib.request.urlopen('http://{ip}/webcam.mjpeg'.format(ip=ip))
 bytes = bytes()
 while True:
     bytes += stream.read(1024)
