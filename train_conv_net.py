@@ -39,40 +39,28 @@ def max_pool_2x2(x):
 x = tf.placeholder(tf.float32, shape=[None, 240, 320, 3])
 y_ = tf.placeholder(tf.float32, shape=[None, 3])
 
-W_conv1 = weight_variable([6, 6, 3, 16])
-b_conv1 = bias_variable([16])
+W_conv1 = weight_variable([6, 6, 3, 32])
+b_conv1 = bias_variable([32])
 h_conv1 = tf.nn.relu(conv2d(x, W_conv1) + b_conv1)
 dead_ReLUs1 = tf.placeholder(tf.float32,shape=[1])
 h_pool1 = max_pool_2x2(h_conv1)
 
-W_conv2 = weight_variable([6, 6, 16, 4])
-b_conv2 = bias_variable([4])
+W_conv2 = weight_variable([6, 6, 32, 64])
+b_conv2 = bias_variable([64])
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
 tf.histogram_summary('activations_layer_2', h_conv2)
 h_pool2 = max_pool_2x2(h_conv2)
 
-W_conv3 = weight_variable([6, 6, 4, 4])
-b_conv3 = bias_variable([4])
-h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-tf.histogram_summary('activations_layer_3', h_conv3)
-h_pool3 = max_pool_2x2(h_conv3)
+W_fc1 = weight_variable([60 * 80 * 64, 512])
+b_fc1 = bias_variable([512])
 
-W_conv4 = weight_variable([6, 6, 4, 4])
-b_conv4 = bias_variable([4])
-h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
-tf.histogram_summary('activations_layer_4', h_conv4)
-h_pool4 = max_pool_2x2(h_conv4)
-
-W_fc1 = weight_variable([15 * 20 * 4, 4])
-b_fc1 = bias_variable([4])
-
-h_pool4_flat = tf.reshape(h_pool4, [-1, 15 * 20 * 4])
+h_pool4_flat = tf.reshape(h_pool2, [-1, 60 * 80 * 64])
 h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
 
 dropout_keep_prob = tf.placeholder(tf.float32)
 h_fc1_drop = tf.nn.dropout(h_fc1, dropout_keep_prob)
 
-W_fc2 = weight_variable([4, 3])
+W_fc2 = weight_variable([512, 3])
 b_fc2 = bias_variable([3])
 
 y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
