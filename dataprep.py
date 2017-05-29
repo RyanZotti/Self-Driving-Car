@@ -25,10 +25,7 @@ def adjust_gamma(image, table):
 def process_session(session_path,gamma_map,rgb=True):
 
     # Overlay target images for visual troubleshooting of processed video
-    image_path = str(os.path.dirname(os.path.realpath(__file__))) + "/arrow_key_images"
-    up_arrow = cv2.imread(image_path + '/UpArrow.tif')
-    left_arrow = cv2.imread(image_path + '/LeftArrow.tif')
-    right_arrow = cv2.imread(image_path + '/Right Arrow.tif')
+    up_arrow, left_arrow, right_arrow = read_arrow_key_images()
 
     cap = cv2.VideoCapture(session_path + "/output.mov")
     video_timestamps = []
@@ -118,16 +115,13 @@ def process_session(session_path,gamma_map,rgb=True):
                         future_command_ts = end_time
 
                 target = [0, 0, 0]  # in order: left, up, right
-                key_image = None
+                key_image = get_key_image(current_command)
                 if current_command == 'left':
                     target[0] = 1
-                    key_image = left_arrow
                 elif current_command == 'up':
                     target[1] = 1
-                    key_image = up_arrow
                 elif current_command == 'right':
                     target[2] = 1
-                    key_image = right_arrow
 
                 if rgb == True:
                     for gamma, gamma_table in gamma_map.items():
@@ -153,28 +147,7 @@ def process_session(session_path,gamma_map,rgb=True):
                 #arrow_key_scale = 0.25v
                 #frame = cv2.resize(frame, None, fx=frame_scale, fy=frame_scale, interpolation=cv2.INTER_CUBIC)
 
-                # Display target key for visual debugging
-                # The original image is huge, so I need to rescale it
-                arrow_key_scale = 0.125
-                resized_image = cv2.resize(key_image, None, fx=arrow_key_scale, fy=arrow_key_scale, interpolation=cv2.INTER_CUBIC)
-
-                # Thresholding requires grayscale only, so that threshold only needs to happen in one dimension
-                img2gray = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
-
-                # Create mask where anything greater than 240 bright is made super white (255) / selected
-                ret, mask = cv2.threshold(img2gray, 240, 255, cv2.THRESH_BINARY)
-
-                # TODO: understand how this copy-pasted OpenCV masking code works
-                mask_inv = cv2.bitwise_not(mask) # invert the mask
-                rows, cols, channels = resized_image.shape # get size of image
-                region_of_interest = frame[0:rows, 0:cols]
-                img1_bg = cv2.bitwise_and(region_of_interest, region_of_interest, mask=mask) # ???
-                img2_fg = cv2.bitwise_and(resized_image, resized_image, mask=mask_inv) # ???
-                dst = cv2.add(img1_bg, img2_fg) # ???
-                frame[0:rows, 0:cols] = dst
-
-                # Finally, show image with the an overlay of identified target key image
-                cv2.imshow('frame', frame)
+                show_image_with_command(frame, key_image)
 
     cap.release()
     cv2.destroyAllWindows()
@@ -228,6 +201,61 @@ def data_prep(data_path,rgb=True):
 # Built so that a 3D convolution doesn't span multiple sessions (since there is no continuity between sessions)
 def video_to_rgb_npz(session_path,predictors,targets):
     np.savez(session_path + '/predictors_and_targets', predictors=predictors,targets=targets)
+
+
+def show_image_with_command(frame, key_image):
+    arrow_key_scale = 0.125
+    resized_image = cv2.resize(key_image, None, fx=arrow_key_scale, fy=arrow_key_scale, interpolation=cv2.INTER_CUBIC)
+
+    # Thresholding requires grayscale only, so that threshold only needs to happen in one dimension
+    img2gray = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
+
+    # Create mask where anything greater than 240 bright is made super white (255) / selected
+    ret, mask = cv2.threshold(img2gray, 240, 255, cv2.THRESH_BINARY)
+
+    # TODO: understand how this copy-pasted OpenCV masking code works
+    mask_inv = cv2.bitwise_not(mask)  # invert the mask
+    rows, cols, channels = resized_image.shape  # get size of image
+    region_of_interest = frame[0:rows, 0:cols]
+    img1_bg = cv2.bitwise_and(region_of_interest, region_of_interest, mask=mask)  # ???
+    img2_fg = cv2.bitwise_and(resized_image, resized_image, mask=mask_inv)  # ???
+    dst = cv2.add(img1_bg, img2_fg)  # ???
+    frame[0:rows, 0:cols] = dst
+
+    # Finally, show image with the an overlay of identified target key image
+    cv2.imshow('frame', frame)
+
+
+def read_arrow_key_images():
+    image_path = str(os.path.dirname(os.path.realpath(__file__))) + "/arrow_key_images"
+    up_arrow = cv2.imread(image_path + '/UpArrow.tif')
+    left_arrow = cv2.imread(image_path + '/LeftArrow.tif')
+    right_arrow = cv2.imread(image_path + '/Right Arrow.tif')
+    return up_arrow, left_arrow, right_arrow
+
+
+def get_key_image(label):
+    up_arrow, left_arrow, right_arrow = read_arrow_key_images()
+    key_image = None
+    if label == 'left':
+        key_image = left_arrow
+    elif label == 'up':
+        key_image = up_arrow
+    elif label == 'right':
+        key_image = right_arrow
+    return key_image
+
+
+def get_key_image_from_array(label):
+    up_arrow, left_arrow, right_arrow = read_arrow_key_images()
+    key_image = None
+    if label[0][0] == 1:
+        key_image = left_arrow
+    elif label[0][1] == 1:
+        key_image = up_arrow
+    elif label[0][2] == 1:
+        key_image = right_arrow
+    return key_image
 
 
 if __name__ == '__main__':
