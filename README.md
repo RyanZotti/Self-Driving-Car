@@ -50,7 +50,7 @@ Turn on video streaming from the Pi. Log into the Raspberry Pi if you haven't al
 	# Run ffmpeg. I have no idea how this command works since I copy-and-pasted it from some website off of Google
 	sudo ffserver -f /etc/ff.conf_original & ffmpeg -v quiet -r 5 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost/webcam.ffm
 
-At this point the streaming video should be available at the URL below (although you probably won't be able to just open/view it with a web browser). Note that the IP will probably be different for you.
+At this point the streaming video should be available at the URL below. You won't be able to view the raw video from your browser though; your browser will endlessly try to download the streaming file. Note that the IP will probably be different for you.
 
 	http://192.168.0.35/webcam.mjpeg
 
@@ -61,9 +61,9 @@ Start the API webserver. Log into the Raspberry Pi in another tab. Clone this re
 On my Pi the drive API script fails if I call it with Python 2 or if I don't call it with root, but this all depends on how you set everything up and might differ based on how you did your installation.
 
 
-Next run the script that displays and saves the incoming video data. Enter the command below (or you could run it from a Python IDE like PyCharm). 
+Next run the script that displays and saves the incoming video data. Enter the command below using the IP address of your Raspberry Pi. 
 
-	save_streaming_video_data.py
+	python save_streaming_video_data.py --ip 192.168.1.82
 
 Finally, open up a web browser and point it to the URL below (IP address will likely be different for you).
 
@@ -71,7 +71,11 @@ Finally, open up a web browser and point it to the URL below (IP address will li
 
 Click on the page and use the arrow keys (left, right, up, down) to drive the car. The page you just clicked on has some hacky javascript I wrote that fires an API call to the webserver running on the Pi each time you hit one of the arrow keys. 
 
-When you get to the end of your driving session, change the URL in the browser from /drive to /StoreLogEntries and hit enter. This runs an important data cleaning step on all of the commands that the webserver received during the driving session. Once the webpage says "Finished", navigate to the Terminal/Putty tab running the server, and hit control+c to kill the process. You shold now see two files. 
+When you get to the end of your driving session, change the URL in the browser to:
+
+	http://192.168.0.35:81/StoreLogEntries
+
+Then hit enter. This runs an important data cleaning step on all of the commands that the webserver received during the driving session. Once the webpage says "Finished", navigate to the Terminal/Putty tab running the server, and hit control+c to kill the process. You shold now see two files. 
 
 1. **session.txt:** contains valid and invalid accidental commands
 2. **clean_session.txt:** contains only valid commands
@@ -92,12 +96,19 @@ I highly recommend backing up your data somewhere like AWS's S3. Use a command l
 	LOCAL_FOLDER='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
 	S3_FOLDER='s3://self-driving-car/data'
 	aws s3 sync ${LOCAL_FOLDER} ${S3_FOLDER}
+	
+The command above can take an extremely long time depending on your internet connection speed. At one point I had basic a cheap AT&T internet plan with only 250 kbs upload speed, and it took me 5-8 hours to upload about an hour's worth of driving data. 	
+	
+The video data takes up a lot of space on your local machine. I periodically check how much storage I have used by running the following command.
+
+	DATA_DIR='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
+	du -sh ${DATA_DIR}
 
 ## Data Processing
 
 At the start of my project I relied on `dataprep.py` to aggregate all of my sessions' image and label data into a single file for model training. As my dataset grew, my 16 GB memory laptop started having memory issues when processing all of the files simultaneously. My limit seemed to be 44,000 240x320x3 images.
 
-Since I don't want to spend money on a GPU or Apache Spark cluster, I decided to sample my data using the `Dataset.py` script and `Dataset` class. `Dataset` assumes that you have already run the `save_all_runs_as_numpy_files.py` script. The `Dataset` class has to be instantiated in each model training script, since it now takes care of creating batches as well.
+Since I don't want to spend money on a GPU Apache Spark cluster, I decided to sample my data using the `Dataset.py` script and `Dataset` class. `Dataset` assumes that you have already run the `save_all_runs_as_numpy_files.py` script. The `Dataset` class has to be instantiated in each model training script, since it now takes care of creating batches as well.
 
 ## FAQ
 
