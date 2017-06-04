@@ -185,22 +185,28 @@ def file_is_stored_locally(full_path_to_file):
     return file_exists
 
 
-def summarize_metadata(data_path):
+def summarize_metadata(data_path,include_folders=None):
     data_folders = sanitize_data_folders(os.listdir(data_path))
     summaries = {}
+    metadata = {}
     for folder in data_folders:
         input_file_path = data_path + '/' + folder + '/metadata.txt'
+        if include_folders is not None:
+            if folder not in include_folders:
+                continue
         with open(input_file_path) as fp:
+            metadata[folder] = {}
             for line in fp:
                 line = line.strip()
                 if ':' in line:
                     key = line.split(":")[0]
                     value = int(line.split(":")[1])
+                    metadata[folder][key]=value
                     if key in summaries:
                         summaries[key] += value
                     else:
                         summaries[key] = value
-    return summaries
+    return summaries, metadata
 
 
 if __name__ == '__main__':
