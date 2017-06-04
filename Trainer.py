@@ -12,9 +12,9 @@ class Trainer:
         self.data_path = data_path
         self.epochs = int(epochs)
         self.max_sample_records = max_sample_records
-        tfboard_basedir = mkdir(data_path+'/tf_visual_data/runs/')
-        tfboard_run_dir = mkdir_tfboard_run_dir(tfboard_basedir)
-        model_checkpoint_path = mkdir(tfboard_run_dir+'/trained_model')
+        self.tfboard_basedir = os.path.join(self.data_path, 'tf_visual_data', 'runs')
+        self.tfboard_run_dir = mkdir_tfboard_run_dir(self.tfboard_basedir)
+        model_checkpoint_path = mkdir(self.tfboard_run_dir+'/trained_model')
 
     # Assumes all models have these same inputs
     def train(self, sess, x, y_, accuracy, train_step, train_feed_dict, test_feed_dict):
@@ -23,18 +23,14 @@ class Trainer:
         tf.scalar_summary('accuracy', accuracy)
         merged = tf.merge_all_summaries()
 
-        tfboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/'
-        tfboard_run_dir = mkdir_tfboard_run_dir(tfboard_basedir)
-
         # Archive this script to document model design in event of good results that need to be replicated
         model_file_path = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basename(__file__)
         cmd = 'cp {model_file} {archive_path}'
-        shell_command(cmd.format(model_file=model_file_path, archive_path=tfboard_run_dir + '/'))
+        shell_command(cmd.format(model_file=model_file_path, archive_path=self.tfboard_run_dir + '/'))
 
         sess.run(tf.initialize_all_variables())
 
-        input_file_path = os.path.join(self.data_path, 'data')
-        dataset = Dataset(input_file_path=input_file_path, max_sample_records=self.max_sample_records)
+        dataset = Dataset(input_file_path=self.data_path, max_sample_records=self.max_sample_records)
 
         # Not sure what these two lines do
         run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
@@ -78,17 +74,17 @@ class Trainer:
 
         # Save the trained model to a file
         saver = tf.train.Saver()
-        save_path = saver.save(sess, tfboard_run_dir + "/model.ckpt")
+        save_path = saver.save(sess, self.tfboard_run_dir + "/model.ckpt")
 
         # Marks unambiguous successful completion to prevent deletion by cleanup script
-        shell_command('touch ' + tfboard_run_dir + '/SUCCESS')
+        shell_command('touch ' + self.tfboard_run_dir + '/SUCCESS')
 
 
 def parse_args():
     ap = argparse.ArgumentParser()
     ap.add_argument("-d", "--datapath", required=False,
                     help="path to all of the data",
-                    default='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car')
+                    default='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data')
     ap.add_argument("-e", "--epochs", required=False,
                     help="quantity of batch iterations to run",
                     default='50')
