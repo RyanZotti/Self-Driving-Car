@@ -8,8 +8,8 @@ def write_metadata(input_dir_path):
     input_file_path = input_dir_path + '/predictors_and_targets.npz'
     npzfile = np.load(input_file_path)
     image_count = len(npzfile['predictors'])
-    metadata_file_path = input_dir_path + '/metadata.csv'
-    with open(metadata_file_path, 'a') as writer:
+    metadata_file_path = input_dir_path + '/metadata.txt'
+    with open(metadata_file_path, 'w') as writer:
         writer.write('image_count:' + str(image_count) + '\n')
 
 

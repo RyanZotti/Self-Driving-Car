@@ -189,7 +189,7 @@ def summarize_metadata(data_path):
     data_folders = sanitize_data_folders(os.listdir(data_path))
     summaries = {}
     for folder in data_folders:
-        input_file_path = data_path + '/' + folder + '/metadata.csv'
+        input_file_path = data_path + '/' + folder + '/metadata.txt'
         with open(input_file_path) as fp:
             for line in fp:
                 line = line.strip()
