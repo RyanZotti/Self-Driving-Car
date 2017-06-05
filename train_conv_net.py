@@ -1,6 +1,6 @@
 import tensorflow as tf
 from Trainer import Trainer, parse_args
-
+import os
 '''
 Helpful notes
 - Excellent source explaining convoluted neural networks:
@@ -70,7 +70,8 @@ train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-trainer = Trainer(data_path=data_path, epochs=epochs, max_sample_records=100)
+model_file = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basename(__file__)
+trainer = Trainer(data_path=data_path, model_file=model_file, epochs=epochs, max_sample_records=100)
 trainer.train(sess=sess, x=x, y_=y_,
               accuracy=accuracy,
               train_step=train_step,

@@ -8,13 +8,15 @@ import argparse
 
 class Trainer:
 
-    def __init__(self, data_path, epochs=50, max_sample_records=500):
+    def __init__(self, data_path, model_file, epochs=50, max_sample_records=500):
+        self.model_file = model_file
         self.data_path = data_path
         self.epochs = int(epochs)
         self.max_sample_records = max_sample_records
         self.tfboard_basedir = os.path.join(self.data_path, 'tf_visual_data', 'runs')
         self.tfboard_run_dir = mkdir_tfboard_run_dir(self.tfboard_basedir)
-        model_checkpoint_path = mkdir(self.tfboard_run_dir+'/trained_model')
+        self.results_file = os.path.join(self.tfboard_run_dir, 'results.txt')
+        model_checkpoint_path = os.path.join(self.tfboard_run_dir,'trained_model')
 
     # Assumes all models have these same inputs
     def train(self, sess, x, y_, accuracy, train_step, train_feed_dict, test_feed_dict):
@@ -26,7 +28,7 @@ class Trainer:
         # Archive this script to document model design in event of good results that need to be replicated
         model_file_path = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basename(__file__)
         cmd = 'cp {model_file} {archive_path}'
-        shell_command(cmd.format(model_file=model_file_path, archive_path=self.tfboard_run_dir + '/'))
+        shell_command(cmd.format(model_file=self.model_file, archive_path=self.tfboard_run_dir + '/'))
 
         sess.run(tf.initialize_all_variables())
 
