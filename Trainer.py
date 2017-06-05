@@ -51,6 +51,9 @@ class Trainer:
         message = "epoch: {0}, training accuracy: {1}, validation accuracy: {2}"
         print(message.format(-1, train_accuracy, test_accuracy))
 
+        with open(self.results_file,'a') as f:
+            f.write(message.format(-1, train_accuracy, test_accuracy)+'\n')
+
         for epoch in range(self.epochs):
             train_batches = dataset.get_batches(train=True)
             for batch in train_batches:
@@ -73,6 +76,8 @@ class Trainer:
             test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict=test_feed_dict,
                                                    options=run_opts, run_metadata=run_opts_metadata)
             print(message.format(epoch, train_accuracy, test_accuracy))
+            with open(self.results_file, 'a') as f:
+                f.write(message.format(epoch, train_accuracy, test_accuracy)+'\n')
 
         # Save the trained model to a file
         saver = tf.train.Saver()

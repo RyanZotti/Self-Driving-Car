@@ -47,7 +47,7 @@ def mkdir(dir):
 def mkdir_tfboard_run_dir(tf_basedir,):
     old_run_index = int(dir_count(tf_basedir))
     new_run_index = str(old_run_index + 1)
-    new_run_dir = tf_basedir + new_run_index
+    new_run_dir = os.path.join(tf_basedir, str(new_run_index))
     mkdir(new_run_dir)
     return new_run_dir
 
