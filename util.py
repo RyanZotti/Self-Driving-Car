@@ -24,7 +24,7 @@ def remove_file_if_exists(file_path):
         os.remove(file_path)
 
 def dir_count(dir):
-    shell_cmd = 'ls -ltr {dir} | wc -l'.format(dir=dir)
+    shell_cmd = 'ls {dir}'.format(dir=dir)
     cmd_result = subprocess.check_output(shell_cmd, shell=True).strip()
     cmd_result = str(cmd_result).replace('b', '').replace("\'", "")
     return cmd_result
@@ -45,9 +45,15 @@ def mkdir(dir):
 
 
 def mkdir_tfboard_run_dir(tf_basedir,):
-    old_run_index = int(dir_count(tf_basedir))
-    new_run_index = str(old_run_index + 1)
-    new_run_dir = os.path.join(tf_basedir, str(new_run_index))
+    dirs = dir_count(tf_basedir)
+    digits = []
+    for dir in dirs:
+        if dir.isdigit():
+            digit = int(dir)
+            digits.append(digit)
+    newest_dir = max(digits)
+    new_dir = str(newest_dir + 1)
+    new_run_dir = os.path.join(tf_basedir, str(new_dir))
     mkdir(new_run_dir)
     return new_run_dir
 
