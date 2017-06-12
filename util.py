@@ -28,7 +28,7 @@ def dir_count(dir):
     cmd_result = subprocess.check_output(shell_cmd, shell=True).strip()
     dirs = str(cmd_result).replace('b', '').replace("\'", "")
     digits = []
-    for dir in dirs:
+    for dir in dirs.split('\\n'):
         if dir.isdigit():
             digit = int(dir)
             digits.append(digit)
