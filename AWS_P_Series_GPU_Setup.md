@@ -105,6 +105,17 @@ If you're starting from the AMI ('tensorflow-0.11.0 p2.xlarge v3', ami-01d0d516)
 	# The pip3 install doesn't seem to work with Anaconda
 	export PATH=export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
 	
+Update: Installing Tensorflow is now much easier. 
+
+	# Inform pip3 you want to uninstall tensorflow
+	pip3 uninstall tensorflow
+	
+	# Delete all the tensorflow files that pip3 couldn't find
+	find / 2>/dev/null | grep tensorflow | xargs rm -rf
+	
+	# Magically install tensorflow -- no more awful building from source
+	pip3 install tensorflow-gpu
+	
 	
 If you want to see the GPU utilization, open another session on the GPU and type:
 
@@ -115,6 +126,9 @@ If you want to see the GPU utilization, open another session on the GPU and type
 	
 How to run the training code:
 
+	# If starting up a new EC2 instance
+	# Latest AMI: tensorflow-1.1.0 p2.xlarge v1 (ami-4d38625b)
+	
 	# Make sure you're in root and not in the Tensorflow install folder
 	sudo su	
 	cd /root
@@ -135,5 +149,9 @@ How to run the training code:
 	git clone https://github.com/RyanZotti/Self-Driving-Car
 	cd Self-Driving-Car/
 	
-	# Run the standard convnet code
-	python3 train_conv_net.py -p /root/ -b 10000 -f n -d y
+	# Run any of the commands below
+	nohup python3 train_deep_convnet.py --datapath /root/data --epochs 100 &
+	nohup python3 train_conv_net.py --datapath /root/data --epochs 100 &
+	nohup python3 train_ANN.py --datapath /root/data --epochs 100 &
+	nohup python3 train_mlp.py --datapath /root/data --epochs 100 &
+	nohup python3 train_shallow_convnet.py --datapath /root/data --epochs 100 &

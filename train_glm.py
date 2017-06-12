@@ -1,26 +1,20 @@
 import tensorflow as tf
 from Trainer import Trainer, parse_args
 import os
+from model import *
+
 
 data_path, epochs = parse_args()
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
-
-def weight_variable(shape):
-    initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial)
-
-def bias_variable(shape):
-    initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial)
 
 x = tf.placeholder(tf.float32, shape=[None, 240, 320, 3])
 y_ = tf.placeholder(tf.float32, shape=[None, 3])
 
 x_shaped = tf.reshape(x, [-1, 240 * 320 * 3])
 
-W = tf.Variable(tf.zeros([240 * 320 * 3, 3]))
-b = tf.Variable(tf.zeros([3]))
+W = tf.Variable('layer1',tf.zeros([240 * 320 * 3, 3]))
+b = tf.Variable('layer1',tf.zeros([3]))
 y = tf.nn.softmax(tf.matmul(x_shaped, W) + b)
 
 cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
