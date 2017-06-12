@@ -26,8 +26,14 @@ def remove_file_if_exists(file_path):
 def dir_count(dir):
     shell_cmd = 'ls {dir}'.format(dir=dir)
     cmd_result = subprocess.check_output(shell_cmd, shell=True).strip()
-    cmd_result = str(cmd_result).replace('b', '').replace("\'", "")
-    return cmd_result
+    dirs = str(cmd_result).replace('b', '').replace("\'", "")
+    digits = []
+    for dir in dirs:
+        if dir.isdigit():
+            digit = int(dir)
+            digits.append(digit)
+    newest_dir = max(digits)
+    return newest_dir
 
 
 def sanitize_data_folders(folders):
@@ -45,13 +51,7 @@ def mkdir(dir):
 
 
 def mkdir_tfboard_run_dir(tf_basedir,):
-    dirs = dir_count(tf_basedir)
-    digits = []
-    for dir in dirs:
-        if dir.isdigit():
-            digit = int(dir)
-            digits.append(digit)
-    newest_dir = max(digits)
+    newest_dir = dir_count(tf_basedir)
     new_dir = str(newest_dir + 1)
     new_run_dir = os.path.join(tf_basedir, str(new_dir))
     mkdir(new_run_dir)
