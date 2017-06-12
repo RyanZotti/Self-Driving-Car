@@ -22,15 +22,15 @@ class Trainer:
     def train(self, sess, x, y_, accuracy, train_step, train_feed_dict, test_feed_dict):
 
         # To view graph: tensorboard --logdir=/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs
-        tf.scalar_summary('accuracy', accuracy)
-        merged = tf.merge_all_summaries()
+        tf.summary.scalar('accuracy', accuracy)
+        merged = tf.summary.merge_all()
 
         # Archive this script to document model design in event of good results that need to be replicated
         model_file_path = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basename(__file__)
         cmd = 'cp {model_file} {archive_path}'
         shell_command(cmd.format(model_file=self.model_file, archive_path=self.tfboard_run_dir + '/'))
 
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
 
         dataset = Dataset(input_file_path=self.data_path, max_sample_records=self.max_sample_records)
 
