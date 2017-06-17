@@ -23,11 +23,11 @@ h2 = tf.tanh(tf.matmul(h1, W2) + b2)
 
 W3 = weight_variable('layer3',[32, 3])
 b3 = bias_variable('layer3',[3])
-y=tf.nn.softmax(tf.matmul(h2, W3) + b3)
+pred=tf.matmul(h2, W3) + b3
 
-cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
+cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y_))
 train_step = tf.train.AdamOptimizer(1e-5).minimize(cross_entropy)
-correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
+correct_prediction = tf.equal(tf.argmax(pred,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 model_file = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basename(__file__)

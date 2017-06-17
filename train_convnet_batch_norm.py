@@ -28,11 +28,12 @@ h_fc1_drop = tf.nn.dropout(h_fc1, dropout_keep_prob)
 
 W_fc2 = weight_variable('layer6',[4, 3])
 b_fc2 = bias_variable('layer6',[3])
+pred=tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 
-y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
-
-
-cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y_conv), reduction_indices=[1]))
+cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y_))
+train_step = tf.train.AdamOptimizer(1e-5).minimize(cross_entropy)
+correct_prediction = tf.equal(tf.argmax(pred,1), tf.argmax(y_,1))
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 '''
     https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/layers/python/layers/layers.py#L396
@@ -58,9 +59,6 @@ cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y_conv), reduction_ind
 update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 with tf.control_dependencies(update_ops):
     train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
-
-correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 model_file = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basename(__file__)
 trainer = Trainer(data_path=data_path, model_file=model_file, epochs=epochs, max_sample_records=100)
