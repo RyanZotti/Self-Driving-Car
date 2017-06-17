@@ -25,13 +25,17 @@ def remove_file_if_exists(file_path):
 
 def dir_count(dir):
     shell_cmd = 'ls {dir}'.format(dir=dir)
-    cmd_result = subprocess.check_output(shell_cmd, shell=True).strip()
-    dirs = str(cmd_result).replace('b', '').replace("\'", "")
-    digits = []
-    for dir in dirs.split('\\n'):
-        if dir.isdigit():
-            digit = int(dir)
-            digits.append(digit)
+    digits = [0]
+    try:
+        cmd_result = subprocess.check_output(shell_cmd, shell=True).strip()
+        dirs = str(cmd_result).replace('b', '').replace("\'", "")
+
+        for dir in dirs.split('\\n'):
+            if dir.isdigit():
+                digit = int(dir)
+                digits.append(digit)
+    except:
+        mkdir(dir)
     newest_dir = max(digits)
     return newest_dir
 
