@@ -18,6 +18,32 @@ class Trainer:
         self.results_file = os.path.join(self.tfboard_run_dir, 'results.txt')
         model_checkpoint_path = os.path.join(self.tfboard_run_dir,'trained_model')
 
+    # Used to intentionally overfit and check for basic initialization and learning issues
+    def train_one_batch(self, sess, x, y_, accuracy, train_step, train_feed_dict, test_feed_dict):
+
+        tf.summary.scalar('accuracy', accuracy)
+        merged = tf.summary.merge_all()
+        sess.run(tf.global_variables_initializer())
+        dataset = Dataset(input_file_path=self.data_path, max_sample_records=self.max_sample_records)
+
+        # Not sure what these two lines do
+        run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+        run_opts_metadata = tf.RunMetadata()
+
+        train_batches = dataset.get_batches(train=True)
+        batch = next(train_batches)
+        images, labels = process_data(batch)
+        train_feed_dict[x] = images
+        train_feed_dict[y_] = labels
+        for epoch in range(self.epochs):
+            train_step.run(feed_dict=train_feed_dict)
+            train_summary, train_accuracy = sess.run([merged, accuracy], feed_dict=train_feed_dict,
+                                                     options=run_opts, run_metadata=run_opts_metadata)
+            test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict=train_feed_dict,
+                                                   options=run_opts, run_metadata=run_opts_metadata)
+            message = "epoch: {0}, training accuracy: {1}, validation accuracy: {2}"
+            print(message.format(epoch, train_accuracy, test_accuracy))
+
     # Assumes all models have these same inputs
     def train(self, sess, x, y_, accuracy, train_step, train_feed_dict, test_feed_dict):
 
