@@ -65,12 +65,11 @@ h_fc1_drop = tf.nn.dropout(h_fc4, dropout_keep_prob)
 
 W_fc4 = weight_variable('layer12',[64, 3])
 b_fc4 = bias_variable('layer12',[3])
+pred=tf.matmul(h_fc4, W_fc4) + b_fc4
 
-y_conv=tf.nn.softmax(tf.matmul(h_fc4, W_fc4) + b_fc4)
-
-cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y_conv), reduction_indices=[1]))
+cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y_))
 train_step = tf.train.AdamOptimizer(1e-5).minimize(cross_entropy)
-correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
+correct_prediction = tf.equal(tf.argmax(pred,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 model_file = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basename(__file__)
