@@ -2,8 +2,8 @@ import tensorflow as tf
 from Dataset import Dataset
 from data_augmentation import process_data
 
-dir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data/tf_visual_data/runs/17/checkpoints'
-graph_name = 'model-999'  # I'll need to find a way to automatically figure out the epoch name
+dir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data/tf_visual_data/runs/18/checkpoints'
+graph_name = 'model-0'  # I'll need to find a way to automatically figure out the epoch name
 saver = tf.train.import_meta_graph(dir+"/"+graph_name+".meta")
 
 sess = tf.Session()

@@ -77,15 +77,15 @@ class Trainer:
         test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict=test_feed_dict,
                                                options=run_opts, run_metadata=run_opts_metadata)
         message = "epoch: {0}, training accuracy: {1}, validation accuracy: {2}"
-        print(message.format(-1, train_accuracy, test_accuracy))
+        print(message.format(0, train_accuracy, test_accuracy))
 
         with open(self.results_file,'a') as f:
-            f.write(message.format(-1, train_accuracy, test_accuracy)+'\n')
+            f.write(message.format(0, train_accuracy, test_accuracy)+'\n')
 
         # Save a model checkpoint after every epoch
-        self.save_model(sess,epoch=999)
+        self.save_model(sess,epoch=0)
 
-        for epoch in range(self.epochs):
+        for epoch in range(1,self.epochs):
             train_batches = dataset.get_batches(train=True)
             for batch in train_batches:
                 images, labels = process_data(batch)
@@ -111,7 +111,7 @@ class Trainer:
                 f.write(message.format(epoch, train_accuracy, test_accuracy)+'\n')
 
             # Save a model checkpoint after every epoch
-            self.save_model(sess,epoch=999)
+            self.save_model(sess,epoch=epoch)
 
         # Save the trained model to a file
         saver = tf.train.Saver()
