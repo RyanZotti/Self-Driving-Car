@@ -4,6 +4,7 @@ from data_augmentation import process_data
 import os
 from Dataset import Dataset
 import argparse
+from util import mkdir
 
 
 class Trainer:
@@ -16,7 +17,8 @@ class Trainer:
         self.tfboard_basedir = os.path.join(self.data_path, 'tf_visual_data', 'runs')
         self.tfboard_run_dir = mkdir_tfboard_run_dir(self.tfboard_basedir)
         self.results_file = os.path.join(self.tfboard_run_dir, 'results.txt')
-        model_checkpoint_path = os.path.join(self.tfboard_run_dir,'trained_model')
+        self.model_checkpoint_dir = os.path.join(self.tfboard_run_dir,'checkpoints')
+        mkdir(self.model_checkpoint_dir)
 
     # Used to intentionally overfit and check for basic initialization and learning issues
     def train_one_batch(self, sess, x, y_, accuracy, train_step, train_feed_dict, test_feed_dict):
@@ -80,6 +82,9 @@ class Trainer:
         with open(self.results_file,'a') as f:
             f.write(message.format(-1, train_accuracy, test_accuracy)+'\n')
 
+        # Save a model checkpoint after every epoch
+        self.save_model(sess,epoch=999)
+
         for epoch in range(self.epochs):
             train_batches = dataset.get_batches(train=True)
             for batch in train_batches:
@@ -105,12 +110,22 @@ class Trainer:
             with open(self.results_file, 'a') as f:
                 f.write(message.format(epoch, train_accuracy, test_accuracy)+'\n')
 
+            # Save a model checkpoint after every epoch
+            self.save_model(sess,epoch=999)
+
         # Save the trained model to a file
         saver = tf.train.Saver()
         save_path = saver.save(sess, self.tfboard_run_dir + "/model.ckpt")
 
         # Marks unambiguous successful completion to prevent deletion by cleanup script
         shell_command('touch ' + self.tfboard_run_dir + '/SUCCESS')
+
+    def save_model(self,sess,epoch):
+        file_path = os.path.join(self.model_checkpoint_dir,'model')
+        #tf.train.export_meta_graph(filename=epoch_dir)
+        # For more details, see: https://www.tensorflow.org/api_docs/python/tf/train/Saver
+        saver = tf.train.Saver()
+        saver.save(sess,file_path,global_step=epoch)
 
 
 def parse_args():
