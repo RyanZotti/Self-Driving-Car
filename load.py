@@ -2,7 +2,7 @@ import tensorflow as tf
 from Dataset import Dataset
 from data_augmentation import process_data
 
-dir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data/tf_visual_data/runs/18/checkpoints'
+dir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data/tf_visual_data/runs/21/checkpoints'
 graph_name = 'model-0'  # I'll need to find a way to automatically figure out the epoch name
 saver = tf.train.import_meta_graph(dir+"/"+graph_name+".meta")
 
@@ -28,6 +28,8 @@ graph = tf.get_default_graph()
 accuracy = graph.get_tensor_by_name("accuracy:0")
 x = graph.get_tensor_by_name("x:0")
 y_ = graph.get_tensor_by_name("y_:0")
+train_step = graph.get_operation_by_name('train_step')
+
 
 train_feed_dict[x] = train_images
 train_feed_dict[y_] = train_labels
@@ -44,5 +46,6 @@ test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict=test_feed_d
 message = "epoch: {0}, training accuracy: {1}, validation accuracy: {2}"
 print(message.format(-1, train_accuracy, test_accuracy))
 
+sess.run(train_step,feed_dict=train_feed_dict)
 print('Finished')
 
