@@ -48,23 +48,25 @@ class Trainer:
             message = "epoch: {0}, training accuracy: {1}, validation accuracy: {2}"
             print(message.format(epoch, train_accuracy, test_accuracy))
 
-    # Assumes all models have these same inputs
+    # This function is agnostic to the model
     def train(self, sess, x, y_, accuracy, train_step, train_feed_dict, test_feed_dict):
 
         # To view graph: tensorboard --logdir=/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs
         tf.summary.scalar('accuracy', accuracy)
         merged = tf.summary.merge_all()
 
-        # Archive this script to document model design in event of good results that need to be replicated
-        model_file_path = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basename(__file__)
-        cmd = 'cp {model_file} {archive_path}'
-        shell_command(cmd.format(model_file=self.model_file, archive_path=self.tfboard_run_dir + '/'))
+        # Archive the model script in case of good results that need to be replicated
+        # If model is being restored, then assume model file has already been saved somewhere
+        # and that self.model_file is None
+        if self.model_file is not None:
+            cmd = 'cp {model_file} {archive_path}'
+            shell_command(cmd.format(model_file=self.model_file, archive_path=self.tfboard_run_dir + '/'))
 
         sess.run(tf.global_variables_initializer())
 
         dataset = Dataset(input_file_path=self.data_path, max_sample_records=self.max_sample_records)
 
-        # Not sure what these two lines do
+        # TODO: Document and understand what RunOptions does
         run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
         run_opts_metadata = tf.RunMetadata()
 
@@ -95,9 +97,10 @@ class Trainer:
                 train_feed_dict[y_] = labels
                 train_step.run(feed_dict=train_feed_dict)
 
-            # TODO: remove all this hideous boilerplate
+            # TODO: Document and understand what RunOptions does
             run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
             run_opts_metadata = tf.RunMetadata()
+
             train_images, train_labels = process_data(dataset.get_sample(train=True))
             train_feed_dict[x] = train_images
             train_feed_dict[y_] = train_labels
