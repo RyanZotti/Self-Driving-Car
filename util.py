@@ -7,7 +7,8 @@ import tensorflow as tf
 from random import randint
 import boto3
 from pathlib import Path
-from data_augmentation import process_data
+import re
+
 
 def dead_ReLU_pct(matrix):
     zeros = (matrix.size - matrix[matrix > 0].size)
@@ -217,6 +218,19 @@ def summarize_metadata(data_path,include_folders=None):
                     else:
                         summaries[key] = value
     return summaries, metadata
+
+
+# Reads last epoch from checkpoint path
+def get_prev_epoch(checkpoint_dir_path):
+    cmd = 'ls {dir} | grep -i .index'.format(dir=checkpoint_dir_path)
+    files = str(shell_command(cmd))
+    raw_results = re.findall('model-(.*?).index', files, re.DOTALL)
+    sanitized_epochs = []
+    for result in raw_results:
+        if result.isdigit():
+            sanitized_epochs.append(int(result))
+    prev_epoch = max(sanitized_epochs)
+    return prev_epoch
 
 
 if __name__ == '__main__':
