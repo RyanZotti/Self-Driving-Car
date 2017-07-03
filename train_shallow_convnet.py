@@ -4,7 +4,9 @@ import os
 from model import *
 
 
-data_path, epochs = parse_args()
+args = parse_args()
+data_path = args["datapath"]
+epochs = args["epochs"]
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 

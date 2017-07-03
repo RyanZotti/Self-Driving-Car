@@ -136,7 +136,8 @@ def parse_args():
     ap.add_argument("-e", "--epochs", required=False,
                     help="quantity of batch iterations to run",
                     default='50')
+    ap.add_argument("-c", "--checkpointpath", required=False,
+                    help="location of checkpoint data",
+                    default=None)
     args = vars(ap.parse_args())
-    data_path = args["datapath"]
-    epochs = args["epochs"]
-    return data_path, epochs
+    return args
