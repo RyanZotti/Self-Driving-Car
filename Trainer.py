@@ -9,15 +9,17 @@ from util import mkdir
 
 class Trainer:
 
-    def __init__(self, data_path, model_file, epochs=50, max_sample_records=500):
+    def __init__(self, data_path, model_file, epochs=50, max_sample_records=500, start_epoch=0):
         self.model_file = model_file
         self.data_path = data_path
-        self.epochs = int(epochs)
+        self.n_epochs = int(epochs)
         self.max_sample_records = max_sample_records
         self.tfboard_basedir = os.path.join(self.data_path, 'tf_visual_data', 'runs')
         self.tfboard_run_dir = mkdir_tfboard_run_dir(self.tfboard_basedir)
         self.results_file = os.path.join(self.tfboard_run_dir, 'results.txt')
         self.model_checkpoint_dir = os.path.join(self.tfboard_run_dir,'checkpoints')
+        self.saver = tf.train.Saver()
+        self.start_epoch = start_epoch
         mkdir(self.model_checkpoint_dir)
 
     # Used to intentionally overfit and check for basic initialization and learning issues
@@ -37,7 +39,7 @@ class Trainer:
         images, labels = process_data(batch)
         train_feed_dict[x] = images
         train_feed_dict[y_] = labels
-        for epoch in range(self.epochs):
+        for epoch in range(self.n_epochs):
             train_step.run(feed_dict=train_feed_dict)
             train_summary, train_accuracy = sess.run([merged, accuracy], feed_dict=train_feed_dict,
                                                      options=run_opts, run_metadata=run_opts_metadata)
@@ -77,15 +79,15 @@ class Trainer:
         test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict=test_feed_dict,
                                                options=run_opts, run_metadata=run_opts_metadata)
         message = "epoch: {0}, training accuracy: {1}, validation accuracy: {2}"
-        print(message.format(0, train_accuracy, test_accuracy))
+        print(message.format(self.start_epoch, train_accuracy, test_accuracy))
 
         with open(self.results_file,'a') as f:
-            f.write(message.format(0, train_accuracy, test_accuracy)+'\n')
+            f.write(message.format(self.start_epoch, train_accuracy, test_accuracy)+'\n')
 
         # Save a model checkpoint after every epoch
-        self.save_model(sess,epoch=0)
+        self.save_model(sess,epoch=self.start_epoch)
 
-        for epoch in range(1,self.epochs):
+        for epoch in range(self.start_epoch+1, self.start_epoch + self.n_epochs):
             train_batches = dataset.get_batches(train=True)
             for batch in train_batches:
                 images, labels = process_data(batch)
@@ -113,19 +115,12 @@ class Trainer:
             # Save a model checkpoint after every epoch
             self.save_model(sess,epoch=epoch)
 
-        # Save the trained model to a file
-        saver = tf.train.Saver()
-        save_path = saver.save(sess, self.tfboard_run_dir + "/model.ckpt")
-
         # Marks unambiguous successful completion to prevent deletion by cleanup script
         shell_command('touch ' + self.tfboard_run_dir + '/SUCCESS')
 
     def save_model(self,sess,epoch):
         file_path = os.path.join(self.model_checkpoint_dir,'model')
-        #tf.train.export_meta_graph(filename=epoch_dir)
-        # For more details, see: https://www.tensorflow.org/api_docs/python/tf/train/Saver
-        saver = tf.train.Saver()
-        saver.save(sess,file_path,global_step=epoch)
+        self.saver.save(sess,file_path,global_step=epoch)
 
 
 def parse_args():
