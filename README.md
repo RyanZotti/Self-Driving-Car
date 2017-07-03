@@ -110,6 +110,24 @@ At the start of my project I relied on `dataprep.py` to aggregate all of my sess
 
 Since I don't want to spend money on a GPU Apache Spark cluster, I decided to sample my data using the `Dataset.py` script and `Dataset` class. `Dataset` assumes that you have already run the `save_all_runs_as_numpy_files.py` script. The `Dataset` class has to be instantiated in each model training script, since it now takes care of creating batches as well.
 
+## Model Training
+
+Training on the GPU is so much faster than training on the CPU that I now only train on the GPU. I have a Mac, so I rely on AWS to do my GPU training. Check out [this link](https://github.com/RyanZotti/Self-Driving-Car/blob/master/AWS_P_Series_GPU_Setup.md ) for details on GPU training. I get about a 14x speedup when running on the GPU vs CPU.
+
+Training still takes a long time (e.g., 10+ hours) even when training on a GPU. To make recovery from unexpected failures easier, I use Tensorflow's checkpoint feature to be able to start and stop my models. Model checkpointing also makes it possible to rely on AWS Spot Instances. I created a script called `resume_training.py` that is agnostic to the model whose training is being restarted. You can call it like this:
+
+	# Your paths will differ
+	DATA_PATH='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
+	EPOCHS=100
+	CHECKPOINT_PATH='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data/tf_visual_data/runs/23/checkpoints'
+	
+	# Run the script
+	python resume_training.py \
+	        --datapath $DATA_PATH 
+	        --epochs $EPOCHS 
+	        --checkpointpath $CHECKPOINT_PATH
+
+
 ## FAQ
 
 **Q:** How do I log into the Pi?
