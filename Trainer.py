@@ -95,7 +95,7 @@ class Trainer:
                 images, labels = process_data(batch)
                 train_feed_dict[x] = images
                 train_feed_dict[y_] = labels
-                train_step.run(feed_dict=train_feed_dict)
+                sess.run(train_step,feed_dict=train_feed_dict)
 
             # TODO: Document and understand what RunOptions does
             run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
