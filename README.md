@@ -134,9 +134,25 @@ Since I don't want to spend money on a GPU Apache Spark cluster, I decided to sa
 
 ## Model Training
 
-Training on the GPU is so much faster than training on the CPU that I now only train on the GPU. I have a Mac, so I rely on AWS to do my GPU training. Check out [this link](https://github.com/RyanZotti/Self-Driving-Car/blob/master/AWS_P_Series_GPU_Setup.md ) for details on GPU training. I get about a 14x speedup when running on the GPU vs CPU.
+Training on the GPU is so much faster than training on the CPU that I now ***only*** train on the GPU except when debugging. I get about a 14x speedup when running on one of AWS's Tesla K80 GPUs (p2.xlarge) compared to my Mac's CPU. Mac's don't have a Tensorflow-supported built-in GPU, so I rely on AWS to do my GPU training. Check out [this link](https://github.com/RyanZotti/Self-Driving-Car/blob/master/AWS_P_Series_GPU_Setup.md ) for details on GPU training (how to build your own AWS GPU AMI, etc). As of now, Amazon Web Services, Google Compute Engine, and Microsoft Azure all provide the same Nvidia K80 GPU. AWS charges $0.90 per hour, and Google charges $0.70 per hour. Microsoft doesn't make it easy to compare to AWS, so I have no idea what they charge. Ultimately I plan to try all three services and go with the cheapest.
 
-Training still takes a long time (e.g., 10+ hours) even when training on a GPU. To make recovery from unexpected failures easier, I use Tensorflow's checkpoint feature to be able to start and stop my models. Model checkpointing also makes it possible to rely on AWS Spot Instances. I created a script called `resume_training.py` that is agnostic to the model whose training is being restarted. You can call it like this:
+I've written scripts for training many different types of models. To avoid confusion I've standardized the command-line interface inputs across all scripts by leveraging the same `Trainer` class in `Trainer.py`. All scripts automatically sync/archive data with AWS's S3. This means that the model will always train on the latest batch of training data. It also means that you need to be prepared to download ***ALL*** of the training data, which as of now is about 50 GB. Make sure your laptop or GPU has enough space before attempting. 
+
+Each script syncs with S3 before training so that it's possible to train multiple models in parallel without the backups overwriting each other. The `Trainer` class writes backups to S3 after each epoch. 
+
+Training a new model is simple. See the example below. The `nohup` and `&` tell the model to train in the background so that you can close your computer (assuming your code is running in the cloud and not locally).
+
+	S3_BUCKET=self-driving-car # Specify your own S3 bucket
+	SCRIPT=train_conv_net.py
+	
+	# All scripts follow the same command-line interface
+	nohup python3 ${SCRIPT} --datapath /root/data \
+		--epochs 100 \
+		--s3_bucket ${SCRIPT} &
+
+Training still takes a long time (e.g., 10+ hours) even when training on a GPU. To make recovery from unexpected failures easier, I use Tensorflow's checkpoint feature to be able to start and stop my models. These are included in the model backups sent to the cloud. Tensorflow model checkpointing also makes it possible to rely on AWS Spot Instances, which I haven't tried yet. 
+
+I created a script called `resume_training.py` that is agnostic to the model whose training is being restarted. It reads in a Tensorflow checkpoint file that you specify and reonconstructs the model in memory before it resumes training. You can call it like this:
 
 	# Your paths will differ
 	DATA_PATH='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
@@ -147,7 +163,7 @@ Training still takes a long time (e.g., 10+ hours) even when training on a GPU. 
 	python resume_training.py \
 	        --datapath $DATA_PATH \
 	        --epochs $EPOCHS \
-	        --checkpointpath $CHECKPOINT_PATH
+	        --model_dir $CHECKPOINT_PATH
 
 
 ## FAQ
