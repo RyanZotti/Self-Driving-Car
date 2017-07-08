@@ -9,7 +9,8 @@ from util import mkdir
 
 class Trainer:
 
-    def __init__(self, data_path, model_file, epochs=50, max_sample_records=500, start_epoch=0):
+    def __init__(self, data_path, model_file, epochs=50, max_sample_records=500, start_epoch=0,
+                 restored_model=False):
         self.model_file = model_file
         self.data_path = data_path
         self.n_epochs = int(epochs)
@@ -20,6 +21,7 @@ class Trainer:
         self.model_checkpoint_dir = os.path.join(self.tfboard_run_dir,'checkpoints')
         self.saver = tf.train.Saver()
         self.start_epoch = start_epoch
+        self.restored_model = restored_model
         mkdir(self.model_checkpoint_dir)
 
     # Used to intentionally overfit and check for basic initialization and learning issues
@@ -62,7 +64,8 @@ class Trainer:
             cmd = 'cp {model_file} {archive_path}'
             shell_command(cmd.format(model_file=self.model_file, archive_path=self.tfboard_run_dir + '/'))
 
-        sess.run(tf.global_variables_initializer())
+        if not self.restored_model:
+            sess.run(tf.global_variables_initializer())
 
         dataset = Dataset(input_file_path=self.data_path, max_sample_records=self.max_sample_records)
 

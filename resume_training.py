@@ -37,7 +37,8 @@ trainer = Trainer(data_path=data_path,
                   model_file=None,
                   epochs=epochs,
                   max_sample_records=1000,  # TODO: Get max_sample_records from collections file
-                  start_epoch = start_epoch)
+                  start_epoch = start_epoch,
+                  restored_model=True)
 
 trainer.train(sess=sess, x=x, y_=y_,
               accuracy=accuracy,
