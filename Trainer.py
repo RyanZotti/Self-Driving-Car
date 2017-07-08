@@ -4,19 +4,29 @@ from data_augmentation import process_data
 import os
 from Dataset import Dataset
 import argparse
-from util import mkdir
+from util import mkdir, sync_from_aws, sync_to_aws
 
 
 class Trainer:
 
-    def __init__(self, data_path, model_file, epochs=50, max_sample_records=500, start_epoch=0,
-                 restored_model=False):
-        self.model_file = model_file
+    def __init__(self, data_path, model_file, s3_bucket, epochs=50, max_sample_records=500, start_epoch=0,
+                 restored_model=False,restored_model_dir=None):
         self.data_path = data_path
+        self.s3_bucket = format_s3_bucket(s3_bucket)
+        self.s3_data_dir = format_s3_data_dir(self.s3_bucket)
+        self.model_file = model_file
         self.n_epochs = int(epochs)
         self.max_sample_records = max_sample_records
-        self.tfboard_basedir = os.path.join(self.data_path, 'tf_visual_data', 'runs')
-        self.tfboard_run_dir = mkdir_tfboard_run_dir(self.tfboard_basedir)
+
+        # Always sync before training in case I ever train multiple models in parallel
+        sync_from_aws(s3_path=self.s3_data_dir, local_path=self.data_path)
+
+        if restored_model:
+            self.tfboard_run_dir = restored_model_dir
+        else:
+            self.tfboard_basedir = os.path.join(self.data_path, 'tf_visual_data', 'runs')
+            self.tfboard_run_dir = mkdir_tfboard_run_dir(self.tfboard_basedir)
+
         self.results_file = os.path.join(self.tfboard_run_dir, 'results.txt')
         self.model_checkpoint_dir = os.path.join(self.tfboard_run_dir,'checkpoints')
         self.saver = tf.train.Saver()
@@ -24,8 +34,9 @@ class Trainer:
         self.restored_model = restored_model
         mkdir(self.model_checkpoint_dir)
 
+
     # Used to intentionally overfit and check for basic initialization and learning issues
-    def train_one_batch(self, sess, x, y_, accuracy, train_step, train_feed_dict, test_feed_dict):
+    def train_one_batch(self, sess, x, y_, accuracy, train_step, train_feed_dict):
 
         tf.summary.scalar('accuracy', accuracy)
         merged = tf.summary.merge_all()
@@ -64,7 +75,7 @@ class Trainer:
             cmd = 'cp {model_file} {archive_path}'
             shell_command(cmd.format(model_file=self.model_file, archive_path=self.tfboard_run_dir + '/'))
 
-        if not self.restored_model:
+        if not self.restored_model:  # Don't want to erase restored model weights
             sess.run(tf.global_variables_initializer())
 
         dataset = Dataset(input_file_path=self.data_path, max_sample_records=self.max_sample_records)
@@ -83,14 +94,17 @@ class Trainer:
         test_feed_dict[y_] = test_labels
         test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict=test_feed_dict,
                                                options=run_opts, run_metadata=run_opts_metadata)
+
+        # Always worth printing accuracy, even for a restored model, since it provides an early sanity check
         message = "epoch: {0}, training accuracy: {1}, validation accuracy: {2}"
         print(message.format(self.start_epoch, train_accuracy, test_accuracy))
 
-        with open(self.results_file,'a') as f:
-            f.write(message.format(self.start_epoch, train_accuracy, test_accuracy)+'\n')
-
-        # Save a model checkpoint after every epoch
-        self.save_model(sess,epoch=self.start_epoch)
+        # Don't double-count. A restored model already has its last checkpoint and results.txt entry available
+        if not self.restored_model:
+            with open(self.results_file,'a') as f:
+                f.write(message.format(self.start_epoch, train_accuracy, test_accuracy)+'\n')
+            self.save_model(sess, epoch=self.start_epoch)
+            sync_to_aws(s3_path=self.s3_data_dir, local_path=self.data_path)  # Save to AWS
 
         for epoch in range(self.start_epoch+1, self.start_epoch + self.n_epochs):
             train_batches = dataset.get_batches(train=True)
@@ -120,6 +134,7 @@ class Trainer:
 
             # Save a model checkpoint after every epoch
             self.save_model(sess,epoch=epoch)
+            sync_to_aws(s3_path=self.s3_data_dir, local_path=self.data_path)  # Save to AWS
 
         # Marks unambiguous successful completion to prevent deletion by cleanup script
         shell_command('touch ' + self.tfboard_run_dir + '/SUCCESS')
@@ -127,6 +142,21 @@ class Trainer:
     def save_model(self,sess,epoch):
         file_path = os.path.join(self.model_checkpoint_dir,'model')
         self.saver.save(sess,file_path,global_step=epoch)
+
+
+def format_s3_bucket(s3_bucket):
+    if not 's3://' in s3_bucket:
+        return 's3://{s3_bucket}'.format(s3_bucket=s3_bucket)
+    else:
+        return s3_bucket
+
+
+# Assumes S3 bucket will always have same s3://bucket/data hierarchy
+def format_s3_data_dir(s3_bucket):
+    if '/data' not in s3_bucket:
+        return '{s3_bucket}/data'.format(s3_bucket=s3_bucket)
+    else:
+        return s3_bucket
 
 
 def parse_args():
@@ -137,8 +167,11 @@ def parse_args():
     ap.add_argument("-e", "--epochs", required=False,
                     help="quantity of batch iterations to run",
                     default='50')
-    ap.add_argument("-c", "--checkpointpath", required=False,
+    ap.add_argument("-c", "--model_dir", required=False,
                     help="location of checkpoint data",
                     default=None)
+    ap.add_argument("-s", "--s3_bucket", required=False,
+                    help="S3 backup URL",
+                    default='self-driving-car')
     args = vars(ap.parse_args())
     return args

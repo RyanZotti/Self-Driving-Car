@@ -7,6 +7,7 @@ from model import *
 args = parse_args()
 data_path = args["datapath"]
 epochs = args["epochs"]
+s3_bucket = args['s3_bucket']
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
@@ -53,7 +54,12 @@ correct_prediction = tf.equal(tf.argmax(pred,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 model_file = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basename(__file__)
-trainer = Trainer(data_path=data_path, model_file=model_file,epochs=epochs, max_sample_records=100)
+trainer = Trainer(data_path=data_path,
+                  model_file=model_file,
+                  s3_bucket=s3_bucket,
+                  epochs=epochs,
+                  max_sample_records=100)
+
 trainer.train(sess=sess, x=x, y_=y_,
               accuracy=accuracy,
               train_step=train_step,

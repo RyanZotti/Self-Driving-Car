@@ -149,9 +149,8 @@ How to run the training code:
 	git clone https://github.com/RyanZotti/Self-Driving-Car
 	cd Self-Driving-Car/
 	
-	# Run any of the commands below
-	nohup python3 train_deep_convnet.py --datapath /root/data --epochs 100 &
-	nohup python3 train_conv_net.py --datapath /root/data --epochs 100 &
-	nohup python3 train_ANN.py --datapath /root/data --epochs 100 &
-	nohup python3 train_mlp.py --datapath /root/data --epochs 100 &
-	nohup python3 train_shallow_convnet.py --datapath /root/data --epochs 100 &
+	# Runable scripts: train_conv_net.py, train_deep_convnet.py, train_ANN.py, train_mlp.py, train_shallow_convnet.py, etc
+	SCRIPT=train_conv_net.py
+	nohup python3 ${SCRIPT} --datapath /root/data \
+		--epochs 100 \
+		--s3_bucket self-driving-car &
