@@ -91,13 +91,35 @@ Once all of the files are in the same place, it's time to clean up all of your d
 
 ## Data Backup
 
-I highly recommend backing up your data somewhere like AWS's S3. Use a command like the one below to sync local data with your S3 bucket. Note that this command won't delete data from S3 but add it if it doesn't exist. The command is also recursive, so it can copy files within nested folders. You can find the official AWS docs on this command [here](http://docs.aws.amazon.com/cli/latest/userguide/using-s3-commands.html).
+I highly recommend backing up your data somewhere like AWS's S3. See command-line examples below. 
 
+Note that without the `--delete` flag, the `aws synch` command won't delete data from S3 but will add it if it doesn't exist. This is helpful so that you don't accidentally obliterate your entire backup. 
+
+The `sync` command is recursive, so it can copy files within nested folders. You can find the official AWS docs on this command [here](http://docs.aws.amazon.com/cli/latest/userguide/using-s3-commands.html).
+
+	# Specify your own locations
 	LOCAL_FOLDER='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
 	S3_FOLDER='s3://self-driving-car/data'
+	
+	# To back up to AWS
 	aws s3 sync ${LOCAL_FOLDER} ${S3_FOLDER}
 	
-The command above can take an extremely long time depending on your internet connection speed. At one point I had basic a cheap AT&T internet plan with only 250 kbs upload speed, and it took me 5-8 hours to upload about an hour's worth of driving data. 	
+	# To restore backup from AWS
+	aws s3 sync ${S3_FOLDER} ${LOCAL_FOLDER}
+	
+	# You can also delete unwanted files from the AWS backup
+	aws s3 sync ${LOCAL_FOLDER} ${S3_FOLDER} --delete
+	
+The command above can take an extremely long time depending on your internet connection speed. At one point I had basic a cheap AT&T internet plan with only 250 kbps upload speed (advertised at 5 Mbps), and it took me 5-8 hours to upload about an hour's worth of driving data. 
+
+**EDIT:** I've since ditched AT&T's 5 Mbps $40/month package and replaced it with San Francisco's Google Fiber (via Webpass) package at $42/month for 1,000 Mbps (1 Gbps). Actual upload speed ranges between 400-900 Mbps. Now uploading 4-5 hours of driving data takes just 1-2 minutes. Google Fiber is amazing. I love it.
+	
+To run all of these AWS commands locally, you need to tell AWS that you have access. AWS does this with the `aws_secret_access_key` and `aws_access_key_id`. When you spin up an AWS instance (e.g., a GPU), you can assign an AWS `IAM Role` to the instance and the instance will inherit these credentials. However, AWS can't assign an IAM Role to your laptop, so you'll need to update `~/.aws/credentials` so that it looks something like the contents below. These are obviously fake values, but the real values look just as much like long gibberish strings. You can get the actual values associated with your account through the AWS IAM console. You should never expose your real values to the public -- thieves could take control of your entire AWS account and, for example, run up a massive bill, among other things.
+
+	[default]
+	aws_access_key_id = ASDFSDFSDFSDFSDFKKJSDFEUSXN
+	aws_secret_access_key = SKJE8ss3jsefa3sjKSDWdease3kjsdvna21
+	region = us-east-1
 	
 The video data takes up a lot of space on your local machine. I periodically check how much storage I have used by running the following command.
 
