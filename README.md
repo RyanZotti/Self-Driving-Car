@@ -123,8 +123,8 @@ Training still takes a long time (e.g., 10+ hours) even when training on a GPU. 
 	
 	# Run the script
 	python resume_training.py \
-	        --datapath $DATA_PATH 
-	        --epochs $EPOCHS 
+	        --datapath $DATA_PATH \
+	        --epochs $EPOCHS \
 	        --checkpointpath $CHECKPOINT_PATH
 
 
