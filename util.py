@@ -62,9 +62,19 @@ def mkdir_tfboard_run_dir(tf_basedir,):
     mkdir(new_run_dir)
     return new_run_dir
 
-def shell_command(cmd):
-    cmd_result = subprocess.check_output(cmd, shell=True).strip()
-    return cmd_result
+
+def shell_command(cmd,print_to_stdout=False):
+    if not print_to_stdout:
+        cmd_result = subprocess.check_output(cmd, shell=True).strip()
+        return cmd_result
+    else:  # Used when the command will take a long time (e.g., `aws sync`) and progress updates would be helpful
+        cmd = cmd.split(' ')
+        p = subprocess.Popen(cmd,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT)
+        for line in iter(p.stdout.readline, b''):
+            print(line.rstrip())
+
 
 def upload_s3_file(source_path,bucket_name,target_path):
     s3 = boto3.client('s3')
@@ -231,6 +241,16 @@ def get_prev_epoch(checkpoint_dir_path):
             sanitized_epochs.append(int(result))
     prev_epoch = max(sanitized_epochs)
     return prev_epoch
+
+
+def sync_from_aws(s3_path,local_path):
+    command = 'aws s3 sync {s3_path} {local_path}'.format(s3_path=s3_path,local_path=local_path)
+    shell_command(cmd=command,print_to_stdout=True)
+
+
+def sync_to_aws(s3_path,local_path):
+    command = 'aws s3 sync {local_path} {s3_path}'.format(s3_path=s3_path,local_path=local_path)
+    shell_command(cmd=command,print_to_stdout=True)
 
 
 if __name__ == '__main__':
