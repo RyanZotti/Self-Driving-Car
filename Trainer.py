@@ -1,4 +1,5 @@
 import tensorflow as tf
+from tensorflow.python.client import timeline
 from util import mkdir_tfboard_run_dir,mkdir,shell_command
 from data_augmentation import process_data
 import os
@@ -10,25 +11,26 @@ from util import mkdir, sync_from_aws, sync_to_aws
 class Trainer:
 
     def __init__(self, data_path, model_file, s3_bucket, epochs=50, max_sample_records=500, start_epoch=0,
-                 restored_model=False,restored_model_dir=None):
+                 restored_model=False,restored_model_dir=None, tf_timeline=False):
         self.data_path = data_path
         self.s3_bucket = format_s3_bucket(s3_bucket)
         self.s3_data_dir = format_s3_data_dir(self.s3_bucket)
         self.model_file = model_file
         self.n_epochs = int(epochs)
         self.max_sample_records = max_sample_records
+        self.tf_timeline = tf_timeline
 
         # Always sync before training in case I ever train multiple models in parallel
         sync_from_aws(s3_path=self.s3_data_dir, local_path=self.data_path)
 
         if restored_model:
-            self.tfboard_run_dir = restored_model_dir
+            self.model_dir = restored_model_dir
         else:
             self.tfboard_basedir = os.path.join(self.data_path, 'tf_visual_data', 'runs')
-            self.tfboard_run_dir = mkdir_tfboard_run_dir(self.tfboard_basedir)
+            self.model_dir = mkdir_tfboard_run_dir(self.tfboard_basedir)
 
-        self.results_file = os.path.join(self.tfboard_run_dir, 'results.txt')
-        self.model_checkpoint_dir = os.path.join(self.tfboard_run_dir,'checkpoints')
+        self.results_file = os.path.join(self.model_dir, 'results.txt')
+        self.model_checkpoint_dir = os.path.join(self.model_dir,'checkpoints')
         self.saver = tf.train.Saver()
         self.start_epoch = start_epoch
         self.restored_model = restored_model
@@ -73,7 +75,7 @@ class Trainer:
         # and that self.model_file is None
         if self.model_file is not None:
             cmd = 'cp {model_file} {archive_path}'
-            shell_command(cmd.format(model_file=self.model_file, archive_path=self.tfboard_run_dir + '/'))
+            shell_command(cmd.format(model_file=self.model_file, archive_path=self.model_dir + '/'))
 
         if not self.restored_model:  # Don't want to erase restored model weights
             sess.run(tf.global_variables_initializer())
@@ -95,9 +97,13 @@ class Trainer:
         test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict=test_feed_dict,
                                                options=run_opts, run_metadata=run_opts_metadata)
 
+
         # Always worth printing accuracy, even for a restored model, since it provides an early sanity check
         message = "epoch: {0}, training accuracy: {1}, validation accuracy: {2}"
         print(message.format(self.start_epoch, train_accuracy, test_accuracy))
+
+        if self.tf_timeline:  # Used for debugging slow Tensorflow code
+            create_tf_timeline(self.model_dir, run_opts_metadata)
 
         # Don't double-count. A restored model already has its last checkpoint and results.txt entry available
         if not self.restored_model:
@@ -137,7 +143,7 @@ class Trainer:
             sync_to_aws(s3_path=self.s3_data_dir, local_path=self.data_path)  # Save to AWS
 
         # Marks unambiguous successful completion to prevent deletion by cleanup script
-        shell_command('touch ' + self.tfboard_run_dir + '/SUCCESS')
+        shell_command('touch ' + self.model_dir + '/SUCCESS')
 
     def save_model(self,sess,epoch):
         file_path = os.path.join(self.model_checkpoint_dir,'model')
@@ -157,6 +163,15 @@ def format_s3_data_dir(s3_bucket):
         return '{s3_bucket}/data'.format(s3_bucket=s3_bucket)
     else:
         return s3_bucket
+
+
+# This is helpful for profiling slow Tensorflow code
+def create_tf_timeline(model_dir,run_metadata):
+    tl = timeline.Timeline(run_metadata.step_stats)
+    ctf = tl.generate_chrome_trace_format()
+    timeline_file_path = os.path.join(model_dir,'timeline.json')
+    with open(timeline_file_path, 'w') as f:
+        f.write(ctf)
 
 
 def parse_args():

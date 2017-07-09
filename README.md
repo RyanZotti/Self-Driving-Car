@@ -181,3 +181,8 @@ I created a script called `resume_training.py` that is agnostic to the model who
 **A:** There are probably multiple ways to do this, but whenever I connect my Raspberry Pi to a new wifi network I always have to plug in my keyboard, mouse, and HDMI cable so that I can view the Pi on a monitor or TV. Then open up the Pi console and type the command below, which will print the IP to your console.
 
 	hostname -I
+
+
+## Useful Links
+
+* [TensorFlow Timeslines example](https://stackoverflow.com/documentation/tensorflow/3850/measure-the-execution-time-of-individual-operations#t=201707090002297903596 ): Show execution time for each node in your TensorFlow graph. 
