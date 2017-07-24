@@ -2,7 +2,9 @@ import tensorflow as tf
 from Trainer import Trainer, parse_args
 import os
 from model import *
+from datetime import datetime
 
+start_time = datetime.now()
 
 args = parse_args()
 data_path = args["datapath"]
@@ -33,11 +35,16 @@ model_file = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basenam
 trainer = Trainer(data_path=data_path,
                   model_file=model_file,
                   s3_bucket=s3_bucket,
-                  epochs=epochs,
+                  epochs=3,
                   max_sample_records=1000)
+
 
 trainer.train(sess=sess, x=x, y_=y_,
               accuracy=accuracy,
               train_step=train_step,
               train_feed_dict={},
               test_feed_dict={})
+
+finish_time = datetime.now()
+diff_secconds = (finish_time - start_time).total_seconds()
+print('duration: '+str(diff_secconds))

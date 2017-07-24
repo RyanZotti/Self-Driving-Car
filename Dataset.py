@@ -139,7 +139,7 @@ class SingleBatchGenerator(Process):
         labels.extend(npzfile['targets'])
         images, labels = reduce_record_count(images, labels)
         images, labels = shuffle_dataset(images, labels)
-        images, labels = process_data([images, labels], folder_path)
+        images, labels = process_data([images, labels])
         return images, labels
 
 
