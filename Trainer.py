@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.python.client import timeline
 from util import mkdir_tfboard_run_dir,mkdir,shell_command
-from data_augmentation import process_data
 import os
 from Dataset import Dataset
 import argparse
@@ -51,7 +50,7 @@ class Trainer:
 
         train_batches = dataset.get_batches(train=True)
         batch = next(train_batches)
-        images, labels = process_data(batch)
+        images, labels = batch
         train_feed_dict[x] = images
         train_feed_dict[y_] = labels
         for epoch in range(self.n_epochs):
@@ -86,12 +85,12 @@ class Trainer:
         run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
         run_opts_metadata = tf.RunMetadata()
 
-        train_images, train_labels = process_data(dataset.get_sample(train=True))
+        train_images, train_labels = dataset.get_multiprocess_sample(train=True)
         train_feed_dict[x] = train_images
         train_feed_dict[y_] = train_labels
         train_summary, train_accuracy = sess.run([merged, accuracy], feed_dict=train_feed_dict,
                                                  options=run_opts, run_metadata=run_opts_metadata)
-        test_images, test_labels = process_data(dataset.get_sample(train=False))
+        test_images, test_labels = dataset.get_multiprocess_sample(train=False)
         test_feed_dict[x] = test_images
         test_feed_dict[y_] = test_labels
         test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict=test_feed_dict,
@@ -115,7 +114,7 @@ class Trainer:
         for epoch in range(self.start_epoch+1, self.start_epoch + self.n_epochs):
             train_batches = dataset.get_batches(train=True)
             for batch in train_batches:
-                images, labels = process_data(batch)
+                images, labels = batch
                 train_feed_dict[x] = images
                 train_feed_dict[y_] = labels
                 sess.run(train_step,feed_dict=train_feed_dict)
@@ -124,12 +123,12 @@ class Trainer:
             run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
             run_opts_metadata = tf.RunMetadata()
 
-            train_images, train_labels = process_data(dataset.get_sample(train=True))
+            train_images, train_labels = dataset.get_multiprocess_sample(train=True)
             train_feed_dict[x] = train_images
             train_feed_dict[y_] = train_labels
             train_summary, train_accuracy = sess.run([merged, accuracy], feed_dict=train_feed_dict,
                                                      options=run_opts, run_metadata=run_opts_metadata)
-            test_images, test_labels = process_data(dataset.get_sample(train=False))
+            test_images, test_labels = dataset.get_multiprocess_sample(train=False)
             test_feed_dict[x] = test_images
             test_feed_dict[y_] = test_labels
             test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict=test_feed_dict,
