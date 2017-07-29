@@ -100,30 +100,6 @@ def shuffle_dataset(predictors, targets):
     targets = targets[shuffle_index]
     return predictors, targets
 
-
-def window(batch_index,batch_size,window_size,predictors,targets):
-    frame_index = batch_size * batch_index
-    windowed_predictors = []
-    windowed_targets = []
-    for record_index in range(batch_size):
-        frame_index += record_index
-        windowed_predictors.append(predictors[frame_index:frame_index + window_size])
-        windowed_targets.append(targets[frame_index + window_size])
-    windowed_predictors = np.array(windowed_predictors)
-    windowed_targets = np.array(windowed_targets)
-    windowed_predictors, windowed_targets = shuffle_dataset(windowed_predictors,windowed_targets)
-    return windowed_predictors, windowed_targets
-
-def windowed_dataset(inpt,otpt,bindx,pred_nm,trgt_nm):
-    cmd = '''python windowed_dataset.py -i {inpt} -o {otpt} -b {bindx} -p {pred_nm} -t {trgt_nm}
-          '''.format(inpt=inpt,otpt=otpt,bindx=bindx,pred_nm=pred_nm,trgt_nm=trgt_nm)
-    shell_command(cmd)
-    npzfile = np.load(otpt+'/window.npz')
-    predictors = npzfile[pred_nm]
-    targets = npzfile[trgt_nm]
-    return predictors, targets
-
-
 def record_count(file_path):
     result = int(str(shell_command('cat '+file_path)).replace("b","").replace("'",""))
     return result
