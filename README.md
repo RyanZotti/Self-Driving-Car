@@ -166,6 +166,19 @@ I created a script called `resume_training.py` that is agnostic to the model who
 	        --epochs $EPOCHS \
 	        --model_dir $MODEL_DIR \
 	        --s3_bucket ${S3_BUCKET}
+	        
+	# Or on a GPU
+	DATA_PATH='/root/data/tf_visual_data'
+	EPOCHS=100
+	MODEL_DIR='/root/data/tf_visual_data/runs/4'
+	S3_BUCKET=self-driving-car
+
+	# Run the script
+	nohup python3 resume_training.py \
+        	--datapath $DATA_PATH \
+        	--epochs $EPOCHS \
+        	--model_dir $MODEL_DIR \
+        	--s3_bucket ${S3_BUCKET} & 
 
 
 ## FAQ
