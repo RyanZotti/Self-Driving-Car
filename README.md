@@ -168,7 +168,7 @@ I created a script called `resume_training.py` that is agnostic to the model who
 	        --s3_bucket ${S3_BUCKET}
 	        
 	# Or on a GPU
-	DATA_PATH='/root/data/tf_visual_data'
+	DATA_PATH='/root/data'
 	EPOCHS=100
 	MODEL_DIR='/root/data/tf_visual_data/runs/4'
 	S3_BUCKET=self-driving-car

@@ -13,22 +13,19 @@ See details below.
 	dpkg -i cuda-repo-ubuntu1604_8.0.44-1_amd64.deb
 	apt-get update
 	apt-get install -y cuda
-		
+
 	# You'll have to manually download this and then scp it up because of a 403. I think it's because Nvidia wants you to go through their website for marketing
-	wget https://developer.nvidia.com/compute/machine-learning/cudnn/secure/v5.1/prod/8.0/cudnn-8.0-linux-x64-v5.1-tgz
-	
+	# wget https://developer.nvidia.com/compute/machine-learning/cudnn/secure/v5.1/prod/8.0/cudnn-8.0-linux-x64-v5.1-tgz
 	# Fortunately I'm now hosting the file in my own S3 bucket
 	wget https://s3.amazonaws.com/self-driving-car/cudnn-8.0-linux-x64-v5.1.tgz
 	tar -xzvf cudnn-8.0-linux-x64-v5.1.tgz
-	
 	mkdir -p /usr/local/cuda/lib64/
 	cp cuda/include/cudnn.h /usr/local/cuda/include
 	cp cuda/lib64/libcudnn* /usr/local/cuda/lib64
 	chmod a+r /usr/local/cuda/include/cudnn.h /usr/local/cuda/lib64/libcudnn*
 	
-	vi /root/.bashrc
-	export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"
-	export CUDA_HOME=/usr/local/cuda
+	echo 'export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"' >> /root/.bashrc
+	echo 'export CUDA_HOME=/usr/local/cuda' >> /root/.bashrc
 	
 	source /root/.bashrc
 	
