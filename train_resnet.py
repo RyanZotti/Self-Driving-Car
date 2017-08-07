@@ -26,8 +26,8 @@ y_ = tf.placeholder(tf.float32, shape=[None, 3])
 BottleneckGroup = namedtuple('BottleneckGroup',
                            ['num_blocks', 'num_filters', 'bottleneck_size'])
 groups = [
-  BottleneckGroup(3, 32, 16), BottleneckGroup(3, 64, 16),
-  BottleneckGroup(3, 64, 16), BottleneckGroup(3, 64, 16)
+  BottleneckGroup(3, 32, 8), BottleneckGroup(3, 32, 8),
+  BottleneckGroup(3, 32, 8), BottleneckGroup(3, 32, 8)
 ]
 
 # First convolution expands to 64 channels
