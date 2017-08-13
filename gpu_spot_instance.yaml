@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  RunId:
+    Type: String
+    Description: Model save/restore location in S3
+  BidPrice:
+    Type: String
+    Description: Max bid price in dollars
+    Default: 0.20
+Mappings:
+  constants:
+    training:
+      epochs: 100
+      data: /root/data
+      modeldir: /root/data/tf_visual_data/runs/
+      s3bucket: self-driving-car
+Resources:
+  SpotFleet:
+    Type: AWS::EC2::SpotFleet
+    Properties:
+      SpotFleetRequestConfigData:
+        IamFleetRole: arn:aws:iam::412973852817:role/aws-ec2-spot-fleet-tagging-role
+        SpotPrice: !Ref BidPrice
+        TargetCapacity: 1
+        LaunchSpecifications:
+        - InstanceType: p2.xlarge
+          ImageId: ami-4d38625b  # tensorflow-1.1.0 p2.xlarge v1 (ami-4d38625b)
+          KeyName: ML
+          Placement:
+            AvailabilityZone: 'us-east-1a, us-east-1b, us-east-1c, us-east-1d, us-east-1e'  # us-east-1f is currently broken
+          SecurityGroups:
+          - GroupId: sg-78d0f507
+          IamInstanceProfile:
+            Arn: arn:aws:iam::412973852817:instance-profile/s3_write
+          UserData:
+            Fn::Base64: !Sub |
+              #!/bin/bash
+              rm -rf /root/Self-Driving-Car
+              git clone git clone https://github.com/RyanZotti/Self-Driving-Car /root/Self-Driving-Car
+              rm -rf /root/data
+              aws s3 cp s3://self-driving-car/data /root/data --recursive
+              SCRIPT=train_conv_net.py
+              nohup python3 resume_training.py \
+                  --datapath !FindInMap [constants, !Ref training, data] \
+                  --epochs !FindInMap [constants, !Ref training, epochs] \
+                  --model_dir !FindInMap [constants, !Ref training, modeldir]/!Ref RunId \
+                  --s3_bucket !FindInMap [constants, !Ref training, s3bucket] &
