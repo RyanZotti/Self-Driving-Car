@@ -8,6 +8,7 @@ args = parse_args()
 data_path = args["datapath"]
 epochs = args["epochs"]
 model_dir = args["model_dir"]
+show_speed = args['show_speed']
 s3_bucket = format_s3_bucket(args['s3_bucket'])
 
 s3_data_dir = format_s3_data_dir(s3_bucket)
@@ -50,7 +51,8 @@ trainer = Trainer(data_path=data_path,
                   max_sample_records=1000,  # TODO: Get max_sample_records from collections file
                   start_epoch = start_epoch,
                   restored_model=True,
-                  restored_model_dir=model_dir)
+                  restored_model_dir=model_dir,
+                  show_speed=show_speed)
 
 trainer.train(sess=sess, x=x, y_=y_,
               accuracy=accuracy,

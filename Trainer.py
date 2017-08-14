@@ -41,6 +41,7 @@ class Trainer:
             self.model_dir = mkdir_tfboard_run_dir(self.tfboard_basedir)
 
         self.results_file = os.path.join(self.model_dir, 'results.txt')
+        self.speed_file = os.path.join(self.model_dir, 'speed.txt')
         self.model_checkpoint_dir = os.path.join(self.model_dir,'checkpoints')
         self.saver = tf.train.Saver()
         self.start_epoch = start_epoch
@@ -137,13 +138,15 @@ class Trainer:
                 # Track speed to better compare GPUs and CPUs
                 now = datetime.now()
                 diff_seconds = (now - prev_time).total_seconds()
-                prev_time = datetime.now()
                 if self.show_speed:
                     message = 'batch {batch_id} of {total_batches}, {seconds} seconds'
                     message = message.format(batch_id=batch_id,
                                              seconds=diff_seconds,
                                              total_batches=dataset.batches_per_epoch)
+                    with open(self.speed_file, 'a') as f:
+                        f.write(message + '\n')
                     print(message)
+                prev_time = datetime.now()
 
             # TODO: Document and understand what RunOptions does
             run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)

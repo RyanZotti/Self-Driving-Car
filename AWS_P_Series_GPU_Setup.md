@@ -77,4 +77,5 @@ How to run the training code:
 	SCRIPT=train_conv_net.py
 	nohup python3 ${SCRIPT} --datapath /root/data \
 		--epochs 100 \
-		--s3_bucket self-driving-car &
+		--s3_bucket self-driving-car \
+		--show_speed True &

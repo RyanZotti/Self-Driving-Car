@@ -178,7 +178,8 @@ I created a script called `resume_training.py` that is agnostic to the model who
         	--datapath $DATA_PATH \
         	--epochs $EPOCHS \
         	--model_dir $MODEL_DIR \
-        	--s3_bucket ${S3_BUCKET} & 
+        	--s3_bucket ${S3_BUCKET} \
+        	--show_speed True &
 
 
 ## FAQ
