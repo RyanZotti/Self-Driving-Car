@@ -217,8 +217,9 @@ def parse_args():
                     help="Show speed in seconds",
                     default=False)
     args = vars(ap.parse_args())
-    if args['show_speed'].lower() in ['y','true']:
-        args['show_speed'] = True
-    else:
-        args['show_speed'] = False
+    if args['show_speed'] is not False:
+        if args['show_speed'].lower() in ['y','true']:
+            args['show_speed'] = True
+        else:
+            args['show_speed'] = False
     return args
