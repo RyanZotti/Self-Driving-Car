@@ -1,3 +1,4 @@
+from datetime import datetime
 import tensorflow as tf
 from tensorflow.python.client import timeline
 from util import mkdir_tfboard_run_dir,mkdir,shell_command
@@ -10,8 +11,18 @@ from util import mkdir, sync_from_aws, sync_to_aws
 
 class Trainer:
 
-    def __init__(self, data_path, model_file, s3_bucket, epochs=50, max_sample_records=500, start_epoch=0,
-                 restored_model=False,restored_model_dir=None, tf_timeline=False):
+    def __init__(self,
+                 data_path,
+                 model_file,
+                 s3_bucket,
+                 epochs=50,
+                 max_sample_records=500,
+                 start_epoch=0,
+                 restored_model=False,
+                 restored_model_dir=None,
+                 tf_timeline=False,
+                 show_speed=False):
+
         self.data_path = data_path
         self.s3_bucket = format_s3_bucket(s3_bucket)
         self.s3_data_dir = format_s3_data_dir(self.s3_bucket)
@@ -36,6 +47,8 @@ class Trainer:
         self.restored_model = restored_model
         mkdir(self.model_checkpoint_dir)
 
+        # Prints batch processing speed, among other things
+        self.show_speed = show_speed
 
     # Used to intentionally overfit and check for basic initialization and learning issues
     def train_one_batch(self, sess, x, y_, accuracy, train_step, train_feed_dict):
@@ -113,12 +126,24 @@ class Trainer:
             sync_to_aws(s3_path=self.s3_data_dir, local_path=self.data_path)  # Save to AWS
 
         for epoch in range(self.start_epoch+1, self.start_epoch + self.n_epochs):
+            prev_time = datetime.now()
             train_batches = dataset.get_batches(train=True)
-            for batch in train_batches:
+            for batch_id, batch in enumerate(train_batches):
                 images, labels = process_data(batch)
                 train_feed_dict[x] = images
                 train_feed_dict[y_] = labels
                 sess.run(train_step,feed_dict=train_feed_dict)
+
+                # Track speed to better compare GPUs and CPUs
+                now = datetime.now()
+                diff_seconds = (now - prev_time).total_seconds()
+                prev_time = datetime.now()
+                if self.show_speed:
+                    message = 'batch {batch_id} of {total_batches}, {seconds} seconds'
+                    message = message.format(batch_id=batch_id,
+                                             seconds=diff_seconds,
+                                             total_batches=dataset.batches_per_epoch)
+                    print(message)
 
             # TODO: Document and understand what RunOptions does
             run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
@@ -188,5 +213,12 @@ def parse_args():
     ap.add_argument("-s", "--s3_bucket", required=False,
                     help="S3 backup URL",
                     default='self-driving-car')
+    ap.add_argument("-a", "--show_speed", required=False,
+                    help="Show speed in seconds",
+                    default=False)
     args = vars(ap.parse_args())
+    if args['show_speed'].lower() in ['y','true']:
+        args['show_speed'] = True
+    else:
+        args['show_speed'] = False
     return args
