@@ -20,6 +20,7 @@ class Dataset:
         self.test_folder_weights = self.get_folder_weights(self.test_folders)
         self.images_per_batch = images_per_batch
         self.images_per_epoch = int(self.train_metadata_summaries['image_count'] * self.train_percentage)
+        self.batches_per_epoch = int(self.images_per_epoch / self.images_per_batch)
         self.samples_per_epoch = int(self.images_per_epoch / self.max_sample_records)
 
     # TODO (ryanzotti): Make this asynchronous to parallelize disk reads during GPU/CPU train_step cycles
