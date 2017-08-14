@@ -139,13 +139,13 @@ class Trainer:
                 now = datetime.now()
                 diff_seconds = (now - prev_time).total_seconds()
                 if self.show_speed:
-                    message = 'batch {batch_id} of {total_batches}, {seconds} seconds'
-                    message = message.format(batch_id=batch_id,
+                    speed_results = 'batch {batch_id} of {total_batches}, {seconds} seconds'
+                    speed_results = speed_results.format(batch_id=batch_id,
                                              seconds=diff_seconds,
                                              total_batches=dataset.batches_per_epoch)
                     with open(self.speed_file, 'a') as f:
-                        f.write(message + '\n')
-                    print(message)
+                        f.write(speed_results + '\n')
+                    print(speed_results)
                 prev_time = datetime.now()
 
             # TODO: Document and understand what RunOptions does
