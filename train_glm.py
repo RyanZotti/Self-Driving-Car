@@ -17,8 +17,8 @@ y_ = tf.placeholder(tf.float32, shape=[None, 3])
 
 x_shaped = tf.reshape(x, [-1, 240 * 320 * 3])
 
-W = tf.Variable('layer1',tf.zeros([240 * 320 * 3, 3]))
-b = tf.Variable('layer1',tf.zeros([3]))
+W = weight_variable('layer1',[240 * 320 * 3, 3])
+b = bias_variable('layer1',[3])
 y = tf.nn.softmax(tf.matmul(x_shaped, W) + b)
 
 cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
