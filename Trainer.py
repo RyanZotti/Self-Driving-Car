@@ -1,7 +1,7 @@
 from datetime import datetime
 import tensorflow as tf
 from tensorflow.python.client import timeline
-from util import mkdir_tfboard_run_dir,mkdir,shell_command
+from util import mkdir_tfboard_run_dir,mkdir,shell_command, delete_old_model_backups
 from data_augmentation import process_data
 import os
 from Dataset import Dataset
@@ -174,6 +174,7 @@ class Trainer:
         shell_command('touch ' + self.model_dir + '/SUCCESS')
 
     def save_model(self,sess,epoch):
+        delete_old_model_backups(checkpoint_dir=self.model_checkpoint_dir)  # Delete all but latest backup to save space
         file_path = os.path.join(self.model_checkpoint_dir,'model')
         self.saver.save(sess,file_path,global_step=epoch)
 
