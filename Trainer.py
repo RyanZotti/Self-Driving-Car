@@ -174,9 +174,9 @@ class Trainer:
         shell_command('touch ' + self.model_dir + '/SUCCESS')
 
     def save_model(self,sess,epoch):
-        delete_old_model_backups(checkpoint_dir=self.model_checkpoint_dir)  # Delete all but latest backup to save space
         file_path = os.path.join(self.model_checkpoint_dir,'model')
         self.saver.save(sess,file_path,global_step=epoch)
+        delete_old_model_backups(checkpoint_dir=self.model_checkpoint_dir)  # Delete all but latest backup to save space
 
 
 def format_s3_bucket(s3_bucket):

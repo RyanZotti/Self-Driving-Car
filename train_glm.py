@@ -12,8 +12,8 @@ show_speed = args['show_speed']
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
-x = tf.placeholder(tf.float32, shape=[None, 240, 320, 3])
-y_ = tf.placeholder(tf.float32, shape=[None, 3])
+x = tf.placeholder(tf.float32, shape=[None, 240, 320, 3], name='x')
+y_ = tf.placeholder(tf.float32, shape=[None, 3], name='y_')
 
 x_shaped = tf.reshape(x, [-1, 240 * 320 * 3])
 

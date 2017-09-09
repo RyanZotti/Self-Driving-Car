@@ -13,24 +13,25 @@ import re
 # Used to save space. Keeping all model checkpoint epochs can eat up many GB of disk space
 def delete_old_model_backups(checkpoint_dir):
     checkpoint_files = listdir(checkpoint_dir)
-    keep_files = ['checkpoint']
-    checkpoint_files = list(set(checkpoint_files) - set(keep_files))
-    numbers = []
-    for checkpoint_file in checkpoint_files:
-        parsed_regex = re.search('(?<=-)[0-9]+(?=\.)', checkpoint_file)
-        regex_result = parsed_regex.group(0)
-        numbers.append(regex_result)
-    latest_checkpoint = max(numbers)
-    delete_files = []
-    for checkpoint_file in checkpoint_files:
-        if latest_checkpoint not in checkpoint_file:
-            delete_files.append(checkpoint_file)
-        else:
-            keep_files.append(checkpoint_file)
-    for delete_file in delete_files:
-        delete_file_path = os.path.join(checkpoint_dir, delete_file)
-        cmd = 'rm ' + delete_file_path
-        shell_command(cmd)
+    if len(checkpoint_files) > 0:
+        keep_files = ['checkpoint']
+        checkpoint_files = list(set(checkpoint_files) - set(keep_files))
+        numbers = []
+        for checkpoint_file in checkpoint_files:
+            parsed_regex = re.search('(?<=-)[0-9]+(?=\.)', checkpoint_file)
+            regex_result = parsed_regex.group(0)
+            numbers.append(regex_result)
+        latest_checkpoint = max(numbers)
+        delete_files = []
+        for checkpoint_file in checkpoint_files:
+            if latest_checkpoint not in checkpoint_file:
+                delete_files.append(checkpoint_file)
+            else:
+                keep_files.append(checkpoint_file)
+        for delete_file in delete_files:
+            delete_file_path = os.path.join(checkpoint_dir, delete_file)
+            cmd = 'rm ' + delete_file_path
+            shell_command(cmd)
 
 
 def dead_ReLU_pct(matrix):
