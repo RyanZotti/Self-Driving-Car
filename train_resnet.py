@@ -15,8 +15,8 @@ sess = tf.InteractiveSession(config=tf.ConfigProto())
 
 n_target_classes = 3
 
-x = tf.placeholder(tf.float32, shape=[None, 240, 320, 3])
-y_ = tf.placeholder(tf.float32, shape=[None, 3])
+x = tf.placeholder(tf.float32, shape=[None, 240, 320, 3], name='x')
+y_ = tf.placeholder(tf.float32, shape=[None, 3], name='y_')
 
 # I got most of the code from here:
 # https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/learn/resnet.py

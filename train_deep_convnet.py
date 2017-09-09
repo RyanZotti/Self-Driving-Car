@@ -12,8 +12,8 @@ show_speed = args['show_speed']
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
-x = tf.placeholder(tf.float32, shape=[None, 240, 320, 3])
-y_ = tf.placeholder(tf.float32, shape=[None, 3])
+x = tf.placeholder(tf.float32, shape=[None, 240, 320, 3], name='x')
+y_ = tf.placeholder(tf.float32, shape=[None, 3], name='y_')
 
 W_conv1 = weight_variable('layer1',[6, 6, 3, 24])
 b_conv1 = bias_variable('layer1',[24])

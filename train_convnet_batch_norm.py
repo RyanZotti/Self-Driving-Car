@@ -12,8 +12,8 @@ show_speed = args['show_speed']
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
-x = tf.placeholder(tf.float32, shape=[None, 240, 320, 3])
-y_ = tf.placeholder(tf.float32, shape=[None, 3])
+x = tf.placeholder(tf.float32, shape=[None, 240, 320, 3], name='x')
+y_ = tf.placeholder(tf.float32, shape=[None, 3], name='y_')
 phase = tf.placeholder(tf.bool, name='phase')
 
 conv1 = batch_norm_conv_layer('layer1', x, [6, 6, 3, 16], phase)
