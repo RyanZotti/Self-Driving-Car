@@ -48,7 +48,7 @@ trainer = Trainer(data_path=data_path,
                   model_file=None,
                   s3_bucket=s3_bucket,
                   epochs=epochs,
-                  max_sample_records=1000,  # TODO: Get max_sample_records from collections file
+                  max_sample_records=100,  # TODO: Get max_sample_records from collections file
                   start_epoch = start_epoch,
                   restored_model=True,
                   restored_model_dir=model_dir,
