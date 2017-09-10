@@ -81,7 +81,7 @@ class Trainer:
     def train(self, sess, x, y_, accuracy, train_step, train_feed_dict, test_feed_dict):
 
         # To view graph: tensorboard --logdir=/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs
-        tf.summary.scalar('accuracy', accuracy)
+        tf.summary.scalar('accuracy_summary', accuracy)
         merged = tf.summary.merge_all()
 
         # Archive the model script in case of good results that need to be replicated
