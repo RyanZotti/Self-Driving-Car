@@ -32,7 +32,7 @@ pred=tf.matmul(h2, W3) + b3
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y_))
 train_step = tf.train.AdamOptimizer(1e-5,name='train_step').minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(pred,1), tf.argmax(y_,1))
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32),name='accuracy')
 
 model_file = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basename(__file__)
 trainer = Trainer(data_path=data_path,
