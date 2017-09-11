@@ -1,50 +1,47 @@
+import argparse
 import tensorflow as tf
 import urllib.request
 import requests
-import numpy as np
 from datetime import datetime
 import cv2
 import json
-import os
+from util import *
 from haar_cascades.haar_cascade_webcam import detect_stop_sign
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
-def weight_variable(shape):
-    initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial)
+ap = argparse.ArgumentParser()
+ap.add_argument("-i", "--ip_address", required=True, help="Raspberry Pi ip address")
+ap.add_argument("-c", "--model_dir", required=True, help="Path to model checkpoint directory")
+args = vars(ap.parse_args())
 
-def bias_variable(shape):
-    initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial)
+checkpoint_dir_path = args['model_dir']
+ip = args['ip_address']
 
-def conv2d(x, W):
-    return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
+start_epoch = get_prev_epoch(checkpoint_dir_path)
+graph_name = 'model-'+str(start_epoch)
+checkpoint_file_path = os.path.join(checkpoint_dir_path,graph_name)
+saver = tf.train.import_meta_graph(checkpoint_dir_path+"/"+graph_name+".meta")
+sess = tf.Session()
 
-def max_pool_2x2(x):
-    return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-                          strides=[1, 2, 2, 1], padding='SAME')
+# Read the model into memory
+saver.restore(sess, checkpoint_file_path)
+graph = tf.get_default_graph()
 
-x = tf.placeholder(tf.float32, shape=[None, 240, 320, 3])
-y_ = tf.placeholder(tf.float32, shape=[None, 3])
+for n in tf.get_default_graph().as_graph_def().node:
+    print(n.name)
 
-x_shaped = tf.reshape(x, [-1, 240 * 320 * 3])
+# Restore values from previous run. These values should be same for all models
+accuracy = graph.get_tensor_by_name("accuracy:0")
+x = graph.get_tensor_by_name("x:0")
+y_ = graph.get_tensor_by_name("y_:0")
+train_step = graph.get_operation_by_name('train_step')
 
-W1 = weight_variable([240 * 320 * 3, 32])
-b1 = bias_variable([32])
-h1 = tf.sigmoid(tf.matmul(x_shaped, W1) + b1)
+# TODO: Explicitly name the prediction part
+pred = graph.get_tensor_by_name("MatMul_1:0")
 
-W2 = weight_variable([32, 3])
-b2 = bias_variable([3])
-y=tf.nn.softmax(tf.matmul(h1, W2) + b2)
-
-saver = tf.train.Saver()
-saver.restore(sess, "/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/1/trained_model/model.ckpt")
-
-cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
-train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
-correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+train_feed_dict = {}
+test_feed_dict = {}
 
 image_path = str(os.path.dirname(os.path.realpath(__file__))) + "/arrow_key_images"
 up_arrow = cv2.imread(image_path + '/UpArrow.tif')
@@ -53,7 +50,7 @@ right_arrow = cv2.imread(image_path + '/Right Arrow.tif')
 
 fourcc = cv2.VideoWriter_fourcc(*'jpeg')
 out = cv2.VideoWriter('output.mov', fourcc, 20.0, (320, 240))
-stream = urllib.request.urlopen('http://192.168.0.35/webcam.mjpeg')
+stream = urllib.request.urlopen('http://{ip}/webcam.mjpeg'.format(ip=ip))
 bytes = bytes()
 while True:
     bytes += stream.read(1024)
@@ -65,7 +62,7 @@ while True:
         frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
         normalized_frame = frame / 255
         new_frame = np.array([normalized_frame])
-        prediction = tf.argmax(y, 1)
+        prediction = tf.argmax(pred, 1)
         command_map = {0:"left",1:"up",2:"right"}
         command_index = prediction.eval(feed_dict={x: new_frame}, session=sess)[0]
         command = command_map[command_index]
@@ -77,7 +74,7 @@ while True:
         elif command == 'right':
             key_image = right_arrow
 
-        distance_api = requests.get('http://192.168.0.35:81/distance')
+        distance_api = requests.get('http://{ip}:81/distance'.format(ip=ip))
         try:
             obstacle_distance = float(distance_api.text)
         except:
@@ -112,7 +109,7 @@ while True:
         post_command = post_map[command]
         if obstacle_distance > 10.00:
             data = {'command':{str(post_command):command}}
-            r = requests.post('http://192.168.0.35:81/post', data=json.dumps(data))
+            r = requests.post('http://{ip}:81/post'.format(ip=ip), data=json.dumps(data))
             print(command + " " + str(now)+" status code: "+str(r.status_code))
         else:
             command = "STOP! Obstacle detected."
