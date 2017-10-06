@@ -21,7 +21,8 @@ class Trainer:
                  restored_model=False,
                  restored_model_dir=None,
                  tf_timeline=False,
-                 show_speed=False):
+                 show_speed=False,
+                 s3_sync=True):
 
         self.data_path = data_path
         self.s3_bucket = format_s3_bucket(s3_bucket)
@@ -30,9 +31,11 @@ class Trainer:
         self.n_epochs = int(epochs)
         self.max_sample_records = max_sample_records
         self.tf_timeline = tf_timeline
+        self.s3_sync = s3_sync
 
         # Always sync before training in case I ever train multiple models in parallel
-        sync_from_aws(s3_path=self.s3_data_dir, local_path=self.data_path)
+        if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
+            sync_from_aws(s3_path=self.s3_data_dir, local_path=self.data_path)
 
         if restored_model:
             self.model_dir = restored_model_dir
@@ -124,7 +127,8 @@ class Trainer:
             with open(self.results_file,'a') as f:
                 f.write(message.format(self.start_epoch, train_accuracy, test_accuracy)+'\n')
             self.save_model(sess, epoch=self.start_epoch)
-            sync_to_aws(s3_path=self.s3_data_dir, local_path=self.data_path)  # Save to AWS
+            if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
+                sync_to_aws(s3_path=self.s3_data_dir, local_path=self.data_path)  # Save to AWS
 
         for epoch in range(self.start_epoch+1, self.start_epoch + self.n_epochs):
             prev_time = datetime.now()
@@ -168,7 +172,8 @@ class Trainer:
 
             # Save a model checkpoint after every epoch
             self.save_model(sess,epoch=epoch)
-            sync_to_aws(s3_path=self.s3_data_dir, local_path=self.data_path)  # Save to AWS
+            if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
+                sync_to_aws(s3_path=self.s3_data_dir, local_path=self.data_path)  # Save to AWS
 
         # Marks unambiguous successful completion to prevent deletion by cleanup script
         shell_command('touch ' + self.model_dir + '/SUCCESS')
@@ -203,6 +208,17 @@ def create_tf_timeline(model_dir,run_metadata):
         f.write(ctf)
 
 
+def parse_boolean_cli_args(args_value):
+    parsed_value = None
+    if isinstance(args_value, bool):
+        parsed_value = args_value
+    elif args_value.lower() in ['y', 'true']:
+        parsed_value = True
+    else:
+        parsed_value = False
+    return parsed_value
+
+
 def parse_args():
     ap = argparse.ArgumentParser()
     ap.add_argument("-d", "--datapath", required=False,
@@ -220,10 +236,10 @@ def parse_args():
     ap.add_argument("-a", "--show_speed", required=False,
                     help="Show speed in seconds",
                     default=False)
+    ap.add_argument("-b", "--s3_sync", required=False,
+                    help="Save on S3 storage by not syncing during code development",
+                    default=True)
     args = vars(ap.parse_args())
-    if args['show_speed'] is not False:
-        if args['show_speed'].lower() in ['y','true']:
-            args['show_speed'] = True
-        else:
-            args['show_speed'] = False
+    args['show_speed'] = parse_boolean_cli_args(args['show_speed'])
+    args['s3_sync'] = parse_boolean_cli_args(args['s3_sync'])
     return args

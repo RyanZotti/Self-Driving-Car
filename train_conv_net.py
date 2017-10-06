@@ -9,6 +9,7 @@ data_path = args["datapath"]
 epochs = args["epochs"]
 s3_bucket = args['s3_bucket']
 show_speed = args['show_speed']
+s3_sync = args['s3_sync']
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
@@ -49,7 +50,8 @@ trainer = Trainer(data_path=data_path,
                   s3_bucket=s3_bucket,
                   epochs=epochs,
                   max_sample_records=100,
-                  show_speed=show_speed)
+                  show_speed=show_speed,
+                  s3_sync=s3_sync)
 
 trainer.train(sess=sess, x=x, y_=y_,
               accuracy=accuracy,
