@@ -118,7 +118,7 @@ net_shape = net.get_shape().as_list()
 net = tf.reshape(net, [-1, net_shape[1] * net_shape[2] * net_shape[3]])
 
 # Compute logits (1 per class)
-logits = tf.layers.dense(net, n_target_classes, activation=None)
+logits = tf.layers.dense(net, n_target_classes, activation=None,name='logits')
 
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y_))
 train_step = tf.train.AdamOptimizer(1e-5,name='train_step').minimize(cross_entropy)

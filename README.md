@@ -145,11 +145,14 @@ Training a new model is simple. See the example below. The `nohup` and `&` tell 
 
 	S3_BUCKET=self-driving-car # Specify your own S3 bucket
 	SCRIPT=train_conv_net.py
+	# Optionally, in development mode, avoid syncing to save money on S3 data transfers
+	S3_SYNC=n
 	
 	# All scripts follow the same command-line interface
 	nohup python3 ${SCRIPT} --datapath /root/data \
 		--epochs 100 \
-		--s3_bucket ${S3_BUCKET} &
+		--s3_bucket ${S3_BUCKET} \
+		--s3_sync ${S3_SYNC} &
 
 Training still takes a long time (e.g., 10+ hours) even when training on a GPU. To make recovery from unexpected failures easier, I use Tensorflow's checkpoint feature to be able to start and stop my models. These are included in the model backups sent to the cloud. Tensorflow model checkpointing also makes it possible to rely on AWS Spot Instances, which I haven't tried yet. 
 
@@ -160,13 +163,16 @@ I created a script called `resume_training.py` that is agnostic to the model who
 	EPOCHS=100
 	MODEL_DIR='/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data/tf_visual_data/runs/1'
 	S3_BUCKET=self-driving-car
+	# Optionally, in development mode, avoid syncing to save money on S3 data transfers
+	S3_SYNC=n
 	
 	# Run the script
 	python resume_training.py \
 	        --datapath $DATA_PATH \
 	        --epochs $EPOCHS \
 	        --model_dir $MODEL_DIR \
-	        --s3_bucket ${S3_BUCKET}
+	        --s3_bucket ${S3_BUCKET} \
+	        --s3_sync ${S3_SYNC}
 	        
 	# Or on a GPU
 	DATA_PATH='/root/data'
