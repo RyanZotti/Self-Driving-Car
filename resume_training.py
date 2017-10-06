@@ -10,6 +10,7 @@ epochs = args["epochs"]
 model_dir = args["model_dir"]
 show_speed = args['show_speed']
 s3_bucket = format_s3_bucket(args['s3_bucket'])
+s3_sync = args['s3_sync']
 
 s3_data_dir = format_s3_data_dir(s3_bucket)
 checkpoint_dir_path = os.path.join(model_dir,'checkpoints')
@@ -52,7 +53,8 @@ trainer = Trainer(data_path=data_path,
                   start_epoch = start_epoch,
                   restored_model=True,
                   restored_model_dir=model_dir,
-                  show_speed=show_speed)
+                  show_speed=show_speed,
+                  s3_sync=s3_sync)
 
 trainer.train(sess=sess, x=x, y_=y_,
               accuracy=accuracy,
