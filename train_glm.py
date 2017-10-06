@@ -20,7 +20,8 @@ x_shaped = tf.reshape(x, [-1, 240 * 320 * 3])
 
 W = weight_variable('layer1',[240 * 320 * 3, 3])
 b = bias_variable('layer1',[3])
-y = tf.nn.softmax(tf.matmul(x_shaped, W) + b)
+logits = tf.add(tf.matmul(x_shaped, W), b, name='logits')
+y = tf.nn.softmax(logits)
 
 cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
 train_step = tf.train.AdamOptimizer(1e-4,name='train_step').minimize(cross_entropy)

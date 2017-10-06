@@ -33,11 +33,11 @@ h11 = batch_norm_fc_layer('layer11',h10, [128, 64], phase)
 
 W_final = weight_variable('layer12',[64, 3])
 b_final = bias_variable('layer12',[3])
-pred = tf.matmul(h11, W_final) + b_final
+logits = tf.add(tf.matmul(h11, W_final), b_final, name='logits')
 
-cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y_))
+cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y_))
 train_step = tf.train.AdamOptimizer(1e-5,name='train_step').minimize(cross_entropy)
-correct_prediction = tf.equal(tf.argmax(pred,1), tf.argmax(y_,1))
+correct_prediction = tf.equal(tf.argmax(logits,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32),name='accuracy')
 
 '''

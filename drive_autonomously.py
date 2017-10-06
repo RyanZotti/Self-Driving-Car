@@ -38,7 +38,7 @@ y_ = graph.get_tensor_by_name("y_:0")
 train_step = graph.get_operation_by_name('train_step')
 
 # TODO: Explicitly name the prediction part
-pred = graph.get_tensor_by_name("MatMul_1:0")
+logits = graph.get_operation_by_name("logits")
 
 train_feed_dict = {}
 test_feed_dict = {}
@@ -62,7 +62,7 @@ while True:
         frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
         normalized_frame = frame / 255
         new_frame = np.array([normalized_frame])
-        prediction = tf.argmax(pred, 1)
+        prediction = tf.argmax(logits, 1)  # Returns the index with the largest value across axes of a tensor
         command_map = {0:"left",1:"up",2:"right"}
         command_index = prediction.eval(feed_dict={x: new_frame}, session=sess)[0]
         command = command_map[command_index]
