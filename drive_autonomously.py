@@ -37,8 +37,15 @@ x = graph.get_tensor_by_name("x:0")
 y_ = graph.get_tensor_by_name("y_:0")
 train_step = graph.get_operation_by_name('train_step')
 
-# TODO: Explicitly name the prediction part
-logits = graph.get_operation_by_name("logits")
+# Restore the Tensorflow op that creates the logits
+make_logits = graph.get_operation_by_name("logits")
+
+# Create a tensor from the restored `logits` op
+# For more details on why .outputs[0] is required, see: https://stackoverflow.com/questions/42595543/tensorflow-eval-restored-graph
+logits = make_logits.outputs[0]
+
+# A tensor representing the model's prediction
+prediction = tf.argmax(logits, 1)  # tf.argmax returns the index with the largest value across axes of a tensor
 
 train_feed_dict = {}
 test_feed_dict = {}
@@ -62,7 +69,6 @@ while True:
         frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
         normalized_frame = frame / 255
         new_frame = np.array([normalized_frame])
-        prediction = tf.argmax(logits, 1)  # Returns the index with the largest value across axes of a tensor
         command_map = {0:"left",1:"up",2:"right"}
         command_index = prediction.eval(feed_dict={x: new_frame}, session=sess)[0]
         command = command_map[command_index]
