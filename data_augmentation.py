@@ -66,7 +66,15 @@ def normalize_contrast(images):
 # Collapses multiple data transformations; primarily used in model training scritps
 def process_data(data):
     images, labels = data[0], data[1]
-    images = normalize_contrast(images)
     images, labels = flip_enrichment(images, labels)
-    images = images / 255
+    images = apply_transformations(images)
     return images, labels
+
+
+# I've separated this from `process_data` so that I can use it in both training
+# and scoring. Relying on process_data alone wasn't sufficient for scoring
+# because during scoring the true labels aren't known at runtime
+def apply_transformations(images):
+    images = normalize_contrast(images)
+    images = images / 255
+    return images
