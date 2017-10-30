@@ -1,11 +1,8 @@
 import cv2
 import subprocess
 from os import listdir
-from os.path import isfile
 import numpy as np
 import os
-import tensorflow as tf
-from random import randint
 import boto3
 from pathlib import Path
 import re
@@ -35,16 +32,6 @@ def delete_old_model_backups(checkpoint_dir):
             cmd = 'rm ' + delete_file_path
             shell_command(cmd)
 
-
-def dead_ReLU_pct(matrix):
-    zeros = (matrix.size - matrix[matrix > 0].size)
-    dead_ReLU_percent = zeros / matrix.size
-    return dead_ReLU_percent
-
-def custom_summary(summary_name,summary_value):
-    # Got this from here: http://stackoverflow.com/questions/37902705/how-to-manually-create-a-tf-summary
-    summary = tf.Summary(value=[tf.Summary.Value(tag=summary_name, simple_value=summary_value)])
-    return summary
 
 def remove_file_if_exists(file_path):
     if os.path.exists(file_path):
@@ -106,17 +93,6 @@ def upload_s3_file(source_path,bucket_name,target_path):
     s3 = boto3.client('s3')
     s3.upload_file(source_path, bucket_name, target_path)
 
-def cleanup(dir):
-    if 'tf_visual_data/runs/' in dir:
-        sub_dirs = listdir(dir)
-        for sub_dir in sub_dirs:
-            if sub_dir is not isfile(sub_dir):
-                files = listdir(dir+'/'+sub_dir)
-                if "SUCCESS" not in files:
-                    shell_command('rm -rf ' + dir + sub_dir)
-    else:
-        pass # do not accidentally delete entire file system!
-
 
 def shuffle_dataset(predictors, targets):
     record_count = predictors.shape[0]
@@ -129,64 +105,6 @@ def shuffle_dataset(predictors, targets):
 def record_count(file_path):
     result = int(str(shell_command('cat '+file_path)).replace("b","").replace("'",""))
     return result
-
-
-def move_window(windowed_data,new_frame):
-    # Add frame to end of window.
-    # Oldest window is first and newest is last so that when the video is played it looks normal
-    windowed_data = np.concatenate((windowed_data, new_frame), axis=0)
-    # remove oldest frame, which is the first element.
-    windowed_data = np.delete(windowed_data, 0, 0)
-    return windowed_data
-
-
-# Hopefully saves space for 3D convolution
-def first_and_last_window_frames(windowed_data):
-    first_frame = windowed_data[0]
-    last_frame = windowed_data[len(windowed_data) - 1]
-    two_frames = np.concatenate(([first_frame], [last_frame]), axis=0)
-    return two_frames
-
-
-# randomly selects a window from a given predictors-targets dataset
-def random_window(predictors,targets,window_size):
-    upper_bound = predictors.shape[0] - window_size
-    random_index = randint(0, upper_bound)
-    random_window_predictors = predictors[random_index:random_index + window_size]
-    # -1 for the target index because this type of numpy sub-setting is inclusive whereas for predictors
-    # it wasn't selected only elements before that index
-    random_window_targets = targets[random_index + window_size -1]
-    return random_window_predictors, random_window_targets
-
-
-# randomly selects one window from one randomly selected session
-def random_window_random_session(data_path,window_size):
-    data_folders = listdir(data_path)
-    random_index = randint(0,len(data_folders)-1)
-    random_folder = data_folders[random_index]
-    data_file = np.load(data_path +'/' + str(random_folder) + '/predictors_and_targets.npz')
-    predictors = data_file['predictors']
-    targets = data_file['targets']
-    predictors, targets = random_window(predictors,targets,window_size)
-    return predictors, targets
-
-
-# returns randomly generated, windowed dataset for 3D convolution
-def multiple_random_windows_from_random_sessions(data_path,window_size,window_count,hollow_window=True):
-    predictor_windows = None # because I'm used to Java
-    target_windows = None # because I'm used to Java
-    for window_index in range(window_count):
-        predictors, targets = random_window_random_session(data_path, window_size)
-        if hollow_window:
-            predictors = first_and_last_window_frames(predictors)
-            # Note the absence of targets; they are snapshots and don't need hollowing
-        if window_index > 0:
-            predictor_windows = np.concatenate((predictor_windows,[predictors]),axis=0)
-            target_windows = np.concatenate((target_windows, [targets]), axis=0)
-        else:
-            predictor_windows = np.array([predictors])
-            target_windows = np.array([targets])
-    return predictor_windows, target_windows
 
 
 def file_is_in_s3(bucket_name,full_path_to_file):

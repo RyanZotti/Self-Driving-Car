@@ -26,12 +26,6 @@ for frame in live_video_stream(ip):
 
         # Tell the car to move if no overriding safety rules apply (e.g., obstacle, stop sign)
         frame = detect_stop_sign(frame)  # TODO: Actually top if stop sign detected
-        obstacle_distance = command_center.read_sensor_distance()
-        if obstacle_distance < 10.00:
-            command = "STOP! Obstacle detected."
-        else:
-            command_center.send_remote_command(command)
+        command_center.send_remote_command(command)
 
     cv2.imshow('frame', frame)
-
-print("Finished")
