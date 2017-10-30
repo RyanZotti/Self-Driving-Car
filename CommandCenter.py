@@ -70,7 +70,7 @@ class CommandCenter:
         post_map = {"left": 37, "up": 38, "right": 39}
         post_command = post_map[command]
         data = {'command': {str(post_command): command}}
-        r = requests.post('http://{ip}:81/post'.format(ip=ip), data=json.dumps(data))
+        r = requests.post('http://{ip}:81/post'.format(ip=self.ip), data=json.dumps(data))
         now = datetime.now()
         print(command + " " + str(now) + " status code: " + str(r.status_code))
 
