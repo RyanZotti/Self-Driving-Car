@@ -256,9 +256,3 @@ def get_key_image_from_array(label):
     elif label[0][2] == 1:
         key_image = right_arrow
     return key_image
-
-
-if __name__ == '__main__':
-    data_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data'
-    data_prep(data_path,rgb=True)
-    print("Finished.")
