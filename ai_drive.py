@@ -15,7 +15,7 @@ ip = args['ip_address']
 # Command Center keep a copy of the model and issues all commands
 command_center = CommandCenter(checkpoint_dir_path=checkpoint_dir_path, ip=ip)
 
-for frame in live_video_stream():
+for frame in live_video_stream(ip):
 
     # Add frame to prediction queue to avoid blocking future frames
     command_center.put(frame)

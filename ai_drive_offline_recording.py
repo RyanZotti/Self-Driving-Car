@@ -1,6 +1,8 @@
 from util import *
 from CommandCenter import CommandCenter
 
+# This script is used to debug ai drive
+# I also use it to test that CommandCenter is working. It's useful because it doesn't require live streaming data
 
 checkpoint_dir_path = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data/tf_visual_data/runs/10/checkpoints'
 npzfile = np.load('/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/data/167/predictors_and_targets.npz')
