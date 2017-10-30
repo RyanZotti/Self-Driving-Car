@@ -1,3 +1,4 @@
+import cv2
 import subprocess
 from os import listdir
 from os.path import isfile
@@ -8,6 +9,7 @@ from random import randint
 import boto3
 from pathlib import Path
 import re
+import urllib.request
 
 
 # Used to save space. Keeping all model checkpoint epochs can eat up many GB of disk space
@@ -253,8 +255,50 @@ def sync_to_aws(s3_path,local_path):
     shell_command(cmd=command,print_to_stdout=True)
 
 
-if __name__ == '__main__':
-    tensorboard_basedir = '/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs/'
-    abc = record_count('/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/shape')
-    cleanup(tensorboard_basedir)
-    mkdir_tfboard_run_dir(tensorboard_basedir)
+# Shows command (arrow key) on top of image frame
+def overlay_command_on_image(frame, command,left_arrow, up_arrow,right_arrow):
+    key_image = None
+    if command == 'left':
+        key_image = left_arrow
+    elif command == 'up':
+        key_image = up_arrow
+    elif command == 'right':
+        key_image = right_arrow
+    arrow_key_scale = 0.125
+    resized_image = cv2.resize(key_image, None, fx=arrow_key_scale, fy=arrow_key_scale, interpolation=cv2.INTER_CUBIC)
+
+    # Thresholding requires grayscale only, so that threshold only needs to happen in one dimension
+    img2gray = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
+
+    # Create mask where anything greater than 240 bright is made super white (255) / selected
+    ret, mask = cv2.threshold(img2gray, 240, 255, cv2.THRESH_BINARY)
+
+    # TODO: understand how this copy-pasted OpenCV masking code works
+    mask_inv = cv2.bitwise_not(mask)  # invert the mask
+    rows, cols, channels = resized_image.shape  # get size of image
+    region_of_interest = frame[0:rows, 0:cols]
+    img1_bg = cv2.bitwise_and(region_of_interest, region_of_interest, mask=mask)  # ???
+    img2_fg = cv2.bitwise_and(resized_image, resized_image, mask=mask_inv)  # ???
+    dst = cv2.add(img1_bg, img2_fg)  # ???
+    frame[0:rows, 0:cols] = dst
+    return frame
+
+
+# This is used to stream video live for the self-driving sessions
+# The syntax is super ugly and I don't understand how it works
+# This is where I got this code from here, which comes with an explanation:
+# https://stackoverflow.com/questions/21702477/how-to-parse-mjpeg-http-stream-from-ip-camera
+def live_video_stream(ip):
+    stream = urllib.request.urlopen('http://{ip}/webcam.mjpeg'.format(ip=ip))
+    opencv_bytes = bytes()
+    while True:
+        opencv_bytes += stream.read(1024)
+        a = opencv_bytes.find(b'\xff\xd8')
+        b = opencv_bytes.find(b'\xff\xd9')
+        if a != -1 and b != -1:
+            jpg = opencv_bytes[a:b + 2]
+            opencv_bytes = opencv_bytes[b + 2:]
+            frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
+            if cv2.waitKey(1) == 27:
+                exit(0)
+            yield frame
