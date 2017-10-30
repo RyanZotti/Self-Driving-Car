@@ -6,6 +6,7 @@ import json
 from util import *
 import queue
 import threading
+import time
 from  data_augmentation import apply_transformations
 
 
@@ -73,6 +74,11 @@ class CommandCenter:
         r = requests.post('http://{ip}:81/post'.format(ip=self.ip), data=json.dumps(data))
         now = datetime.now()
         print(command + " " + str(now) + " status code: " + str(r.status_code))
+        # Add a stop command so that the car doesn't freeze on the previous command
+        delay = 0.1
+        time.sleep(delay)
+        data = {'command': {str(99): 'stop'}}
+        r = requests.post('http://{ip}:81/post'.format(ip=self.ip), data=json.dumps(data))
 
     # Reads centimeter distance from the forward-facing ultrasound sensor
     def read_sensor_distance(self):
