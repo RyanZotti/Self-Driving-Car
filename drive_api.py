@@ -1,3 +1,4 @@
+import argparse
 import tornado.ioloop
 import tornado.web
 from datetime import datetime
@@ -8,6 +9,18 @@ import requests
 from time import sleep
 
 class PostHandler(tornado.web.RequestHandler):
+
+    # I don't understand decorators, but this fixed my "can't set attribute" error
+    @property
+    def settings(self):
+        return self._settings
+
+    @settings.setter
+    def settings(self,settings):
+        self._settings = settings
+
+    def initialize(self, settings):
+        self.settings = settings
 
     def post(self):
         timestamp = datetime.now()
@@ -23,8 +36,7 @@ class PostHandler(tornado.web.RequestHandler):
         with open(file_path,"a") as writer:
             writer.write(log_entry+"\n")
         print(log_entry)
-        command_duration = 0.1
-        speed = 100
+        speed = self.settings['speed']
         if '37' in command:
             motor.forward_left(speed)
         elif '38' in command:
@@ -206,17 +218,22 @@ class Motor:
         self.pwm_left.ChangeDutyCycle(0)
         self.pwm_right.ChangeDutyCycle(0)
 
-def make_app():
+def make_app(settings):
     return tornado.web.Application([
-        (r"/drive",MultipleKeysHandler),(r"/post", PostHandler),
+        (r"/drive",MultipleKeysHandler),(r"/post", PostHandler, {'settings':settings}),
         (r"/StoreLogEntries",StoreLogEntriesHandler)
     ])
 
 if __name__ == "__main__":
+
+    # Parse CLI args
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-s", "--speed_percent", required=True, help="Between 0 and 100")
+    args = vars(ap.parse_args())
     GPIO.setmode(GPIO.BOARD)
-    command_duration = 0.1
     motor = Motor(16, 18, 22, 19, 21, 23)
     log_entries = []
-    app = make_app()
+    settings = {'speed':float(args['speed_percent'])}
+    app = make_app(settings)
     app.listen(81)
     tornado.ioloop.IOLoop.current().start()
