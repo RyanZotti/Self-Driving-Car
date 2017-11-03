@@ -55,9 +55,13 @@ At this point the streaming video should be available at the URL below. You won'
 
 	http://192.168.0.35/webcam.mjpeg
 
-Start the API webserver. Log into the Raspberry Pi in another tab. Clone this repo on the Pi and move into the folder. Then run this command.
+Start the API webserver. Log into the Raspberry Pi in another tab. Clone this repo on the Pi and move into the folder. Then start the server that will accept remote commands to drive the car (see the `drive_api.py` command below).
 
-	sudo python3 drive_api.py
+Driving speed could be a parameter that the AI learns, but for simplicity I made speed a CLI argument that is constant for the entire driving session. The car uses pulse-width modulation (PWM) to change speed, and the server's CLI accepts a speed parameter called "speed_percent" that determines the PWM setting on the Pi. A speed percent of 100 translates to max speed while 0 means the car will never move.
+
+I'll generally use a higher speed (90-100) when collecting training data and a much lower speed (40-50) when I let the AI take over. Sometimes you'll also need to adjust speed to match the terrain. For example, my car is slow on carpet, so when the AI drives on carpet I might set a speed of 80 or even 100. The command below will start the server that accepts remote driving commands.
+
+	sudo python3 drive_api.py --speed_percent 50
 
 On my Pi the drive API script fails if I call it with Python 2 or if I don't call it with root, but this all depends on how you set everything up and might differ based on how you did your installation.
 
