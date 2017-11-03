@@ -44,41 +44,49 @@ class CommandCenter:
         # Multi-threaded prediction queue to prevent blocking of incoming frames
         self.frame_queue = queue.LifoQueue()
         self.prediction_queue = queue.LifoQueue()
-        thread = threading.Thread(name="Prediction thread",
+        self.prediction_visualization_queue = queue.Queue()
+        prediction_thread = threading.Thread(name="Prediction thread",
                              target=self.predict_from_queue,
                              args=())
-        thread.start()
+        prediction_thread.start()
+        remote_command_thread = threading.Thread(name="Remote command thread",
+                                             target=self.send_remote_command,
+                                             args=())
+        remote_command_thread.start()
 
     def put(self,frame):
         self.frame_queue.put(frame)
 
-    def prediction_qsize(self):
-        return self.prediction_queue.qsize()
+    def prediction_visualization_qsize(self):
+        return self.prediction_visualization_queue.qsize()
 
     def get_command(self,frame):
-        command = self.prediction_queue.get()
+        command = self.prediction_visualization_queue.get()
         print(command)
         frame = overlay_command_on_image(frame=frame,
                                          command=command,
                                          left_arrow=self.left_arrow,
                                          up_arrow=self.up_arrow,
                                          right_arrow=self.right_arrow)
-        self.prediction_queue.task_done()
+        self.prediction_visualization_queue.task_done()
         return command, frame
 
     # Sends a command to the car over http
-    def send_remote_command(self,command):
-        post_map = {"left": 37, "up": 38, "right": 39}
-        post_command = post_map[command]
-        data = {'command': {str(post_command): command}}
-        r = requests.post('http://{ip}:81/post'.format(ip=self.ip), data=json.dumps(data))
-        now = datetime.now()
-        print(command + " " + str(now) + " status code: " + str(r.status_code))
-        # Add a stop command so that the car doesn't freeze on the previous command
-        delay = 0.1
-        time.sleep(delay)
-        data = {'command': {str(99): 'stop'}}
-        r = requests.post('http://{ip}:81/post'.format(ip=self.ip), data=json.dumps(data))
+    def send_remote_command(self):
+        while True:
+            command = self.prediction_queue.get()
+            post_map = {"left": 37, "up": 38, "right": 39}
+            post_command = post_map[command]
+            data = {'command': {str(post_command): command}}
+            r = requests.post('http://{ip}:81/post'.format(ip=self.ip), data=json.dumps(data))
+            now = datetime.now()
+            print(command + " " + str(now) + " status code: " + str(r.status_code))
+            # Add a stop command so that the car doesn't freeze on the previous command
+            delay = 0.15
+            time.sleep(delay)
+            data = {'command': {str(99): 'stop'}}
+            r = requests.post('http://{ip}:81/post'.format(ip=self.ip), data=json.dumps(data))
+            self.prediction_queue.task_done()
 
     # Reads centimeter distance from the forward-facing ultrasound sensor
     def read_sensor_distance(self):
@@ -105,4 +113,5 @@ class CommandCenter:
             command_index = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess)[0]
             command = command_map[command_index]
             self.prediction_queue.put(command)
+            self.prediction_visualization_queue.put(command)
             self.frame_queue.task_done()

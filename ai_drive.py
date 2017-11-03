@@ -21,11 +21,10 @@ for frame in live_video_stream(ip):
     command_center.put(frame)
 
     # Car should not do anything without a command
-    if command_center.prediction_qsize() > 0:
+    if command_center.prediction_visualization_qsize() > 0:
         command, frame = command_center.get_command(frame)
 
         # Tell the car to move if no overriding safety rules apply (e.g., obstacle, stop sign)
         frame = detect_stop_sign(frame)  # TODO: Actually top if stop sign detected
-        command_center.send_remote_command(command)
 
     cv2.imshow('frame', frame)
