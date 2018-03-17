@@ -8,9 +8,9 @@ import os
 
 # Example: python save_streaming_video_data.py --ip 192.168.1.82
 ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--ip", required=True, help="Raspberry Pi IP address")
+ap.add_argument("--host", required=True, help="Raspberry Pi hostname or IP")
 args = vars(ap.parse_args())
-ip = args["ip"]
+host = args["host"]
 
 # First log into the raspberry pi, and then do these two things:
 # cd /usr/src/ffmpeg
@@ -19,7 +19,8 @@ ip = args["ip"]
 fourcc = cv2.VideoWriter_fourcc(*'jpeg')
 out = cv2.VideoWriter('output.mov',fourcc, 20.0, (320,240))
 file_path = str(os.path.dirname(os.path.realpath(__file__)))+"/video_timestamps.txt"
-stream = urllib.request.urlopen('http://{ip}/webcam.mjpeg'.format(ip=ip))
+stream = urllib.request.urlopen('http://{host}/webcam.mjpeg'.format(host=host))
+
 bytes = bytes()
 while True:
     bytes += stream.read(1024)
