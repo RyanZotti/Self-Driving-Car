@@ -6,6 +6,50 @@
 
 ![img_1022](https://cloud.githubusercontent.com/assets/8901244/16572477/fd3dac1c-4236-11e6-86ea-93503f5cbb94.JPG)
 
+## Hostname Configuration
+
+If your Pi and laptop are on the same wifi network you can test a connection to the Pi from your laptop with the command below:
+
+```
+# Run this command
+ping raspberrypi.local
+
+# And you should see results like this:
+PING raspberrypi.local (192.168.1.11): 56 data bytes
+64 bytes from 192.168.1.11: icmp_seq=0 ttl=64 time=12.195 ms
+64 bytes from 192.168.1.11: icmp_seq=1 ttl=64 time=155.695 ms
+64 bytes from 192.168.1.11: icmp_seq=2 ttl=64 time=49.939 ms
+64 bytes from 192.168.1.11: icmp_seq=3 ttl=64 time=31.751 ms
+
+# If you're able to ping the Pi, you should also be able to ssh into it
+ssh pi@raspberrypi.local
+
+```
+All Raspberry Pis should respond to the raspberrypi.local hostname, but this becomes problematic if you have multiple Pis on the same wifi network (e.g., if you're using the same wifi as other autonomous Pi cars during a race at a public event). You should change the hostname to avoid these name collisions, otherwise you might not be able to find and connect to your car. On the Pi, open this file: `/etc/hosts`. Before making any edits, the file should look something like this:
+
+```
+127.0.0.1       localhost
+::1             localhost ip6-localhost ip6-loopback
+ff02::1         ip6-allnodes
+ff02::2         ip6-allrouters
+
+127.0.1.1       raspberrypi
+```
+Replace `raspberrypi` with whatever new name you want to use. In my case, I'm choosing `ryanzotti`. Next, edit the following file `/etc/hostname`. By default this file should only contain the text `raspberrypi`. Replace it with the new name, then save the file. Now commit the changes to the system and reboot:
+
+```
+# Commit the change
+sudo /etc/init.d/hostname.sh
+
+# Reboot the Pi
+sudo reboot
+
+```
+You should now be able to log into your Pi like so:
+
+```
+ssh pi@ryanzotti.local
+```
 
 ## Circuitry
 
@@ -53,7 +97,7 @@ Turn on video streaming from the Pi. Log into the Raspberry Pi if you haven't al
 
 At this point the streaming video should be available at the URL below. You won't be able to view the raw video from your browser though; your browser will endlessly try to download the streaming file. Note that the IP will probably be different for you.
 
-	http://192.168.0.35/webcam.mjpeg
+	http://ryanzotti.local/webcam.mjpeg
 
 Start the API webserver. Log into the Raspberry Pi in another tab. Clone this repo on the Pi and move into the folder. Then start the server that will accept remote commands to drive the car (see the `drive_api.py` command below).
 
@@ -68,17 +112,17 @@ On my Pi the drive API script fails if I call it with Python 2 or if I don't cal
 
 Next run the script that displays and saves the incoming video data. Enter the command below using the IP address of your Raspberry Pi. 
 
-	python save_streaming_video_data.py --ip 192.168.1.82
+	python save_streaming_video_data.py --host ryanzotti.local
 
 Finally, open up a web browser and point it to the URL below (IP address will likely be different for you).
 
-	http://192.168.0.35:81/drive
+	http://ryanzotti.local:81/drive
 
 Click on the page and use the arrow keys (left, right, up, down) to drive the car. The page you just clicked on has some hacky javascript I wrote that fires an API call to the webserver running on the Pi each time you hit one of the arrow keys. 
 
 When you get to the end of your driving session, change the URL in the browser to:
 
-	http://192.168.0.35:81/StoreLogEntries
+	http://ryanzotti.local:81/StoreLogEntries
 
 Then hit enter. This runs an important data cleaning step on all of the commands that the webserver received during the driving session. Once the webpage says "Finished", navigate to the Terminal/Putty tab running the server, and hit control+c to kill the process. You shold now see two files. 
 
@@ -199,11 +243,11 @@ I created a script called `resume_training.py` that is agnostic to the model who
 
 **A:** By default the id is ***pi*** and the password is ***raspberry***. I usually ssh into mine using the Terminal application on my Mac. On Windows you could probably use Putty. See example command below. Note: your IP will probably be different.
 
-	ssh pi@192.168.0.35
+	ssh pi@raspberrypi.local
 
 **Q:** How do I find the IP address for my PI?
 
-**A:** There are probably multiple ways to do this, but whenever I connect my Raspberry Pi to a new wifi network I always have to plug in my keyboard, mouse, and HDMI cable so that I can view the Pi on a monitor or TV. Then open up the Pi console and type the command below, which will print the IP to your console.
+**A:** There are probably multiple ways to do this, but whenever I connect my Raspberry Pi to a new wifi network I always have to plug in my keyboard, mouse, and HDMI cable so that I can view the Pi on a monitor or TV. Then open up the Pi console and type the command below, which will print the IP to your console. If you've already assigned a hostname to your Pi (e.g., replaced raspberrypi.local with something else), then you effectively don't need to use the IP address.
 
 	hostname -I
 
@@ -213,3 +257,4 @@ I created a script called `resume_training.py` that is agnostic to the model who
 * [TensorFlow Timeslines example](https://stackoverflow.com/documentation/tensorflow/3850/measure-the-execution-time-of-individual-operations#t=201707090002297903596 ): Show execution time for each node in your TensorFlow graph
 * [Raspberry Pi motor circuitry](https://business.tutsplus.com/tutorials/controlling-dc-motors-using-python-with-a-raspberry-pi--cms-20051): Tutorial for connecting DC motors to your Raspberry Pi
 * [Raspberry Pi range sensor circuitry](https://www.modmypi.com/blog/hc-sr04-ultrasonic-range-sensor-on-the-raspberry-pi): Tutorial for connecting an ultrasonic range sensor to your Pi
+* [https://www.howtogeek.com/167195/how-to-change-your-raspberry-pi-or-other-linux-devices-hostname/](https://www.howtogeek.com/167195/how-to-change-your-raspberry-pi-or-other-linux-devices-hostname/): Tutorial to give your Pi a hostname so that it's easier to find on wifi
