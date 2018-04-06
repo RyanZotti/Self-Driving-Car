@@ -11,15 +11,15 @@ class Dataset:
         self.input_file_path = input_file_path
         folders = os.listdir(self.input_file_path)
         folders = sanitize_data_folders(folders)
-        self.train_folders, self.test_folders = Dataset.train_test_split(folders)
         self.train_percentage = train_percentage
+        self.train_folders, self.test_folders = self.train_test_split(folders)
         self.max_sample_records = max_sample_records
         self.train_metadata_summaries, self.train_metadata = summarize_metadata(self.input_file_path,self.train_folders)
         self.train_folder_weights = self.get_folder_weights(self.train_folders)
         self.test_metadata_summaries, self.test_metadata = summarize_metadata(self.input_file_path, self.test_folders)
         self.test_folder_weights = self.get_folder_weights(self.test_folders)
         self.images_per_batch = images_per_batch
-        self.images_per_epoch = int(self.train_metadata_summaries['image_count'] * self.train_percentage)
+        self.images_per_epoch = self.train_metadata_summaries['image_count']
         self.batches_per_epoch = int(self.images_per_epoch / self.images_per_batch)
         self.samples_per_epoch = int(self.images_per_epoch / self.max_sample_records)
 
@@ -83,9 +83,9 @@ class Dataset:
             batch_end = (batch_index + 1) * self.images_per_batch
             yield images[batch_start:batch_end], labels[batch_start:batch_end]
 
-    def train_test_split(folders):
+    def train_test_split(self,folders):
         shuffle(folders)
-        train_folder_size = int(len(folders) * 0.8)
+        train_folder_size = int(len(folders) * self.train_percentage)
         train = [folder for folder in folders[:train_folder_size]]
         test = list(set(folders) - set(train))
         return train, test
