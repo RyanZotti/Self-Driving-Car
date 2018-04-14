@@ -7,6 +7,7 @@ remotes.py
 The client and web server needed to control a car remotely.
 """
 
+import cv2
 import os
 import json
 import time
@@ -169,7 +170,8 @@ class VideoAPI(tornado.web.RequestHandler):
             interval = .1
             if self.served_image_timestamp + interval < time.time():
 
-                img = utils.arr_to_binary(self.application.img_arr)
+                # Tornando: "... only accepts bytes, unicode, and dict objects" (from Tornado error Traceback)
+                img = cv2.imencode('.jpg', self.application.img_arr)[1].tostring()
 
                 self.write(my_boundary)
                 self.write("Content-type: image/jpeg\r\n")
