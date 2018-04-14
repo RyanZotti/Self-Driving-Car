@@ -170,13 +170,19 @@ class VideoAPI(tornado.web.RequestHandler):
             interval = .1
             if self.served_image_timestamp + interval < time.time():
 
+                # Can't serve the OpenCV numpy array
                 # Tornando: "... only accepts bytes, unicode, and dict objects" (from Tornado error Traceback)
                 img = cv2.imencode('.jpg', self.application.img_arr)[1].tostring()
 
+                # I have no idea what these lines do, but other people seem to use them, they
+                # came with this copied code and I don't want to break something by removing
                 self.write(my_boundary)
                 self.write("Content-type: image/jpeg\r\n")
                 self.write("Content-length: %s\r\n\r\n" % len(img))
+
+                # Serve the image
                 self.write(img)
+
                 self.served_image_timestamp = time.time()
                 yield tornado.gen.Task(self.flush)
             else:
