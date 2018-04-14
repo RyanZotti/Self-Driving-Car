@@ -1,19 +1,9 @@
-import cv2
-import os
-import time
-import numpy as np
-from PIL import Image
-import glob
-from util import live_video_stream
-import urllib.request
+import RPi.GPIO as GPIO
 
 
-class BaseCamera:
-    def run_threaded(self):
-        return self.frame
+class Motor(object):
 
-
-class Webcam(BaseCamera):
+    # TODO: Read host from config file
     def __init__(self,ffmpeg_host):
 
         super().__init__()
@@ -32,13 +22,6 @@ class Webcam(BaseCamera):
 
         print('WebcamVideoStream loaded.. .warming camera')
 
-    def update2(self):
-        while self.on:
-
-            return live_video_stream(self.ffmpeg_host)
-
-        self.cam.stop()
-
     def update(self):
         while self.on:
 
@@ -51,10 +34,7 @@ class Webcam(BaseCamera):
                 frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
                 if cv2.waitKey(1) == 27:
                     exit(0)
-
                 self.frame = frame
-
-        self.cam.stop()
 
     def run_threaded(self):
         return self.frame

@@ -18,7 +18,7 @@ import tornado.ioloop
 import tornado.web
 import tornado.gen
 
-from donkeycar import utils
+from car import utils
 
 
 class RemoteWebServer():
