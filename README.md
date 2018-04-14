@@ -279,3 +279,6 @@ I created a script called `resume_training.py` that is agnostic to the model who
 * [Raspberry Pi motor circuitry](https://business.tutsplus.com/tutorials/controlling-dc-motors-using-python-with-a-raspberry-pi--cms-20051): Tutorial for connecting DC motors to your Raspberry Pi
 * [Raspberry Pi range sensor circuitry](https://www.modmypi.com/blog/hc-sr04-ultrasonic-range-sensor-on-the-raspberry-pi): Tutorial for connecting an ultrasonic range sensor to your Pi
 * [https://www.howtogeek.com/167195/how-to-change-your-raspberry-pi-or-other-linux-devices-hostname/](https://www.howtogeek.com/167195/how-to-change-your-raspberry-pi-or-other-linux-devices-hostname/): Tutorial to give your Pi a hostname so that it's easier to find on wifi
+* [http://docs.donkeycar.com/](http://docs.donkeycar.com/) Docs for DonkeyCar, a DIY Meetup group in San Francisco. 
+* [http://docs.donkeycar.com/](https://github.com/otaviogood/carputer): The GitHub repo for the winner of the DIYRobors meetup in San Francisco and Oakland
+* [https://makezine.com/projects/build-autonomous-rc-car-raspberry-pi/](https://makezine.com/projects/build-autonomous-rc-car-raspberry-pi/) Donkeycar overview

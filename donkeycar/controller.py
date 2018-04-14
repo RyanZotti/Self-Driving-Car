@@ -1,10 +1,9 @@
 import array
-import time
 import struct
-from threading import Thread
+import time
+
 
 # import for syntactical ease
-from donkeycar.web_controller.web import LocalWebController
 
 
 class Joystick():

@@ -53,7 +53,6 @@ class Webcam(BaseCamera):
                     exit(0)
 
                 self.frame = frame
-                yield self.frame
 
         self.cam.stop()
 
