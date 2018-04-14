@@ -4,6 +4,7 @@ from donkeycar.parts.camera import Webcam
 from donkeycar.parts.web_controller.web import LocalWebController
 
 
+# TODO: load from a default, relative path location
 # Load default settings
 cfg = load_config(config_path='/Users/ryanzotti/Documents/repos/Self-Driving-Car/donkeycar/templates/config_defaults.py')
 

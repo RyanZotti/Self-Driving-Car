@@ -4,8 +4,6 @@ import time
 import numpy as np
 from PIL import Image
 import glob
-import pygame
-import pygame.camera
 from util import live_video_stream
 import urllib.request
 
@@ -20,7 +18,9 @@ class Webcam(BaseCamera):
 
         super().__init__()
 
+        # TODO: Read host from config file
         self.ffmpeg_host = ffmpeg_host
+
         stream_url = 'http://{ffmpeg_host}/webcam.mjpeg'.format(ffmpeg_host=ffmpeg_host)
         self.stream = urllib.request.urlopen(stream_url)
         self.opencv_bytes = bytes()
