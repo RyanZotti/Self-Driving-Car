@@ -1,10 +1,11 @@
 import RPi.GPIO as GPIO
 
 
-class Motor(object):
+class Engine(object):
 
-    # TODO: Read host from config file
-    def __init__(self,ffmpeg_host):
+    def __init__(self):
+
+        GPIO.setmode(GPIO.BOARD)
 
         super().__init__()
 
@@ -39,8 +40,6 @@ class Motor(object):
     def run_threaded(self):
         return self.frame
 
+    # TODO: Turn off all motors
     def shutdown(self):
-        # indicate that the thread should be stopped
-        self.on = False
-        print('stoping Webcam')
-        time.sleep(.5)
+        pass
