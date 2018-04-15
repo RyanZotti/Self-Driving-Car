@@ -2,9 +2,11 @@ import RPi.GPIO as GPIO
 
 
 class Engine(object):
-    def __init__(self, pinForward, pinBackward, pinControlStraight, pinLeft, pinRight, pinControlSteering, **kwargs):
+    def __init__(self, pinForward, pinBackward, pinControlStraight, pinLeft, pinRight, pinControlSteering, inputs):
         """ Initialize the motor with its control pins and start pulse-width
              modulation """
+
+        self.inputs = inputs
 
         GPIO.setmode(GPIO.BOARD)
 

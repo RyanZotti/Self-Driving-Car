@@ -25,7 +25,7 @@ car.add(ctr,
         threaded=True)
 
 # Add engine
-engine = Engine(16, 18, 22, 19, 21, 23)
+engine = Engine(16, 18, 22, 19, 21, 23, ['user/angle', 'user/throttle'])
 car.add(engine,
         inputs=['user/angle', 'user/throttle'],
         threaded=True)
