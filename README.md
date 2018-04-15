@@ -282,3 +282,4 @@ I created a script called `resume_training.py` that is agnostic to the model who
 * [http://docs.donkeycar.com/](http://docs.donkeycar.com/) Docs for DonkeyCar, a DIY Meetup group in San Francisco. 
 * [http://docs.donkeycar.com/](https://github.com/otaviogood/carputer): The GitHub repo for the winner of the DIYRobors meetup in San Francisco and Oakland
 * [https://makezine.com/projects/build-autonomous-rc-car-raspberry-pi/](https://makezine.com/projects/build-autonomous-rc-car-raspberry-pi/) Donkeycar overview
+
