@@ -1,4 +1,4 @@
-from car.car import Vehicle
+from car.vehicle import Vehicle
 from car.config import load_config
 from car.parts.camera import Webcam
 from car.parts.engine import Engine
