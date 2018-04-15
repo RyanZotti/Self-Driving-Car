@@ -16,8 +16,7 @@ PI_HOSTNAME = 'ryanzotti.local'
 
 #PATHS
 CAR_PATH = PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
-#DATA_PATH = os.path.join(CAR_PATH, 'data')
-DATA_PATH = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data'
+DATA_PATH = os.path.join(CAR_PATH, 'data')
 MODELS_PATH = os.path.join(CAR_PATH, 'models')
 
 #VEHICLE
