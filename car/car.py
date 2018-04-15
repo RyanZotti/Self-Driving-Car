@@ -7,7 +7,7 @@ Created on Sun Jun 25 10:44:24 2017
 
 import time
 from threading import Thread
-from .memory import Memory
+from car.memory import Memory
 
 
 class Vehicle():
