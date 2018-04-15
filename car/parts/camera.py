@@ -4,6 +4,7 @@ import time
 import numpy as np
 from PIL import Image
 import glob
+import subprocess
 from util import live_video_stream
 import urllib.request
 
@@ -31,6 +32,9 @@ class Webcam(BaseCamera):
         # if the thread should be stopped
         self.frame = None
         self.on = True
+        
+        cmd = 'cd /usr/src/ffmpeg & sudo ffserver -f /etc/ff.conf_original & ffmpeg -v quiet -r 5 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost/webcam.ffm'
+        subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 
         print('WebcamVideoStream loaded.. .warming camera')
 
