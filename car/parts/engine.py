@@ -2,44 +2,87 @@ import RPi.GPIO as GPIO
 
 
 class Engine(object):
-
-    def __init__(self):
+    def __init__(self, pinForward, pinBackward, pinControlStraight, pinLeft, pinRight, pinControlSteering, **kwargs):
+        """ Initialize the motor with its control pins and start pulse-width
+             modulation """
 
         GPIO.setmode(GPIO.BOARD)
 
-        super().__init__()
+        self.pinForward = pinForward
+        self.pinBackward = pinBackward
+        self.pinControlStraight = pinControlStraight
+        self.pinLeft = pinLeft
+        self.pinRight = pinRight
+        self.pinControlSteering = pinControlSteering
+        GPIO.setup(self.pinForward, GPIO.OUT)
+        GPIO.setup(self.pinBackward, GPIO.OUT)
+        GPIO.setup(self.pinControlStraight, GPIO.OUT)
 
-        # TODO: Read host from config file
-        self.ffmpeg_host = ffmpeg_host
+        GPIO.setup(self.pinLeft, GPIO.OUT)
+        GPIO.setup(self.pinRight, GPIO.OUT)
+        GPIO.setup(self.pinControlSteering, GPIO.OUT)
 
-        stream_url = 'http://{ffmpeg_host}/webcam.mjpeg'.format(ffmpeg_host=ffmpeg_host)
-        self.stream = urllib.request.urlopen(stream_url)
-        self.opencv_bytes = bytes()
+        self.pwm_forward = GPIO.PWM(self.pinForward, 100)
+        self.pwm_backward = GPIO.PWM(self.pinBackward, 100)
+        self.pwm_forward.start(0)
+        self.pwm_backward.start(0)
 
-        # initialize variable used to indicate
-        # if the thread should be stopped
-        self.frame = None
-        self.on = True
+        self.pwm_left = GPIO.PWM(self.pinLeft, 100)
+        self.pwm_right = GPIO.PWM(self.pinRight, 100)
+        self.pwm_left.start(0)
+        self.pwm_right.start(0)
 
-        print('WebcamVideoStream loaded.. .warming camera')
+        GPIO.output(self.pinControlStraight, GPIO.HIGH)
+        GPIO.output(self.pinControlSteering, GPIO.HIGH)
 
     def update(self):
-        while self.on:
-
-            self.opencv_bytes += self.stream.read(1024)
-            a = self.opencv_bytes.find(b'\xff\xd8')
-            b = self.opencv_bytes.find(b'\xff\xd9')
-            if a != -1 and b != -1:
-                jpg = self.opencv_bytes[a:b + 2]
-                self.opencv_bytes = self.opencv_bytes[b + 2:]
-                frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
-                if cv2.waitKey(1) == 27:
-                    exit(0)
-                self.frame = frame
-
-    def run_threaded(self):
-        return self.frame
-
-    # TODO: Turn off all motors
-    def shutdown(self):
         pass
+
+    # PWM only accepts integer values between 0 and 100
+    def normalize_input(self,raw_input):
+
+        if raw_input < 0:
+            raw_input *= -1
+
+        # Starts between 0.0 and 1.0 so scale by 100
+        scaled_input = int(raw_input * 100)
+
+        # Ensure no less than 0 and no greater than 100
+        bounded_input = min(max(0,scaled_input),100)
+
+        return bounded_input
+
+    def run_threaded(self,*args):
+
+        commands = dict(zip(self.inputs, args))
+
+        if commands['user/angle'] > 0:
+            pwm_intensity = self.normalize_input(commands['user/angle'])
+            self.pwm_left.ChangeDutyCycle(0)
+            self.pwm_right.ChangeDutyCycle(pwm_intensity)
+        elif commands['user/angle'] < 0:
+            pwm_intensity = self.normalize_input(commands['user/angle'])
+            self.pwm_left.ChangeDutyCycle(pwm_intensity)
+            self.pwm_right.ChangeDutyCycle(0)
+        else:
+            self.pwm_left.ChangeDutyCycle(0)
+            self.pwm_right.ChangeDutyCycle(0)
+
+        if commands['user/throttle'] > 0:
+            pwm_intensity = self.normalize_input(commands['user/throttle'])
+            self.pwm_forward.ChangeDutyCycle(pwm_intensity)
+            self.pwm_backward.ChangeDutyCycle(0)
+        elif commands['user/throttle'] < 0:
+            pwm_intensity = self.normalize_input(commands['user/throttle'])
+            self.pwm_forward.ChangeDutyCycle(0)
+            self.pwm_backward.ChangeDutyCycle(pwm_intensity)
+        else:
+            self.pwm_forward.ChangeDutyCycle(0)
+            self.pwm_backward.ChangeDutyCycle(0)
+
+    # Turns off all motors
+    def shutdown(self):
+        self.pwm_forward.ChangeDutyCycle(0)
+        self.pwm_backward.ChangeDutyCycle(0)
+        self.pwm_left.ChangeDutyCycle(0)
+        self.pwm_right.ChangeDutyCycle(0)
