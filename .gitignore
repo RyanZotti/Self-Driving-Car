@@ -2,3 +2,4 @@
 __pycache__/
 output.mov
 video_timestamps.txt
+*.pyc
