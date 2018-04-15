@@ -21,6 +21,9 @@ class Webcam(BaseCamera):
 
         super().__init__()
 
+        cmd = 'cd /usr/src/ffmpeg & sudo ffserver -f /etc/ff.conf_original & ffmpeg -v quiet -r 5 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost/webcam.ffm'
+        subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+
         # TODO: Read host from config file
         self.ffmpeg_host = ffmpeg_host
 
@@ -32,9 +35,6 @@ class Webcam(BaseCamera):
         # if the thread should be stopped
         self.frame = None
         self.on = True
-        
-        cmd = 'cd /usr/src/ffmpeg & sudo ffserver -f /etc/ff.conf_original & ffmpeg -v quiet -r 5 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost/webcam.ffm'
-        subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 
         print('WebcamVideoStream loaded.. .warming camera')
 
