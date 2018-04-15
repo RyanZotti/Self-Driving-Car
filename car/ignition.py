@@ -8,7 +8,7 @@ from car.parts.datastore import TubHandler
 
 # TODO: load from a default, relative path location
 # Load default settings
-cfg = load_config(config_path='/Users/ryanzotti/Documents/repos/Self-Driving-Car/car/templates/config_defaults.py')
+cfg = load_config()
 
 # Initialize the car
 car = Vehicle()
