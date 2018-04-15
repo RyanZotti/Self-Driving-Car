@@ -3,10 +3,9 @@ from car.config import load_config
 from car.parts.camera import Webcam
 from car.parts.engine import Engine
 from car.parts.web_controller.web import LocalWebController
-from car.parts.datastore import TubHandler
+from car.parts.datastore import DatasetHandler
 
 
-# TODO: load from a default, relative path location
 # Load default settings
 cfg = load_config()
 
@@ -30,14 +29,13 @@ car.add(engine,
         inputs=['user/angle', 'user/throttle'],
         threaded=True)
 
-# add tub to save data
+# Add dataset to save data
 inputs = ['cam/image_array', 'user/angle', 'user/throttle', 'user/mode']
 types = ['image_array', 'float', 'float', 'str']
-
-th = TubHandler(path=cfg.DATA_PATH)
+dh = DatasetHandler(path=cfg.DATA_PATH)
 print(cfg.DATA_PATH)
-tub = th.new_tub_writer(inputs=inputs, types=types)
-car.add(tub, inputs=inputs, run_condition='recording')
+dataset = dh.new_dataset_writer(inputs=inputs, types=types)
+car.add(dataset, inputs=inputs, run_condition='recording')
 
 car.start(rate_hz=cfg.DRIVE_LOOP_HZ,
           max_loop_count=cfg.MAX_LOOPS)

@@ -17,17 +17,7 @@ import pandas as pd
 from PIL import Image
 
 
-class Tub(object):
-    """
-    A datastore to store sensor data in a key, value format.
-    Accepts str, int, float, image_array, image, and array data types.
-    For example:
-    #Create a tub to store speed values.
-    >>> path = '~/mydonkey/test_tub'
-    >>> inputs = ['user/speed', 'cam/image']
-    >>> types = ['float', 'image']
-    >>> t=Tub(path=path, inputs=inputs, types=types)
-    """
+class Dataset(object):
 
     def __init__(self, path, inputs=None, types=None):
 
@@ -39,23 +29,23 @@ class Tub(object):
 
         if exists:
             # load log and meta
-            print("Tub exists: {}".format(self.path))
+            print("Dataset exists: {}".format(self.path))
             with open(self.meta_path, 'r') as f:
                 self.meta = json.load(f)
             self.current_ix = self.get_last_ix() + 1
 
         elif not exists and inputs:
-            print('Tub does NOT exist. Creating new tub...')
+            print('Dataset does NOT exist. Creating new dataset...')
             # create log and save meta
             os.makedirs(self.path)
             self.meta = {'inputs': inputs, 'types': types}
             with open(self.meta_path, 'w') as f:
                 json.dump(self.meta, f)
             self.current_ix = 0
-            print('New tub created at: {}'.format(self.path))
+            print('New dataset created at: {}'.format(self.path))
         else:
-            msg = "The tub path you provided doesn't exist and you didnt pass any meta info (inputs & types)" + \
-                  "to create a new tub. Please check your tub path or provide meta info to create a new tub."
+            msg = "The dataset path you provided doesn't exist and you didnt pass any meta info (inputs & types)" + \
+                  "to create a new dataset. Please check your dataset path or provide meta info to create a new dataset."
 
             raise AttributeError(msg)
 
@@ -142,7 +132,7 @@ class Tub(object):
         Iterate over all records and make sure we can load them.
         Optionally remove records that cause a problem.
         '''
-        print('Checking tub:%s.' % self.path)
+        print('Checking dataset:%s.' % self.path)
         print('Found: %d records.' % self.get_num_records())
         problems = False
         for ix in self.get_index(shuffled=False):
@@ -192,7 +182,7 @@ class Tub(object):
                 json_data[key] = name
 
             else:
-                msg = 'Tub does not know what to do with this type {}'.format(typ)
+                msg = 'Dataset does not know what to do with this type {}'.format(typ)
                 raise TypeError(msg)
 
         self.write_json_record(json_data)
@@ -243,7 +233,7 @@ class Tub(object):
         return name
 
     def delete(self):
-        """ Delete the folder and files for this tub. """
+        """ Delete the folder and files for this dataset. """
         import shutil
         shutil.rmtree(self.path)
 
@@ -312,9 +302,9 @@ class Tub(object):
         return train_gen, val_gen
 
 
-class TubWriter(Tub):
+class DatasetWriter(Dataset):
     def __init__(self, *args, **kwargs):
-        super(TubWriter, self).__init__(*args, **kwargs)
+        super(DatasetWriter, self).__init__(*args, **kwargs)
 
     def run(self, *args):
         '''
@@ -329,14 +319,14 @@ class TubWriter(Tub):
         self.put_record(record)
 
 
-class TubReader(Tub):
+class DatasetReader(Dataset):
     def __init__(self, path, *args, **kwargs):
-        super(TubReader, self).__init__(*args, **kwargs)
+        super(DatasetReader, self).__init__(*args, **kwargs)
 
     def run(self, *args):
         '''
         API function needed to use as a Donkey part.
-        Accepts keys to read from the tub and retrieves them sequentially.
+        Accepts keys to read from the dataset and retrieves them sequentially.
         '''
 
         record = self.get_record()
@@ -344,44 +334,44 @@ class TubReader(Tub):
         return record
 
 
-class TubHandler():
+class DatasetHandler():
     def __init__(self, path):
         self.path = os.path.expanduser(path)
 
-    def get_tub_list(self, path):
+    def get_dataset_list(self, path):
         folders = next(os.walk(path))[1]
         return folders
 
-    def next_tub_number(self, path):
-        def get_tub_num(tub_name):
+    def next_dataset_number(self, path):
+        def get_dataset_num(dataset_name):
             try:
-                num = int(tub_name.split('_')[1])
+                num = int(dataset_name.split('_')[1])
             except:
                 num = 0
             return num
 
-        folders = self.get_tub_list(path)
-        numbers = [get_tub_num(x) for x in folders]
+        folders = self.get_dataset_list(path)
+        numbers = [get_dataset_num(x) for x in folders]
         # numbers = [i for i in numbers if i is not None]
         next_number = max(numbers + [0]) + 1
         return next_number
 
-    def create_tub_path(self):
-        tub_num = self.next_tub_number(self.path)
+    def create_dataset_path(self):
+        dataset_num = self.next_dataset_number(self.path)
         date = datetime.datetime.now().strftime('%y-%m-%d')
-        name = '_'.join(['tub', str(tub_num), date])
-        tub_path = os.path.join(self.path, name)
-        return tub_path
+        name = '_'.join(['dataset', str(dataset_num), date])
+        dataset_path = os.path.join(self.path, name)
+        return dataset_path
 
-    def new_tub_writer(self, inputs, types):
-        tub_path = self.create_tub_path()
-        tw = TubWriter(path=tub_path, inputs=inputs, types=types)
+    def new_dataset_writer(self, inputs, types):
+        dataset_path = self.create_dataset_path()
+        tw = DatasetWriter(path=dataset_path, inputs=inputs, types=types)
         return tw
 
 
-class TubImageStacker(Tub):
+class DatasetImageStacker(Dataset):
     '''
-    A Tub for training a NN with images that are the last three records stacked
+    A Dataset for training a NN with images that are the last three records stacked
     togther as 3 channels of a single image. The idea is to give a simple feedforward
     NN some chance of building a model based on motion.
     If you drive with the ImageFIFO part, then you don't need this.
@@ -418,11 +408,11 @@ class TubImageStacker(Tub):
         get the current record and two previous.
         stack the 3 images into a single image.
         '''
-        data = super(TubImageStacker, self).get_record(ix)
+        data = super(DatasetImageStacker, self).get_record(ix)
 
         if ix > 1:
-            data_ch1 = super(TubImageStacker, self).get_record(ix - 1)
-            data_ch0 = super(TubImageStacker, self).get_record(ix - 2)
+            data_ch1 = super(DatasetImageStacker, self).get_record(ix - 1)
+            data_ch0 = super(DatasetImageStacker, self).get_record(ix - 2)
 
             json_data = self.get_json_record(ix)
             for key, val in json_data.items():
@@ -439,9 +429,9 @@ class TubImageStacker(Tub):
         return data
 
 
-class TubTimeStacker(TubImageStacker):
+class DatasetTimeStacker(DatasetImageStacker):
     '''
-    A Tub for training N with records stacked through time.
+    A Dataset for training N with records stacked through time.
     The idea here is to force the network to learn to look ahead in time.
     Init with an array of time offsets from the current time.
     '''
@@ -452,7 +442,7 @@ class TubTimeStacker(TubImageStacker):
         with just the current image returned.
         [5, 90, 200] would return 3 frames of records, ofset 5, 90, and 200 frames in the future.
         '''
-        super(TubTimeStacker, self).__init__(*args, **kwargs)
+        super(DatasetTimeStacker, self).__init__(*args, **kwargs)
         self.frame_list = frame_list
 
     def get_record(self, ix):
@@ -480,7 +470,7 @@ class TubTimeStacker(TubImageStacker):
                     val = Image.open(os.path.join(self.path, val))
                     data[key] = val
                 elif typ == 'image_array' and i == 0:
-                    d = super(TubTimeStacker, self).get_record(ix)
+                    d = super(DatasetTimeStacker, self).get_record(ix)
                     data[key] = d[key]
                 else:
                     '''
@@ -492,27 +482,27 @@ class TubTimeStacker(TubImageStacker):
         return data
 
 
-class TubGroup(Tub):
-    def __init__(self, tub_paths):
-        tub_paths = self.resolve_tub_paths(tub_paths)
-        tubs = [Tub(path) for path in tub_paths]
+class DatasetGroup(Dataset):
+    def __init__(self, dataset_paths):
+        dataset_paths = self.resolve_dataset_paths(dataset_paths)
+        datasets = [Dataset(path) for path in dataset_paths]
         self.input_types = {}
 
         record_count = 0
-        for t in tubs:
+        for t in datasets:
             t.update_df()
             record_count += len(t.df)
             self.input_types.update(dict(zip(t.inputs, t.types)))
 
-        print('joining the tubs {} records together. This could take {} minutes.'.format(record_count,
+        print('joining the datasets {} records together. This could take {} minutes.'.format(record_count,
                                                                                          int(record_count / 300000)))
 
         self.meta = {'inputs': list(self.input_types.keys()),
                      'types': list(self.input_types.values())}
 
-        self.df = pd.concat([t.df for t in tubs], axis=0, join='inner')
+        self.df = pd.concat([t.df for t in datasets], axis=0, join='inner')
 
-    def find_tub_paths(self, path):
+    def find_dataset_paths(self, path):
         matches = []
         path = os.path.expanduser(path)
         for file in glob.glob(os.path.join(path)):
@@ -520,13 +510,13 @@ class TubGroup(Tub):
                 matches.append(os.path.join(path, file))
         return matches
 
-    def resolve_tub_paths(self, path_list):
+    def resolve_dataset_paths(self, path_list):
         print("path_list: {}".format(path_list))
 
         path_list = path_list.split(",")
 
         resolved_paths = []
         for path in path_list:
-            paths = self.find_tub_paths(path)
+            paths = self.find_dataset_paths(path)
             resolved_paths += paths
         return resolved_paths
