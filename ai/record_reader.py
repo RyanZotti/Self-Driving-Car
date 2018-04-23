@@ -6,7 +6,6 @@ import numpy as np
 from random import shuffle
 
 
-# TODO: Track batch progress towards epochs
 # Used to feed data to models for training
 class RecordReader(object):
 
@@ -27,6 +26,7 @@ class RecordReader(object):
         self.test_paths = self.merge_paths(self.test_folders)
 
         self.batch_size = batch_size
+        self.batches_per_epoch = int(len(self.train_paths) / self.batch_size)
 
     # Merge paths into single numpy array for fast random selection
     def merge_paths(self,folders):
@@ -88,10 +88,16 @@ class RecordReader(object):
         images, labels = self.get_batch(self.test_paths)
         return  (images, labels)
 
+    # Used in Trainer class to know when epoch is reached
+    def get_batches_per_epoch(self):
+        return self.batches_per_epoch
 
 # TODO: Below is just example code. Remove once incorporated into trainer
 folders = glob.glob('/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/*')
 rr = RecordReader(folders)
+
+batch_count = rr.get_batches_per_epoch()
+print(batch_count)
 
 train_images, train_labels = rr.get_train_batch()
 test_batch = rr.get_test_batch()
