@@ -6,11 +6,32 @@ import numpy as np
 from random import shuffle
 
 
-# Used to feed data to models for training
 class RecordReader(object):
 
-    # Assumes folders is a list of absolute file paths
-    def __init__(self,folders,batch_size=50):
+    """
+    A class that reads records from disk, partitions them
+    into training and test sets and passes them as randomized
+    batches to a model trainer.
+    """
+
+    def __init__(self,base_directory,batch_size=50):
+
+        """
+        Create a RecordReader object
+
+        Parameters
+        ----------
+        base_directory : string
+            The absolute path to the directory immediately above the
+            dataset folders. For example /root/data. RecordReader expects
+            to find folders like dataset_1_18-04-15, dataset_1_18-04-15,
+            etc. in the base directory that you specify
+        batch_size : int
+            Number of records per batch. Defaults to 50 records
+        """
+
+        self.base_directory = base_directory
+        folders = glob.glob(join(self.base_directory,'*'))
 
         # Assign folders to either train or test
         shuffle(folders)
