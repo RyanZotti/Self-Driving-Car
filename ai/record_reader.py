@@ -91,22 +91,3 @@ class RecordReader(object):
     # Used in Trainer class to know when epoch is reached
     def get_batches_per_epoch(self):
         return self.batches_per_epoch
-
-# TODO: Below is just example code. Remove once incorporated into trainer
-folders = glob.glob('/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/*')
-rr = RecordReader(folders)
-
-batch_count = rr.get_batches_per_epoch()
-print(batch_count)
-
-train_images, train_labels = rr.get_train_batch()
-test_batch = rr.get_test_batch()
-
-angle = train_labels[0][0]
-throttle = train_labels[0][1]
-image = train_images[0]
-
-print('angle: {0}, throttle: {1}'.format(angle,throttle))
-cv2.imshow('frame', image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
