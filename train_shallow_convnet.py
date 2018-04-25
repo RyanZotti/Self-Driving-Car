@@ -50,7 +50,7 @@ trainer = Trainer(data_path=data_path,
                   s3_sync=s3_sync)
 
 trainer.train(sess=sess, x=x, y_=y_,
-              accuracy=accuracy,
+              optimization=accuracy,
               train_step=train_step,
               train_feed_dict={dropout_keep_prob:1.0},
               test_feed_dict={dropout_keep_prob:1.0})
