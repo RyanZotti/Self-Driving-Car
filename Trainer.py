@@ -238,7 +238,7 @@ def parse_args():
                     default=False)
     ap.add_argument("-b", "--s3_sync", required=False,
                     help="Save on S3 storage by not syncing during code development",
-                    default=True)
+                    default=False)
     args = vars(ap.parse_args())
     args['show_speed'] = parse_boolean_cli_args(args['show_speed'])
     args['s3_sync'] = parse_boolean_cli_args(args['s3_sync'])
