@@ -6,6 +6,7 @@ from model import *
 
 args = parse_args()
 data_path = args["datapath"]
+data_path='/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data'
 epochs = args["epochs"]
 s3_bucket = args['s3_bucket']
 show_speed = args['show_speed']
@@ -22,16 +23,16 @@ conv2 = batch_norm_conv_layer('layer2',conv1, [6, 6, 24, 24], phase)
 conv3 = batch_norm_conv_layer('layer3',conv2, [6, 6, 24, 24], phase)
 conv4 = batch_norm_conv_layer('layer4',conv3, [6, 6, 24, 24], phase)
 
-h_pool4_flat = tf.reshape(conv4, [-1, 240 * 320 * 64])
-h5 = batch_norm_fc_layer('layer8',h_pool4_flat, [240 * 320 * 64, 512], phase)
-W_final = weight_variable('layer12',[512, 2])
+h_pool4_flat = tf.reshape(conv4, [-1, 240 * 320 * 24])
+h5 = batch_norm_fc_layer('layer8',h_pool4_flat, [240 * 320 * 24, 128], phase)
+W_final = weight_variable('layer12',[128, 2])
 b_final = bias_variable('layer12',[2])
 logits = tf.add(tf.matmul(h5, W_final), b_final, name='logits')
 
 # TODO: Fix this x.shape[0] bug
-mse = tf.reduce_mean(tf.squared_difference(logits, y_))
+rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(logits, y_)))
 
-train_step = tf.train.AdamOptimizer(1e-5,name='train_step').minimize(mse)
+train_step = tf.train.AdamOptimizer(1e-5,name='train_step').minimize(rmse)
 
 '''
     https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/layers/python/layers/layers.py#L396
@@ -56,7 +57,7 @@ train_step = tf.train.AdamOptimizer(1e-5,name='train_step').minimize(mse)
 '''
 update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 with tf.control_dependencies(update_ops):
-    train_step = tf.train.AdamOptimizer(1e-5).minimize(mse)
+    train_step = tf.train.AdamOptimizer(1e-5).minimize(rmse)
 
 model_file = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basename(__file__)
 trainer = Trainer(data_path=data_path,
@@ -67,7 +68,7 @@ trainer = Trainer(data_path=data_path,
                   show_speed=show_speed,
                   s3_sync=s3_sync)
 trainer.train(sess=sess, x=x, y_=y_,
-              optimization=mse,
+              optimization=rmse,
               train_step=train_step,
               train_feed_dict={'phase:0': True},
               test_feed_dict={})
