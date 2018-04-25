@@ -34,6 +34,27 @@ def flip(images,labels,original_command,debug=False):
     return flipped_images, new_target_array
 
 
+def flip_continuous(images,labels,debug=True):
+
+    # Order of labels variables is angle, throttle. It
+    # only makes sense to flip angle, so select the first
+    # column, the one indexed at 0. The : means to apply
+    # the transformation to all rows
+    flipped_labels = labels.copy()
+    flipped_labels[:, 0] = labels[:, 0] * -1
+    flipped_images = []
+    for image in images:
+        flipped_image = cv2.flip(image, 1)
+        flipped_images.append(flipped_image)
+    flipped_images = np.array(flipped_images)
+    if True:
+        for i in range(10):
+            cv2.imshow("Original - {0}".format(labels[i,:]), images[i,:])
+            cv2.imshow("Flipped - {0}".format(flipped_labels[i,:]), flipped_images[i,:])
+            cv2.waitKey(0)
+    return flipped_images, flipped_labels
+
+
 def flip_enrichment(images,labels):
     new_right_images, new_right_labels = flip(images, labels, 'left', debug=False)
     new_left_images, new_left_labels = flip(images, labels, 'right', debug=False)
@@ -49,6 +70,11 @@ def flip_enrichment(images,labels):
         labels = np.vstack((labels, new_up_labes))
     return images, labels
 
+def flip_enrichment_continuous(images,labels):
+    image_images, new_labels = flip_continuous(images, labels, debug=False)
+    images = np.vstack((images, image_images))
+    labels = np.vstack((labels, new_labels))
+    return images, labels
 
 def normalize_contrast(images):
     normalized_images = []
@@ -70,6 +96,12 @@ def process_data(data):
     images = apply_transformations(images)
     return images, labels
 
+# Collapses multiple data transformations; primarily used in model training scritps
+def process_data_continuous(data):
+    images, labels = data[0], data[1]
+    images, labels = flip_enrichment_continuous(images, labels)
+    images = apply_transformations(images)
+    return images, labels
 
 # I've separated this from `process_data` so that I can use it in both training
 # and scoring. Relying on process_data alone wasn't sufficient for scoring
