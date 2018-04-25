@@ -33,6 +33,10 @@ class RecordReader(object):
         self.base_directory = base_directory
         folders = glob.glob(join(self.base_directory,'*'))
 
+        # Filter out any folder (like tf_visual_data/runs) not related
+        # to datasets. Assumes dataset is not elsewhere in the file path
+        folders = [folder for folder in folders if 'dataset' in folder]
+
         # Assign folders to either train or test
         shuffle(folders)
         train_percentage = 60
