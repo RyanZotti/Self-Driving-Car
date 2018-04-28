@@ -6,7 +6,6 @@ from model import *
 
 args = parse_args()
 data_path = args["datapath"]
-data_path='/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data'
 epochs = args["epochs"]
 s3_bucket = args['s3_bucket']
 show_speed = args['show_speed']
