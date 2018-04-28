@@ -2,9 +2,10 @@ from datetime import datetime
 import tensorflow as tf
 from tensorflow.python.client import timeline
 from util import mkdir_tfboard_run_dir,mkdir,shell_command, delete_old_model_backups
-from data_augmentation import process_data
+from data_augmentation import process_data, process_data_continuous
 import os
 from Dataset import Dataset
+from ai.record_reader import RecordReader
 import argparse
 from util import mkdir, sync_from_aws, sync_to_aws
 
@@ -24,7 +25,11 @@ class Trainer:
                  show_speed=False,
                  s3_sync=True):
 
+
         self.data_path = data_path
+
+        self.record_reader = RecordReader(base_directory=self.data_path)
+
         self.s3_bucket = format_s3_bucket(s3_bucket)
         self.s3_data_dir = format_s3_data_dir(self.s3_bucket)
         self.model_file = model_file
@@ -81,10 +86,10 @@ class Trainer:
             print(message.format(epoch, train_accuracy, test_accuracy))
 
     # This function is agnostic to the model
-    def train(self, sess, x, y_, accuracy, train_step, train_feed_dict, test_feed_dict):
+    def train(self, sess, x, y_, optimization, train_step, train_feed_dict, test_feed_dict):
 
         # To view graph: tensorboard --logdir=/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs
-        tf.summary.scalar('accuracy_summary', accuracy)
+        tf.summary.scalar('optimization', optimization)
         merged = tf.summary.merge_all()
 
         # Archive the model script in case of good results that need to be replicated
@@ -103,17 +108,19 @@ class Trainer:
         run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
         run_opts_metadata = tf.RunMetadata()
 
-        train_images, train_labels = process_data(dataset.get_sample(train=True))
+        train_batch = self.record_reader.get_train_batch()
+        train_images, train_labels = process_data_continuous(train_batch)
         train_feed_dict[x] = train_images
         train_feed_dict[y_] = train_labels
-        train_summary, train_accuracy = sess.run([merged, accuracy], feed_dict=train_feed_dict,
+
+        train_summary, train_accuracy = sess.run([merged, optimization], feed_dict=train_feed_dict,
                                                  options=run_opts, run_metadata=run_opts_metadata)
-        test_images, test_labels = process_data(dataset.get_sample(train=False))
+        test_batch = self.record_reader.get_test_batch()
+        test_images, test_labels = process_data_continuous(test_batch)
         test_feed_dict[x] = test_images
         test_feed_dict[y_] = test_labels
-        test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict=test_feed_dict,
+        test_summary, test_accuracy = sess.run([merged, optimization], feed_dict=test_feed_dict,
                                                options=run_opts, run_metadata=run_opts_metadata)
-
 
         # Always worth printing accuracy, even for a restored model, since it provides an early sanity check
         message = "epoch: {0}, training accuracy: {1}, validation accuracy: {2}"
@@ -132,9 +139,10 @@ class Trainer:
 
         for epoch in range(self.start_epoch+1, self.start_epoch + self.n_epochs):
             prev_time = datetime.now()
-            train_batches = dataset.get_batches(train=True)
-            for batch_id, batch in enumerate(train_batches):
-                images, labels = process_data(batch)
+            batch_count = self.record_reader.get_batches_per_epoch()
+            for batch_id in range(batch_count):
+                batch = self.record_reader.get_train_batch()
+                images, labels = process_data_continuous(batch)
                 train_feed_dict[x] = images
                 train_feed_dict[y_] = labels
                 sess.run(train_step,feed_dict=train_feed_dict)
@@ -156,15 +164,17 @@ class Trainer:
             run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
             run_opts_metadata = tf.RunMetadata()
 
-            train_images, train_labels = process_data(dataset.get_sample(train=True))
+            train_batch = self.record_reader.get_train_batch()
+            train_images, train_labels = process_data_continuous(train_batch)
             train_feed_dict[x] = train_images
             train_feed_dict[y_] = train_labels
-            train_summary, train_accuracy = sess.run([merged, accuracy], feed_dict=train_feed_dict,
+            train_summary, train_accuracy = sess.run([merged, optimization], feed_dict=train_feed_dict,
                                                      options=run_opts, run_metadata=run_opts_metadata)
-            test_images, test_labels = process_data(dataset.get_sample(train=False))
+            test_batch = self.record_reader.get_test_batch()
+            test_images, test_labels = process_data_continuous(test_batch)
             test_feed_dict[x] = test_images
             test_feed_dict[y_] = test_labels
-            test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict=test_feed_dict,
+            test_summary, test_accuracy = sess.run([merged, optimization], feed_dict=test_feed_dict,
                                                    options=run_opts, run_metadata=run_opts_metadata)
             print(message.format(epoch, train_accuracy, test_accuracy))
             with open(self.results_file, 'a') as f:
