@@ -26,14 +26,15 @@ conv4 = batch_norm_pool_conv_layer('layer4',conv3, [3, 3, 36, 36], phase)
 h_pool4_flat = tf.reshape(conv4, [-1, 15 * 20 * 36])
 h5 = batch_norm_fc_layer('layer5',h_pool4_flat, [15 * 20 * 36, 512], phase)
 h6 = batch_norm_fc_layer('layer6',h5, [512, 256], phase)
-W_final = weight_variable('layer7',[256, 2])
-b_final = bias_variable('layer7',[2])
+h6 = batch_norm_fc_layer('layer7',h6, [256, 128], phase)
+W_final = weight_variable('layer8',[128, 2])
+b_final = bias_variable('layer8',[2])
 logits = tf.add(tf.matmul(h6, W_final), b_final, name='logits')
 
 # TODO: Fix this x.shape[0] bug
-rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(logits, y_)))
+rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(logits, y_)),name='loss')
 
-train_step = tf.train.AdamOptimizer(1e-5,name='train_step').minimize(rmse)
+train_step = tf.train.AdamOptimizer(1e-4,name='train_step').minimize(rmse)
 
 '''
     https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/layers/python/layers/layers.py#L396
