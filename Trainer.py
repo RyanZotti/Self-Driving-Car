@@ -31,7 +31,6 @@ class Trainer:
         self.record_reader = RecordReader(base_directory=self.data_path)
 
         self.s3_bucket = format_s3_bucket(s3_bucket)
-        self.s3_data_dir = format_s3_data_dir(self.s3_bucket)
         self.model_file = model_file
         self.n_epochs = int(epochs)
         self.max_sample_records = max_sample_records
@@ -40,7 +39,7 @@ class Trainer:
 
         # Always sync before training in case I ever train multiple models in parallel
         if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
-            sync_from_aws(s3_path=self.s3_data_dir, local_path=self.data_path)
+            sync_from_aws(s3_path=self.s3_bucket, local_path=self.data_path)
 
         if restored_model:
             self.model_dir = restored_model_dir
@@ -133,7 +132,7 @@ class Trainer:
                 f.write(message.format(self.start_epoch, train_accuracy, test_accuracy)+'\n')
             self.save_model(sess, epoch=self.start_epoch)
             if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
-                sync_to_aws(s3_path=self.s3_data_dir, local_path=self.data_path)  # Save to AWS
+                sync_to_aws(s3_path=self.s3_bucket, local_path=self.data_path)  # Save to AWS
 
         for epoch in range(self.start_epoch+1, self.start_epoch + self.n_epochs):
             prev_time = datetime.now()
@@ -181,7 +180,7 @@ class Trainer:
             # Save a model checkpoint after every epoch
             self.save_model(sess,epoch=epoch)
             if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
-                sync_to_aws(s3_path=self.s3_data_dir, local_path=self.data_path)  # Save to AWS
+                sync_to_aws(s3_path=self.s3_bucket, local_path=self.data_path)  # Save to AWS
 
         # Marks unambiguous successful completion to prevent deletion by cleanup script
         shell_command('touch ' + self.model_dir + '/SUCCESS')
@@ -195,14 +194,6 @@ class Trainer:
 def format_s3_bucket(s3_bucket):
     if not 's3://' in s3_bucket:
         return 's3://{s3_bucket}'.format(s3_bucket=s3_bucket)
-    else:
-        return s3_bucket
-
-
-# Assumes S3 bucket will always have same s3://bucket/data hierarchy
-def format_s3_data_dir(s3_bucket):
-    if '/data' not in s3_bucket:
-        return '{s3_bucket}/data'.format(s3_bucket=s3_bucket)
     else:
         return s3_bucket
 
