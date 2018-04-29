@@ -26,11 +26,10 @@ class Trainer:
                  s3_sync=True,
                  save_to_disk=False):
 
-
         self.data_path = data_path
-
+        self.save_to_disk = save_to_disk
+        self.is_restored_model = is_restored_model
         self.record_reader = RecordReader(base_directory=self.data_path)
-
         self.s3_bucket = format_s3_bucket(s3_bucket)
         self.model_file = model_file
         self.n_epochs = int(epochs)
@@ -44,24 +43,20 @@ class Trainer:
 
         if is_restored_model:
             self.model_dir = restored_model_dir
-        else:
+        elif self.save_to_disk is True:
             self.tfboard_basedir = os.path.join(self.data_path, 'tf_visual_data', 'runs')
             self.model_dir = mkdir_tfboard_run_dir(self.tfboard_basedir)
-
-        self.results_file = os.path.join(self.model_dir, 'results.txt')
-        self.speed_file = os.path.join(self.model_dir, 'speed.txt')
-        self.model_checkpoint_dir = os.path.join(self.model_dir,'checkpoints')
-        self.saver = tf.train.Saver()
-        self.start_epoch = start_epoch
-        self.is_restored_model = is_restored_model
-
-        if save_to_disk:
+            self.results_file = os.path.join(self.model_dir, 'results.txt')
+            self.speed_file = os.path.join(self.model_dir, 'speed.txt')
+            self.model_checkpoint_dir = os.path.join(self.model_dir,'checkpoints')
+            self.saver = tf.train.Saver()
             mkdir(self.model_checkpoint_dir)
+
+        self.start_epoch = start_epoch
+
 
         # Prints batch processing speed, among other things
         self.show_speed = show_speed
-
-        self.save_to_disk = save_to_disk
 
     # This function is agnostic to the model
     def train(self, sess, x, y_, optimization, train_step, train_feed_dict, test_feed_dict):
@@ -73,7 +68,7 @@ class Trainer:
         # Archive the model script in case of good results that need to be replicated
         # If model is being restored, then assume model file has already been saved somewhere
         # and that self.model_file is None
-        if self.model_file is not None:
+        if self.model_file is not None and self.save_to_disk is True:
             cmd = 'cp {model_file} {archive_path}'
             shell_command(cmd.format(model_file=self.model_file, archive_path=self.model_dir + '/'))
 
