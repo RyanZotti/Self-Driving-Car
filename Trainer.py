@@ -54,38 +54,14 @@ class Trainer:
         self.saver = tf.train.Saver()
         self.start_epoch = start_epoch
         self.is_restored_model = is_restored_model
-        mkdir(self.model_checkpoint_dir)
+
+        if save_to_disk:
+            mkdir(self.model_checkpoint_dir)
 
         # Prints batch processing speed, among other things
         self.show_speed = show_speed
 
         self.save_to_disk = save_to_disk
-
-    # Used to intentionally overfit and check for basic initialization and learning issues
-    def train_one_batch(self, sess, x, y_, accuracy, train_step, train_feed_dict):
-
-        tf.summary.scalar('accuracy', accuracy)
-        merged = tf.summary.merge_all()
-        sess.run(tf.global_variables_initializer())
-        dataset = Dataset(input_file_path=self.data_path, max_sample_records=self.max_sample_records)
-
-        # Not sure what these two lines do
-        run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-        run_opts_metadata = tf.RunMetadata()
-
-        train_batches = dataset.get_batches(train=True)
-        batch = next(train_batches)
-        images, labels = process_data(batch)
-        train_feed_dict[x] = images
-        train_feed_dict[y_] = labels
-        for epoch in range(self.n_epochs):
-            train_step.run(feed_dict=train_feed_dict)
-            train_summary, train_accuracy = sess.run([merged, accuracy], feed_dict=train_feed_dict,
-                                                     options=run_opts, run_metadata=run_opts_metadata)
-            test_summary, test_accuracy = sess.run([merged, accuracy], feed_dict=train_feed_dict,
-                                                   options=run_opts, run_metadata=run_opts_metadata)
-            message = "epoch: {0}, training accuracy: {1}, validation accuracy: {2}"
-            print(message.format(epoch, train_accuracy, test_accuracy))
 
     # This function is agnostic to the model
     def train(self, sess, x, y_, optimization, train_step, train_feed_dict, test_feed_dict):
