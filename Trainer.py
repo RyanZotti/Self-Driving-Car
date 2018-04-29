@@ -102,8 +102,6 @@ class Trainer:
         if not self.restored_model:  # Don't want to erase restored model weights
             sess.run(tf.global_variables_initializer())
 
-        dataset = Dataset(input_file_path=self.data_path, max_sample_records=self.max_sample_records)
-
         # TODO: Document and understand what RunOptions does
         run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
         run_opts_metadata = tf.RunMetadata()
@@ -154,7 +152,7 @@ class Trainer:
                     speed_results = 'batch {batch_id} of {total_batches}, {seconds} seconds'
                     speed_results = speed_results.format(batch_id=batch_id,
                                              seconds=diff_seconds,
-                                             total_batches=dataset.batches_per_epoch)
+                                             total_batches=batch_count)
                     with open(self.speed_file, 'a') as f:
                         f.write(speed_results + '\n')
                     print(speed_results)
