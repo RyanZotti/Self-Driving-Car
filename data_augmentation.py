@@ -34,7 +34,7 @@ def flip(images,labels,original_command,debug=False):
     return flipped_images, new_target_array
 
 
-def flip_continuous(images,labels,debug=True):
+def flip_continuous(images,labels,debug=False):
 
     # Order of labels variables is angle, throttle. It
     # only makes sense to flip angle, so select the first
@@ -47,7 +47,7 @@ def flip_continuous(images,labels,debug=True):
         flipped_image = cv2.flip(image, 1)
         flipped_images.append(flipped_image)
     flipped_images = np.array(flipped_images)
-    if True:
+    if debug:
         for i in range(10):
             cv2.imshow("Original - {0}".format(labels[i,:]), images[i,:])
             cv2.imshow("Flipped - {0}".format(flipped_labels[i,:]), flipped_images[i,:])
