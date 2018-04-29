@@ -46,6 +46,8 @@ class Trainer:
         elif self.save_to_disk is True:
             self.tfboard_basedir = os.path.join(self.data_path, 'tf_visual_data', 'runs')
             self.model_dir = mkdir_tfboard_run_dir(self.tfboard_basedir)
+
+        if self.save_to_disk is True:
             self.results_file = os.path.join(self.model_dir, 'results.txt')
             self.speed_file = os.path.join(self.model_dir, 'speed.txt')
             self.model_checkpoint_dir = os.path.join(self.model_dir,'checkpoints')
@@ -53,7 +55,6 @@ class Trainer:
             mkdir(self.model_checkpoint_dir)
 
         self.start_epoch = start_epoch
-
 
         # Prints batch processing speed, among other things
         self.show_speed = show_speed
