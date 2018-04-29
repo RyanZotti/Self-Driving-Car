@@ -240,5 +240,6 @@ def parse_args():
                     default=False)
     args = vars(ap.parse_args())
     args['show_speed'] = parse_boolean_cli_args(args['show_speed'])
-    args['s3_sync'] = parse_boolean_cli_args(args['s3_sync'])
+    if args['s3_sync']:
+        args['s3_sync'] = parse_boolean_cli_args(args['s3_sync'])
     return args
