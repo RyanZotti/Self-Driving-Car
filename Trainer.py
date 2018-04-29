@@ -106,7 +106,7 @@ class Trainer:
             create_tf_timeline(self.model_dir, run_opts_metadata)
 
         # Don't double-count. A restored model already has its last checkpoint and results.txt entry available
-        if not self.is_restored_model:
+        if not self.is_restored_model and self.save_to_disk is True:
             with open(self.results_file,'a') as f:
                 f.write(message.format(self.start_epoch, train_accuracy, test_accuracy)+'\n')
             self.save_model(sess, epoch=self.start_epoch)
@@ -131,8 +131,9 @@ class Trainer:
                     speed_results = speed_results.format(batch_id=batch_id,
                                              seconds=diff_seconds,
                                              total_batches=batch_count)
-                    with open(self.speed_file, 'a') as f:
-                        f.write(speed_results + '\n')
+                    if self.save_to_disk is True:
+                        with open(self.speed_file, 'a') as f:
+                            f.write(speed_results + '\n')
                     print(speed_results)
                 prev_time = datetime.now()
 
@@ -153,16 +154,14 @@ class Trainer:
             test_summary, test_accuracy = sess.run([merged, optimization], feed_dict=test_feed_dict,
                                                    options=run_opts, run_metadata=run_opts_metadata)
             print(message.format(epoch, train_accuracy, test_accuracy))
-            with open(self.results_file, 'a') as f:
-                f.write(message.format(epoch, train_accuracy, test_accuracy)+'\n')
+            if self.save_to_disk is True:
+                with open(self.results_file, 'a') as f:
+                    f.write(message.format(epoch, train_accuracy, test_accuracy)+'\n')
 
             # Save a model checkpoint after every epoch
             self.save_model(sess,epoch=epoch)
             if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
                 sync_to_aws(s3_path=self.s3_bucket, local_path=self.data_path)  # Save to AWS
-
-        # Marks unambiguous successful completion to prevent deletion by cleanup script
-        shell_command('touch ' + self.model_dir + '/SUCCESS')
 
     def save_model(self,sess,epoch):
         file_path = os.path.join(self.model_checkpoint_dir,'model')
