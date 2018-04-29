@@ -19,11 +19,12 @@ class Trainer:
                  epochs=50,
                  max_sample_records=500,
                  start_epoch=0,
-                 restored_model=False,
+                 is_restored_model=False,
                  restored_model_dir=None,
                  tf_timeline=False,
                  show_speed=False,
-                 s3_sync=True):
+                 s3_sync=True,
+                 save_to_disk=False):
 
 
         self.data_path = data_path
@@ -41,7 +42,7 @@ class Trainer:
         if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
             sync_from_aws(s3_path=self.s3_bucket, local_path=self.data_path)
 
-        if restored_model:
+        if is_restored_model:
             self.model_dir = restored_model_dir
         else:
             self.tfboard_basedir = os.path.join(self.data_path, 'tf_visual_data', 'runs')
@@ -52,11 +53,13 @@ class Trainer:
         self.model_checkpoint_dir = os.path.join(self.model_dir,'checkpoints')
         self.saver = tf.train.Saver()
         self.start_epoch = start_epoch
-        self.restored_model = restored_model
+        self.is_restored_model = is_restored_model
         mkdir(self.model_checkpoint_dir)
 
         # Prints batch processing speed, among other things
         self.show_speed = show_speed
+
+        self.save_to_disk = save_to_disk
 
     # Used to intentionally overfit and check for basic initialization and learning issues
     def train_one_batch(self, sess, x, y_, accuracy, train_step, train_feed_dict):
@@ -98,7 +101,7 @@ class Trainer:
             cmd = 'cp {model_file} {archive_path}'
             shell_command(cmd.format(model_file=self.model_file, archive_path=self.model_dir + '/'))
 
-        if not self.restored_model:  # Don't want to erase restored model weights
+        if not self.is_restored_model:  # Don't want to erase restored model weights
             sess.run(tf.global_variables_initializer())
 
         # TODO: Document and understand what RunOptions does
@@ -127,7 +130,7 @@ class Trainer:
             create_tf_timeline(self.model_dir, run_opts_metadata)
 
         # Don't double-count. A restored model already has its last checkpoint and results.txt entry available
-        if not self.restored_model:
+        if not self.is_restored_model:
             with open(self.results_file,'a') as f:
                 f.write(message.format(self.start_epoch, train_accuracy, test_accuracy)+'\n')
             self.save_model(sess, epoch=self.start_epoch)
@@ -238,8 +241,13 @@ def parse_args():
     ap.add_argument("-b", "--s3_sync", required=False,
                     help="Save on S3 storage by not syncing during code development",
                     default=False)
+    ap.add_argument("--save_to_disk", required=False,
+                    help="Default of 'no' avoids naming conflicts during local development when GPU is also running",
+                    default=False)
     args = vars(ap.parse_args())
     args['show_speed'] = parse_boolean_cli_args(args['show_speed'])
     if args['s3_sync']:
         args['s3_sync'] = parse_boolean_cli_args(args['s3_sync'])
+    if args['save_to_disk']:
+        args['save_to_disk'] = parse_boolean_cli_args(args['save_to_disk'])
     return args
