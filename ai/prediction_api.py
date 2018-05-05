@@ -57,8 +57,13 @@ class PredictionHandler(tornado.web.RequestHandler):
         # Normalize for contrast and pixel size
         normalized_images = apply_transformations(normalized_images)
 
-        prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess)[0]
-        self.write({'prediction':prediction})
+        prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess).astype(float)
+
+        # Ignore second prediction set, which is flipped image, a hack
+        prediction = list(prediction[0])
+
+        result = {'prediction': prediction}
+        self.write(result)
 
 
 def make_app(sess, x, prediction):
@@ -83,10 +88,7 @@ def load_model(checkpoint_dir_path):
     # For more details on why .outputs[0] is required, see:
     # https://stackoverflow.com/questions/42595543/tensorflow-eval-restored-graph
     make_logits = graph.get_operation_by_name("logits")
-    logits = make_logits.outputs[0]
-
-    # A tensor representing the model's prediction
-    prediction = tf.argmax(logits, 1)  # tf.argmax returns the index with the largest value across axes of a tensor
+    prediction = make_logits.outputs[0]
 
     return sess, x, prediction
 
