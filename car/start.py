@@ -3,7 +3,9 @@ from car.config import load_config
 from car.parts.camera import Webcam
 from car.parts.engine import Engine
 from car.parts.web_controller.web import LocalWebController
+from car.parts.web_controller.prediction_caller import PredictionCaller
 from car.parts.datastore import DatasetHandler
+
 
 
 # Load default settings
@@ -21,6 +23,15 @@ ctr = LocalWebController()
 car.add(ctr,
         inputs=['cam/image_array'],
         outputs=['user/angle', 'user/throttle', 'user/mode', 'recording'],
+        threaded=True)
+
+# TODO: Only add this part if there is a model
+# TODO: Output model/angle, model/throttle instead of user/
+# Add prediction caller
+prediction_caller = PredictionCaller()
+car.add(prediction_caller,
+        inputs=['cam/image_array'],
+        outputs=['model/angle', 'model/throttle'],
         threaded=True)
 
 # Add engine
