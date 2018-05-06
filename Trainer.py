@@ -19,6 +19,7 @@ class Trainer:
                  epochs=50,
                  max_sample_records=500,
                  start_epoch=0,
+                 batch_size=50,
                  is_restored_model=False,
                  restored_model_dir=None,
                  tf_timeline=False,
@@ -29,7 +30,8 @@ class Trainer:
         self.data_path = data_path
         self.save_to_disk = save_to_disk
         self.is_restored_model = is_restored_model
-        self.record_reader = RecordReader(base_directory=self.data_path)
+        self.batch_size = batch_size
+        self.record_reader = RecordReader(base_directory=self.data_path,batch_size=self.batch_size)
         self.s3_bucket = format_s3_bucket(s3_bucket)
         self.model_file = model_file
         self.n_epochs = int(epochs)
@@ -215,6 +217,10 @@ def parse_args():
     ap.add_argument("--save_to_disk", required=False,
                     help="Default of 'no' avoids naming conflicts during local development when GPU is also running",
                     default=False)
+    ap.add_argument(
+        "--batch_size", required=False,
+        help="Images per batch",
+        default=False)
     args = vars(ap.parse_args())
     args['show_speed'] = parse_boolean_cli_args(args['show_speed'])
     if args['s3_sync']:
