@@ -81,7 +81,18 @@ class RecordReader(object):
         # Read image. OpenCV interprets 1 as RGB
         image = cv2.imread(image_path, 1)
 
-        return image, angle, throttle
+        # Fixes a critical bug
+        # Image passed via post request to Tornado gets converted
+        # this way, which results in a very slight change (slight
+        # blurring) that unfortunately drastically changes the
+        # model's prediction. This code makes sure that what the
+        # model sees during training matches what it sees during
+        # deployment
+        hardcoded_image = cv2.imencode('.jpg', image)[1].tostring()
+        nparr = np.fromstring(hardcoded_image, np.uint8)
+        api_image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        return api_image, angle, throttle
 
     # Returns batch of label and image pairs
     def get_batch(self,all_paths):
