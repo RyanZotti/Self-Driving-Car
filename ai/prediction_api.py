@@ -48,17 +48,38 @@ class PredictionHandler(tornado.web.RequestHandler):
         # https://stackoverflow.com/questions/17170752/python-opencv-load-image-from-byte-string/17170855
         nparr = np.fromstring(file_body, np.uint8)
         img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        cv2.imwrite('/Users/ryanzotti/Documents/repos/Self-Driving-Car/regular.jpg', img_np)
+        #print(img_np[0])
 
-        # TODO: Fix this bug. Right now if I don't pass mirror image, model outputs unchanging prediction
+        # This produces result consistent w/ Trainer.py code
+        #hardcoded_image = cv2.imread('/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_1_18-04-15/1034_cam-image_array_.jpg', 1)
+        #flipped_image = cv2.flip(hardcoded_image, 1)
+        #normalized_images = [hardcoded_image, flipped_image]
+        #normalized_images = np.array(normalized_images)
+        #normalized_images = apply_transformations(normalized_images)
+        #prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess).astype(float)
+
+        nparr = np.fromstring(file_body, np.uint8)
+        img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         flipped_image = cv2.flip(img_np, 1)
         normalized_images = [img_np, flipped_image]
         normalized_images = np.array(normalized_images)
-
-        # Normalize for contrast and pixel size
         normalized_images = apply_transformations(normalized_images)
-
         prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess).astype(float)
 
+        # print(normalized_images[0])
+        # TODO: Fix this bug. Right now if I don't pass mirror image, model outputs unchanging prediction
+        #flipped_image = cv2.flip(img_np, 1)
+        #normalized_images = [img_np, flipped_image]
+        #normalized_images = np.array(normalized_images)
+
+        #cv2.imwrite('/Users/ryanzotti/Documents/repos/Self-Driving-Car/test.jpg', normalized_images[0])
+
+        # Normalize for contrast and pixel size
+        ##normalized_images = apply_transformations(normalized_images)
+        #print(normalized_images[0])
+        #prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess).astype(float)
+        #print(prediction)
         # Ignore second prediction set, which is flipped image, a hack
         prediction = list(prediction[0])
 

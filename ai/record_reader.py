@@ -84,11 +84,14 @@ class RecordReader(object):
         return image, angle, throttle
 
     # Returns batch of label and image pairs
-    def get_batch(self,all_paths):
+    def get_batch(self,all_paths,is_train=False):
 
         # Select paths at random
         random_paths = list(np.random.choice(
             all_paths, self.batch_size, replace=False))
+
+        if is_train == True:
+            print(random_paths)
 
         # Parallelize using a map (vs. for-loop) for faster reads
         records = list(map(self.read_record, random_paths))
@@ -105,7 +108,7 @@ class RecordReader(object):
 
     # Get train batch
     def get_train_batch(self):
-        images, labels = self.get_batch(self.train_paths)
+        images, labels = self.get_batch(self.train_paths,is_train=True)
         return (images, labels)
 
     # Get test batch

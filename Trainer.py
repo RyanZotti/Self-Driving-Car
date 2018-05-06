@@ -1,3 +1,4 @@
+import cv2
 from datetime import datetime
 import tensorflow as tf
 from tensorflow.python.client import timeline
@@ -19,6 +20,7 @@ class Trainer:
                  epochs=50,
                  max_sample_records=500,
                  start_epoch=0,
+                 batch_size=50,
                  is_restored_model=False,
                  restored_model_dir=None,
                  tf_timeline=False,
@@ -29,13 +31,14 @@ class Trainer:
         self.data_path = data_path
         self.save_to_disk = save_to_disk
         self.is_restored_model = is_restored_model
-        self.record_reader = RecordReader(base_directory=self.data_path)
+        self.record_reader = RecordReader(base_directory=self.data_path,batch_size=1)
         self.s3_bucket = format_s3_bucket(s3_bucket)
         self.model_file = model_file
         self.n_epochs = int(epochs)
         self.max_sample_records = max_sample_records
         self.tf_timeline = tf_timeline
         self.s3_sync = s3_sync
+        self.batch_size = batch_size
 
         # Always sync before training in case I ever train multiple models in parallel
         if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
@@ -94,6 +97,28 @@ class Trainer:
         test_summary, test_accuracy = sess.run([merged, optimization], feed_dict=test_feed_dict,
                                                options=run_opts, run_metadata=run_opts_metadata)
 
+        graph = tf.get_default_graph()
+        make_logits = graph.get_operation_by_name("logits")
+        prediction = make_logits.outputs[0]
+        abc, _ = train_batch
+        #print(train_images[0])
+        #cv2.imwrite('/Users/ryanzotti/Documents/repos/Self-Driving-Car/trainer_image.jpg', train_images[0])
+
+        # This produces result consistent w/ prediction_api.py code
+        #import numpy as np
+        #from  data_augmentation import apply_transformations
+        #hardcoded_image = cv2.imread('/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_1_18-04-15/1034_cam-image_array_.jpg', 1)
+        #flipped_image = cv2.flip(hardcoded_image, 1)
+        #normalized_images = [hardcoded_image, flipped_image]
+        #normalized_images = np.array(normalized_images)
+        #normalized_images = apply_transformations(normalized_images)
+        #prediction = prediction.eval(feed_dict={x: normalized_images}, session=sess).astype(float)
+
+
+        prediction = prediction.eval(feed_dict={x: train_images}, session=sess).astype(float)
+        print('pred api:')
+        print(prediction)
+
         # Always worth printing accuracy, even for a restored model, since it provides an early sanity check
         message = "epoch: {0}, training accuracy: {1}, validation accuracy: {2}"
         print(message.format(self.start_epoch, train_accuracy, test_accuracy))
@@ -119,6 +144,10 @@ class Trainer:
                 train_feed_dict[y_] = labels
                 sess.run(train_step,feed_dict=train_feed_dict)
 
+                prediction = make_logits.outputs[0].eval(feed_dict={x: images}, session=sess).astype(float)
+                print('pred api:')
+                print(prediction)
+
                 # Track speed to better compare GPUs and CPUs
                 now = datetime.now()
                 diff_seconds = (now - prev_time).total_seconds()
@@ -130,7 +159,7 @@ class Trainer:
                     if self.save_to_disk is True:
                         with open(self.speed_file, 'a') as f:
                             f.write(speed_results + '\n')
-                    print(speed_results)
+                    #print(speed_results)
                 prev_time = datetime.now()
 
             # TODO: Document and understand what RunOptions does
@@ -149,6 +178,9 @@ class Trainer:
             test_feed_dict[y_] = test_labels
             test_summary, test_accuracy = sess.run([merged, optimization], feed_dict=test_feed_dict,
                                                    options=run_opts, run_metadata=run_opts_metadata)
+
+
+
             print(message.format(epoch, train_accuracy, test_accuracy))
             if self.save_to_disk is True:
                 with open(self.results_file, 'a') as f:
@@ -211,6 +243,9 @@ def parse_args():
                     default=False)
     ap.add_argument("-b", "--s3_sync", required=False,
                     help="Save on S3 storage by not syncing during code development",
+                    default=False)
+    ap.add_argument("--batch_size", required=False,
+                    help="Images per batch",
                     default=False)
     ap.add_argument("--save_to_disk", required=False,
                     help="Default of 'no' avoids naming conflicts during local development when GPU is also running",

@@ -19,9 +19,6 @@ class Dataset:
         self.test_metadata_summaries, self.test_metadata = summarize_metadata(self.input_file_path, self.test_folders)
         self.test_folder_weights = self.get_folder_weights(self.test_folders)
         self.images_per_batch = images_per_batch
-        self.images_per_epoch = self.train_metadata_summaries['image_count']
-        self.batches_per_epoch = int(self.images_per_epoch / self.images_per_batch)
-        self.samples_per_epoch = int(self.images_per_epoch / self.max_sample_records)
 
     # TODO (ryanzotti): Make this asynchronous to parallelize disk reads during GPU/CPU train_step cycles
     def get_sample(self,train=True):

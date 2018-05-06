@@ -12,6 +12,7 @@ show_speed = args['show_speed']
 s3_bucket = format_s3_bucket(args['s3_bucket'])
 s3_sync = args['s3_sync']
 save_to_disk = args['save_to_disk']
+batch_size = args['batch_size']
 
 checkpoint_dir_path = os.path.join(model_dir,'checkpoints')
 
@@ -55,7 +56,8 @@ trainer = Trainer(data_path=data_path,
                   restored_model_dir=model_dir,
                   show_speed=show_speed,
                   s3_sync=s3_sync,
-                  save_to_disk=save_to_disk)
+                  save_to_disk=save_to_disk,
+                  batch_size=1)
 
 trainer.train(sess=sess, x=x, y_=y_,
               optimization=optimization,
