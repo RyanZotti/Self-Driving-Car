@@ -52,12 +52,29 @@ class PredictionHandler(tornado.web.RequestHandler):
         #print(img_np[0])
 
         # This produces result consistent w/ Trainer.py code
-        #hardcoded_image = cv2.imread('/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_1_18-04-15/1034_cam-image_array_.jpg', 1)
-        #flipped_image = cv2.flip(hardcoded_image, 1)
-        #normalized_images = [hardcoded_image, flipped_image]
-        #normalized_images = np.array(normalized_images)
-        #normalized_images = apply_transformations(normalized_images)
-        #prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess).astype(float)
+        hardcoded_image = cv2.imread('/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_1_18-04-15/45_cam-image_array_.jpg', 1)
+        flipped_image = cv2.flip(hardcoded_image, 1)
+        normalized_images = [hardcoded_image, flipped_image]
+        normalized_images = np.array(normalized_images)
+        normalized_images = apply_transformations(normalized_images)
+        prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess).astype(float)
+        print('From disk with no transformation')
+        print(list(prediction[0]))
+
+        # Meant to mimic what API does to image
+        hardcoded_image = cv2.imread(
+            '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_1_18-04-15/45_cam-image_array_.jpg',
+            1)
+        hardcoded_image = cv2.imencode('.jpg', hardcoded_image)[1].tostring()
+        nparr = np.fromstring(hardcoded_image, np.uint8)
+        img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        flipped_image = cv2.flip(img_np, 1)
+        normalized_images = [img_np, flipped_image]
+        normalized_images = np.array(normalized_images)
+        normalized_images = apply_transformations(normalized_images)
+        prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess).astype(float)
+        print('From disk but with string to bytes to string conversion')
+        print(list(prediction[0]))
 
         nparr = np.fromstring(file_body, np.uint8)
         img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -66,6 +83,8 @@ class PredictionHandler(tornado.web.RequestHandler):
         normalized_images = np.array(normalized_images)
         normalized_images = apply_transformations(normalized_images)
         prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess).astype(float)
+        print('From API')
+        print(list(prediction[0]))
 
         # print(normalized_images[0])
         # TODO: Fix this bug. Right now if I don't pass mirror image, model outputs unchanging prediction

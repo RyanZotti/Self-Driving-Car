@@ -19,7 +19,7 @@ data = {
 
 #label_paths = glob.glob('/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_1_18-04-15/record*.json')
 
-label_paths = glob.glob('/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_4_18-04-15/record_891.json')
+label_paths = glob.glob('/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_5_18-04-15/record_2002.json')
 for label_path in label_paths:
     print(label_path)
 

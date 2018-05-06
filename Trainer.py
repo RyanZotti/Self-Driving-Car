@@ -104,19 +104,32 @@ class Trainer:
         #print(train_images[0])
         #cv2.imwrite('/Users/ryanzotti/Documents/repos/Self-Driving-Car/trainer_image.jpg', train_images[0])
 
-        # This produces result consistent w/ prediction_api.py code
-        #import numpy as np
-        #from  data_augmentation import apply_transformations
-        #hardcoded_image = cv2.imread('/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_1_18-04-15/1034_cam-image_array_.jpg', 1)
-        #flipped_image = cv2.flip(hardcoded_image, 1)
-        #normalized_images = [hardcoded_image, flipped_image]
-        #normalized_images = np.array(normalized_images)
-        #normalized_images = apply_transformations(normalized_images)
-        #prediction = prediction.eval(feed_dict={x: normalized_images}, session=sess).astype(float)
-
-
         prediction = prediction.eval(feed_dict={x: train_images}, session=sess).astype(float)
-        print('pred api:')
+        print('Normal Trainer.py prediction')
+        print(prediction)
+
+        # This produces result consistent w/ prediction_api.py code
+        import numpy as np
+        from  data_augmentation import apply_transformations
+        hardcoded_image = cv2.imread('/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_1_18-04-15/1034_cam-image_array_.jpg', 1)
+        flipped_image = cv2.flip(hardcoded_image, 1)
+        normalized_images = [hardcoded_image, flipped_image]
+        normalized_images = np.array(normalized_images)
+        normalized_images = apply_transformations(normalized_images)
+        prediction = make_logits.outputs[0]
+        prediction = prediction.eval(feed_dict={x: normalized_images}, session=sess).astype(float)
+        print(prediction)
+
+        hardcoded_image = cv2.imencode('.jpg', train_batch[0][0])[1].tostring()
+        nparr = np.fromstring(hardcoded_image, np.uint8)
+        img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        flipped_image = cv2.flip(img_np, 1)
+        normalized_images = [img_np, flipped_image]
+        normalized_images = np.array(normalized_images)
+        normalized_images = apply_transformations(normalized_images)
+        prediction = make_logits.outputs[0]
+        prediction = prediction.eval(feed_dict={x: normalized_images}, session=sess).astype(float)
+        print('byte-string pred api:')
         print(prediction)
 
         # Always worth printing accuracy, even for a restored model, since it provides an early sanity check
