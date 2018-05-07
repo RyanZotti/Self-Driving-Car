@@ -21,8 +21,11 @@ class Webcam(BaseCamera):
 
         super().__init__()
 
-        # TODO: Read host from config file
         self.ffmpeg_host = ffmpeg_host
+
+        # Run ffmpeg as a subprocess
+        cmd = 'cd /usr/src/ffmpeg & sudo ffserver -f /etc/ff.conf_original & ffmpeg -v quiet -r 5 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost/webcam.ffm'
+        subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 
         stream_url = 'http://{ffmpeg_host}/webcam.mjpeg'.format(ffmpeg_host=ffmpeg_host)
         self.stream = urllib.request.urlopen(stream_url)
