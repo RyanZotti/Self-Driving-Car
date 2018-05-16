@@ -138,24 +138,31 @@ So, in total, there are four files for each driving session. I usually create a 
 
 Once all of the files are in the same place, it's time to clean up all of your data and create files that TensorFlow will be able to digest for model training. All of this happens in the `save_all_runs_as_numpy_files.py` script. This script assigns a label (left, right, straight) to each image and performs basic data cleaning. It saves each driving session separately as a .npz file.
 
-## Data Capture Quickstart
+## Quickstart
 
-In short, to gather training data you should have two terminal sessions open:
+**Step 1.** Start the model API (if applicable).
+
+The car will fail if it tries to connect to the model API while it is off.
+
+Make sure that you can ping your remote server. If the remote server is a Mac laptop, go to: System Preferences > Sharing. Then click the check box next to "on" for "File Sharing". This will allow other machines (like the Pi) on your network to talk to your laptop.
 
 ```
-# Terminal 1
 REPO_PATH="/Users/ryanzotti/Documents/repos/Self-Driving-Car"
-# Don't use PYTHONPATH=$PYTHONPATH here or it will cause Tornado import to fail
 export PYTHONPATH=${REPO_PATH}
 python ${REPO_PATH}/ai/prediction_api.py
 
-# Terminal 2
-ssh pi@ryanzotti.local
-# Here it is ok to use PYTHONPATH=$PYTHONPATH for some reason
-export PYTHONPATH=$PYTHONPATH:~/Self-Driving-Car
-cd ~/Self-Driving-Car
-python3 car/start.py
 ```
+**Step 2.** Start the car.
+
+```
+ssh pi@ryanzotti.local
+export PYTHONPATH=$PYTHONPATH:~/Self-Driving-Car
+python3 ~/Self-Driving-Car/car/start.py
+```
+
+**Step 3.** Open the web app control panel.
+
+Navigate to: ```http://ryanzotti.local:8887/drive```. You can now interactively switch between AI driving and human driving.
 
 ## Data Backup
 
