@@ -17,7 +17,7 @@ from pprint import pprint
 
 class PredictionCaller(object):
     # TODO: Read host from config file
-    def __init__(self):
+    def __init__(self, model_api):
 
         super().__init__()
 
@@ -25,7 +25,7 @@ class PredictionCaller(object):
         # initialize variable used to indicate
         # if the thread should be stopped
         self.on = True
-
+        self.model_api = model_api
         print('Turning on prediction caller...')
 
     def update(self):
@@ -35,9 +35,8 @@ class PredictionCaller(object):
     def run_threaded(self, img_arr=None):
 
         img = cv2.imencode('.jpg', img_arr)[1].tostring()
-        url = 'http://localhost:8888/predict'
         files = {'image': img}
-        request = requests.post(url, files=files)
+        request = requests.post(self.model_api, files=files)
         response = json.loads(request.text)
         prediction = response['prediction']
         self.predicted_angle, self.predicted_throttle = prediction

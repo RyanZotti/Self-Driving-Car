@@ -28,7 +28,7 @@ car.add(ctr,
 # TODO: Only add this part if there is a model
 # TODO: Output model/angle, model/throttle instead of user/
 # Add prediction caller
-prediction_caller = PredictionCaller()
+prediction_caller = PredictionCaller(model_api=cfg.MODEL_API)
 car.add(prediction_caller,
         inputs=['cam/image_array'],
         outputs=['model/angle', 'model/throttle'],

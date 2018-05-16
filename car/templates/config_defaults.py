@@ -14,6 +14,9 @@ import os
 
 PI_HOSTNAME = 'ryanzotti.local'
 
+# Provide entire endpoint since host, http(s), port, or url could change
+MODEL_API = 'http://Ryans-MacBook-Pro.local:8888/predict'
+
 #PATHS
 CAR_PATH = PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 DATA_PATH = os.path.join(CAR_PATH, 'data')
