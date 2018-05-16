@@ -140,23 +140,21 @@ Once all of the files are in the same place, it's time to clean up all of your d
 
 ## Data Capture Quickstart
 
-In short, to gather training data you should have three terminal sessions open:
+In short, to gather training data you should have two terminal sessions open:
 
 ```
 # Terminal 1
-ssh pi@ryanzotti.local
-cd /usr/src/ffmpeg
-sudo ffserver -f /etc/ff.conf_original & ffmpeg -v quiet -r 5 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost/webcam.ffm
+REPO_PATH="/Users/ryanzotti/Documents/repos/Self-Driving-Car"
+# Don't use PYTHONPATH=$PYTHONPATH here or it will cause Tornado import to fail
+export PYTHONPATH=${REPO_PATH}
+python ${REPO_PATH}/ai/prediction_api.py
 
 # Terminal 2
 ssh pi@ryanzotti.local
-cd /home/pi/Documents/code/Self-Driving-Car
-sudo su
-python3 drive_api.py --speed_percent 100
-
-# Terminal 3
-cd /Users/ryanzotti/Documents/repos/Self-Driving-Car
-python save_streaming_video_data.py --host ryanzotti.local
+# Here it is ok to use PYTHONPATH=$PYTHONPATH for some reason
+export PYTHONPATH=$PYTHONPATH:~/Self-Driving-Car
+cd ~/Self-Driving-Car
+python3 car/start.py
 ```
 
 ## Data Backup
