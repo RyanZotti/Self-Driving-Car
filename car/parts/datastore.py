@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 
 from PIL import Image
+from util import mkdir
 
 
 class Dataset(object):
@@ -337,6 +338,7 @@ class DatasetReader(Dataset):
 class DatasetHandler():
     def __init__(self, path):
         self.path = os.path.expanduser(path)
+        mkdir(self.path)  # Create dir if it doesn't exist
 
     def get_dataset_list(self, path):
         folders = next(os.walk(path))[1]
