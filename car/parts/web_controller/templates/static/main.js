@@ -502,7 +502,7 @@ var driveHandler = new function() {
       const deadZone = 5;
       var angle = 0.0;
       var outsideDeadZone = false;
-      var controlDirection = (Math.sign(initialGamma) * -1)
+      var controlDirection = (sign(initialGamma) * -1)
 
       //max steering angle at device 35º tilt
       var fullLeft = -35.0;
@@ -510,9 +510,9 @@ var driveHandler = new function() {
 
       //handle beta 90 to 180 discontinuous transition at gamma 90
       if (beta > 90) {
-        beta = (beta - 180) * Math.sign(gamma * -1) * controlDirection
+        beta = (beta - 180) * sign(gamma * -1) * controlDirection
       } else if (beta < -90) {
-        beta = (beta + 180) * Math.sign(gamma * -1) * controlDirection
+        beta = (beta + 180) * sign(gamma * -1) * controlDirection
       }
 
       // set the deadzone for neutral sterring
@@ -546,11 +546,20 @@ var driveHandler = new function() {
       return angle * controlDirection;
     };
 
+    // Math.sign() not available in iOS 8
+    function sign(x) {
+        return typeof x === 'number' ? x ? x < 0 ? -1 : 1 : x === x ? 0 : NaN : NaN;
+    }
+
     var gammaToThrottle = function(gamma) {
       var throttle = 0.0;
       var gamma180 = gamma + 90;
       var initialGamma180 = initialGamma + 90;
-      var controlDirection = (Math.sign(initialGamma) * -1);
+
+
+
+      var controlDirection = (sign(initialGamma) * -1);
+      //var controlDirection = (Math.sign(initialGamma) * -1);
 
       // 10 degree deadzone around the initial position
       // 45 degrees of motion for forward and reverse
