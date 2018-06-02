@@ -96,11 +96,23 @@ def process_data(data):
     images = apply_transformations(images)
     return images, labels
 
+def resize_images(images,scale):
+    resized_images = []
+    for original_image in images:
+        resized_image = cv2.resize(original_image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+        resized_images.append(resized_image)
+    return resized_images
+
 # Collapses multiple data transformations; primarily used in model training scritps
-def process_data_continuous(data):
+def process_data_continuous(data, image_scale=1.0):
     images, labels = data[0], data[1]
     images, labels = flip_enrichment_continuous(images, labels)
     images = apply_transformations(images)
+    if image_scale != 1:
+        images = resize_images(
+            images=images,
+            scale=image_scale
+        )
     return images, labels
 
 # I've separated this from `process_data` so that I can use it in both training

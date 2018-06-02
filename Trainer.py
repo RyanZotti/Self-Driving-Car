@@ -25,7 +25,8 @@ class Trainer:
                  tf_timeline=False,
                  show_speed=False,
                  s3_sync=True,
-                 save_to_disk=False):
+                 save_to_disk=False,
+                 image_scale=1.0):
 
         self.data_path = data_path
         self.save_to_disk = save_to_disk
@@ -38,6 +39,7 @@ class Trainer:
         self.max_sample_records = max_sample_records
         self.tf_timeline = tf_timeline
         self.s3_sync = s3_sync
+        self.image_scale = image_scale
 
         # Always sync before training in case I ever train multiple models in parallel
         if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
@@ -83,14 +85,18 @@ class Trainer:
         run_opts_metadata = tf.RunMetadata()
 
         train_batch = self.record_reader.get_train_batch()
-        train_images, train_labels = process_data_continuous(train_batch)
+        train_images, train_labels = process_data_continuous(
+            data=train_batch,
+            image_scale=self.image_scale)
         train_feed_dict[x] = train_images
         train_feed_dict[y_] = train_labels
 
         train_summary, train_accuracy = sess.run([merged, optimization], feed_dict=train_feed_dict,
                                                  options=run_opts, run_metadata=run_opts_metadata)
         test_batch = self.record_reader.get_test_batch()
-        test_images, test_labels = process_data_continuous(test_batch)
+        test_images, test_labels = process_data_continuous(
+            data=test_batch,
+            image_scale=self.image_scale)
         test_feed_dict[x] = test_images
         test_feed_dict[y_] = test_labels
         test_summary, test_accuracy = sess.run([merged, optimization], feed_dict=test_feed_dict,
@@ -116,7 +122,9 @@ class Trainer:
             batch_count = self.record_reader.get_batches_per_epoch()
             for batch_id in range(batch_count):
                 batch = self.record_reader.get_train_batch()
-                images, labels = process_data_continuous(batch)
+                images, labels = process_data_continuous(
+                    data=batch,
+                    image_scale=self.image_scale)
                 train_feed_dict[x] = images
                 train_feed_dict[y_] = labels
                 sess.run(train_step,feed_dict=train_feed_dict)
@@ -140,13 +148,17 @@ class Trainer:
             run_opts_metadata = tf.RunMetadata()
 
             train_batch = self.record_reader.get_train_batch()
-            train_images, train_labels = process_data_continuous(train_batch)
+            train_images, train_labels = process_data_continuous(
+                data=train_batch,
+                image_scale=self.image_scale)
             train_feed_dict[x] = train_images
             train_feed_dict[y_] = train_labels
             train_summary, train_accuracy = sess.run([merged, optimization], feed_dict=train_feed_dict,
                                                      options=run_opts, run_metadata=run_opts_metadata)
             test_batch = self.record_reader.get_test_batch()
-            test_images, test_labels = process_data_continuous(test_batch)
+            test_images, test_labels = process_data_continuous(
+                data=test_batch,
+                image_scale=self.image_scale)
             test_feed_dict[x] = test_images
             test_feed_dict[y_] = test_labels
             test_summary, test_accuracy = sess.run([merged, optimization], feed_dict=test_feed_dict,
@@ -217,6 +229,11 @@ def parse_args():
     ap.add_argument("--save_to_disk", required=False,
                     help="Default of 'no' avoids naming conflicts during local development when GPU is also running",
                     default=False)
+    ap.add_argument(
+        "--image_scale",
+        required=False,
+        help="How much to grow or shrink the image. Example: 0.0625 shrinks to 1/16 of original size",
+        default=1.0)
     ap.add_argument(
         "--batch_size", required=False,
         help="Images per batch",
