@@ -140,9 +140,10 @@ class Trainer:
         thread_count = 3
         train_batch_threads = []
         test_batch_threads = []
+        self.train_batches = queue.Queue(maxsize=5)
+        self.test_batches = queue.Queue(maxsize=3)
         for i in range(thread_count):
 
-            self.train_batches = queue.Queue(maxsize=10)
             train_batch_thread = Thread(
                 name="Train batches",
                 target=partial(self.get_batch,is_train=True),
@@ -150,7 +151,6 @@ class Trainer:
             train_batch_thread.start()
             train_batch_threads.append(train_batch_thread)
 
-            self.test_batches = queue.Queue(maxsize=3)
             test_batch_thread = Thread(
                 name="Test batches",
                 target=partial(self.get_batch, is_train=False),
