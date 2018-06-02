@@ -8,6 +8,9 @@ from Dataset import Dataset
 from ai.record_reader import RecordReader
 import argparse
 from util import mkdir, sync_from_aws, sync_to_aws
+from threading import Thread
+import queue
+from functools import partial
 
 
 class Trainer:
@@ -63,6 +66,23 @@ class Trainer:
         # Prints batch processing speed, among other things
         self.show_speed = show_speed
 
+    # Create this function to make it threadable / parallelizable
+    def get_batch(self,is_train):
+        if is_train == True:
+            while True:
+                batch = self.record_reader.get_train_batch()
+                images, labels = process_data_continuous(
+                    data=batch,
+                    image_scale=self.image_scale)
+                self.train_batches.put((images, labels))
+        else:
+            while True:
+                batch = self.record_reader.get_test_batch()
+                images, labels = process_data_continuous(
+                    data=batch,
+                    image_scale=self.image_scale)
+                self.test_batches.put((images, labels))
+
     # This function is agnostic to the model
     def train(self, sess, x, y_, optimization, train_step, train_feed_dict, test_feed_dict):
 
@@ -117,14 +137,28 @@ class Trainer:
             if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
                 sync_to_aws(s3_path=self.s3_bucket, local_path=self.data_path)  # Save to AWS
 
+        self.train_batches = queue.Queue(maxsize=3)
+        train_batch_thread = Thread(
+            name="Train batches",
+            target=partial(self.get_batch,is_train=True),
+            args=())
+        train_batch_thread.start()
+
+        self.test_batches = queue.Queue(maxsize=3)
+        test_batch_thread = Thread(
+            name="Test batches",
+            target=partial(self.get_batch, is_train=False),
+            args=())
+        test_batch_thread.start()
+
         for epoch in range(self.start_epoch+1, self.start_epoch + self.n_epochs):
             prev_time = datetime.now()
             batch_count = self.record_reader.get_batches_per_epoch()
             for batch_id in range(batch_count):
-                batch = self.record_reader.get_train_batch()
-                images, labels = process_data_continuous(
-                    data=batch,
-                    image_scale=self.image_scale)
+
+                images, labels = self.train_batches.get()
+                self.train_batches.task_done()
+
                 train_feed_dict[x] = images
                 train_feed_dict[y_] = labels
                 sess.run(train_step,feed_dict=train_feed_dict)
@@ -147,18 +181,15 @@ class Trainer:
             run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
             run_opts_metadata = tf.RunMetadata()
 
-            train_batch = self.record_reader.get_train_batch()
-            train_images, train_labels = process_data_continuous(
-                data=train_batch,
-                image_scale=self.image_scale)
+            train_images, train_labels = self.train_batches.get()
+            self.train_batches.task_done()
             train_feed_dict[x] = train_images
             train_feed_dict[y_] = train_labels
             train_summary, train_accuracy = sess.run([merged, optimization], feed_dict=train_feed_dict,
                                                      options=run_opts, run_metadata=run_opts_metadata)
-            test_batch = self.record_reader.get_test_batch()
-            test_images, test_labels = process_data_continuous(
-                data=test_batch,
-                image_scale=self.image_scale)
+
+            test_images, test_labels = self.train_batches.get()
+            self.train_batches.task_done()
             test_feed_dict[x] = test_images
             test_feed_dict[y_] = test_labels
             test_summary, test_accuracy = sess.run([merged, optimization], feed_dict=test_feed_dict,
