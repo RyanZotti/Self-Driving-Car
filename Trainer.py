@@ -168,10 +168,10 @@ class Trainer:
                 with open(self.results_file, 'a') as f:
                     f.write(message.format(epoch, train_accuracy, test_accuracy)+'\n')
 
-            # Save a model checkpoint after every epoch
-            self.save_model(sess,epoch=epoch)
-            if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
-                sync_to_aws(s3_path=self.s3_bucket, local_path=self.data_path)  # Save to AWS
+                # Save a model checkpoint after every epoch
+                self.save_model(sess,epoch=epoch)
+                if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
+                    sync_to_aws(s3_path=self.s3_bucket, local_path=self.data_path)  # Save to AWS
 
     def save_model(self,sess,epoch):
         file_path = os.path.join(self.model_checkpoint_dir,'model')
