@@ -137,19 +137,26 @@ class Trainer:
             if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
                 sync_to_aws(s3_path=self.s3_bucket, local_path=self.data_path)  # Save to AWS
 
-        self.train_batches = queue.Queue(maxsize=3)
-        train_batch_thread = Thread(
-            name="Train batches",
-            target=partial(self.get_batch,is_train=True),
-            args=())
-        train_batch_thread.start()
+        thread_count = 3
+        train_batch_threads = []
+        test_batch_threads = []
+        for i in range(thread_count):
 
-        self.test_batches = queue.Queue(maxsize=3)
-        test_batch_thread = Thread(
-            name="Test batches",
-            target=partial(self.get_batch, is_train=False),
-            args=())
-        test_batch_thread.start()
+            self.train_batches = queue.Queue(maxsize=10)
+            train_batch_thread = Thread(
+                name="Train batches",
+                target=partial(self.get_batch,is_train=True),
+                args=())
+            train_batch_thread.start()
+            train_batch_threads.append(train_batch_thread)
+
+            self.test_batches = queue.Queue(maxsize=3)
+            test_batch_thread = Thread(
+                name="Test batches",
+                target=partial(self.get_batch, is_train=False),
+                args=())
+            test_batch_thread.start()
+            test_batch_threads.append(test_batch_thread)
 
         for epoch in range(self.start_epoch+1, self.start_epoch + self.n_epochs):
             prev_time = datetime.now()
