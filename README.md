@@ -262,6 +262,37 @@ I created a script called `resume_training.py` that is agnostic to the model who
         	--s3_bucket ${S3_BUCKET} \
         	--show_speed True &
 
+## Testing
+
+One of the most frustrating sources of error is when the model produces different predictions during training vs deployment for the same exact image. This can occur when there are subtle differences in how you process the images.
+
+For example, when the car sends an image to the prediction API, it must convert the image to a string. When the prediction API server receives the string, it must convert the string back to an image. The conversion changes are subtle (slight blurring) but can lead to significant changes in predictions if your model is sensitive to noise (e.g., if the number of records in your training dataset was small). If you don't reproduce this same type of transformation during training, your model will probably perform much worse when it is deployed. Other types of discrepancies can occur if you forget to apply the same image alterations (like contrast normalization or brightness adjustments).
+
+To catch these types of discrepancies, I've created a script to check that the model produces the same image during training as it does after deployment given the same images. You can run the script below:
+
+```
+# Set environment variables
+REPO_PATH="/Users/ryanzotti/Documents/repos/Self-Driving-Car"
+export PYTHONPATH=$PYTHONPATH:"${REPO_PATH}"
+CHECKPOINT_DIR="/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/tf_visual_data/runs/4/checkpoints"
+DATA_PATH="/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data"
+IMAGE_SCALE="0.0625"
+REPO_DIR='/Users/ryanzotti/Documents/repos/Self-Driving-Car'
+PORT="8888"
+
+# Used to check the output of a single image
+LABEL_PATH="/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_2_18-04-15/record_845.json"
+
+# Call the script
+python "${REPO_PATH}"/ai/qa/validate_deployment.py \
+	--checkpoint_dir "${CHECKPOINT_DIR}" \
+	--data_path "${DATA_PATH}" \
+	--image_scale "${IMAGE_SCALE}" \
+	--label_path "${LABEL_PATH}" \
+	--port "${PORT}" \
+	--repo_dir "${REPO_DIR}"
+
+```
 
 ## FAQ
 

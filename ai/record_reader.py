@@ -62,6 +62,16 @@ class RecordReader(object):
             merged = merged + file_paths
         return np.array(merged)
 
+    # Used in validate_deployment.py
+    def image_path_from_label_path(self,label_path):
+        # Parse JSON file
+        with open(label_path, 'r') as f:
+            contents = json.load(f)
+        image_file = contents['cam/image_array']
+        folder_path = dirname(label_path)
+        image_path = join(folder_path, image_file)
+        return image_path
+
     # Read both labels and image data.
     # This is written as a function so that it can
     # be parallelized in a map for speed
@@ -74,9 +84,7 @@ class RecordReader(object):
         # Extract file contents
         angle = contents['user/angle']
         throttle = contents['user/throttle']
-        image_file = contents['cam/image_array']
-        folder_path = dirname(label_path)
-        image_path = join(folder_path,image_file)
+        image_path = self.image_path_from_label_path(label_path)
 
         # Read image. OpenCV interprets 1 as RGB
         image = cv2.imread(image_path, 1)
