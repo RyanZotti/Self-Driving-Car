@@ -106,7 +106,7 @@ if __name__ == "__main__":
         default=8888)
     args = vars(ap.parse_args())
     path = args['checkpoint_dir']
-    image_scale = args['image_scale']
+    image_scale = float(args['image_scale'])
     port=args['port']
 
     # Load model just once and store in memory for all future calls
