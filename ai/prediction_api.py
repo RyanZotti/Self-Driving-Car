@@ -1,5 +1,5 @@
-from  data_augmentation import apply_transformations
-import tensorflow as tf
+import argparse
+from data_augmentation import apply_transformations
 import tornado.ioloop
 import tornado.web
 from util import *
@@ -74,29 +74,18 @@ def make_app(sess, x, prediction):
            'prediction':prediction})])
 
 
-def load_model(checkpoint_dir_path):
-
-    # Read the model into memory
-    sess = tf.Session()
-    start_epoch = get_prev_epoch(checkpoint_dir_path)
-    graph_name = 'model-' + str(start_epoch)
-    checkpoint_file_path = os.path.join(checkpoint_dir_path, graph_name)
-    saver = tf.train.import_meta_graph(checkpoint_dir_path + "/" + graph_name + ".meta")
-    saver.restore(sess, checkpoint_file_path)
-    graph = tf.get_default_graph()
-    x = graph.get_tensor_by_name("x:0")
-    # For more details on why .outputs[0] is required, see:
-    # https://stackoverflow.com/questions/42595543/tensorflow-eval-restored-graph
-    make_logits = graph.get_operation_by_name("logits")
-    prediction = make_logits.outputs[0]
-
-    return sess, x, prediction
-
-
 if __name__ == "__main__":
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--checkpoint_dir",
+        required=False,
+        help="path to all of the data",
+        default='/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/tf_visual_data/runs/4/checkpoints')
+    args = vars(ap.parse_args())
+    path = args['checkpoint_dir']
+
     # Load model just once and store in memory for all future calls
-    # TODO: remove this hard coded path
-    path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/tf_visual_data/runs/2/checkpoints'
     sess, x, prediction = load_model(path)
 
     app = make_app(sess, x, prediction)
