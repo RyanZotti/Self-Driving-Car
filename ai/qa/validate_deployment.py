@@ -34,7 +34,7 @@ ap.add_argument(
 args = vars(ap.parse_args())
 checkpoint_dir = args['checkpoint_dir']
 data_path = args['data_path']
-image_scale = args['image_scale']
+image_scale = float(args['image_scale'])
 label_path = args['label_path']
 port=args['port']
 

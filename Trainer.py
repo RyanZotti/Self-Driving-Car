@@ -277,6 +277,7 @@ def parse_args():
         help="Images per batch",
         default=False)
     args = vars(ap.parse_args())
+    args['image_scale'] = float(args['image_scale'])
     args['show_speed'] = parse_boolean_cli_args(args['show_speed'])
     if args['s3_sync']:
         args['s3_sync'] = parse_boolean_cli_args(args['s3_sync'])
