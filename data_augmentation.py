@@ -107,18 +107,18 @@ def resize_images(images,scale):
 def process_data_continuous(data, image_scale=1.0):
     images, labels = data[0], data[1]
     images, labels = flip_enrichment_continuous(images, labels)
-    images = apply_transformations(images)
-    if image_scale != 1:
-        images = resize_images(
-            images=images,
-            scale=image_scale
-        )
+    images = apply_transformations(images,image_scale)
     return images, labels
 
 # I've separated this from `process_data` so that I can use it in both training
 # and scoring. Relying on process_data alone wasn't sufficient for scoring
 # because during scoring the true labels aren't known at runtime
-def apply_transformations(images):
+def apply_transformations(images, image_scale):
     images = normalize_contrast(images)
     images = images / 255
+    if image_scale != 1:
+        images = resize_images(
+            images=images,
+            scale=image_scale
+        )
     return images
