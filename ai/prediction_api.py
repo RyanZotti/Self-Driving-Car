@@ -11,14 +11,23 @@ class PredictionHandler(tornado.web.RequestHandler):
     def prediction(self):
         return self._prediction
 
+    @property
+    def image_scale(self):
+        return self._image_scale
+
     @prediction.setter
     def prediction(self,prediction):
         self._prediction = prediction
 
-    def initialize(self, sess, x, prediction):
+    @image_scale.setter
+    def image_scale(self, image_scale):
+        self._image_scale = image_scale
+
+    def initialize(self, sess, x, prediction, image_scale):
         self.prediction = prediction
         self.sess = sess
         self.x = x
+        self.image_scale = image_scale
 
     @property
     def sess(self):
@@ -55,7 +64,9 @@ class PredictionHandler(tornado.web.RequestHandler):
         normalized_images = np.array(normalized_images)
 
         # Normalize for contrast and pixel size
-        normalized_images = apply_transformations(normalized_images)
+        normalized_images = apply_transformations(
+            images=normalized_images,
+            image_scale=self.image_scale)
 
         prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess).astype(float)
 
@@ -66,12 +77,13 @@ class PredictionHandler(tornado.web.RequestHandler):
         self.write(result)
 
 
-def make_app(sess, x, prediction):
+def make_app(sess, x, prediction, image_scale):
     return tornado.web.Application(
         [(r"/predict",PredictionHandler,
           {'sess':sess,
            'x':x,
-           'prediction':prediction})])
+           'prediction':prediction,
+           'image_scale':image_scale})])
 
 
 if __name__ == "__main__":
@@ -82,12 +94,24 @@ if __name__ == "__main__":
         required=False,
         help="path to all of the data",
         default='/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/tf_visual_data/runs/4/checkpoints')
+    ap.add_argument(
+        "--image_scale",
+        required=False,
+        help="Resize image scale",
+        default=0.0625)
+    ap.add_argument(
+        "--port",
+        required=False,
+        help="Serer port to use",
+        default=8888)
     args = vars(ap.parse_args())
     path = args['checkpoint_dir']
+    image_scale = args['image_scale']
+    port=args['port']
 
     # Load model just once and store in memory for all future calls
     sess, x, prediction = load_model(path)
 
-    app = make_app(sess, x, prediction)
-    app.listen(8888)
+    app = make_app(sess, x, prediction,image_scale)
+    app.listen(port)
     tornado.ioloop.IOLoop.current().start()
