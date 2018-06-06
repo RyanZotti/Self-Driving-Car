@@ -148,8 +148,15 @@ Make sure that you can ping your remote server. If the remote server is a Mac la
 
 ```
 REPO_PATH="/Users/ryanzotti/Documents/repos/Self-Driving-Car"
+CHECKPOINT_DIR="/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/tf_visual_data/runs/4/checkpoints"
+IMAGE_SCALE="0.0625"
+PORT="8888"
+
 export PYTHONPATH=${REPO_PATH}
-python ${REPO_PATH}/ai/prediction_api.py
+python ${REPO_PATH}/ai/prediction_api.py \
+   --checkpoint_dir "${CHECKPOINT_DIR}" \
+	--image_scale "${IMAGE_SCALE}" \
+	--port "${PORT}"
 
 ```
 **Step 2.** Start the car.
