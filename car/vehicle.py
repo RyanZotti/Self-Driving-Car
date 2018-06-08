@@ -104,6 +104,11 @@ class Vehicle():
         finally:
             self.stop()
 
+    def get_named_part(self,name):
+        for part in self.parts:
+            if part.name == name:
+                return part
+
     def update_parts(self):
 
         # Loop over all the parts
@@ -123,6 +128,9 @@ class Vehicle():
                 # run the part
                 if entry.get('thread'):
 
+                    if p.name == 'ai':
+                        pass
+
                     # Check latency here
                     now = datetime.now()
                     if p.last_update_time is not None:
@@ -134,10 +142,14 @@ class Vehicle():
                         if diff_seconds > self.latency_threshold:
                             if p.name != 'ai':
                                 print('Delayed by {0} seconds!'.format(diff_seconds))
+                                engine = self.get_named_part(name='engine')
+                                engine.stop()
                             else:
                                 # Ignore ai delay if the ai isn't needed
                                 if mode == 'ai':
                                     print('Delayed by {0} seconds!'.format(diff_seconds))
+                                    engine = self.get_named_part(name='engine')
+                                    engine.stop()
 
                     outputs = p.run_threaded(*inputs)
                 else:
