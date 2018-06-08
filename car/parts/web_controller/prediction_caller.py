@@ -46,9 +46,10 @@ class PredictionCaller(object):
                 self.predicted_throttle = 0.0
 
     def run_threaded(self, img_arr=None):
-        # TODO: Remove hard-coded image
-        image_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_1_18-04-15/3207_cam-image_array_.jpg'
-        self.img_arr = cv2.imread(image_path)
+        ## TODO: Remove hard-coded image
+        #image_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_1_18-04-15/3207_cam-image_array_.jpg'
+        #self.img_arr = cv2.imread(image_path)
+        self.img_arr = img_arr
         return self.predicted_angle, self.predicted_throttle
 
     def get_last_update_time(self):
