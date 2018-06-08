@@ -26,37 +26,54 @@ ctr = LocalWebController()
 car.add(
     ctr,
     inputs=['cam/image_array'],
-    outputs=['user/angle', 'user/throttle', 'user/mode', 'recording'],
+    outputs=['user/angle', 'user/throttle', 'mode', 'recording'],
     threaded=True)
 
 # TODO: Only add this part if there is a model
-# TODO: Output model/angle, model/throttle instead of user/
 # Add prediction caller
 prediction_caller = PredictionCaller(model_api=cfg.MODEL_API)
 car.add(
     prediction_caller,
     inputs=['cam/image_array'],
-    outputs=['model/angle', 'model/throttle'],
+    outputs=['ai/angle', 'ai/throttle'],
     threaded=True)
 
 # Add engine
-engine = Engine(16, 18, 22, 19, 21, 23, ['user/angle', 'user/throttle'])
+engine_inputs =[
+    'user/angle',
+    'user/throttle',
+    'ai/angle',
+    'ai/throttle',
+    'mode']
+engine = Engine(16, 18, 22, 19, 21, 23, inputs=engine_inputs)
 car.add(
     engine,
-    inputs=['user/angle', 'user/throttle'],
+    inputs=engine_inputs,
     threaded=True)
 
 # TODO: Record AI predictions as well
 # TODO: Drive as user but record AI's silent predictions and error rates
 # Add dataset to save data
-inputs = ['cam/image_array', 'user/angle', 'user/throttle', 'user/mode']
-types = ['image_array', 'float', 'float', 'str']
+recorded_inputs = [
+    'cam/image_array',
+    'user/angle',
+    'user/throttle',
+    'ai/angle',
+    'ai/throttle',
+    'mode']
+types = [
+    'image_array',
+    'float',
+    'float',
+    'float',
+    'float',
+    'str']
 dh = DatasetHandler(path=cfg.DATA_PATH)
 print(cfg.DATA_PATH)
-dataset = dh.new_dataset_writer(inputs=inputs, types=types)
+dataset = dh.new_dataset_writer(inputs=recorded_inputs, types=types)
 car.add(
     dataset,
-    inputs=inputs,
+    inputs=recorded_inputs,
     run_condition='recording')
 
 car.start(
