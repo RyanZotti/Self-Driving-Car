@@ -16,39 +16,51 @@ car = Vehicle()
 
 # Add a webcam
 cam = Webcam(ffmpeg_host=cfg.PI_HOSTNAME)
-car.add(cam, outputs=['cam/image_array'], threaded=True)
+car.add(
+    cam,
+    outputs=['cam/image_array'],
+    threaded=True)
 
 # Add a local Tornado web server to receive commands
 ctr = LocalWebController()
-car.add(ctr,
-        inputs=['cam/image_array'],
-        outputs=['user/angle', 'user/throttle', 'user/mode', 'recording'],
-        threaded=True)
+car.add(
+    ctr,
+    inputs=['cam/image_array'],
+    outputs=['user/angle', 'user/throttle', 'user/mode', 'recording'],
+    threaded=True)
 
 # TODO: Only add this part if there is a model
 # TODO: Output model/angle, model/throttle instead of user/
 # Add prediction caller
 prediction_caller = PredictionCaller(model_api=cfg.MODEL_API)
-car.add(prediction_caller,
-        inputs=['cam/image_array'],
-        outputs=['model/angle', 'model/throttle'],
-        threaded=True)
+car.add(
+    prediction_caller,
+    inputs=['cam/image_array'],
+    outputs=['model/angle', 'model/throttle'],
+    threaded=True)
 
 # Add engine
 engine = Engine(16, 18, 22, 19, 21, 23, ['user/angle', 'user/throttle'])
-car.add(engine,
-        inputs=['user/angle', 'user/throttle'],
-        threaded=True)
+car.add(
+    engine,
+    inputs=['user/angle', 'user/throttle'],
+    threaded=True)
 
+# TODO: Record AI predictions as well
+# TODO: Drive as user but record AI's silent predictions and error rates
 # Add dataset to save data
 inputs = ['cam/image_array', 'user/angle', 'user/throttle', 'user/mode']
 types = ['image_array', 'float', 'float', 'str']
 dh = DatasetHandler(path=cfg.DATA_PATH)
 print(cfg.DATA_PATH)
 dataset = dh.new_dataset_writer(inputs=inputs, types=types)
-car.add(dataset, inputs=inputs, run_condition='recording')
+car.add(
+    dataset,
+    inputs=inputs,
+    run_condition='recording')
 
-car.start(rate_hz=cfg.DRIVE_LOOP_HZ,
-          max_loop_count=cfg.MAX_LOOPS)
+car.start(
+    rate_hz=cfg.DRIVE_LOOP_HZ,
+    max_loop_count=cfg.MAX_LOOPS)
 
 print("You can now go to <your pi ip address>:8887 to drive your car.")
