@@ -15,7 +15,7 @@ cfg = load_config()
 car = Vehicle()
 
 # Add a webcam
-cam = Webcam(ffmpeg_host=cfg.PI_HOSTNAME)
+cam = Webcam(ffmpeg_host=cfg.PI_HOSTNAME,unit_test=True)
 car.add(
     cam,
     outputs=['cam/image_array'],
@@ -29,7 +29,9 @@ car.add(
     outputs=['user/angle', 'user/throttle', 'mode', 'recording'],
     threaded=True)
 
-# TODO: Only add this part if there is a model
+# This shouldn't have to know if the model exists.
+# It should return 0s if the model doesn't exist
+# or if the model exists but simply isn't reachable
 # Add prediction caller
 prediction_caller = PredictionCaller(model_api=cfg.MODEL_API)
 car.add(

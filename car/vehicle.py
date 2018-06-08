@@ -8,6 +8,7 @@ Created on Sun Jun 25 10:44:24 2017
 import time
 from threading import Thread
 from .memory import Memory
+from datetime import datetime
 
 
 class Vehicle():
@@ -67,6 +68,9 @@ class Vehicle():
 
         try:
 
+            # Stop the motor if any part's latency exceeds this threshold
+            self.latency_threshold = (1.0 / rate_hz) * 2
+
             self.on = True
 
             for entry in self.parts:
@@ -99,24 +103,33 @@ class Vehicle():
             self.stop()
 
     def update_parts(self):
-        '''
-        loop over all parts
-        '''
+
+        # Loop over all the parts
         for entry in self.parts:
+            p = entry['part']
+
             # don't run if there is a run condition that is False
             run = True
             if entry.get('run_condition'):
                 run_condition = entry.get('run_condition')
                 run = self.mem.get([run_condition])[0]
-                # print('run_condition', entry['part'], entry.get('run_condition'), run)
 
             if run:
-                p = entry['part']
                 # get inputs from memory
                 inputs = self.mem.get(entry['inputs'])
 
                 # run the part
                 if entry.get('thread'):
+
+                    # Check latency here
+                    now = datetime.now()
+                    last_update_time = p.get_last_update_time()
+                    if last_update_time is not None:
+                        print(last_update_time)
+                        diff_seconds = (now - last_update_time).total_seconds()
+                        if diff_seconds > self.latency_threshold:
+                            print('Delayed by {0} seconds!'.format(diff_seconds))
+
                     outputs = p.run_threaded(*inputs)
                 else:
                     outputs = p.run(*inputs)

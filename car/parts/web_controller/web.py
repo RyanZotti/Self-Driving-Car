@@ -8,6 +8,7 @@ The client and web server needed to control a car remotely.
 """
 
 import cv2
+from datetime import datetime
 import os
 import json
 import time
@@ -106,6 +107,7 @@ class LocalWebController(tornado.web.Application):
         self.throttle = 0.0
         self.mode = 'user'
         self.recording = False
+        self.last_update_time = None
 
         handlers = [
             (r"/", tornado.web.RedirectHandler, dict(url="/drive")),
@@ -116,7 +118,9 @@ class LocalWebController(tornado.web.Application):
 
         settings = {'debug': True}
 
+        # https://stackoverflow.com/a/41384524/554481  # Explains python's super()
         super().__init__(handlers, **settings)
+
 
     def update(self, port=8887):
         ''' Start the tornado webserver. '''
@@ -124,6 +128,10 @@ class LocalWebController(tornado.web.Application):
         self.port = int(port)
         self.listen(self.port)
         tornado.ioloop.IOLoop.instance().start()
+        self.last_update_time = datetime.now()
+
+    def get_last_update_time(self):
+        return self.last_update_time
 
     def run_threaded(self, img_arr=None):
         self.img_arr = img_arr

@@ -1,4 +1,5 @@
 import cv2
+from datetime import datetime
 import os
 import time
 import numpy as np
@@ -20,27 +21,38 @@ class PredictionCaller(object):
     def __init__(self, model_api):
 
         super().__init__()
-
-
-        # initialize variable used to indicate
-        # if the thread should be stopped
         self.on = True
         self.model_api = model_api
-        print('Turning on prediction caller...')
+        self.last_update_time = None
 
     def update(self):
+        self.predicted_angle = 0.0
+        self.predicted_throttle = 0.0
         while self.on:
-            pass  # If this fails then I should just call run_threaded() here
+            try:
+                img = cv2.imencode('.jpg', self.img_arr)[1].tostring()
+                files = {'image': img}
+                request = requests.post(self.model_api, files=files)
+                response = json.loads(request.text)
+                prediction = response['prediction']
+                self.predicted_angle, self.predicted_throttle = prediction
+                self.last_update_time = datetime.now()
+            except:
+                # Always attempt to get predictions. If no model
+                # exists or a model exists but is not reachable
+                # due to a bug then the result should be the
+                # same: 0.0, 0.0
+                self.predicted_angle = 0.0
+                self.predicted_throttle = 0.0
 
     def run_threaded(self, img_arr=None):
-
-        img = cv2.imencode('.jpg', img_arr)[1].tostring()
-        files = {'image': img}
-        request = requests.post(self.model_api, files=files)
-        response = json.loads(request.text)
-        prediction = response['prediction']
-        self.predicted_angle, self.predicted_throttle = prediction
+        # TODO: Remove hard-coded image
+        image_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_1_18-04-15/3207_cam-image_array_.jpg'
+        self.img_arr = cv2.imread(image_path)
         return self.predicted_angle, self.predicted_throttle
+
+    def get_last_update_time(self):
+        return self.last_update_time
 
     def shutdown(self):
         # indicate that the thread should be stopped

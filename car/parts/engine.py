@@ -1,3 +1,4 @@
+from datetime import datetime
 import RPi.GPIO as GPIO
 
 
@@ -7,6 +8,7 @@ class Engine(object):
              modulation """
 
         self.inputs = inputs
+        self.last_update_time = None
 
         GPIO.setmode(GPIO.BOARD)
 
@@ -38,7 +40,10 @@ class Engine(object):
         GPIO.output(self.pinControlSteering, GPIO.HIGH)
 
     def update(self):
-        pass
+        self.last_update_time = datetime.now()
+
+    def get_last_update_time(self):
+        return self.last_update_time
 
     # PWM only accepts integer values between 0 and 100
     def normalize_input(self,raw_input):
@@ -54,33 +59,43 @@ class Engine(object):
 
         return bounded_input
 
-    def run_threaded(self,*args):
+    def run_throttle(self, throttle):
+        if throttle > 0:
+            pwm_intensity = self.normalize_input(throttle)
+            self.pwm_forward.ChangeDutyCycle(pwm_intensity)
+            self.pwm_backward.ChangeDutyCycle(0)
+        elif throttle < 0:
+            pwm_intensity = self.normalize_input(throttle)
+            self.pwm_forward.ChangeDutyCycle(0)
+            self.pwm_backward.ChangeDutyCycle(pwm_intensity)
+        else:
+            self.pwm_forward.ChangeDutyCycle(0)
+            self.pwm_backward.ChangeDutyCycle(0)
 
-        commands = dict(zip(self.inputs, args))
-
-        if commands['user/angle'] > 0:
-            pwm_intensity = self.normalize_input(commands['user/angle'])
+    def run_angle(self, angle):
+        if angle > 0:
+            pwm_intensity = self.normalize_input(angle)
             self.pwm_left.ChangeDutyCycle(0)
             self.pwm_right.ChangeDutyCycle(pwm_intensity)
-        elif commands['user/angle'] < 0:
-            pwm_intensity = self.normalize_input(commands['user/angle'])
+        elif angle < 0:
+            pwm_intensity = self.normalize_input(angle)
             self.pwm_left.ChangeDutyCycle(pwm_intensity)
             self.pwm_right.ChangeDutyCycle(0)
         else:
             self.pwm_left.ChangeDutyCycle(0)
             self.pwm_right.ChangeDutyCycle(0)
 
-        if commands['user/throttle'] > 0:
-            pwm_intensity = self.normalize_input(commands['user/throttle'])
-            self.pwm_forward.ChangeDutyCycle(pwm_intensity)
-            self.pwm_backward.ChangeDutyCycle(0)
-        elif commands['user/throttle'] < 0:
-            pwm_intensity = self.normalize_input(commands['user/throttle'])
-            self.pwm_forward.ChangeDutyCycle(0)
-            self.pwm_backward.ChangeDutyCycle(pwm_intensity)
+    def run_threaded(self,*args):
+
+        inputs = dict(zip(self.inputs, args))
+        mode = inputs['mode']
+        assert (mode in ['ai', 'user'])
+        if mode == 'ai':
+            self.run_angle(inputs['ai/angle'])
+            self.run_throttle(inputs['ai/throttle'])
         else:
-            self.pwm_forward.ChangeDutyCycle(0)
-            self.pwm_backward.ChangeDutyCycle(0)
+            self.run_angle(inputs['user/angle'])
+            self.run_throttle(inputs['user/throttle'])
 
     # Turns off all motors
     def shutdown(self):
