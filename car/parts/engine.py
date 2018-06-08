@@ -6,7 +6,7 @@ class Engine(object):
     def __init__(self, pinForward, pinBackward, pinControlStraight, pinLeft, pinRight, pinControlSteering, inputs):
         """ Initialize the motor with its control pins and start pulse-width
              modulation """
-
+        self.name = 'engine'
         self.inputs = inputs
         self.last_update_time = None
 

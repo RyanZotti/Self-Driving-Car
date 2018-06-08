@@ -306,6 +306,7 @@ class Dataset(object):
 class DatasetWriter(Dataset):
     def __init__(self, *args, **kwargs):
         super(DatasetWriter, self).__init__(*args, **kwargs)
+        self.name = 'dataset'
 
     def run(self, *args):
         '''

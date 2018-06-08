@@ -21,6 +21,8 @@ class Vehicle():
         self.on = True
         self.threads = []
 
+        self.mem.put(['mode'], ['user'])
+
     def add(self, part, inputs=[], outputs=[],
             threaded=False, run_condition=None):
         """
@@ -123,12 +125,19 @@ class Vehicle():
 
                     # Check latency here
                     now = datetime.now()
-                    last_update_time = p.get_last_update_time()
-                    if last_update_time is not None:
-                        print(last_update_time)
-                        diff_seconds = (now - last_update_time).total_seconds()
+                    if p.last_update_time is not None:
+                        #print(last_update_time)
+                        diff_seconds = (now - p.last_update_time).total_seconds()
+                        # Latency only matters if we're using the part's output
+                        # Ex: mode is AI and the model is timing out
+                        mode = self.mem.get(['mode'])[0]
                         if diff_seconds > self.latency_threshold:
-                            print('Delayed by {0} seconds!'.format(diff_seconds))
+                            if p.name != 'ai':
+                                print('Delayed by {0} seconds!'.format(diff_seconds))
+                            else:
+                                # Ignore ai delay if the ai isn't needed
+                                if mode == 'ai':
+                                    print('Delayed by {0} seconds!'.format(diff_seconds))
 
                     outputs = p.run_threaded(*inputs)
                 else:

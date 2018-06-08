@@ -38,6 +38,7 @@ class LocalWebController(tornado.web.Application):
         self.mode = 'user'
         self.recording = False
         self.last_update_time = None
+        self.name = 'server'
 
         handlers = [
             (r"/", tornado.web.RedirectHandler, dict(url="/drive")),

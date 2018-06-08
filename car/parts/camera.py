@@ -17,6 +17,7 @@ class Webcam(object):
     def __init__(self,ffmpeg_host,unit_test=False):
 
         self.ffmpeg_host = ffmpeg_host
+        self.name = 'camera'
 
         # Serve static images during unit tests, since I
         # likely won't have access to the car and ffmpeg
