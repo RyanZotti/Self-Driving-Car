@@ -138,14 +138,15 @@ class Vehicle():
                         # Ex: mode is AI and the model is timing out
                         mode = self.mem.get(['mode'])[0]
                         if diff_seconds > self.latency_threshold:
+                            message = '{part} delayed by {seconds} seconds!'
                             if p.name != 'ai':
-                                print('Delayed by {0} seconds!'.format(diff_seconds))
+                                print(message.format(part=p.name, seconds=diff_seconds))
                                 engine = self.get_named_part(name='engine')
                                 engine.stop()
                             else:
                                 # Ignore ai delay if the ai isn't needed
                                 if mode == 'ai':
-                                    print('Delayed by {0} seconds!'.format(diff_seconds))
+                                    print(message.format(part=p.name, seconds=diff_seconds))
                                     engine = self.get_named_part(name='engine')
                                     engine.stop()
 
