@@ -13,10 +13,10 @@ import urllib.request
 class Webcam(object):
 
     # TODO: Read host from config file
-    def __init__(self,ffmpeg_host,unit_test=False):
+    def __init__(self,ffmpeg_host,name,unit_test=False):
 
         self.ffmpeg_host = ffmpeg_host
-        self.name = 'camera'
+        self.name = name
 
         # Serve static images during unit tests, since I
         # likely won't have access to the car and ffmpeg

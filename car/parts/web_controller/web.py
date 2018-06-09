@@ -22,7 +22,7 @@ import tornado.gen
 
 class LocalWebController(tornado.web.Application):
 
-    def __init__(self):
+    def __init__(self,name):
         '''
         Create and publish variables needed on many of
         the web handlers.
@@ -38,7 +38,7 @@ class LocalWebController(tornado.web.Application):
         self.mode = 'user'
         self.recording = False
         self.last_update_time = None
-        self.name = 'server'
+        self.name = name
 
         handlers = [
             (r"/", tornado.web.RedirectHandler, dict(url="/drive")),

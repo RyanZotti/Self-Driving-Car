@@ -3,10 +3,10 @@ import RPi.GPIO as GPIO
 
 
 class Engine(object):
-    def __init__(self, pinForward, pinBackward, pinControlStraight, pinLeft, pinRight, pinControlSteering, inputs):
+    def __init__(self, pinForward, pinBackward, pinControlStraight, pinLeft, pinRight, pinControlSteering,name, inputs):
         """ Initialize the motor with its control pins and start pulse-width
              modulation """
-        self.name = 'engine'
+        self.name = name
         self.inputs = inputs
         self.last_update_time = None
 

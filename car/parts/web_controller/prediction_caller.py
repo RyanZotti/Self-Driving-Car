@@ -18,13 +18,13 @@ from pprint import pprint
 
 class PredictionCaller(object):
     # TODO: Read host from config file
-    def __init__(self, model_api):
+    def __init__(self, model_api,name):
 
         super().__init__()
         self.on = True
         self.model_api = model_api
         self.last_update_time = None
-        self.name = 'ai'
+        self.name = name
 
     def update(self):
         self.predicted_angle = 0.0

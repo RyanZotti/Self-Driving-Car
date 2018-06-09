@@ -15,14 +15,15 @@ cfg = load_config()
 car = Vehicle()
 
 # Add a webcam
-cam = Webcam(ffmpeg_host=cfg.PI_HOSTNAME,unit_test=True)
+cam = Webcam(ffmpeg_host=cfg.PI_HOSTNAME,name='camera',unit_test=True)
 car.add(
     cam,
     outputs=['cam/image_array'],
     threaded=True)
 
 # Add a local Tornado web server to receive commands
-ctr = LocalWebController()
+# http://localhost:8887/
+ctr = LocalWebController(name='server')
 car.add(
     ctr,
     inputs=['cam/image_array'],
@@ -33,7 +34,7 @@ car.add(
 # It should return 0s if the model doesn't exist
 # or if the model exists but simply isn't reachable
 # Add prediction caller
-prediction_caller = PredictionCaller(model_api=cfg.MODEL_API)
+prediction_caller = PredictionCaller(model_api=cfg.MODEL_API,name='ai')
 car.add(
     prediction_caller,
     inputs=['cam/image_array'],
@@ -47,7 +48,7 @@ engine_inputs =[
     'ai/angle',
     'ai/throttle',
     'mode']
-engine = Engine(16, 18, 22, 19, 21, 23, inputs=engine_inputs)
+engine = Engine(16, 18, 22, 19, 21, 23, name='engine', inputs=engine_inputs)
 car.add(
     engine,
     inputs=engine_inputs,
@@ -73,6 +74,7 @@ types = [
 dh = DatasetHandler(path=cfg.DATA_PATH)
 print(cfg.DATA_PATH)
 dataset = dh.new_dataset_writer(inputs=recorded_inputs, types=types)
+dataset.set_name('dataset')
 car.add(
     dataset,
     inputs=recorded_inputs,
