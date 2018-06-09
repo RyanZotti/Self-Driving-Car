@@ -97,9 +97,11 @@ class Engine(object):
             self.run_angle(inputs['user/angle'])
             self.run_throttle(inputs['user/throttle'])
 
-    # Turns off all motors
-    def shutdown(self):
+    def stop(self):
         self.pwm_forward.ChangeDutyCycle(0)
         self.pwm_backward.ChangeDutyCycle(0)
         self.pwm_left.ChangeDutyCycle(0)
         self.pwm_right.ChangeDutyCycle(0)
+
+    def shutdown(self):
+        self.stop()
