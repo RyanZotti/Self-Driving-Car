@@ -57,4 +57,3 @@ class PredictionCaller(object):
         # indicate that the thread should be stopped
         self.on = False
         print('Stopping prediction caller')
-        time.sleep(.5)
