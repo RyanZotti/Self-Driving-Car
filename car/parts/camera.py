@@ -8,7 +8,6 @@ import glob
 import subprocess
 from util import live_video_stream
 import urllib.request
-from car.parts.part import Part
 
 
 class Webcam(object):

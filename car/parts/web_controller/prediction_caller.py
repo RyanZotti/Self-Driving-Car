@@ -24,6 +24,7 @@ class PredictionCaller(object):
         self.on = True
         self.model_api = model_api
         self.last_update_time = None
+        self.name = 'ai'
 
     def update(self):
         self.predicted_angle = 0.0

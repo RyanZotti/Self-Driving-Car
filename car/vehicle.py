@@ -128,9 +128,6 @@ class Vehicle():
                 # run the part
                 if entry.get('thread'):
 
-                    if p.name == 'ai':
-                        pass
-
                     # Check latency here
                     now = datetime.now()
                     if p.last_update_time is not None:
