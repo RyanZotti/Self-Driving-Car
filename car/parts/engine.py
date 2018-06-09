@@ -40,7 +40,8 @@ class Engine(object):
         GPIO.output(self.pinControlSteering, GPIO.HIGH)
 
     def update(self):
-        self.last_update_time = datetime.now()
+        while True:
+            self.last_update_time = datetime.now()
 
     def get_last_update_time(self):
         return self.last_update_time
