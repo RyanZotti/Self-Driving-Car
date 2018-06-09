@@ -71,7 +71,7 @@ class Vehicle():
         try:
 
             # Stop the motor if any part's latency exceeds this threshold
-            self.latency_threshold = (1.0 / rate_hz) * 2
+            self.latency_threshold = (1.0 / rate_hz) * 5
 
             self.on = True
 
