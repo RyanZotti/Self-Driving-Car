@@ -18,6 +18,7 @@ class Webcam(object):
         self.ffmpeg_host = ffmpeg_host
         self.ffmpeg_process = None  # Fixes "has no attribute" error
         self.name = name
+        self.last_update_time = None
 
         # Serve static images during unit tests, since I
         # likely won't have access to the car and ffmpeg
