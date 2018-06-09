@@ -16,6 +16,7 @@ class Webcam(object):
     def __init__(self,ffmpeg_host,name,unit_test=False):
 
         self.ffmpeg_host = ffmpeg_host
+        self.ffmpeg_process = None  # Fixes "has no attribute" error
         self.name = name
 
         # Serve static images during unit tests, since I
