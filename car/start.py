@@ -7,7 +7,6 @@ from car.parts.web_controller.prediction_caller import PredictionCaller
 from car.parts.datastore import DatasetHandler
 
 
-
 # Load default settings
 cfg = load_config()
 
@@ -21,6 +20,7 @@ car.add(
     outputs=['cam/image_array'],
     threaded=True)
 
+# TODO: Figure out why drive mode takes 2 full seconds to send commands back to Tornado
 # Add a local Tornado web server to receive commands
 # http://localhost:8887/
 ctr = LocalWebController(name='server')
@@ -54,8 +54,6 @@ car.add(
     inputs=engine_inputs,
     threaded=True)
 
-# TODO: Record AI predictions as well
-# TODO: Drive as user but record AI's silent predictions and error rates
 # Add dataset to save data
 recorded_inputs = [
     'cam/image_array',
