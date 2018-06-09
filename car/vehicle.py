@@ -105,7 +105,8 @@ class Vehicle():
             self.stop()
 
     def get_named_part(self,name):
-        for part in self.parts:
+        for entry in self.parts:
+            part = entry['part']
             if part.name == name:
                 return part
 
