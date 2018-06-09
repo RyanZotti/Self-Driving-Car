@@ -15,7 +15,7 @@ cfg = load_config()
 car = Vehicle()
 
 # Add a webcam
-cam = Webcam(ffmpeg_host=cfg.PI_HOSTNAME,name='camera',unit_test=True)
+cam = Webcam(ffmpeg_host=cfg.PI_HOSTNAME,name='camera',unit_test=False)
 car.add(
     cam,
     outputs=['cam/image_array'],
