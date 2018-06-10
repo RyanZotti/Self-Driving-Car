@@ -14,7 +14,7 @@ cfg = load_config()
 car = Vehicle()
 
 # Add a webcam
-cam = Webcam(ffmpeg_host=cfg.PI_HOSTNAME,name='camera',unit_test=False)
+cam = Webcam(pi_host=cfg.PI_HOSTNAME, name='camera', unit_test=False)
 car.add(
     cam,
     outputs=['cam/image_array'],
@@ -23,7 +23,7 @@ car.add(
 # TODO: Figure out why drive mode takes 2 full seconds to send commands back to Tornado
 # Add a local Tornado web server to receive commands
 # http://localhost:8887/
-ctr = LocalWebController(name='server')
+ctr = LocalWebController(name='server',pi_host=cfg.PI_HOSTNAME)
 car.add(
     ctr,
     inputs=['cam/image_array'],
@@ -81,5 +81,3 @@ car.add(
 car.start(
     rate_hz=cfg.DRIVE_LOOP_HZ,
     max_loop_count=cfg.MAX_LOOPS)
-
-print("You can now go to <your pi ip address>:8887 to drive your car.")

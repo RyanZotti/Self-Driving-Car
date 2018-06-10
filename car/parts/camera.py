@@ -13,9 +13,9 @@ import urllib.request
 class Webcam(object):
 
     # TODO: Read host from config file
-    def __init__(self,ffmpeg_host,name,unit_test=False):
+    def __init__(self, pi_host, name, unit_test=False):
 
-        self.ffmpeg_host = ffmpeg_host
+        self.pi_host = pi_host
         self.ffmpeg_process = None  # Fixes "has no attribute" error
         self.name = name
         self.last_update_time = None
@@ -33,7 +33,7 @@ class Webcam(object):
             # Run ffmpeg as a subprocess
             cmd = 'cd /usr/src/ffmpeg & sudo ffserver -f /etc/ff.conf_original & ffmpeg -v quiet -r 5 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost/webcam.ffm'
             self.ffmpeg_process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-            stream_url = 'http://{ffmpeg_host}/webcam.mjpeg'.format(ffmpeg_host=ffmpeg_host)
+            stream_url = 'http://{pi_host}/webcam.mjpeg'.format(pi_host=pi_host)
             self.stream = urllib.request.urlopen(stream_url)
             self.opencv_bytes = bytes()
             print('WebcamVideoStream loaded.. .warming camera')
