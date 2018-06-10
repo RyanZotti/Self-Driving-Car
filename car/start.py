@@ -11,7 +11,7 @@ from car.parts.datastore import DatasetHandler
 cfg = load_config()
 
 # Initialize the car
-car = Vehicle()
+car = Vehicle(warm_up_seconds=cfg.WARM_UP_SECONDS)
 
 # Add a webcam
 cam = Webcam(pi_host=cfg.PI_HOSTNAME, name='camera', unit_test=False)

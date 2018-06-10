@@ -14,6 +14,7 @@ import os
 
 PI_HOSTNAME = 'ryanzotti.local'
 WEB_UI_PORT = 8887
+WARM_UP_SECONDS = 3
 
 # Provide entire endpoint since host, http(s), port, or url could change
 MODEL_API = 'http://Ryans-MacBook-Pro.local:8888/predict'

@@ -33,7 +33,7 @@ class Webcam(object):
             # Run ffmpeg as a subprocess
             cmd = 'cd /usr/src/ffmpeg & sudo ffserver -f /etc/ff.conf_original & ffmpeg -v quiet -r 5 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost/webcam.ffm'
             self.ffmpeg_process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-            stream_url = 'http://{pi_host}/webcam.mjpeg'.format(pi_host=pi_host)
+            stream_url = 'http://{pi_host}/webcam.mjpeg'.format(pi_host=self.pi_host)
             self.stream = urllib.request.urlopen(stream_url)
             self.opencv_bytes = bytes()
             print('WebcamVideoStream loaded.. .warming camera')
@@ -68,4 +68,4 @@ class Webcam(object):
         self.on = False
         if self.ffmpeg_process is not None:
             self.ffmpeg_process.kill()
-        print('Stopped Webcam')
+        print('Stopped camera')

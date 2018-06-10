@@ -12,7 +12,7 @@ from datetime import datetime
 
 
 class Vehicle():
-    def __init__(self, mem=None):
+    def __init__(self, warm_up_seconds, mem=None):
 
         if not mem:
             mem = Memory()
@@ -20,6 +20,7 @@ class Vehicle():
         self.parts = []
         self.on = True
         self.threads = []
+        self.warm_up_seconds = warm_up_seconds
 
         self.mem.put(['mode'], ['user'])
 
@@ -80,9 +81,13 @@ class Vehicle():
                     # start the update thread
                     entry.get('thread').start()
 
-            # wait until the parts warm up.
+            # Wait until the parts warm up. This is needed so that parts
+            # don't try to read while other parts' values prematurely.
+            # For example, the web server tries to read the camera's
+            # frames a second or two before the camera starts producing
+            # frames and this leads to a proliferation of Open CV errors
             print('Starting vehicle...')
-            time.sleep(1)
+            time.sleep(self.warm_up_seconds)
 
             loop_count = 0
             while self.on:
