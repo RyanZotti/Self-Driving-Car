@@ -87,7 +87,10 @@ class Vehicle():
             # frames a second or two before the camera starts producing
             # frames and this leads to a proliferation of Open CV errors
             print('Starting vehicle...')
+            # TODO: Check that all inputs/outputs are not None instead
+            # TODO: of using a simple time delay
             time.sleep(self.warm_up_seconds)
+            print('Vehicle started!')
 
             loop_count = 0
             while self.on:
