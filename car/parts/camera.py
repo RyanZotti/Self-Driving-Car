@@ -66,7 +66,6 @@ class Webcam(object):
     def shutdown(self):
         # indicate that the thread should be stopped
         self.on = False
-        print('stoping Webcam')
         if self.ffmpeg_process is not None:
             self.ffmpeg_process.kill()
-        time.sleep(.5)
+        print('Stopped Webcam')

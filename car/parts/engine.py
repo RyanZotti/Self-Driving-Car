@@ -106,3 +106,4 @@ class Engine(object):
 
     def shutdown(self):
         self.stop()
+        print('Stopped engine')
