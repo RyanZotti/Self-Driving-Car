@@ -22,7 +22,7 @@ import tornado.gen
 
 class LocalWebController(tornado.web.Application):
 
-    def __init__(self,name,pi_host):
+    def __init__(self,name,pi_host,port):
         '''
         Create and publish variables needed on many of
         the web handlers.
@@ -40,6 +40,7 @@ class LocalWebController(tornado.web.Application):
         self.last_update_time = None
         self.name = name
         self.pi_host = pi_host
+        self.port = int(port)
 
         handlers = [
             (r"/", tornado.web.RedirectHandler, dict(url="/drive")),
@@ -54,12 +55,9 @@ class LocalWebController(tornado.web.Application):
         super().__init__(handlers, **settings)
 
 
-    def update(self, port=8887):
-        self.port = int(port)
+    def update(self):
         self.listen(self.port)
         tornado.ioloop.IOLoop.instance().start()
-        message = "You can now go to {host}:{port} to drive your car."
-        print(message.format(host=self.pi_host,port=port))
         self.last_update_time = datetime.now()
 
     def get_last_update_time(self):

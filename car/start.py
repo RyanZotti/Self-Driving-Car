@@ -22,13 +22,14 @@ car.add(
 
 # TODO: Figure out why drive mode takes 2 full seconds to send commands back to Tornado
 # Add a local Tornado web server to receive commands
-# http://localhost:8887/
-ctr = LocalWebController(name='server',pi_host=cfg.PI_HOSTNAME)
+ctr = LocalWebController(name='server',pi_host=cfg.PI_HOSTNAME, port=cfg.WEB_UI_PORT)
 car.add(
     ctr,
     inputs=['cam/image_array'],
     outputs=['user/angle', 'user/throttle', 'mode', 'recording'],
     threaded=True)
+server_message = "You can now go to {host}:{port} to drive your car."
+print(server_message.format(host=cfg.PI_HOSTNAME, port=cfg.WEB_UI_PORT))
 
 # This shouldn't have to know if the model exists.
 # It should return 0s if the model doesn't exist
