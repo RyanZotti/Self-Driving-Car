@@ -122,7 +122,7 @@ class Vehicle():
                 # and show high latency but we can ignore it
                 # assuming the web app says the drive mode is
                 # the user
-                mode = self.mem.get(['mode'])
+                mode = self.mem.get(['mode'])[0]
                 any_slow_parts = False
                 for entry in self.parts:
                     part = entry['part']
