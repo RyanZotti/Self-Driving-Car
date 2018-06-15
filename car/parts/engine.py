@@ -91,12 +91,15 @@ class Engine(object):
         inputs = dict(zip(self.inputs, args))
         mode = inputs['mode']
         assert (mode in ['ai', 'user'])
-        if mode == 'ai':
-            self.run_angle(inputs['ai/angle'])
-            self.run_throttle(inputs['ai/throttle'])
+        if inputs['latency-brake'] == 'off':
+            if mode == 'ai':
+                self.run_angle(inputs['ai/angle'])
+                self.run_throttle(inputs['ai/throttle'])
+            else:
+                self.run_angle(inputs['user/angle'])
+                self.run_throttle(inputs['user/throttle'])
         else:
-            self.run_angle(inputs['user/angle'])
-            self.run_throttle(inputs['user/throttle'])
+            self.stop()
 
     def stop(self):
         self.pwm_forward.ChangeDutyCycle(0)
