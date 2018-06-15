@@ -48,7 +48,8 @@ engine_inputs =[
     'user/throttle',
     'ai/angle',
     'ai/throttle',
-    'mode']
+    'mode',
+    'latency-brake']
 engine = Engine(16, 18, 22, 19, 21, 23, name='engine', inputs=engine_inputs)
 car.add(
     engine,
@@ -62,13 +63,15 @@ recorded_inputs = [
     'user/throttle',
     'ai/angle',
     'ai/throttle',
-    'mode']
+    'mode',
+    'latency-brake']
 types = [
     'image_array',
     'float',
     'float',
     'float',
     'float',
+    'str',
     'str']
 dh = DatasetHandler(path=cfg.DATA_PATH)
 print(cfg.DATA_PATH)

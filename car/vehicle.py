@@ -24,6 +24,13 @@ class Vehicle():
 
         self.mem.put(['mode'], ['user'])
 
+        # A brake can be applied by a user via the
+        # web UI or because a part has become
+        # unresponsive. The engine will stop if
+        # either brake is applied.
+        self.mem.put(['user-brake'], ['on'])
+        self.mem.put(['latency-brake'], ['on'])
+
     def add(self, part, inputs=[], outputs=[],
             threaded=False, run_condition=None):
         """
@@ -45,6 +52,15 @@ class Vehicle():
         entry['inputs'] = inputs
         entry['outputs'] = outputs
         entry['run_condition'] = run_condition
+
+        # Apply brake when any part takes too long to update.
+        # The most problematic part is often the prediction
+        # caller because it can sometimes take awhile to get a
+        # prediction. About 1-2% of the time the model has a huge
+        # delay, so I stop the car so it doesn't get stuck with a
+        # stale command and drive off the road. I release the brake
+        # as soon as all parts are marked as responsive again
+        entry['is_responsive'] = True
 
         if threaded:
             t = Thread(target=part.update, args=())
@@ -97,6 +113,33 @@ class Vehicle():
                 start_time = time.time()
                 loop_count += 1
 
+
+                # Make sure all parts are responding quickly
+                # enough. The only exception is the prediction
+                # caller which always attempts to reach the
+                # model even when no model exists; in such
+                # cases the prediction caller will time out
+                # and show high latency but we can ignore it
+                # assuming the web app says the drive mode is
+                # the user
+                mode = self.mem.get(['mode'])
+                any_slow_parts = False
+                for entry in self.parts:
+                    part = entry['part']
+                    if part['is_responsive'] == False:
+                        # Ignore slow model if model not being used
+                        if part.name == 'ai' and mode == 'user':
+                            continue
+                        else:
+                            # Immediately stop search if even a
+                            # single slow part is discovered
+                            any_slow_parts = True
+                            break
+                if any_slow_parts:
+                    self.mem.put(['latency-brake'], ['on'])
+                else:
+                    self.mem.put(['latency-brake'], ['off'])
+
                 self.update_parts()
 
                 # stop drive loop if loop_count exceeds max_loopcount
@@ -146,18 +189,29 @@ class Vehicle():
                         # Ex: mode is AI and the model is timing out
                         mode = self.mem.get(['mode'])[0]
                         if diff_seconds > self.latency_threshold:
+                            entry['is_responsive'] = False
                             message = '{part} delayed by {seconds} seconds!'
                             if p.name != 'ai':
                                 print(message.format(part=p.name, seconds=diff_seconds))
+                                # Force the engine to acknowledge the brake by
+                                # updating the brake state to on and then sending
+                                # those inputs through the engine. Note that with
+                                # a real car there would be a physical brake that
+                                # works independently of the engine. I have a toy
+                                # car with no actual brake, so I accomplish the
+                                # same thing by just telling the engine to stop
+                                self.mem.put(['latency-brake'], ['on'])
+                                engine_inputs = self.mem.get(entry['inputs'])
                                 engine = self.get_named_part(name='engine')
-                                engine.stop()
+                                engine.run_threaded(*engine_inputs)
                             else:
                                 # Ignore ai delay if the ai isn't needed
                                 if mode == 'ai':
                                     print(message.format(part=p.name, seconds=diff_seconds))
                                     engine = self.get_named_part(name='engine')
                                     engine.stop()
-
+                        else:
+                            entry['is_responsive'] = True
                     outputs = p.run_threaded(*inputs)
                 else:
                     outputs = p.run(*inputs)
