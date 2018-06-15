@@ -126,7 +126,7 @@ class Vehicle():
                 any_slow_parts = False
                 for entry in self.parts:
                     part = entry['part']
-                    if part['is_responsive'] == False:
+                    if entry['is_responsive'] == False:
                         # Ignore slow model if model not being used
                         if part.name == 'ai' and mode == 'user':
                             continue
