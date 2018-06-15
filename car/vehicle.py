@@ -136,9 +136,9 @@ class Vehicle():
                             any_slow_parts = True
                             break
                 if any_slow_parts:
-                    self.mem.put(['latency-brake'], ['on'])
+                    self.mem.put(['latency-brake'], 'on')
                 else:
-                    self.mem.put(['latency-brake'], ['off'])
+                    self.mem.put(['latency-brake'], 'off')
 
                 self.update_parts()
 

@@ -42,6 +42,9 @@ class Memory:
                     raise IndexError(error)
 
         else:
+            # For some baffling reason using inputs[0] for
+            # consistency will break the image shown in
+            # tornado
             self.d[keys[0]] = inputs
 
     def get(self, keys):
