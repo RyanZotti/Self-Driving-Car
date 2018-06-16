@@ -2,10 +2,9 @@ from car.vehicle import Vehicle
 from car.config import load_config
 from car.parts.camera import Webcam
 from car.parts.engine import Engine
-from car.parts.web_controller.web import LocalWebController
-from car.parts.web_controller.prediction_caller import PredictionCaller
+from car.parts.web.prediction_caller import PredictionCaller
 from car.parts.datastore import DatasetHandler
-
+from car.parts.web.client import ui
 
 # Load default settings
 cfg = load_config()
@@ -20,12 +19,10 @@ car.add(
     outputs=['cam/image_array'],
     threaded=True)
 
-# TODO: Figure out why drive mode takes 2 full seconds to send commands back to Tornado
-# Add a local Tornado web server to receive commands
-ctr = LocalWebController(name='server',pi_host=cfg.PI_HOSTNAME, port=cfg.WEB_UI_PORT)
+# Add a web app / user interface accessible via laptop or phone
+ui = ui.Client(api=cfg.UI_API,name='ui',server_path=cfg.UI_SERVER_PATH)
 car.add(
-    ctr,
-    inputs=['cam/image_array'],
+    ui,
     outputs=['user/angle', 'user/throttle', 'mode', 'recording'],
     threaded=True)
 server_message = "You can now go to {host}:{port} to drive your car."

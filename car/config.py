@@ -49,9 +49,13 @@ def load_config(config_path=None):
         main_path = os.path.dirname(os.path.realpath(main.__file__))
         config_path = functools.reduce(
             os.path.join, [main_path, 'templates','config_defaults.py'])
-
     print('loading config file: {}'.format(config_path))
     cfg = Config()
     cfg.from_pyfile(config_path)
+
+    # Find UI server script
+    main_path = os.path.dirname(os.path.realpath(__file__))
+    cfg.UI_SERVER_PATH = functools.reduce(os.path.join, [main_path,'parts','web','server','ui.py'])
+
     print('config loaded')
     return cfg

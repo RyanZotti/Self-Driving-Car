@@ -18,6 +18,7 @@ WARM_UP_SECONDS = 3
 
 # Provide entire endpoint since host, http(s), port, or url could change
 MODEL_API = 'http://Ryans-MacBook-Pro.local:8888/predict'
+UI_API = 'http://ryanzotti.local:8887/ui-state'
 
 #PATHS
 CAR_PATH = PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))

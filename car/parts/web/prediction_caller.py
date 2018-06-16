@@ -56,4 +56,4 @@ class PredictionCaller(object):
     def shutdown(self):
         # indicate that the thread should be stopped
         self.on = False
-        print('Stopped prediction caller')
+        print('Stopped {name}'.format(name=self.name))
