@@ -36,7 +36,12 @@ class Webcam(object):
             stream_url = 'http://{pi_host}/webcam.mjpeg'.format(pi_host=self.pi_host)
             self.stream = urllib.request.urlopen(stream_url)
             self.opencv_bytes = bytes()
-            print('WebcamVideoStream loaded.. .warming camera')
+
+            # Getting rid of this sleep causes the whole car to
+            # fail the very first time the Pi is turned on
+            print('Allowing time for camera to turn on')
+            time.sleep(2)
+
         else:
             # TODO: Save a permanent image to the repo and replace this user-specific path
             image_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_1_18-04-15/3207_cam-image_array_.jpg'
