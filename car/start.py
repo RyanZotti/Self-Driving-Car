@@ -3,7 +3,7 @@ from car.parts.camera import Webcam
 from car.parts.datastore import DatasetHandler
 from car.parts.engine import Engine
 from car.parts.web.client import ui
-from car.parts.web.client.ai import Client
+from car.parts.web.client import ai
 from car.vehicle import Vehicle
 
 # Load default settings
@@ -39,7 +39,7 @@ print(server_message.format(host=cfg.PI_HOSTNAME, port=cfg.WEB_UI_PORT))
 # It should return 0s if the model doesn't exist
 # or if the model exists but simply isn't reachable
 # Add prediction caller
-prediction_caller = Client(model_api=cfg.MODEL_API, name='ai')
+prediction_caller = ai.Client(model_api=cfg.MODEL_API, name='ai')
 car.add(
     prediction_caller,
     inputs=['cam/image_array'],
