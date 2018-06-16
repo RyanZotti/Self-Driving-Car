@@ -155,11 +155,11 @@ class Vehicle():
         finally:
             self.stop()
 
-    def get_named_part(self,name):
+    def get_entry(self, part_name):
         for entry in self.parts:
             part = entry['part']
-            if part.name == name:
-                return part
+            if part.name == part_name:
+                return entry
 
     def update_parts(self):
 
@@ -201,15 +201,18 @@ class Vehicle():
                                 # car with no actual brake, so I accomplish the
                                 # same thing by just telling the engine to stop
                                 self.mem.put(['latency-brake'], ['on'])
-                                engine_inputs = self.mem.get(entry['inputs'])
-                                engine = self.get_named_part(name='engine')
+                                engine_entry = self.get_entry(part_name='engine')
+                                engine = engine_entry['part']
+                                engine_inputs = self.mem.get(engine_entry['inputs'])
                                 engine.run_threaded(*engine_inputs)
                             else:
                                 # Ignore ai delay if the ai isn't needed
                                 if mode == 'ai':
                                     print(message.format(part=p.name, seconds=diff_seconds))
-                                    engine = self.get_named_part(name='engine')
-                                    engine.stop()
+                                    engine_entry = self.get_entry(part_name='engine')
+                                    engine = engine_entry['part']
+                                    engine_inputs = self.mem.get(engine_entry['inputs'])
+                                    engine.run_threaded(*engine_inputs)
                         else:
                             entry['is_responsive'] = True
                     outputs = p.run_threaded(*inputs)
