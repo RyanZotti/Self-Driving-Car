@@ -28,8 +28,8 @@ class Vehicle():
         # web UI or because a part has become
         # unresponsive. The engine will stop if
         # either brake is applied.
-        self.mem.put(['user-brake'], ['on'])
-        self.mem.put(['system-brake'], ['on'])
+        self.mem.put(['user-brake'], 'on')
+        self.mem.put(['system-brake'], 'on')
 
     def add(self, part, inputs=[], outputs=[],
             threaded=False, run_condition=None):
