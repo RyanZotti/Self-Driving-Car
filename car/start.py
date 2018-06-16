@@ -13,14 +13,21 @@ cfg = load_config()
 car = Vehicle(warm_up_seconds=cfg.WARM_UP_SECONDS)
 
 # Add a webcam
-cam = Webcam(pi_host=cfg.PI_HOSTNAME, name='camera', unit_test=False)
+cam = Webcam(
+    pi_host=cfg.PI_HOSTNAME,
+    name='camera',
+    unit_test=False)
 car.add(
     cam,
     outputs=['cam/image_array'],
     threaded=True)
 
 # Add a web app / user interface accessible via laptop or phone
-ui = ui.Client(api=cfg.UI_API,name='ui',server_path=cfg.UI_SERVER_PATH)
+ui = ui.Client(
+    api=cfg.UI_API,
+    name='ui',
+    server_path=cfg.UI_SERVER_PATH,
+    port=cfg.WEB_UI_PORT)
 car.add(
     ui,
     outputs=['user/angle', 'user/throttle', 'mode', 'recording'],

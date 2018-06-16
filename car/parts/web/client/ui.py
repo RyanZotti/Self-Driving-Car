@@ -14,12 +14,13 @@ import json
 
 class Client(object):
 
-    def __init__(self, api,name,server_path):
+    def __init__(self, api,name,server_path,port):
 
         super().__init__()
         self.on = True
         self.api = api
         self.server_path = server_path
+        self.port = port
         self.last_update_time = None
         self.name = name
         self.on = True
@@ -31,7 +32,9 @@ class Client(object):
         self.recording = False
 
         # Run ffmpeg as a subprocess
-        cmd = 'python3 {server}'.format(server=self.server_path)
+        cmd = 'python3 {server} --port {port}'.format(
+            server=self.server_path,
+            port=self.port)
         self.process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 
     def update(self):
