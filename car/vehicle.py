@@ -22,7 +22,7 @@ class Vehicle():
         self.threads = []
         self.warm_up_seconds = warm_up_seconds
 
-        self.mem.put(['mode'], ['user'])
+        self.mem.put(['mode'], 'user')
 
         # A brake can be applied by a user via the
         # web UI or because a part has become
