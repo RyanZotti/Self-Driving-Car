@@ -124,5 +124,9 @@ if __name__ == "__main__":
     args = vars(ap.parse_args())
     port = args['port']
     app = make_app()
+    app.angle = 0.0
+    app.throttle = 0.0
+    app.mode = 'user'
+    app.recording = False
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()
