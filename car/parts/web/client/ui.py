@@ -41,7 +41,7 @@ class Client(object):
 
         while self.on:
             try:
-                response = requests.get('{api}'.format(state_api=self.api))
+                response = requests.get('{api}'.format(api=self.api))
                 state = json.loads(response.text)
                 self.angle = state['angle']
                 self.throttle = state['throttle']
