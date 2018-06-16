@@ -25,6 +25,7 @@ class PredictionCaller(object):
         self.model_api = model_api
         self.last_update_time = None
         self.name = name
+        self.healthcheck = 'fail'
 
     def update(self):
         self.predicted_angle = 0.0
@@ -38,6 +39,7 @@ class PredictionCaller(object):
                 prediction = response['prediction']
                 self.predicted_angle, self.predicted_throttle = prediction
                 self.last_update_time = datetime.now()
+                self.healthcheck = 'pass'
             except:
                 # Always attempt to get predictions. If no model
                 # exists or a model exists but is not reachable
@@ -45,10 +47,11 @@ class PredictionCaller(object):
                 # same: 0.0, 0.0
                 self.predicted_angle = 0.0
                 self.predicted_throttle = 0.0
+                self.healthcheck = 'fail'
 
     def run_threaded(self, img_arr=None):
         self.img_arr = img_arr
-        return self.predicted_angle, self.predicted_throttle
+        return self.predicted_angle, self.predicted_throttle, self.is_healthy
 
     def get_last_update_time(self):
         return self.last_update_time

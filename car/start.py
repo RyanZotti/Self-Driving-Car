@@ -68,13 +68,15 @@ recorded_inputs = [
     'ai/angle',
     'ai/throttle',
     'mode',
-    'latency-brake']
+    'system-brake',
+    'ai/healthcheck']
 types = [
     'image_array',
     'float',
     'float',
     'float',
     'float',
+    'str',
     'str',
     'str']
 dh = DatasetHandler(path=cfg.DATA_PATH)

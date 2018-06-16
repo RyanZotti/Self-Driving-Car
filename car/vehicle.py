@@ -29,7 +29,7 @@ class Vehicle():
         # unresponsive. The engine will stop if
         # either brake is applied.
         self.mem.put(['user-brake'], ['on'])
-        self.mem.put(['latency-brake'], ['on'])
+        self.mem.put(['system-brake'], ['on'])
 
     def add(self, part, inputs=[], outputs=[],
             threaded=False, run_condition=None):
@@ -135,10 +135,16 @@ class Vehicle():
                             # single slow part is discovered
                             any_slow_parts = True
                             break
+
+                # Turning the brake on is mostly redundant since
+                # I immediately stop the engine as soon as a bad
+                # part is discovered in the update loop. What this
+                # logic mostly takes care of is defining when to
+                # release the brake
                 if any_slow_parts:
-                    self.mem.put(['latency-brake'], 'on')
+                    self.apply_system_brake()
                 else:
-                    self.mem.put(['latency-brake'], 'off')
+                    self.mem.put(['system-brake'], 'off')
 
                 self.update_parts()
 
@@ -161,6 +167,20 @@ class Vehicle():
             if part.name == part_name:
                 return entry
 
+    # Force the engine to acknowledge the brake by
+    # updating the brake state to on and then sending
+    # those inputs through the engine. Note that with
+    # a real car there would be a physical brake that
+    # works independently of the engine. I have a toy
+    # car with no actual brake, so I accomplish the
+    # same thing by just telling the engine to stop
+    def apply_system_brake(self):
+        self.mem.put(['system-brake'], ['on'])
+        engine_entry = self.get_entry(part_name='engine')
+        engine = engine_entry['part']
+        engine_inputs = self.mem.get(engine_entry['inputs'])
+        engine.run_threaded(*engine_inputs)
+
     def update_parts(self):
 
         # Loop over all the parts
@@ -174,52 +194,36 @@ class Vehicle():
                 run = self.mem.get([run_condition])[0]
 
             if run:
-                # get inputs from memory
                 inputs = self.mem.get(entry['inputs'])
-
-                # run the part
+                mode = self.mem.get(['mode'])[0]
                 if entry.get('thread'):
 
-                    # Check latency here
+                    # Check for issues before using the part
                     now = datetime.now()
                     if p.last_update_time is not None:
-                        #print(last_update_time)
                         diff_seconds = (now - p.last_update_time).total_seconds()
-                        # Latency only matters if we're using the part's output
-                        # Ex: mode is AI and the model is timing out
-                        mode = self.mem.get(['mode'])[0]
                         if diff_seconds > self.latency_threshold:
                             entry['is_responsive'] = False
                             message = '{part} delayed by {seconds} seconds!'
                             if p.name != 'ai':
                                 print(message.format(part=p.name, seconds=diff_seconds))
-                                # Force the engine to acknowledge the brake by
-                                # updating the brake state to on and then sending
-                                # those inputs through the engine. Note that with
-                                # a real car there would be a physical brake that
-                                # works independently of the engine. I have a toy
-                                # car with no actual brake, so I accomplish the
-                                # same thing by just telling the engine to stop
-                                self.mem.put(['latency-brake'], ['on'])
-                                engine_entry = self.get_entry(part_name='engine')
-                                engine = engine_entry['part']
-                                engine_inputs = self.mem.get(engine_entry['inputs'])
-                                engine.run_threaded(*engine_inputs)
+                                self.apply_system_brake()
                             else:
-                                # Ignore ai delay if the ai isn't needed
+                                # Apply brake if AI is supposed to drive but is delayed
                                 if mode == 'ai':
                                     print(message.format(part=p.name, seconds=diff_seconds))
-                                    engine_entry = self.get_entry(part_name='engine')
-                                    engine = engine_entry['part']
-                                    engine_inputs = self.mem.get(engine_entry['inputs'])
-                                    engine.run_threaded(*engine_inputs)
+                                    self.apply_system_brake()
                         else:
                             entry['is_responsive'] = True
-                    outputs = p.run_threaded(*inputs)
+                    elif mode == 'ai' and p.name == 'ai' and p.healthcheck == 'fail':
+                        print('AI API call has failed!')
+                        self.apply_system_brake()
+                    else:
+                        outputs = p.run_threaded(*inputs)
                 else:
                     outputs = p.run(*inputs)
 
-                # save the output to memory
+                # Save the output(s) to memory
                 if outputs is not None:
                     self.mem.put(entry['outputs'], outputs)
 
