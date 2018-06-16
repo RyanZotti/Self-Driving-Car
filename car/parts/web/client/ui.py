@@ -31,7 +31,7 @@ class Client(object):
         self.recording = False
 
         # Run ffmpeg as a subprocess
-        cmd = 'python {server}'.format(server=self.server_path)
+        cmd = 'python3 {server}'.format(server=self.server_path)
         self.process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 
     def update(self):
