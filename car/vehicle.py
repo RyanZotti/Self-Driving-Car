@@ -175,7 +175,7 @@ class Vehicle():
     # car with no actual brake, so I accomplish the
     # same thing by just telling the engine to stop
     def apply_system_brake(self):
-        self.mem.put(['system-brake'], ['on'])
+        self.mem.put(['system-brake'], 'on')
         engine_entry = self.get_entry(part_name='engine')
         engine = engine_entry['part']
         engine_inputs = self.mem.get(engine_entry['inputs'])
@@ -216,11 +216,10 @@ class Vehicle():
                                     self.apply_system_brake()
                         else:
                             entry['is_responsive'] = True
-                    elif mode == 'ai' and p.name == 'ai' and p.healthcheck == 'fail':
+                    if mode == 'ai' and p.name == 'ai' and p.healthcheck == 'fail':
                         print('AI API call has failed!')
                         self.apply_system_brake()
-                    else:
-                        outputs = p.run_threaded(*inputs)
+                    outputs = p.run_threaded(*inputs)
                 else:
                     outputs = p.run(*inputs)
 
