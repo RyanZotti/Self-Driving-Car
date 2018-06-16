@@ -195,6 +195,7 @@ class Vehicle():
 
             if run:
                 inputs = self.mem.get(entry['inputs'])
+                outputs = None
                 mode = self.mem.get(['mode'])[0]
                 if entry.get('thread'):
 
