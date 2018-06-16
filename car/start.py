@@ -53,7 +53,7 @@ engine_inputs =[
     'ai/angle',
     'ai/throttle',
     'mode',
-    'latency-brake']
+    'system-brake']
 engine = Engine(16, 18, 22, 19, 21, 23, name='engine', inputs=engine_inputs)
 car.add(
     engine,
