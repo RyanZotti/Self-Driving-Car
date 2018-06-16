@@ -51,7 +51,7 @@ class PredictionCaller(object):
 
     def run_threaded(self, img_arr=None):
         self.img_arr = img_arr
-        return self.predicted_angle, self.predicted_throttle, self.is_healthy
+        return self.predicted_angle, self.predicted_throttle, self.healthcheck
 
     def get_last_update_time(self):
         return self.last_update_time
