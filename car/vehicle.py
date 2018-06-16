@@ -217,7 +217,7 @@ class Vehicle():
                         else:
                             entry['is_responsive'] = True
                     if mode == 'ai' and p.name == 'ai' and p.healthcheck == 'fail':
-                        print('AI API call has failed!')
+                        print('ai API call has failed!')
                         self.apply_system_brake()
                     outputs = p.run_threaded(*inputs)
                 else:

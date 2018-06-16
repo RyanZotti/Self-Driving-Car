@@ -39,8 +39,8 @@ class Webcam(object):
 
             # Getting rid of this sleep causes the whole car to
             # fail the very first time the Pi is turned on
-            print('Allowing time for camera to turn on')
-            time.sleep(2)
+            print('Allowing time for camera to turn on...')
+            time.sleep(5)
 
         else:
             # TODO: Save a permanent image to the repo and replace this user-specific path
