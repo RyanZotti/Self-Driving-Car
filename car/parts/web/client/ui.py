@@ -18,9 +18,9 @@ class Client(object):
 
         super().__init__()
         self.on = True
-        self.api = api
         self.server_path = server_path
         self.port = port
+        self.api = api.format(port=self.port)
         self.last_update_time = None
         self.name = name
         self.on = True
