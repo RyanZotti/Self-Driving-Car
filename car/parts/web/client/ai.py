@@ -16,7 +16,7 @@ import json
 from pprint import pprint
 
 
-class PredictionCaller(object):
+class AI(object):
     # TODO: Read host from config file
     def __init__(self, model_api,name):
 

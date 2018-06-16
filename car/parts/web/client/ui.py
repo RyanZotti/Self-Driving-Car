@@ -12,7 +12,7 @@ import requests
 import json
 
 
-class Client(object):
+class UI(object):
 
     def __init__(self, api,name,server_path,port):
 
