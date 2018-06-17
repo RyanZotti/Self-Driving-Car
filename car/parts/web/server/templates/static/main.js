@@ -91,8 +91,7 @@ var driveHandler = new function() {
       });
 
       $('#max_throttle_select').on('change', function () {
-        state.maxThrottle = parseFloat($(this).val());
-        updateUI();
+        updateMaxThrottle(parseFloat($(this).val()));
       });
 
       $('#throttle_mode_select').on('change', function () {
@@ -416,6 +415,11 @@ var driveHandler = new function() {
 
     var updateDriveMode = function(mode){
       state.driveMode = mode;
+      postDrive()
+    };
+
+    var updateMaxThrottle = function(throttle){
+      state.maxThrottle = throttle;
       postDrive()
     };
 
