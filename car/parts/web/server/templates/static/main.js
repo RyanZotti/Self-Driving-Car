@@ -265,7 +265,8 @@ var driveHandler = new function() {
         data = JSON.stringify({ 'angle': state.tele.user.angle,
                                 'throttle':state.tele.user.throttle,
                                 'drive_mode':state.driveMode,
-                                'recording': state.recording})
+                                'recording': state.recording,
+                                'brake':state.brakeOn})
         console.log(data)
         $.post(driveURL, data)
         updateUI()

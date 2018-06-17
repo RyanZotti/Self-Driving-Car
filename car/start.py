@@ -31,7 +31,7 @@ ui = UI(
     port=cfg.WEB_UI_PORT)
 car.add(
     ui,
-    outputs=['user/angle', 'user/throttle', 'mode', 'recording'],
+    outputs=['user/angle', 'user/throttle', 'mode', 'recording', 'user-brake'],
     threaded=True)
 server_message = "You can now go to {host}:{port} to drive your car."
 print(server_message.format(host=cfg.PI_HOSTNAME, port=cfg.WEB_UI_PORT))
@@ -54,7 +54,8 @@ engine_inputs =[
     'ai/angle',
     'ai/throttle',
     'mode',
-    'system-brake']
+    'system-brake',
+    'user-brake']
 engine = Engine(16, 18, 22, 19, 21, 23, name='engine', inputs=engine_inputs)
 car.add(
     engine,
@@ -70,6 +71,7 @@ recorded_inputs = [
     'ai/throttle',
     'mode',
     'system-brake',
+    'user-brake',
     'ai/healthcheck']
 types = [
     'image_array',
@@ -78,7 +80,8 @@ types = [
     'float',
     'float',
     'str',
-    'str',
+    'boolean',
+    'boolean',
     'str']
 dh = DatasetHandler(path=cfg.DATA_PATH)
 print(cfg.DATA_PATH)

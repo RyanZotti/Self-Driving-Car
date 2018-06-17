@@ -48,6 +48,7 @@ class DriveAPI(tornado.web.RequestHandler):
         self.application.throttle = data['throttle']
         self.application.mode = data['drive_mode']
         self.application.recording = data['recording']
+        self.application.brake = data['brake']
 
 
 class StateAPI(tornado.web.RequestHandler):
@@ -57,7 +58,8 @@ class StateAPI(tornado.web.RequestHandler):
             'angle': self.application.angle,
             'throttle': self.application.throttle,
             'drive_mode': self.application.mode,
-            'recording': self.application.recording
+            'recording': self.application.recording,
+            'brake': self.application.brake,
         }
         self.write(state)
 

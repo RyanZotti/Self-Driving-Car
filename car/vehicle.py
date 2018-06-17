@@ -28,8 +28,8 @@ class Vehicle():
         # web UI or because a part has become
         # unresponsive. The engine will stop if
         # either brake is applied.
-        self.mem.put(['user-brake'], 'on')
-        self.mem.put(['system-brake'], 'on')
+        self.mem.put(['user-brake'], True)
+        self.mem.put(['system-brake'], True)
 
     def add(self, part, inputs=[], outputs=[],
             threaded=False, run_condition=None):
@@ -144,7 +144,7 @@ class Vehicle():
                 if any_slow_parts:
                     self.apply_system_brake()
                 else:
-                    self.mem.put(['system-brake'], 'off')
+                    self.mem.put(['system-brake'], False)
 
                 self.update_parts()
 
@@ -175,7 +175,7 @@ class Vehicle():
     # car with no actual brake, so I accomplish the
     # same thing by just telling the engine to stop
     def apply_system_brake(self):
-        self.mem.put(['system-brake'], 'on')
+        self.mem.put(['system-brake'], True)
         engine_entry = self.get_entry(part_name='engine')
         engine = engine_entry['part']
         engine_inputs = self.mem.get(engine_entry['inputs'])

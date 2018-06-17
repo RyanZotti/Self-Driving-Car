@@ -91,7 +91,7 @@ class Engine(object):
         inputs = dict(zip(self.inputs, args))
         mode = inputs['mode']
         assert (mode in ['ai', 'user'])
-        if inputs['system-brake'] == 'off':
+        if inputs['system-brake'] is False and inputs['user-brake'] is False:
             if mode == 'ai':
                 self.run_angle(inputs['ai/angle'])
                 self.run_throttle(inputs['ai/throttle'])
