@@ -49,6 +49,7 @@ class DriveAPI(tornado.web.RequestHandler):
         self.application.mode = data['drive_mode']
         self.application.recording = data['recording']
         self.application.brake = data['brake']
+        self.application.max_throttle = data['max_throttle']
 
 
 class StateAPI(tornado.web.RequestHandler):
@@ -60,6 +61,7 @@ class StateAPI(tornado.web.RequestHandler):
             'drive_mode': self.application.mode,
             'recording': self.application.recording,
             'brake': self.application.brake,
+            'max_throttle': self.application.max_throttle
         }
         self.write(state)
 
@@ -131,5 +133,6 @@ if __name__ == "__main__":
     app.mode = 'user'
     app.recording = False
     app.brake = True
+    app.max_throttle = 1.0
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()

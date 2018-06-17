@@ -31,6 +31,7 @@ class UI(object):
         self.drive_mode = 'user'
         self.recording = False
         self.brake = True
+        self.max_throttle = 1.0
 
         # Run ffmpeg as a subprocess
         cmd = 'python3 {server} --port {port}'.format(
@@ -49,6 +50,7 @@ class UI(object):
                 self.drive_mode = state['drive_mode']
                 self.recording = state['recording']
                 self.brake = state['brake']
+                self.max_throttle = state['max_throttle']
                 self.last_update_time = datetime.now()
             except:
                 # Always attempt to get the state. If the state
@@ -60,9 +62,10 @@ class UI(object):
                 self.drive_mode = 'user'
                 self.recording = False
                 self.brake = True
+                self.max_throttle = 1.0
 
     def run_threaded(self):
-        return self.angle, self.throttle, self.drive_mode, self.recording, self.brake
+        return self.angle, self.throttle, self.drive_mode, self.recording, self.brake, self.max_throttle
 
     def get_last_update_time(self):
         return self.last_update_time

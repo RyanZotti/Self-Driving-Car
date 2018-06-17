@@ -3,11 +3,12 @@ import RPi.GPIO as GPIO
 
 
 class Engine(object):
-    def __init__(self, pinForward, pinBackward, pinControlStraight, pinLeft, pinRight, pinControlSteering,name, inputs):
+    def __init__(self, pinForward, pinBackward, pinControlStraight, pinLeft, pinRight, pinControlSteering, name, input_names):
         """ Initialize the motor with its control pins and start pulse-width
              modulation """
         self.name = name
-        self.inputs = inputs
+        self.input_names = input_names
+        self.input = None
         self.last_update_time = None
 
         GPIO.setmode(GPIO.BOARD)
@@ -61,6 +62,7 @@ class Engine(object):
         return bounded_input
 
     def run_throttle(self, throttle):
+        throttle = throttle * self.inputs['max_throttle']
         if throttle > 0:
             pwm_intensity = self.normalize_input(throttle)
             self.pwm_forward.ChangeDutyCycle(pwm_intensity)
@@ -88,16 +90,16 @@ class Engine(object):
 
     def run_threaded(self,*args):
 
-        inputs = dict(zip(self.inputs, args))
-        mode = inputs['mode']
+        self.inputs = dict(zip(self.input_names, args))
+        mode = self.inputs['mode']
         assert (mode in ['ai', 'user'])
-        if inputs['system-brake'] is False and inputs['user-brake'] is False:
+        if self.inputs['system-brake'] is False and self.inputs['user-brake'] is False:
             if mode == 'ai':
-                self.run_angle(inputs['ai/angle'])
-                self.run_throttle(inputs['ai/throttle'])
+                self.run_angle(self.inputs['ai/angle'])
+                self.run_throttle(self.inputs['ai/throttle'])
             else:
-                self.run_angle(inputs['user/angle'])
-                self.run_throttle(inputs['user/throttle'])
+                self.run_angle(self.inputs['user/angle'])
+                self.run_throttle(self.inputs['user/throttle'])
         else:
             self.stop()
 

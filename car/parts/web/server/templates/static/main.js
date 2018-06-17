@@ -266,7 +266,8 @@ var driveHandler = new function() {
                                 'throttle':state.tele.user.throttle,
                                 'drive_mode':state.driveMode,
                                 'recording': state.recording,
-                                'brake':state.brakeOn})
+                                'brake':state.brakeOn,
+                                'max_throttle':state.brakeOn})
         console.log(data)
         $.post(driveURL, data)
         updateUI()
