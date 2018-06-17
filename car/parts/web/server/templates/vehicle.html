@@ -48,6 +48,16 @@
               </select>
             </div>
           </div>
+          <div class="form-group" style="max-width:30%;">
+            <label>Drive Mode</label>
+            <div class="form-group">
+              <select id="mode_select" class="form-control">
+                <option disabled selected> Select Mode </option>
+                <option value="user">User</option>
+                <option value="ai">AI</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -84,14 +94,6 @@
         </div>
 
         <form>
-          <label>Drive Mode</label>
-          <div class="form-group">
-            <select id="mode_select" class="form-control">
-              <option disabled selected> Select Mode </option>
-              <option value="user">User</option>
-              <option value="ai">AI</option>
-            </select>
-          </div>
           <div class="form-group">
             <button type="button" id="record_button" class="btn btn-info btn-block">
               Start Recording (r)
