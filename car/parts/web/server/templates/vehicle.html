@@ -49,7 +49,7 @@
             </div>
           </div>
           <div class="form-group" style="max-width:30%;">
-            <label>Drive Mode</label>
+            <label class="group-label">Drive Mode</label><br/>
             <div class="form-group">
               <select id="mode_select" class="form-control">
                 <option disabled selected> Select Mode </option>
@@ -99,6 +99,11 @@
               Start Recording (r)
             </button>
           </div>
+          <div class="form-group">
+            <button type="button" id="brake_button" class="btn btn-lg btn-success btn-block">
+              Start Vehicle
+            </button>
+          </div>
         </form>
       </div>
       
@@ -120,13 +125,6 @@
     
   </div> <!-- END Container -->
   <footer class="footer" id="vehicle_footer">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <button type="button" id="brake_button" class="btn btn-lg btn-success btn-block">Start Vehicle (space)</button>
-        </div>
-      </div>
-    </div>
   </footer>
 
   <!-- Modal -->
