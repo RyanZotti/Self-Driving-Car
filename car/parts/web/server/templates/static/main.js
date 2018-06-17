@@ -92,6 +92,7 @@ var driveHandler = new function() {
 
       $('#max_throttle_select').on('change', function () {
         state.maxThrottle = parseFloat($(this).val());
+        updateUI();
       });
 
       $('#throttle_mode_select').on('change', function () {
@@ -267,7 +268,7 @@ var driveHandler = new function() {
                                 'drive_mode':state.driveMode,
                                 'recording': state.recording,
                                 'brake':state.brakeOn,
-                                'max_throttle':state.brakeOn})
+                                'max_throttle':state.maxThrottle})
         console.log(data)
         $.post(driveURL, data)
         updateUI()
