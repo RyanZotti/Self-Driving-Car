@@ -31,7 +31,7 @@ class Webcam(object):
 
         if not self.unit_test:
             # Run ffmpeg as a subprocess
-            cmd = 'cd /usr/src/ffmpeg & sudo ffserver -f /etc/ff.conf_original & ffmpeg -v quiet -r 40 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost/webcam.ffm'
+            cmd = 'cd /usr/src/ffmpeg & sudo ffserver -f /etc/ff.conf_original & ffmpeg -v quiet -r 10 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost/webcam.ffm'
             self.ffmpeg_process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
             stream_url = 'http://{pi_host}/webcam.mjpeg'.format(pi_host=self.pi_host)
             self.stream = urllib.request.urlopen(stream_url)
