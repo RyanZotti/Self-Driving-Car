@@ -130,5 +130,6 @@ if __name__ == "__main__":
     app.throttle = 0.0
     app.mode = 'user'
     app.recording = False
+    app.brake = True
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()
