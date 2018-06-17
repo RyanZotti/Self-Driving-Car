@@ -4,6 +4,7 @@
 Created on Tue Jul  4 12:32:53 2017
 @author: wroscoe
 """
+import cv2
 import os
 import sys
 import time
@@ -177,9 +178,8 @@ class Dataset(object):
                 json_data[key] = path
 
             elif typ == 'image_array':
-                img = Image.fromarray(np.uint8(val))
-                name = self.make_file_name(key, ext='.jpg')
-                img.save(os.path.join(self.path, name))
+                name = self.make_file_name(key, ext='.png')
+                cv2.imwrite(name, val)
                 json_data[key] = name
 
             else:
