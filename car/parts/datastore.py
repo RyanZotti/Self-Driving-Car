@@ -179,7 +179,8 @@ class Dataset(object):
 
             elif typ == 'image_array':
                 name = self.make_file_name(key, ext='.png')
-                cv2.imwrite(name, val)
+                absolute_path = os.path.join(self.path, name)
+                cv2.imwrite(absolute_path, val)
                 json_data[key] = name
 
             else:

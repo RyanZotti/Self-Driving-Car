@@ -89,6 +89,7 @@ class VideoAPI(tornado.web.RequestHandler):
 
                 # Can't serve the OpenCV numpy array
                 # Tornando: "... only accepts bytes, unicode, and dict objects" (from Tornado error Traceback)
+                # The result of cv2.imencode is a tuple like: (True, some_image), but I have no idea what True refers to
                 img = cv2.imencode('.jpg', frame)[1].tostring()
 
                 # I have no idea what these lines do, but other people seem to use them, they
