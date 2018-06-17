@@ -62,7 +62,7 @@ class UI(object):
                 self.brake = True
 
     def run_threaded(self):
-        return self.angle, self.throttle, self.drive_mode, self.recording
+        return self.angle, self.throttle, self.drive_mode, self.recording, self.brake
 
     def get_last_update_time(self):
         return self.last_update_time
