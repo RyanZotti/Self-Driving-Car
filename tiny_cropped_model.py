@@ -15,20 +15,20 @@ s3_sync = False
 save_to_disk = args['save_to_disk']
 save_to_disk = True
 image_scale = 0.0625
+crop_factor = 3
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
-x = tf.placeholder(tf.float32, shape=[None, 15, 20, 3], name='x')
+x = tf.placeholder(tf.float32, shape=[None, 5, 20, 3], name='x')
 y_ = tf.placeholder(tf.float32, shape=[None, 2], name='y_')
 phase = tf.placeholder(tf.bool, name='phase')
 
 conv1 = batch_norm_conv_layer('layer1', x, [3, 3, 3, 36], phase)
 conv2 = batch_norm_conv_layer('layer2',conv1, [3, 3, 36, 36], phase)
 conv3 = batch_norm_conv_layer('layer3',conv2, [3, 3, 36, 36], phase)
-conv4 = batch_norm_conv_layer('layer4',conv3, [3, 3, 36, 36], phase)
 
-h_pool4_flat = tf.reshape(conv4, [-1, 15 * 20 * 36])
-h5 = batch_norm_fc_layer('layer5',h_pool4_flat, [15 * 20 * 36, 128], phase)
+h_pool4_flat = tf.reshape(conv3, [-1, 5 * 20 * 36])
+h5 = batch_norm_fc_layer('layer5',h_pool4_flat, [5 * 20 * 36, 128], phase)
 
 W_final = weight_variable('layer8',[128, 2])
 b_final = bias_variable('layer8',[2])
@@ -73,7 +73,8 @@ trainer = Trainer(data_path=data_path,
                   show_speed=show_speed,
                   s3_sync=s3_sync,
                   save_to_disk=save_to_disk,
-                  image_scale=image_scale)
+                  image_scale=image_scale,
+                  crop_factor=crop_factor)
 trainer.train(sess=sess, x=x, y_=y_,
               optimization=rmse,
               train_step=train_step,

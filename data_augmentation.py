@@ -104,18 +104,36 @@ def resize_images(images,scale):
     return resized_images
 
 # Collapses multiple data transformations; primarily used in model training scritps
-def process_data_continuous(data, image_scale=1.0):
+def process_data_continuous(data, image_scale=1.0, crop_factor=1):
     images, labels = data[0], data[1]
     images, labels = flip_enrichment_continuous(images, labels)
-    images = apply_transformations(images,image_scale)
+    images = apply_transformations(images,image_scale,crop_factor)
     return images, labels
+
+def crop_images(images, crop_factor):
+    cropped_images = []
+    # Assumes you want to keep bottom part of image and discard the top
+    # In OpenCV, (0,0) represents top left pixel
+    # https://stackoverflow.com/a/25644503/554481
+    for original_image in images:
+        shape = original_image.shape
+        new_top_position = int(shape[0]) - int(shape[0] / crop_factor)
+        new_bottom_position = int(shape[0])
+        cropped_image = original_image[new_top_position:new_bottom_position]
+        cropped_images.append(cropped_image)
+    return cropped_images
 
 # I've separated this from `process_data` so that I can use it in both training
 # and scoring. Relying on process_data alone wasn't sufficient for scoring
 # because during scoring the true labels aren't known at runtime
-def apply_transformations(images, image_scale):
+def apply_transformations(images, image_scale, crop_factor):
     images = normalize_contrast(images)
     images = images / 255
+    if crop_factor > 1:
+        images = crop_images(
+            images=images,
+            crop_factor=crop_factor
+        )
     if image_scale != 1:
         images = resize_images(
             images=images,

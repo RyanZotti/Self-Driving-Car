@@ -4,7 +4,6 @@ from tensorflow.python.client import timeline
 from util import mkdir_tfboard_run_dir,mkdir,shell_command, delete_old_model_backups
 from data_augmentation import process_data, process_data_continuous
 import os
-from Dataset import Dataset
 from ai.record_reader import RecordReader
 import argparse
 from util import mkdir, sync_from_aws, sync_to_aws
@@ -29,7 +28,8 @@ class Trainer:
                  show_speed=False,
                  s3_sync=True,
                  save_to_disk=False,
-                 image_scale=1.0):
+                 image_scale=1.0,
+                 crop_factor=1):
 
         self.data_path = data_path
         self.save_to_disk = save_to_disk
@@ -43,6 +43,7 @@ class Trainer:
         self.tf_timeline = tf_timeline
         self.s3_sync = s3_sync
         self.image_scale = image_scale
+        self.crop_factor = crop_factor
 
         # Always sync before training in case I ever train multiple models in parallel
         if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
@@ -73,14 +74,16 @@ class Trainer:
                 batch = self.record_reader.get_train_batch()
                 images, labels = process_data_continuous(
                     data=batch,
-                    image_scale=self.image_scale)
+                    image_scale=self.image_scale,
+                    crop_factor=self.crop_factor)
                 self.train_batches.put((images, labels))
         else:
             while True:
                 batch = self.record_reader.get_test_batch()
                 images, labels = process_data_continuous(
                     data=batch,
-                    image_scale=self.image_scale)
+                    image_scale=self.image_scale,
+                    crop_factor=self.crop_factor)
                 self.test_batches.put((images, labels))
 
     # This function is agnostic to the model
@@ -107,7 +110,8 @@ class Trainer:
         train_batch = self.record_reader.get_train_batch()
         train_images, train_labels = process_data_continuous(
             data=train_batch,
-            image_scale=self.image_scale)
+            image_scale=self.image_scale,
+            crop_factor=self.crop_factor)
         train_feed_dict[x] = train_images
         train_feed_dict[y_] = train_labels
 
@@ -116,7 +120,8 @@ class Trainer:
         test_batch = self.record_reader.get_test_batch()
         test_images, test_labels = process_data_continuous(
             data=test_batch,
-            image_scale=self.image_scale)
+            image_scale=self.image_scale,
+            crop_factor=self.crop_factor)
         test_feed_dict[x] = test_images
         test_feed_dict[y_] = test_labels
         test_summary, test_accuracy = sess.run([merged, optimization], feed_dict=test_feed_dict,
