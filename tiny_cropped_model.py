@@ -14,23 +14,24 @@ s3_sync = args['s3_sync']
 s3_sync = False
 save_to_disk = args['save_to_disk']
 save_to_disk = True
-image_scale = 0.0625
+image_scale = 0.125
 crop_factor = 3
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
-x = tf.placeholder(tf.float32, shape=[None, 5, 20, 3], name='x')
+x = tf.placeholder(tf.float32, shape=[None, 10, 40, 3], name='x')
 y_ = tf.placeholder(tf.float32, shape=[None, 2], name='y_')
 phase = tf.placeholder(tf.bool, name='phase')
 
-conv1 = batch_norm_conv_layer('layer1', x, [3, 3, 3, 36], phase)
-conv2 = batch_norm_conv_layer('layer2',conv1, [3, 3, 36, 36], phase)
-conv3 = batch_norm_conv_layer('layer3',conv2, [3, 3, 36, 36], phase)
+conv1 = batch_norm_conv_layer('layer1', x, [3, 3, 3, 32], phase)
+conv2 = batch_norm_conv_layer('layer2',conv1, [3, 3, 32, 32], phase)
+conv3 = batch_norm_conv_layer('layer3',conv2, [3, 3, 32, 32], phase)
+conv4 = batch_norm_conv_layer('layer4',conv2, [3, 3, 32, 32], phase)
 
-h_pool4_flat = tf.reshape(conv3, [-1, 5 * 20 * 36])
-h5 = batch_norm_fc_layer('layer5',h_pool4_flat, [5 * 20 * 36, 128], phase)
+h_pool4_flat = tf.reshape(conv4, [-1, 10 * 40 * 32])
+h5 = batch_norm_fc_layer('layer5',h_pool4_flat, [10 * 40 * 32, 64], phase)
 
-W_final = weight_variable('layer8',[128, 2])
+W_final = weight_variable('layer8',[64, 2])
 b_final = bias_variable('layer8',[2])
 logits = tf.add(tf.matmul(h5, W_final), b_final, name='logits')
 
