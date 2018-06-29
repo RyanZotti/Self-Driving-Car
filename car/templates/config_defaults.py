@@ -23,6 +23,7 @@ UI_API = 'http://ryanzotti.local:{port}/ui-state'
 
 # How much to scale the image for the AI
 IMAGE_SCALE = 0.0625
+CROP_FACTOR = 3
 
 #PATHS
 CAR_PATH = PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))

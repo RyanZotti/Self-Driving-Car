@@ -43,6 +43,7 @@ ai = AI(
     server_path=cfg.UI_SERVER_PATH,
     port=cfg.WEB_AI_PORT,
     image_scale=cfg.IMAGE_SCALE,
+    crop_factor=cfg.CROP_FACTOR,
     model_directory=cfg.MODEL_PATH)
 car.add(
     ai,
