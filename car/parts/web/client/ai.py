@@ -73,4 +73,6 @@ class AI(object):
     def shutdown(self):
         # indicate that the thread should be stopped
         self.on = False
+        if self.process is not None:
+            self.process.kill()
         print('Stopped {name}'.format(name=self.name))
