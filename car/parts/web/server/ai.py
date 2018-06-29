@@ -93,7 +93,7 @@ if __name__ == "__main__":
         "--checkpoint_dir",
         required=False,
         help="path to all of the data",
-        default='/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/tf_visual_data/runs/4/checkpoints')
+        default='/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/tf_visual_data/runs/5/checkpoints')
     ap.add_argument(
         "--image_scale",
         required=False,

@@ -53,9 +53,11 @@ def load_config(config_path=None):
     cfg = Config()
     cfg.from_pyfile(config_path)
 
-    # Find UI server script
+    # Set complicated paths
     main_path = os.path.dirname(os.path.realpath(__file__))
     cfg.UI_SERVER_PATH = functools.reduce(os.path.join, [main_path,'parts','web','server','ui.py'])
+    cfg.AI_SERVER_PATH = functools.reduce(os.path.join, [main_path, 'parts', 'web', 'server', 'ai.py'])
+    cfg.MODEL_PATH = functools.reduce(os.path.join, [main_path, 'parts', 'model'])
 
     print('config loaded')
     return cfg

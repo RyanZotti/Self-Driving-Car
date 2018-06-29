@@ -36,13 +36,16 @@ car.add(
 server_message = "You can now go to {host}:{port} to drive your car."
 print(server_message.format(host=cfg.PI_HOSTNAME, port=cfg.WEB_UI_PORT))
 
-# This shouldn't have to know if the model exists.
-# It should return 0s if the model doesn't exist
-# or if the model exists but simply isn't reachable
-# Add prediction caller
-prediction_caller = AI(model_api=cfg.MODEL_API, name='ai')
+# Add AI API caller
+ai = AI(
+    model_api=cfg.MODEL_API,
+    name='ai',
+    server_path=cfg.UI_SERVER_PATH,
+    port=cfg.WEB_AI_PORT,
+    image_scale=cfg.IMAGE_SCALE,
+    model_directory=cfg.MODEL_PATH)
 car.add(
-    prediction_caller,
+    ai,
     inputs=['cam/image_array'],
     outputs=['ai/angle', 'ai/throttle'],
     threaded=True)

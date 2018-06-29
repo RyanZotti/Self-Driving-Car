@@ -18,7 +18,7 @@ from pprint import pprint
 
 class AI(object):
     # TODO: Read host from config file
-    def __init__(self, model_api,name):
+    def __init__(self, model_api,name, server_path, port, image_scale, model_directory):
 
         super().__init__()
         self.on = True
@@ -26,6 +26,18 @@ class AI(object):
         self.last_update_time = None
         self.name = name
         self.healthcheck = 'fail'
+        self.server_path = server_path
+        self.port = port
+        self.image_scale = image_scale
+        self.model_directory = model_directory
+
+        # Run model server as a subprocess
+        cmd = 'python3 {server} --port {port} --image_scale {image_scale} --checkpoint_dir {model}'.format(
+            server=self.server_path,
+            port=self.port,
+            image_scale=self.image_scale,
+            model=self.model_directory)
+        self.process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 
     def update(self):
         self.predicted_angle = 0.0

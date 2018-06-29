@@ -14,16 +14,20 @@ import os
 
 PI_HOSTNAME = 'ryanzotti.local'
 WEB_UI_PORT = 8887
+WEB_AI_PORT = 8888
 WARM_UP_SECONDS = 3
 
 # Provide entire endpoint since host, http(s), port, or url could change
 MODEL_API = 'http://Ryans-MacBook-Pro.local:8888/predict'
 UI_API = 'http://ryanzotti.local:{port}/ui-state'
 
+# How much to scale the image for the AI
+IMAGE_SCALE = 0.0625
+
 #PATHS
 CAR_PATH = PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 DATA_PATH = os.path.join(CAR_PATH, 'data')
-MODELS_PATH = os.path.join(CAR_PATH, 'models')
+MODELS_PATH = os.path.join(CAR_PATH, 'model')
 
 #VEHICLE
 DRIVE_LOOP_HZ = 20
