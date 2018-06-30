@@ -36,6 +36,7 @@ class PredictionHandler(tornado.web.RequestHandler):
         self.sess = sess
         self.x = x
         self.image_scale = image_scale
+        self.crop_factor = crop_factor
 
     @property
     def sess(self):
@@ -74,7 +75,8 @@ class PredictionHandler(tornado.web.RequestHandler):
         # Normalize for contrast and pixel size
         normalized_images = apply_transformations(
             images=normalized_images,
-            image_scale=self.image_scale)
+            image_scale=self.image_scale,
+            crop_factor=self.crop_factor)
 
         prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess).astype(float)
 
