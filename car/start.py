@@ -40,7 +40,7 @@ print(server_message.format(host=cfg.PI_HOSTNAME, port=cfg.WEB_UI_PORT))
 ai = AI(
     model_api=cfg.MODEL_API,
     name='ai',
-    server_path=cfg.UI_SERVER_PATH,
+    server_path=cfg.AI_SERVER_PATH,
     port=cfg.WEB_AI_PORT,
     image_scale=cfg.IMAGE_SCALE,
     crop_factor=cfg.CROP_FACTOR,
