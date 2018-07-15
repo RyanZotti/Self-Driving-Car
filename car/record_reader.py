@@ -1,9 +1,11 @@
 import cv2
 import glob
 import json
+import operator
 from os.path import dirname, join
 import numpy as np
 from random import shuffle
+import re
 
 
 class RecordReader(object):
@@ -31,18 +33,18 @@ class RecordReader(object):
         """
 
         self.base_directory = base_directory
-        folders = glob.glob(join(self.base_directory,'*'))
+        self.folders = glob.glob(join(self.base_directory,'*'))
 
         # Filter out any folder (like tf_visual_data/runs) not related
         # to datasets. Assumes dataset is not elsewhere in the file path
-        folders = [folder for folder in folders if 'dataset' in folder]
+        self.folders = [folder for folder in self.folders if 'dataset' in folder]
 
         # Assign folders to either train or test
-        shuffle(folders)
+        shuffle(self.folders)
         train_percentage = 60
-        train_folder_size = int(len(folders) * (train_percentage/100))
-        self.train_folders = [folder for folder in folders[:train_folder_size]]
-        self.test_folders = list(set(folders) - set(self.train_folders))
+        train_folder_size = int(len(self.folders) * (train_percentage/100))
+        self.train_folders = [folder for folder in self.folders[:train_folder_size]]
+        self.test_folders = list(set(self.folders) - set(self.train_folders))
 
         # Combine all train folder file paths into single list
         self.train_paths = self.merge_paths(self.test_folders)
@@ -61,6 +63,16 @@ class RecordReader(object):
             file_paths = glob.glob(file_pattern)
             merged = merged + file_paths
         return np.array(merged)
+
+    # Return list of (full_path, file_number) tuples given a folder
+    def ordered_label_files(self,folder):
+        files = glob.glob(join(folder, 'record*.json'))
+        file_numbers = {}
+        for file in files:
+            number = re.search(r'(?<=record_)(.*)(?=\.json)', file).group(1)
+            file_numbers[file] = int(number)
+        sorted_files = sorted(file_numbers.items(), key=operator.itemgetter(1))
+        return sorted_files
 
     # Used in validate_deployment.py
     def image_path_from_label_path(self,label_path):
