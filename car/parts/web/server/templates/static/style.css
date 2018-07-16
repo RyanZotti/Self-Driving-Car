@@ -20,6 +20,11 @@
 #control-bars {
 	margin-top:10px;
 }
+
+#control-bars .row {
+    margin-left: 0px;
+}
+
 .group-label {
 	width:100%;
 }

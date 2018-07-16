@@ -74,6 +74,17 @@ class RecordReader(object):
         sorted_files = sorted(file_numbers.items(), key=operator.itemgetter(1))
         return sorted_files
 
+    # Makes it easy to go through every single file. Primarily used
+    # for editing files. Defaults to all folders but has option to
+    # go through just some folders, like training
+    def all_ordered_label_files(self,folders=None):
+        if folders is None:
+            folders = self.folders
+        for folder in folders:
+            files = self.ordered_label_files(folder)
+            for file in files:
+                yield file
+
     # Used in validate_deployment.py
     def image_path_from_label_path(self,label_path):
         # Parse JSON file
