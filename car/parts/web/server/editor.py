@@ -90,6 +90,43 @@ class DeleteRecord(tornado.web.RequestHandler):
         os.remove(self.application.label_path)
         os.remove(self.application.image_path)
 
+        # TODO: Put this in a separate function, since it's identical to green button
+        # Advance next image
+        self.application.label_path, file_number = next(app.all_files)
+        self.application.image_path = self.application.record_reader.image_path_from_label_path(
+        self.application.label_path)
+
+        highest_index = app.record_reader.ordered_label_files(dirname(self.application.image_path))[-1][1]
+        message = '{index}/{total}: path:{path}'.format(
+            index=file_number,
+            total=highest_index,
+            path=self.application.image_path
+        )
+        print(message)
+        _, angle, throttle = self.application.record_reader.read_record(label_path=self.application.label_path)
+
+        # Read image from disk
+        img_arr = cv2.imread(self.application.image_path)
+        self.application.image = img_arr
+        img = cv2.imencode('.jpg', img_arr)[1].tostring()
+        files = {'image': img}
+        # TODO: Remove hard-coded model API
+        request = requests.post('http://Ryans-MacBook-Pro.local:8885/predict', files=files)
+        response = json.loads(request.text)
+        prediction = response['prediction']
+        predicted_angle, predicted_throttle = prediction
+
+        result = {
+            'ai': {
+                'angle': predicted_angle,
+                'throttle': predicted_throttle},
+            'user': {
+                'angle': angle,
+                'throttle': throttle}
+        }
+
+        self.write(result)
+
 class ImageAPI(tornado.web.RequestHandler):
     '''
     Serves a MJPEG of the images posted from the vehicle.

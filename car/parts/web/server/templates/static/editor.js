@@ -83,19 +83,13 @@ var driveHandler = new function() {
 
       // This Ryan's super hacky javascript code
       $("#keep_button").click(function(){
-      $.post("/metadata",
-      {
-          name: "Donald Duck",
-          city: "Duckburg"
-      },
-          parseMetadata);
+      $.post("/metadata",{},parseMetadata);
       });
       // End of Ryan's code
 
       // Tell the server to delete the current record
       $('#delete_button').click(function () {
-        $.post('/delete', {});
-        updateUI();
+        $.post('/delete', {}, parseMetadata);
       });
 
       $('#pilot_select').on('change', function () {
