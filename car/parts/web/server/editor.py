@@ -3,6 +3,7 @@ import cv2
 import time
 import urllib.request
 from car.record_reader import RecordReader
+import os
 from os.path import dirname
 import numpy as np
 import tornado.gen
@@ -50,8 +51,8 @@ class StateAPI(tornado.web.RequestHandler):
 class MetadataAPI(tornado.web.RequestHandler):
 
     def post(self):
-        label_path, file_number = next(app.all_files)
-        self.application.image_path = self.application.record_reader.image_path_from_label_path(label_path)
+        self.application.label_path, file_number = next(app.all_files)
+        self.application.image_path = self.application.record_reader.image_path_from_label_path(self.application.label_path)
         highest_index = app.record_reader.ordered_label_files(dirname(self.application.image_path))[-1][1]
         message = '{index}/{total}: path:{path}'.format(
             index=file_number,
@@ -59,7 +60,7 @@ class MetadataAPI(tornado.web.RequestHandler):
             path=self.application.image_path
         )
         print(message)
-        _, angle, throttle = self.application.record_reader.read_record(label_path=label_path)
+        _, angle, throttle = self.application.record_reader.read_record(label_path=self.application.label_path)
 
         # Read image from disk
         img_arr = cv2.imread(self.application.image_path)
@@ -83,6 +84,11 @@ class MetadataAPI(tornado.web.RequestHandler):
 
         self.write(result)
 
+class DeleteRecord(tornado.web.RequestHandler):
+
+    def post(self):
+        os.remove(self.application.label_path)
+        os.remove(self.application.image_path)
 
 class ImageAPI(tornado.web.RequestHandler):
     '''
@@ -129,6 +135,7 @@ def make_app():
         (r"/metadata", MetadataAPI),
         (r"/image", ImageAPI),
         (r"/ui-state", StateAPI),
+        (r"/delete",DeleteRecord),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": static_file_path}),
     ]
     return tornado.web.Application(handlers)

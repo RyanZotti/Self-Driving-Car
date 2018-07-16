@@ -92,6 +92,12 @@ var driveHandler = new function() {
       });
       // End of Ryan's code
 
+      // Tell the server to delete the current record
+      $('#delete_button').click(function () {
+        $.post('/delete', {});
+        updateUI();
+      });
+
       $('#pilot_select').on('change', function () {
         state.pilot = $(this).val(); // get selected value
         postPilot()
