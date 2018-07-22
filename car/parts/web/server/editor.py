@@ -68,7 +68,7 @@ class MetadataAPI(tornado.web.RequestHandler):
         img = cv2.imencode('.jpg', img_arr)[1].tostring()
         files = {'image': img}
         # TODO: Remove hard-coded model API
-        request = requests.post('http://Ryans-MacBook-Pro.local:8885/predict', files=files)
+        request = requests.post('http://localhost:8885/predict', files=files)
         response = json.loads(request.text)
         prediction = response['prediction']
         predicted_angle, predicted_throttle = prediction
@@ -90,12 +90,6 @@ class DeleteRecord(tornado.web.RequestHandler):
         os.remove(self.application.label_path)
         os.remove(self.application.image_path)
 
-        # TODO: Put this in a separate function, since it's identical to green button
-        # Advance next image
-        self.application.label_path, file_number = next(app.all_files)
-        self.application.image_path = self.application.record_reader.image_path_from_label_path(
-        self.application.label_path)
-
         highest_index = app.record_reader.ordered_label_files(dirname(self.application.image_path))[-1][1]
         message = '{index}/{total}: path:{path}'.format(
             index=file_number,
@@ -115,6 +109,12 @@ class DeleteRecord(tornado.web.RequestHandler):
         response = json.loads(request.text)
         prediction = response['prediction']
         predicted_angle, predicted_throttle = prediction
+
+        # TODO: Put this in a separate function, since it's identical to green button
+        # Advance next image
+        self.application.label_path, file_number = next(app.all_files)
+        self.application.image_path = self.application.record_reader.image_path_from_label_path(
+            self.application.label_path)
 
         result = {
             'ai': {
@@ -198,5 +198,10 @@ if __name__ == "__main__":
     app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data'
     app.record_reader = RecordReader(base_directory=app.data_path)
     app.all_files = iter(app.record_reader.all_ordered_label_files())
+
+    # Start the server with a pre-loaded image instead of a blank
+    app.label_path, file_number = next(app.all_files)
+    app.image_path = app.record_reader.image_path_from_label_path(app.label_path)
+
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()
