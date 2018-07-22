@@ -15,11 +15,11 @@ s3_sync = False
 save_to_disk = args['save_to_disk']
 save_to_disk = True
 image_scale = 0.125
-crop_factor = 3
+crop_factor = 2
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
-x = tf.placeholder(tf.float32, shape=[None, 10, 40, 3], name='x')
+x = tf.placeholder(tf.float32, shape=[None, 15, 40, 3], name='x')
 y_ = tf.placeholder(tf.float32, shape=[None, 2], name='y_')
 phase = tf.placeholder(tf.bool, name='phase')
 
@@ -28,12 +28,20 @@ conv2 = batch_norm_conv_layer('layer2',conv1, [3, 3, 32, 32], phase)
 conv3 = batch_norm_conv_layer('layer3',conv2, [3, 3, 32, 32], phase)
 conv4 = batch_norm_conv_layer('layer4',conv2, [3, 3, 32, 32], phase)
 
-h_pool4_flat = tf.reshape(conv4, [-1, 10 * 40 * 32])
-h5 = batch_norm_fc_layer('layer5',h_pool4_flat, [10 * 40 * 32, 64], phase)
+h_pool4_flat = tf.reshape(conv4, [-1, 15 * 40 * 32])
+h5 = batch_norm_fc_layer('layer5',h_pool4_flat, [15 * 40 * 32, 64], phase)
 
 W_final = weight_variable('layer8',[64, 2])
 b_final = bias_variable('layer8',[2])
-logits = tf.add(tf.matmul(h5, W_final), b_final, name='logits')
+pre_clipped_logits = tf.add(tf.matmul(h5, W_final), b_final, name='pre_clipped_logits')
+
+# Forces predictions to fall within -1 and 1 to avoid rmse
+# loss values that penalize max angle
+logits = tf.clip_by_value(
+    t=pre_clipped_logits,
+    clip_value_min=-1,
+    clip_value_max=1,
+    name='logits')
 
 # TODO: Fix this x.shape[0] bug
 rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(logits, y_)),name='loss')
