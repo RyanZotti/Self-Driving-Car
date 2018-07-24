@@ -48,9 +48,43 @@ class StateAPI(tornado.web.RequestHandler):
         self.write(state)
 
 
+# Makes a copy of record for model to focus on this record
+class Keep(tornado.web.RequestHandler):
+
+    def post(self):
+
+        # TODO: Replace ugly file name hack with os package
+        label_file_name = self.application.label_path.split('/')[-1]
+        image_file_name = self.application.image_path.split('/')[-1]
+
+        # Prepend with dataset name to avoid possible name collision
+        dir = self.application.label_path.split('/')[-2]
+        label_file_name = dir+'_'+label_file_name
+        image_file_name = dir+'_'+image_file_name
+
+        with open(self.application.label_path, 'r') as f:
+            contents = json.load(f)
+            contents["cam/image_array"] = image_file_name
+        new_label_path = os.path.join(
+            self.application.new_data_path,
+            label_file_name)
+        print(new_label_path)
+        with open(new_label_path, 'w') as fp:
+            json.dump(contents, fp)
+
+        copy_image_record = 'cp {source} {destination}'.format(
+            source=self.application.image_path,
+            destination=os.path.join(
+                self.application.new_data_path,
+                image_file_name)
+        )
+        shell_command(copy_image_record)
+
+
 class MetadataAPI(tornado.web.RequestHandler):
 
     def post(self):
+
         self.application.label_path, file_number = next(app.all_files)
         self.application.image_path = self.application.record_reader.image_path_from_label_path(self.application.label_path)
         highest_index = app.record_reader.ordered_label_files(dirname(self.application.image_path))[-1][1]
@@ -173,6 +207,7 @@ def make_app():
         (r"/image", ImageAPI),
         (r"/ui-state", StateAPI),
         (r"/delete",DeleteRecord),
+        (r"/keep", Keep),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": static_file_path}),
     ]
     return tornado.web.Application(handlers)
@@ -184,15 +219,22 @@ if __name__ == "__main__":
         required=False,
         help="Server port to use",
         default=8884)
+    ap.add_argument(
+        "--new_data_path",
+        required=False,
+        help="Where to store emphasized images",
+        default='/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/emphasis-data/dataset')
     args = vars(ap.parse_args())
     port = args['port']
     app = make_app()
+    app.port = port
     app.angle = 0.0
     app.throttle = 0.0
     app.mode = 'user'
     app.recording = False
     app.brake = True
     app.max_throttle = 1.0
+    app.new_data_path = args['new_data_path']
 
     # TODO: Remove this hard-coded path
     app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data'

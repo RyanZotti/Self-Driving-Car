@@ -81,11 +81,14 @@ var driveHandler = new function() {
           if(e.which == 83) { updateDriveMode('auto_angle') } // 'a' turn on auto mode
       });
 
-      // This Ryan's super hacky javascript code
       $("#keep_button").click(function(){
-      $.post("/metadata",{},parseMetadata);
+        $.post("/keep");
+        $.post("/metadata",{},parseMetadata);
       });
-      // End of Ryan's code
+
+      $("#ignore_button").click(function(){
+        $.post("/metadata",{},parseMetadata);
+      });
 
       // Tell the server to delete the current record
       $('#delete_button').click(function () {
@@ -164,7 +167,6 @@ var driveHandler = new function() {
         radian = data['angle']['radian']
         distance = data['distance']
 
-        //console.log(data)
         state.tele.user.angle = Math.max(Math.min(Math.cos(radian)/70*distance, 1), -1)
         state.tele.user.throttle = limitedThrottle(Math.max(Math.min(Math.sin(radian)/70*distance , 1), -1))
 
@@ -366,7 +368,6 @@ var driveHandler = new function() {
             differenceNumber = Math.abs(userThrottleRounded - aiThrottleRounded) * 100
             differentPercent = differenceNumber +'%';
         } else {
-        //abc
             commonPercent = userThrottlePercent
             differentPercent = aiThrottlePercent - userThrottlePercent
         }
@@ -544,7 +545,6 @@ var driveHandler = new function() {
                                 'recording': state.recording,
                                 'brake':state.brakeOn,
                                 'max_throttle':state.maxThrottle})
-        console.log(data)
         $.post(driveURL, data)
         updateUI()
     };
