@@ -246,7 +246,14 @@ var driveHandler = new function() {
     }
 
 
+
+
     var updateUI = function() {
+
+        // Add the html element for the image if it doesn't exist yet
+        if ($('#mpeg-image').length == 0) {
+            $("#image-thumbnail").html('<img id="mpeg-image", class="img-responsive" src="/image"> </img>');
+        }
 
       // AJAX is for all buttons to update
       $.ajax({
@@ -264,9 +271,6 @@ var driveHandler = new function() {
                         );
                   }
                 });
-
-      // Don't try loading image until its prediction and angle data is also available
-      $("#image-thumbnail").html("<img id='mpeg-image', class='img-responsive' src='/image'/> </img>")
 
       $("#mpeg-image").prop("src", "/image?" + +new Date());
       $("#throttleInput").val(state.tele.user.throttle);
