@@ -209,9 +209,5 @@ if __name__ == "__main__":
     app.record_reader = RecordReader(base_directory=app.data_path)
     app.all_files = iter(app.record_reader.all_ordered_label_files())
 
-    # Start the server with a pre-loaded image instead of a blank
-    app.label_path, file_number = next(app.all_files)
-    app.image_path = app.record_reader.image_path_from_label_path(app.label_path)
-
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()

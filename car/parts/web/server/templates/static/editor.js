@@ -72,6 +72,7 @@ var driveHandler = new function() {
         console.log("Device Orientation not supported by browser, setting control mode to joystick.");
         state.controlMode = 'joystick';
       }
+      updateUI();
     };
 
     function playVideo() {
@@ -120,17 +121,17 @@ var driveHandler = new function() {
 
       $("#keep_button").click(function(){
         $.post("/keep");
-        $.post("/metadata",{},parseMetadata);
+        updateUI();
       });
 
       $("#ignore_button").click(function(){
-        $.post("/metadata",{},parseMetadata);
+        updateUI();
       });
 
       // Tell the server to delete the current record
       $('#delete_button').click(function () {
         $.post('/delete');
-        $.post("/metadata",{},parseMetadata);
+        updateUI();
       });
 
       // Play the video, stopping when there is a
@@ -209,7 +210,6 @@ var driveHandler = new function() {
       state.dataset.highest_index = data.dataset.highest_index;
       state.dataset.percent_complete = ((data.dataset.file_number / data.dataset.highest_index) * 100).toFixed(2) + '%';
 
-      updateUI();
     }
 
     function bindNipple(manager) {
@@ -247,6 +247,27 @@ var driveHandler = new function() {
 
 
     var updateUI = function() {
+
+      // AJAX is for all buttons to update
+      $.ajax({
+                  type:    "POST",
+                  url:     "/metadata",
+                  data:    {},
+                  async: false, // critical, or the image won't update. Not sure why
+                  success: function(data) {
+                        console.log('success');
+                        parseMetadata(data);
+                  },
+                  error:   function(jqXHR, textStatus, errorThrown) {
+                        alert("Error, status = " + textStatus + ", " +
+                              "error thrown: " + errorThrown
+                        );
+                  }
+                });
+
+      // Don't try loading image until its prediction and angle data is also available
+      $("#image-thumbnail").html("<img id='mpeg-image', class='img-responsive' src='/image'/> </img>")
+
       $("#mpeg-image").prop("src", "/image?" + +new Date());
       $("#throttleInput").val(state.tele.user.throttle);
       $("#angleInput").val(state.tele.user.angle);
@@ -616,7 +637,7 @@ var driveHandler = new function() {
                                 'brake':state.brakeOn,
                                 'max_throttle':state.maxThrottle})
         $.post(driveURL, data)
-        updateUI()
+        updateUI();
     };
 
     var applyDeadzone = function(number, threshold){
