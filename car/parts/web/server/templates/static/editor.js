@@ -12,10 +12,13 @@ var driveHandler = new function() {
                                   },
                           "ai":   {
                                   'angle':0,
-                                  'throttle':0
+                                  'throttle':0,
+                                  'angleAbsError':0,
+                                  'throttleAbsError':0
                                   }
                           },
                   'brakeOn': true,
+                  'isVideoPlaying':false,
                   'recording': false,
                   'driveMode': "user",
                   'pilot': 'None',
@@ -24,6 +27,11 @@ var driveHandler = new function() {
                   'controlMode': 'joystick',
                   'maxThrottle' : 1,
                   'throttleMode' : 'user',
+                  'dataset' : {
+                        'file_number':0,
+                        'highest_index':0,
+                        'percent_complete':0.0
+                  }
                   }
 
     var joystick_options = {}
@@ -66,6 +74,35 @@ var driveHandler = new function() {
       }
     };
 
+    function playVideo() {
+        // Update everything in a loop if video is on
+        // Stop for a sufficiently bad error
+        if (state.isVideoPlaying == true) {
+            while (state.tele.ai.angleAbsError < 0.8) {
+                console.log(state.tele.ai.angleAbsError);
+                //$.post('/metadata', {}, parseMetadata, "json");
+
+                $.ajax({
+                  type:    "POST",
+                  url:     "/metadata",
+                  data:    {},
+                  async: false, // critical, or the image won't update. Not sure why
+                  success: function(data) {
+                        console.log('success');
+                        parseMetadata(data);
+                  },
+                  error:   function(jqXHR, textStatus, errorThrown) {
+                        alert("Error, status = " + textStatus + ", " +
+                              "error thrown: " + errorThrown
+                        );
+                  }
+                });
+            }
+            // Pause at end of video or where encountering
+            // a bad error
+            state.isVideoPlaying = false
+        }
+    }
 
     var setBindings = function() {
 
@@ -92,7 +129,24 @@ var driveHandler = new function() {
 
       // Tell the server to delete the current record
       $('#delete_button').click(function () {
-        $.post('/delete', {}, parseMetadata);
+        $.post('/delete');
+        $.post("/metadata",{},parseMetadata);
+      });
+
+      // Play the video, stopping when there is a
+      // sufficiently bad model error
+      $('#play_button').click(function () {
+
+        // Same button is used for play and pause,
+        // so hitting the button changes the state
+        // to the opposite boolean value
+        if (state.isVideoPlaying == true){
+            state.isVideoPlaying = false
+        } else {
+            state.isVideoPlaying = true
+        }
+        playVideo();
+
       });
 
       $('#pilot_select').on('change', function () {
@@ -147,6 +201,14 @@ var driveHandler = new function() {
       state.tele.user.throttle = data.user.throttle;
       state.tele.ai.angle = data.ai.angle;
       state.tele.ai.throttle = data.ai.throttle;
+
+      state.tele.ai.angleAbsError = Math.abs(state.tele.user.angle - state.tele.ai.angle);
+      state.tele.ai.throttleAbsError = Math.abs(state.tele.user.throttle - state.tele.ai.throttle);
+
+      state.dataset.file_number = data.dataset.file_number;
+      state.dataset.highest_index = data.dataset.highest_index;
+      state.dataset.percent_complete = ((data.dataset.file_number / data.dataset.highest_index) * 100).toFixed(2) + '%';
+
       updateUI();
     }
 
@@ -199,6 +261,12 @@ var driveHandler = new function() {
       var aiSteeringPercent = Math.round(Math.abs(state.tele.ai.angle) * 100) + '%';
       var aiThrottleRounded = Number(state.tele.ai.throttle.toFixed(2))
       var aiSteeringRounded = Number(state.tele.ai.angle.toFixed(2))
+
+      $('#image-progress')
+        .css('width', state.dataset.percent_complete);
+
+      $('#text-image-progress')
+        .html('<b>Dataset Frames: </b>' + state.dataset.file_number + ' / '+ state.dataset.highest_index + '    ' + state.dataset.percent_complete)
 
       if(state.tele.user.throttle < 0) {
         $('#user-throttle-bar-backward').css('width', userThrottlePercent).html(userThrottleRounded)
@@ -439,6 +507,8 @@ var driveHandler = new function() {
         }
 
       }
+
+
 
       if(state.tele.ai.throttle < 0) {
         $('#ai-throttle-bar-backward').css('width', aiThrottlePercent).html(aiThrottleRounded)

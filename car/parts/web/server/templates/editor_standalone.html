@@ -47,6 +47,9 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
   <div class="container">
+
+
+
     <div class="row">
       <div class="col-md-12">
         <div class="page-header">
@@ -60,6 +63,7 @@
               </a>
             </label>
             <br/>
+
             <div class="btn-group" data-toggle="buttons">
               <label class="btn btn-primary" id="joystick-toggle">
                 <input type="radio" name="controlMode" id="joystick" autocomplete="off" value="joystick"> Joystick
@@ -102,10 +106,22 @@
               </select>
             </div>
           </div>
+
         </div>
+
+
+
       </div>
     </div>
     <hr>
+
+    <div class="row">
+          <p id="text-image-progress"></p>
+          <div class="progress" style="margin: 2%;">
+                <div id="image-progress" class="progress-bar progress-bar-primary" role="progressbar" style="width: 0%;">
+                </div>
+          </div>
+    </div>
 
       <div class="row">
       <div class="col-xs-4 col-sm-2 col-md-2">
@@ -224,9 +240,14 @@
               Skip
             </button>
           </div>
-            <div class="form-group">
+          <div class="form-group">
             <button type="button" id="delete_button" class="btn btn-danger btn-block">
               Delete
+            </button>
+          </div>
+          <div class="form-group">
+            <button type="button" id="play_button" class="btn btn-primary btn-block">
+              Play
             </button>
           </div>
         </form>
