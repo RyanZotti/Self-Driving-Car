@@ -35,13 +35,23 @@ W_final = weight_variable('layer8',[64, 2])
 b_final = bias_variable('layer8',[2])
 pre_clipped_logits = tf.add(tf.matmul(h5, W_final), b_final, name='pre_clipped_logits')
 
-# Forces predictions to fall within -1 and 1 to avoid rmse
-# loss values that penalize max angle
-logits = tf.clip_by_value(
-    t=pre_clipped_logits,
+
+# Forces predictions to fall within acceptable ranges to
+# avoid exploding rmse loss values that penalize max angle
+angle, throttle = tf.split(pre_clipped_logits, 2, axis=1)
+clipped_angle = tf.clip_by_value(
+    t=angle,
     clip_value_min=-1,
-    clip_value_max=1,
-    name='logits')
+    clip_value_max=1)
+
+# My car only starts to move at >0.25
+clipped_throttle = tf.clip_by_value(
+    t=throttle,
+    clip_value_min=0.25,
+    clip_value_max=1)
+
+# Bring the two columns back together
+logits = tf.concat([clipped_angle, clipped_throttle], axis=1, name='logits')
 
 # TODO: Fix this x.shape[0] bug
 rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(logits, y_)),name='loss')
