@@ -101,7 +101,6 @@ var driveHandler = new function() {
       });
 
         updateUI();
-      });
 
     };
 
