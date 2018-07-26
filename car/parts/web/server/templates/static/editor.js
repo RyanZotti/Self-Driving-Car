@@ -269,6 +269,9 @@ var driveHandler = new function() {
       var aiThrottleRounded = Number(state.tele.ai.throttle.toFixed(2))
       var aiSteeringRounded = Number(state.tele.ai.angle.toFixed(2))
 
+      var aiSteeringAbsError = Math.abs(userSteeringRounded - aiSteeringRounded) * 100
+      var aiThrottleAbsError = Math.abs(userThrottleRounded - aiThrottleRounded) * 100
+
       $('#image-progress')
         .css('width', state.dataset.percent_complete);
 
@@ -520,10 +523,50 @@ var driveHandler = new function() {
       if(state.tele.ai.throttle < 0) {
         $('#ai-throttle-bar-backward').css('width', aiThrottlePercent).html(aiThrottleRounded)
         $('#ai-throttle-bar-forward').css('width', '0%').html('')
+        if (aiThrottleAbsError < 40) {
+            $('#ai-throttle-bar-backward')
+                .removeClass('progress-bar-info')
+                .removeClass('progress-bar-warning')
+                .removeClass('progress-bar-danger')
+                .addClass('progress-bar-success').end()
+            }
+        else if (aiThrottleAbsError < 60){
+            $('#ai-throttle-bar-backward')
+                .removeClass('progress-bar-info')
+                .removeClass('progress-bar-success')
+                .removeClass('progress-bar-danger')
+                .addClass('progress-bar-warning').end()
+        } else {
+            $('#ai-throttle-bar-backward')
+                .removeClass('progress-bar-info')
+                .removeClass('progress-bar-success')
+                .removeClass('progress-bar-warning')
+                .addClass('progress-bar-danger').end()
+        }
       }
       else if (state.tele.ai.throttle > 0) {
         $('#ai-throttle-bar-backward').css('width', '0%').html('')
         $('#ai-throttle-bar-forward').css('width', aiThrottlePercent).html(aiThrottleRounded)
+        if (aiThrottleAbsError < 40) {
+            $('#ai-throttle-bar-forward')
+                .removeClass('progress-bar-info')
+                .removeClass('progress-bar-warning')
+                .removeClass('progress-bar-danger')
+                .addClass('progress-bar-success').end()
+            }
+        else if (aiThrottleAbsError < 60){
+            $('#ai-throttle-bar-forward')
+                .removeClass('progress-bar-info')
+                .removeClass('progress-bar-success')
+                .removeClass('progress-bar-danger')
+                .addClass('progress-bar-warning').end()
+        } else {
+            $('#ai-throttle-bar-forward')
+                .removeClass('progress-bar-info')
+                .removeClass('progress-bar-success')
+                .removeClass('progress-bar-warning')
+                .addClass('progress-bar-danger').end()
+        }
       }
       else {
         $('#ai-throttle-bar-forward').css('width', '0%').html('')
@@ -546,10 +589,50 @@ var driveHandler = new function() {
       if(state.tele.ai.angle < 0) {
         $('#ai-angle-bar-backward').css('width', aiSteeringPercent).html(aiSteeringRounded)
         $('#ai-angle-bar-forward').css('width', '0%').html('')
-      }
+            if (aiSteeringAbsError < 40) {
+                $('#ai-angle-bar-backward')
+                    .removeClass('progress-bar-info')
+                    .removeClass('progress-bar-warning')
+                    .removeClass('progress-bar-danger')
+                    .addClass('progress-bar-success').end()
+                }
+            else if (aiSteeringAbsError < 60){
+                $('#ai-angle-bar-backward')
+                    .removeClass('progress-bar-info')
+                    .removeClass('progress-bar-success')
+                    .removeClass('progress-bar-danger')
+                    .addClass('progress-bar-warning').end()
+            } else {
+                $('#ai-angle-bar-backward')
+                    .removeClass('progress-bar-info')
+                    .removeClass('progress-bar-success')
+                    .removeClass('progress-bar-warning')
+                    .addClass('progress-bar-danger').end()
+            }
+        }
       else if (state.tele.ai.angle > 0) {
         $('#ai-angle-bar-backward').css('width', '0%').html('')
         $('#ai-angle-bar-forward').css('width', aiSteeringPercent).html(aiSteeringRounded)
+        if (aiSteeringAbsError < 40) {
+            $('#ai-angle-bar-forward')
+                .removeClass('progress-bar-info')
+                .removeClass('progress-bar-warning')
+                .removeClass('progress-bar-danger')
+                .addClass('progress-bar-success').end()
+            }
+        else if (aiSteeringAbsError < 60){
+            $('#ai-angle-bar-forward')
+                .removeClass('progress-bar-info')
+                .removeClass('progress-bar-success')
+                .removeClass('progress-bar-danger')
+                .addClass('progress-bar-warning').end()
+        } else {
+            $('#ai-angle-bar-forward')
+                .removeClass('progress-bar-info')
+                .removeClass('progress-bar-success')
+                .removeClass('progress-bar-warning')
+                .addClass('progress-bar-danger').end()
+        }
       }
       else {
         $('#ai-angle-bar-forward').css('width', '0%').html('')
