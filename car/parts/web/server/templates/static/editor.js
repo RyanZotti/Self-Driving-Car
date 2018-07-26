@@ -80,24 +80,7 @@ var driveHandler = new function() {
         // Stop for a sufficiently bad error
         if (state.isVideoPlaying == true) {
             while (state.tele.ai.angleAbsError < 0.8) {
-                console.log(state.tele.ai.angleAbsError);
-                //$.post('/metadata', {}, parseMetadata, "json");
-
-                $.ajax({
-                  type:    "POST",
-                  url:     "/metadata",
-                  data:    {},
-                  async: false, // critical, or the image won't update. Not sure why
-                  success: function(data) {
-                        console.log('success');
-                        parseMetadata(data);
-                  },
-                  error:   function(jqXHR, textStatus, errorThrown) {
-                        alert("Error, status = " + textStatus + ", " +
-                              "error thrown: " + errorThrown
-                        );
-                  }
-                });
+                updateUI();
             }
             // Pause at end of video or where encountering
             // a bad error
@@ -262,7 +245,6 @@ var driveHandler = new function() {
                   data:    {},
                   async: false, // critical, or the image won't update. Not sure why
                   success: function(data) {
-                        console.log('success');
                         parseMetadata(data);
                   },
                   error:   function(jqXHR, textStatus, errorThrown) {
