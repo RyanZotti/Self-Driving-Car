@@ -16,7 +16,7 @@ class RecordReader(object):
     batches to a model trainer.
     """
 
-    def __init__(self,base_directory,batch_size=50):
+    def __init__(self,base_directory,batch_size=50,overfit=False):
 
         """
         Create a RecordReader object
@@ -30,28 +30,38 @@ class RecordReader(object):
             etc. in the base directory that you specify
         batch_size : int
             Number of records per batch. Defaults to 50 records
+        overfit : boolean
+            Indicates whether the model should be trained and validated
+            on the same data. I use this when I'm training on images
+            that the model got horribly wrong (or recorded disengagements
+            that occurred during a recorded deployment)
         """
 
         self.base_directory = base_directory
         self.folders = glob.glob(join(self.base_directory,'*'))
+        self.overfit = overfit
 
         # Filter out any folder (like tf_visual_data/runs) not related
         # to datasets. Assumes dataset is not elsewhere in the file path
         self.folders = [folder for folder in self.folders if 'dataset' in folder]
 
-        # Assign folders to either train or test
-        shuffle(self.folders)
-        train_percentage = 60
-        train_folder_size = int(len(self.folders) * (train_percentage/100))
-        self.train_folders = [folder for folder in self.folders[:train_folder_size]]
-        self.test_folders = list(set(self.folders) - set(self.train_folders))
+        # Train and test are the same in overfit mode
+        if overfit == True:
+            self.train_folders = [folder for folder in self.folders]
+            self.test_folders = self.train_folders
+        else:
+            # Assign folders to either train or test
+            shuffle(self.folders)
+            train_percentage = 60
+            train_folder_size = int(len(self.folders) * (train_percentage / 100))
+            self.train_folders = [folder for folder in self.folders[:train_folder_size]]
+            self.test_folders = list(set(self.folders) - set(self.train_folders))
 
         # Combine all train folder file paths into single list
-        self.train_paths = self.merge_paths(self.test_folders)
+        self.train_paths = self.merge_paths(self.train_folders)
 
         # Combine all test folder file paths into single list
         self.test_paths = self.merge_paths(self.test_folders)
-
         self.batch_size = batch_size
         self.batches_per_epoch = int(len(self.train_paths) / self.batch_size)
 
@@ -59,7 +69,7 @@ class RecordReader(object):
     def merge_paths(self,folders):
         merged = []
         for folder in folders:
-            file_pattern = '{0}/record*.json'.format(folder)
+            file_pattern = '{0}/*record*.json'.format(folder)
             file_paths = glob.glob(file_pattern)
             merged = merged + file_paths
         return np.array(merged)

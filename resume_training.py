@@ -13,6 +13,9 @@ s3_bucket = format_s3_bucket(args['s3_bucket'])
 s3_sync = args['s3_sync']
 save_to_disk = args['save_to_disk']
 batch_size = args['batch_size']
+overfit = args['overfit']
+image_scale = args['image_scale']
+crop_factor = args['crop_factor']
 
 checkpoint_dir_path = os.path.join(model_dir,'checkpoints')
 
@@ -57,7 +60,10 @@ trainer = Trainer(data_path=data_path,
                   show_speed=show_speed,
                   s3_sync=s3_sync,
                   save_to_disk=save_to_disk,
-                  batch_size=batch_size)
+                  batch_size=batch_size,
+                  overfit=overfit,
+                  image_scale=image_scale,
+                  crop_factor=crop_factor)
 
 trainer.train(sess=sess, x=x, y_=y_,
               optimization=optimization,

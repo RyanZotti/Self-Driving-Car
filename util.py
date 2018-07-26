@@ -121,8 +121,7 @@ def file_is_in_s3(bucket_name,full_path_to_file):
 
 def file_is_stored_locally(full_path_to_file):
     file_exists = False
-    my_file = Path(full_path_to_file)
-    if my_file.is_file():
+    if os.path.exists(full_path_to_file):
         file_exists = True
     return file_exists
 

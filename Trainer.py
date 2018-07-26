@@ -1,15 +1,17 @@
+import argparse
+import os
+import queue
 from datetime import datetime
+from functools import partial
+from threading import Thread
+
 import tensorflow as tf
 from tensorflow.python.client import timeline
-from util import mkdir_tfboard_run_dir,mkdir,shell_command, delete_old_model_backups
-from data_augmentation import process_data, process_data_continuous
-import os
-from ai.record_reader import RecordReader
-import argparse
+
+from car.record_reader import RecordReader
+from data_augmentation import process_data_continuous
 from util import mkdir, sync_from_aws, sync_to_aws
-from threading import Thread
-import queue
-from functools import partial
+from util import mkdir_tfboard_run_dir, shell_command, delete_old_model_backups
 
 
 class Trainer:
@@ -29,13 +31,18 @@ class Trainer:
                  s3_sync=True,
                  save_to_disk=False,
                  image_scale=1.0,
-                 crop_factor=1):
+                 crop_factor=1,
+                 overfit=False):
 
         self.data_path = data_path
         self.save_to_disk = save_to_disk
         self.is_restored_model = is_restored_model
         self.batch_size = batch_size
-        self.record_reader = RecordReader(base_directory=self.data_path,batch_size=self.batch_size)
+        self.overfit = overfit
+        self.record_reader = RecordReader(
+            base_directory=self.data_path,
+            batch_size=self.batch_size,
+            overfit=self.overfit)
         self.s3_bucket = format_s3_bucket(s3_bucket)
         self.model_file = model_file
         self.n_epochs = int(epochs)
@@ -272,6 +279,12 @@ def parse_args():
     ap.add_argument("--save_to_disk", required=False,
                     help="Default of 'no' avoids naming conflicts during local development when GPU is also running",
                     default=False)
+    ap.add_argument("--overfit", required=False,
+                    help="Use same data for train and test (y/n)?",
+                    default=False)
+    ap.add_argument("--crop_factor", required=False,
+                    help="Chop top 1/crop_factor off of image",
+                    default=1.0)
     ap.add_argument(
         "--image_scale",
         required=False,
@@ -280,10 +293,12 @@ def parse_args():
     ap.add_argument(
         "--batch_size", required=False,
         help="Images per batch",
-        default=False)
+        default=50)
     args = vars(ap.parse_args())
     args['image_scale'] = float(args['image_scale'])
+    args['crop_factor'] = float(args['crop_factor'])
     args['show_speed'] = parse_boolean_cli_args(args['show_speed'])
+    args['overfit'] = parse_boolean_cli_args(args['overfit'])
     if args['s3_sync']:
         args['s3_sync'] = parse_boolean_cli_args(args['s3_sync'])
     if args['save_to_disk']:
