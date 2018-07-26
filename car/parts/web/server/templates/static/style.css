@@ -30,6 +30,11 @@
 	width:100%;
 }
 
+#text-image-progress {
+    margin-left: 15px;
+}
+
+
 /* this setting is too large on iPhone5s */
 #control-bars .progress {
 	width: 40%;
