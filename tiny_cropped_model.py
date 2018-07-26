@@ -25,10 +25,8 @@ phase = tf.placeholder(tf.bool, name='phase')
 
 conv1 = batch_norm_conv_layer('layer1', x, [3, 3, 3, 32], phase)
 conv2 = batch_norm_conv_layer('layer2',conv1, [3, 3, 32, 32], phase)
-conv3 = batch_norm_conv_layer('layer3',conv2, [3, 3, 32, 32], phase)
-conv4 = batch_norm_conv_layer('layer4',conv2, [3, 3, 32, 32], phase)
 
-h_pool4_flat = tf.reshape(conv4, [-1, 15 * 40 * 32])
+h_pool4_flat = tf.reshape(conv2, [-1, 15 * 40 * 32])
 h5 = batch_norm_fc_layer('layer5',h_pool4_flat, [15 * 40 * 32, 64], phase)
 
 W_final = weight_variable('layer8',[64, 2])
