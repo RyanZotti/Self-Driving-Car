@@ -84,13 +84,29 @@ class RecordReader(object):
         sorted_files = sorted(file_numbers.items(), key=operator.itemgetter(1))
         return sorted_files
 
+    def ordered_folders(self,folders):
+        ordered_numbers = []
+        for folder in folders:
+            folder_number = int(re.search(r'(?<=dataset_)([0-9]*)(?=_)', folder).group(1))
+            ordered_numbers.append(folder_number)
+        ordered_numbers.sort()
+        ordered_folders = []
+        for number in ordered_numbers:
+            for folder in folders:
+                pattern = 'dataset_'+str(number)+'_'
+                if pattern in folder:
+                    ordered_folders.append(folder)
+                    break
+        return ordered_folders
+
     # Makes it easy to go through every single file. Primarily used
     # for editing files. Defaults to all folders but has option to
     # go through just some folders, like training
     def all_ordered_label_files(self,folders=None):
         if folders is None:
             folders = self.folders
-        for folder in folders:
+        ordered_folders = self.ordered_folders(folders)
+        for folder in ordered_folders:
             files = self.ordered_label_files(folder)
             for file in files:
                 yield file

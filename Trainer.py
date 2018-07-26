@@ -28,7 +28,7 @@ class Trainer:
                  restored_model_dir=None,
                  tf_timeline=False,
                  show_speed=False,
-                 s3_sync=True,
+                 s3_sync=False,
                  save_to_disk=False,
                  image_scale=1.0,
                  crop_factor=1,
