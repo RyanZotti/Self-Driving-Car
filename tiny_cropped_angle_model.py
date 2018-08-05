@@ -82,7 +82,8 @@ trainer = Trainer(data_path=data_path,
                   s3_sync=s3_sync,
                   save_to_disk=save_to_disk,
                   image_scale=image_scale,
-                  crop_factor=crop_factor)
+                  crop_factor=crop_factor,
+                  angle_only=True)
 trainer.train(sess=sess, x=x, y_=y_,
               optimization=rmse,
               train_step=train_step,

@@ -172,9 +172,14 @@ class RecordReader(object):
         # Sort into images and labels
         images, labels = [], []
         for record in records:
-            image, angle, throttle = record
-            images.append(image)
-            labels.append([angle, throttle])
+            if self.angle_only == True:
+                image, angle = record
+                images.append(image)
+                labels.append([angle])
+            else:
+                image, angle, throttle = record
+                images.append(image)
+                labels.append([angle, throttle])
         images = np.array(images)
         labels = np.array(labels)
         return (images, labels)

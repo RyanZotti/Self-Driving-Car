@@ -32,17 +32,20 @@ class Trainer:
                  save_to_disk=False,
                  image_scale=1.0,
                  crop_factor=1,
-                 overfit=False):
+                 overfit=False,
+                 angle_only=False):
 
         self.data_path = data_path
         self.save_to_disk = save_to_disk
         self.is_restored_model = is_restored_model
         self.batch_size = batch_size
         self.overfit = overfit
+        self.angle_only = angle_only
         self.record_reader = RecordReader(
             base_directory=self.data_path,
             batch_size=self.batch_size,
-            overfit=self.overfit)
+            overfit=self.overfit,
+            angle_only=self.angle_only)
         self.s3_bucket = format_s3_bucket(s3_bucket)
         self.model_file = model_file
         self.n_epochs = int(epochs)
