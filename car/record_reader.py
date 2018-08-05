@@ -16,7 +16,7 @@ class RecordReader(object):
     batches to a model trainer.
     """
 
-    def __init__(self,base_directory,batch_size=50,overfit=False):
+    def __init__(self,base_directory,batch_size=50,overfit=False,angle_only=False):
 
         """
         Create a RecordReader object
@@ -35,11 +35,16 @@ class RecordReader(object):
             on the same data. I use this when I'm training on images
             that the model got horribly wrong (or recorded disengagements
             that occurred during a recorded deployment)
+        angle_only : boolean
+            Whether to focus on angle only. Possibly focuses model's
+            attention on the most egregious errors, turning right when
+            the car should turn left, etc
         """
 
         self.base_directory = base_directory
         self.folders = glob.glob(join(self.base_directory,'*'))
         self.overfit = overfit
+        self.angle_only = angle_only
 
         # Filter out any folder (like tf_visual_data/runs) not related
         # to datasets. Assumes dataset is not elsewhere in the file path
@@ -149,7 +154,10 @@ class RecordReader(object):
         nparr = np.fromstring(hardcoded_image, np.uint8)
         api_image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-        return api_image, angle, throttle
+        if self.angle_only == True:
+            return api_image, angle
+        else:
+            return api_image, angle, throttle
 
     # Returns batch of label and image pairs
     def get_batch(self,all_paths):
