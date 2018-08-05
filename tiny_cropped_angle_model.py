@@ -39,7 +39,8 @@ pre_clipped_logits = tf.add(tf.matmul(h5, W_final), b_final, name='pre_clipped_l
 clipped_logits = tf.clip_by_value(
     t=pre_clipped_logits,
     clip_value_min=-1,
-    clip_value_max=1)
+    clip_value_max=1,
+    name='logits')
 
 # TODO: Fix this x.shape[0] bug
 rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(clipped_logits, y_)),name='loss')
