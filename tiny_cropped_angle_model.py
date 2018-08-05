@@ -20,7 +20,7 @@ crop_factor = 2
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 
 x = tf.placeholder(tf.float32, shape=[None, 15, 40, 3], name='x')
-y_ = tf.placeholder(tf.float32, shape=[None, 2], name='y_')
+y_ = tf.placeholder(tf.float32, shape=[None, 1], name='y_')
 phase = tf.placeholder(tf.bool, name='phase')
 
 conv1 = batch_norm_conv_layer('layer1', x, [3, 3, 3, 32], phase)
