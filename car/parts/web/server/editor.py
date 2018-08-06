@@ -52,31 +52,28 @@ class StateAPI(tornado.web.RequestHandler):
 class Keep(tornado.web.RequestHandler):
 
     def post(self):
+        dataset = re.search(r'(?<=data/)(.*)(?=/record)', self.application.label_path).group(1)
 
         # TODO: Replace ugly file name hack with os package
         label_file_name = self.application.label_path.split('/')[-1]
         image_file_name = self.application.image_path.split('/')[-1]
 
-        # Prepend with dataset name to avoid possible name collision
-        dir = self.application.label_path.split('/')[-2]
-        label_file_name = dir+'_'+label_file_name
-        image_file_name = dir+'_'+image_file_name
+        directory = os.path.join(app.data_path_emphasis,dataset)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        new_label_path = os.path.join(directory,label_file_name)
+        new_image_path = os.path.join(directory, image_file_name)
 
         with open(self.application.label_path, 'r') as f:
             contents = json.load(f)
             contents["cam/image_array"] = image_file_name
-        new_label_path = os.path.join(
-            self.application.new_data_path,
-            label_file_name)
         print(new_label_path)
         with open(new_label_path, 'w') as fp:
             json.dump(contents, fp)
 
         copy_image_record = 'cp {source} {destination}'.format(
             source=self.application.image_path,
-            destination=os.path.join(
-                self.application.new_data_path,
-                image_file_name)
+            destination=new_image_path
         )
         shell_command(copy_image_record)
 
@@ -105,21 +102,34 @@ class MetadataAPI(tornado.web.RequestHandler):
         request = requests.post('http://localhost:8885/predict', files=files)
         response = json.loads(request.text)
         prediction = response['prediction']
-        predicted_angle, predicted_throttle = prediction
-
-        result = {
-            'ai':{
-                'angle': predicted_angle,
-                'throttle': predicted_throttle},
-            'user':{
-                'angle': angle,
-                'throttle': throttle},
-            'dataset':{
-                'file_number':file_number,
-                'highest_index':highest_index
+        if self.application.angle_only == True:
+            predicted_angle = prediction[0]
+            result = {
+                'ai': {
+                    'angle': predicted_angle,
+                    'throttle': 0.4},
+                'user': {
+                    'angle': angle,
+                    'throttle': throttle},
+                'dataset': {
+                    'file_number': file_number,
+                    'highest_index': highest_index
+                }
             }
-        }
-
+        else:
+            predicted_angle, predicted_throttle = prediction
+            result = {
+                'ai': {
+                    'angle': predicted_angle,
+                    'throttle': predicted_throttle},
+                'user': {
+                    'angle': angle,
+                    'throttle': throttle},
+                'dataset': {
+                    'file_number': file_number,
+                    'highest_index': highest_index
+                }
+            }
         self.write(result)
 
 class DeleteRecord(tornado.web.RequestHandler):
@@ -192,7 +202,16 @@ if __name__ == "__main__":
         required=False,
         help="Where to store emphasized images",
         default='/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/emphasis-data/dataset')
+    ap.add_argument(
+        "--angle_only",
+        required=False,
+        help="Use angle only model (Y/N)?",
+        default='y')
     args = vars(ap.parse_args())
+    if 'y' in args['angle_only'].lower():
+        args['angle_only'] = True
+    else:
+        args['angle_only'] = False
     port = args['port']
     app = make_app()
     app.port = port
@@ -206,8 +225,11 @@ if __name__ == "__main__":
 
     # TODO: Remove this hard-coded path
     app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data'
-    app.record_reader = RecordReader(base_directory=app.data_path)
+    #app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper-emphasis/data'
+    app.data_path_emphasis = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper-emphasis/data'
+    app.record_reader = RecordReader(base_directory=app.data_path,overfit=False)
     app.all_files = iter(app.record_reader.all_ordered_label_files())
+    app.angle_only = args['angle_only']
 
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()
