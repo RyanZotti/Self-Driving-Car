@@ -18,7 +18,7 @@ from pprint import pprint
 
 class AI(object):
     # TODO: Read host from config file
-    def __init__(self, model_api,name, server_path, port, image_scale, model_directory, crop_factor):
+    def __init__(self, model_api,name, server_path, port, image_scale, model_directory, crop_factor, angle_only):
 
         super().__init__()
         self.on = True
@@ -31,14 +31,19 @@ class AI(object):
         self.image_scale = image_scale
         self.crop_factor = crop_factor
         self.model_directory = model_directory
+        self.angle_only = angle_only
 
         # Run model server as a subprocess
-        cmd = 'python3 {server} --port {port} --image_scale {image_scale} --crop_factor {crop_factor} --checkpoint_dir {model}'.format(
+        angle_only_cli = 'y'
+        if self.angle_only == False:
+            angle_only_cli = 'n'
+        cmd = 'python3 {server} --port {port} --image_scale {image_scale} --crop_factor {crop_factor} --checkpoint_dir {model} --angle_only {angle_only}'.format(
             server=self.server_path,
             port=self.port,
             image_scale=self.image_scale,
             model=self.model_directory,
-            crop_factor=self.crop_factor)
+            crop_factor=self.crop_factor,
+            angle_only=angle_only_cli)
         self.process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 
     def update(self):

@@ -19,6 +19,10 @@ class PredictionHandler(tornado.web.RequestHandler):
     def crop_factor(self):
         return self._crop_factor
 
+    @property
+    def angle_only(self):
+        return self._angle_only
+
     @prediction.setter
     def prediction(self,prediction):
         self._prediction = prediction
@@ -31,7 +35,11 @@ class PredictionHandler(tornado.web.RequestHandler):
     def crop_factor(self, crop_factor):
         self._crop_factor = crop_factor
 
-    def initialize(self, sess, x, prediction, image_scale, crop_factor):
+    @angle_only.setter
+    def angle_only(self, angle_only):
+        self._angle_only = angle_only
+
+    def initialize(self, sess, x, prediction, image_scale, crop_factor, angle_only):
         self.prediction = prediction
         self.sess = sess
         self.x = x
@@ -87,14 +95,15 @@ class PredictionHandler(tornado.web.RequestHandler):
         self.write(result)
 
 
-def make_app(sess, x, prediction, image_scale, crop_factor):
+def make_app(sess, x, prediction, image_scale, crop_factor, angle_only):
     return tornado.web.Application(
         [(r"/predict",PredictionHandler,
           {'sess':sess,
            'x':x,
            'prediction':prediction,
            'image_scale':image_scale,
-           'crop_factor':crop_factor})])
+           'crop_factor':crop_factor,
+           'angle_only':angle_only})])
 
 
 if __name__ == "__main__":
@@ -104,24 +113,33 @@ if __name__ == "__main__":
         "--checkpoint_dir",
         required=False,
         help="path to all of the data",
-        default='/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/tf_visual_data/runs/5/checkpoints')
+        default='/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/tf_visual_data/runs/14/checkpoints')
     ap.add_argument(
         "--image_scale",
         required=False,
         help="Resize image scale",
-        default=0.0625)
+        default=0.125)
     ap.add_argument(
         "--port",
         required=False,
         help="Serer port to use",
-        default=8888)
+        default=8885)
+    ap.add_argument(
+        "--angle_only",
+        required=True,
+        help="Should model output only angle (Y/n)")
     ap.add_argument(
         "--crop_factor",
         required=False,
         help="Image is cropped to 1/crop_factor",
-        default=3)
+        default=2)
     args = vars(ap.parse_args())
     path = args['checkpoint_dir']
+    if 'y' in args['angle_only'].lower():
+        args['angle_only'] = True
+    else:
+        args['angle_only'] = False
+    angle_only = args['angle_only']
     image_scale = float(args['image_scale'])
     crop_factor = float(args['crop_factor'])
     port=args['port']
@@ -129,6 +147,6 @@ if __name__ == "__main__":
     # Load model just once and store in memory for all future calls
     sess, x, prediction = load_model(path)
 
-    app = make_app(sess, x, prediction,image_scale, crop_factor)
+    app = make_app(sess, x, prediction,image_scale, crop_factor, angle_only)
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()

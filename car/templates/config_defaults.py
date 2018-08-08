@@ -21,6 +21,9 @@ WARM_UP_SECONDS = 3
 MODEL_API = 'http://Ryans-MacBook-Pro.local:8888/predict'
 UI_API = 'http://ryanzotti.local:{port}/ui-state'
 
+# Model / AI outputs
+ANGLE_ONLY = True
+
 # How much to scale the image for the AI
 IMAGE_SCALE = 0.0625
 CROP_FACTOR = 3

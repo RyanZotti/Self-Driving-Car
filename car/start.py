@@ -44,7 +44,8 @@ ai = AI(
     port=cfg.WEB_AI_PORT,
     image_scale=cfg.IMAGE_SCALE,
     crop_factor=cfg.CROP_FACTOR,
-    model_directory=cfg.MODEL_PATH)
+    model_directory=cfg.MODEL_PATH,
+    angle_only=cfg.ANGLE_ONLY)
 car.add(
     ai,
     inputs=['cam/image_array'],
