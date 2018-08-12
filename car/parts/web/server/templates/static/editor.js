@@ -146,7 +146,16 @@ var driveHandler = new function() {
 
         // Add the html element for the image if it doesn't exist yet
         if ($('#mpeg-image').length == 0) {
-            $("#image-thumbnail").html('<img id="mpeg-image", class="img-responsive" src="/image"> </img>');
+            if (dataset.length > 0) {
+                image_url = '/image?dataset='+dataset+'&record-id='+record_ids[0];
+                //$("#image-thumbnail").html('<img id="mpeg-image", class="img-responsive" src="/image?dataset=dataset_28_18-08-11&record-id=1"> </img>');
+                $("#image-thumbnail").html('<img id="mpeg-image", class="img-responsive" src="'+image_url+'"> </img>');
+                //console.log(image_url);
+            } else {
+                $("#image-thumbnail").html('<div id="image_placeholder"><p>Select a dataset from the dropdown menu.</p></div>');
+            }
+
+
         }
 
       // AJAX is for all buttons to update

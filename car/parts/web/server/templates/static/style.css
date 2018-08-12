@@ -71,6 +71,14 @@
 	background-color: #d9edf7;
 }
 
+#image_placeholder {
+	text-align: center;
+	height: 335px;
+	padding-top: 155px;
+	border-color: #bce8f1;
+	background-color: #d9edf7;
+}
+
 #vehicle_footer {
 	height:auto;
 }
