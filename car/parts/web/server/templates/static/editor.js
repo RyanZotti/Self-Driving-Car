@@ -34,6 +34,22 @@ var driveHandler = new function() {
                   }
                   }
 
+    // Show available datasets in dataset drop-down menu
+    $.get( "/list-datasets", function(datasets) {
+        // Option.value: What sent to the server
+        // Option.text: What the user sees
+        $('#select_dataset').append($('<option>', {
+                value: 'All Datasets',
+                text : 'All Datasets'
+        }));
+        $.each(datasets, function (i, dataset) {
+            $('#select_dataset').append($('<option>', {
+                value: dataset,
+                text : dataset
+            }));
+        });
+    });
+
     var driveURL = ""
     var vehicleURL = ""
 
@@ -127,16 +143,6 @@ var driveHandler = new function() {
 
     var updateUI = function() {
 
-        // Show available datasets in dataset drop-down menu
-        $.get( "/list-datasets", function(datasets) {
-            $('#select_dataset').empty();
-            $.each(datasets, function (i, dataset) {
-                $('#select_dataset').append($('<option>', {
-                    value: dataset, // What is sent to server
-                    text : dataset  // What user sees
-                }));
-            });
-        });
 
         // Add the html element for the image if it doesn't exist yet
         if ($('#mpeg-image').length == 0) {
