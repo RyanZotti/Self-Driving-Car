@@ -2,7 +2,7 @@ import cv2
 import glob
 import json
 import operator
-from os.path import dirname, join
+from os.path import dirname, join, basename
 import numpy as np
 from random import shuffle
 import re
@@ -197,3 +197,10 @@ class RecordReader(object):
     # Used in Trainer class to know when epoch is reached
     def get_batches_per_epoch(self):
         return self.batches_per_epoch
+
+    def get_dataset_names(self,file_paths):
+        names = []
+        for file_path in file_paths:
+            name = basename(file_path)
+            names.append(name)
+        return names

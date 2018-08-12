@@ -139,6 +139,18 @@ class DeleteRecord(tornado.web.RequestHandler):
         os.remove(self.application.image_path)
 
 
+class ListDatasets(tornado.web.RequestHandler):
+
+    def get(self):
+
+        folder_file_paths = self.application.record_reader.folders
+        dataset_names = self.application.record_reader.get_dataset_names(folder_file_paths)
+        results = {
+            'datasets' : dataset_names
+        }
+        self.write(results)
+
+
 class ImageAPI(tornado.web.RequestHandler):
     '''
     Serves a MJPEG of the images posted from the vehicle.
@@ -186,6 +198,7 @@ def make_app():
         (r"/ui-state", StateAPI),
         (r"/delete",DeleteRecord),
         (r"/keep", Keep),
+        (r"/list-datasets",ListDatasets),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": static_file_path}),
     ]
     return tornado.web.Application(handlers)

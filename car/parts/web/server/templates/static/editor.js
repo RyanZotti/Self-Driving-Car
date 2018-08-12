@@ -127,6 +127,18 @@ var driveHandler = new function() {
 
     var updateUI = function() {
 
+        // Show available datasets in dataset drop-down menu
+        $.get( "/list-datasets", function(datasets) {
+            $('#select_dataset').empty();
+            $.each(datasets, function (i, dataset) {
+                console.log(dataset);
+                $('#select_dataset').append($('<option>', {
+                    value: dataset,
+                    text : dataset
+                }));
+            });
+        });
+
         // Add the html element for the image if it doesn't exist yet
         if ($('#mpeg-image').length == 0) {
             $("#image-thumbnail").html('<img id="mpeg-image", class="img-responsive" src="/image"> </img>');

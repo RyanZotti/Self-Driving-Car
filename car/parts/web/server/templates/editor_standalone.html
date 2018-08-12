@@ -77,13 +77,10 @@
             </div>
           </div>
           <div class="form-group" style="max-width:30%;">
-            <label class="group-label">Max Throttle</label><br/>
+            <label class="group-label">Datasets</label><br/>
             <div class="form-group">
-              <select id="max_throttle_select" class="form-control">
-                <option disabled selected> Select Max Throttle </option>
-                {% for t in [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 100] %}
-                  <option value="{{ t / 100.0 }}">{{ t }}%</option>
-                {% end %}
+              <select id="select_dataset" class="form-control">
+                <option disabled selected> Select Dataset </option>
               </select>
             </div>
           </div>
