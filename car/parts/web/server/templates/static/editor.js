@@ -1,6 +1,17 @@
 var driveHandler = new function() {
     //functions used to drive the vehicle.
 
+    // Dataset selected via drop-down or entire pass
+    var dataset = ''
+
+    // Record IDs of the current dataset
+    var record_ids = []
+
+    var record_id = -1
+
+    // Index of the record ID in record_ids
+    var record_id_index = 0
+
     var state = {'tele': {
                           "user": {
                                   'angle': 0,
@@ -74,19 +85,39 @@ var driveHandler = new function() {
         }
     }
 
+    // TODO: Show light blue screen at end and beginning of dataset
+    function update_record_id(){
+      record_id_index = record_id_index + 1
+      record_id = record_ids[record_id_index]
+      console.log(record_id)
+    }
+
     var setBindings = function() {
+
+      $("#select_dataset").change(function(){
+        dataset = $('#select_dataset :selected').text();
+        data = JSON.stringify({ 'dataset': dataset})
+        $.post('/dataset-record-ids', data, function(result){
+            record_ids = result.record_ids
+            record_id_index = record_id_index = 0
+            record_id = record_ids[record_id_index]
+        });
+      });
 
       $("#keep_button").click(function(){
         $.post("/keep");
+        update_record_id();
         updateUI();
       });
 
       $("#ignore_button").click(function(){
+        update_record_id();
         updateUI();
       });
 
       // Tell the server to delete the current record
       $('#delete_button').click(function () {
+        update_record_id();
         $.post('/delete');
         updateUI();
       });
@@ -144,18 +175,12 @@ var driveHandler = new function() {
     var updateUI = function() {
 
 
-        // Add the html element for the image if it doesn't exist yet
-        if ($('#mpeg-image').length == 0) {
-            if (dataset.length > 0) {
-                image_url = '/image?dataset='+dataset+'&record-id='+record_ids[0];
-                //$("#image-thumbnail").html('<img id="mpeg-image", class="img-responsive" src="/image?dataset=dataset_28_18-08-11&record-id=1"> </img>');
-                $("#image-thumbnail").html('<img id="mpeg-image", class="img-responsive" src="'+image_url+'"> </img>');
-                //console.log(image_url);
-            } else {
-                $("#image-thumbnail").html('<div id="image_placeholder"><p>Select a dataset from the dropdown menu.</p></div>');
-            }
-
-
+        if (dataset.length > 0) {
+            image_url = '/image?dataset='+dataset+'&record-id='+record_id;
+            $("#image-thumbnail").html('<img id="mpeg-image", class="img-responsive" src="'+image_url+'"> </img>');
+            console.log('Image should be added')
+        } else {
+            $("#image-thumbnail").html('<div id="image_placeholder"><p>Select a dataset from the dropdown menu.</p></div>');
         }
 
       // AJAX is for all buttons to update
@@ -174,7 +199,6 @@ var driveHandler = new function() {
                   }
                 });
 
-      $("#mpeg-image").prop("src", "/image?" + +new Date());
       $("#throttleInput").val(state.tele.user.throttle);
       $("#angleInput").val(state.tele.user.angle);
       $('#mode_select').val(state.driveMode);
