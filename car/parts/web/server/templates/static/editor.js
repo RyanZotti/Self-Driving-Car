@@ -100,6 +100,7 @@ var driveHandler = new function() {
             record_ids = result.record_ids
             record_id_index = record_id_index = 0
             record_id = record_ids[record_id_index]
+            updateUI();
         });
       });
 
