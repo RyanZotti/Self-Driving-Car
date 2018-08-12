@@ -116,6 +116,15 @@ class RecordReader(object):
             for file in files:
                 yield file
 
+    # Used by the editor API
+    def get_image(self,dataset_name,record_id):
+        dataset_path = join(self.base_directory, dataset_name)
+        image_path = join(dataset_path,'{record_id}_cam-image_array_.png'.format(
+            record_id=record_id))
+        print(image_path)
+        frame = cv2.imread(image_path)
+        return frame
+
     # Used in validate_deployment.py
     def image_path_from_label_path(self,label_path):
         # Parse JSON file
@@ -198,6 +207,18 @@ class RecordReader(object):
     def get_batches_per_epoch(self):
         return self.batches_per_epoch
 
+    # Used by editor API to keep track of records
+    def get_dataset_record_ids(self,dataset_name):
+        dataset_path = join(self.base_directory, dataset_name)
+        files = glob.glob(join(dataset_path, 'record*.json'))
+        file_numbers = {}
+        for file in files:
+            number = re.search(r'(?<=record_)(.*)(?=\.json)', file).group(1)
+            file_numbers[file] = int(number)
+        sorted_files = sorted(file_numbers.items(), key=operator.itemgetter(1))
+        return sorted_files
+
+    # Used by editor API to show editable datasets
     def get_dataset_names(self,file_paths):
         names = []
         for file_path in file_paths:

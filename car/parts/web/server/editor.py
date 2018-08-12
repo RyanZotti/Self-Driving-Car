@@ -78,6 +78,25 @@ class Keep(tornado.web.RequestHandler):
         shell_command(copy_image_record)
 
 
+class DatasetRecordIdsAPI(tornado.web.RequestHandler):
+
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+        path_id_pairs = self.application.record_reader.get_dataset_record_ids(dataset_name)
+
+        # Comes in list of tuples: (/path/to/record, record_id), but
+        # we don't want to show paths to the user b/e it's ugly
+        record_ids = []
+        for pair in path_id_pairs:
+            path, record_id = pair
+            record_ids.append(record_id)
+        result = {
+            'record_ids' : record_ids
+        }
+        self.write(result)
+
+
 class MetadataAPI(tornado.web.RequestHandler):
 
     def post(self):
@@ -160,14 +179,18 @@ class ImageAPI(tornado.web.RequestHandler):
     @tornado.gen.coroutine
     def get(self):
 
+        dataset = self.get_argument("dataset")
+        record_id = self.get_argument("record-id")
         ioloop = tornado.ioloop.IOLoop.current()
         self.set_header("Content-type", "multipart/x-mixed-replace;boundary=--boundarydonotcross")
 
         self.served_image_timestamp = time.time()
         my_boundary = "--boundarydonotcross"
 
-
-        frame = cv2.imread(self.application.image_path)
+        frame = self.application.record_reader.get_image(
+            dataset_name=dataset,
+            record_id=record_id
+        )
 
         # Can't serve the OpenCV numpy array
         # Tornando: "... only accepts bytes, unicode, and dict objects" (from Tornado error Traceback)
@@ -196,6 +219,7 @@ def make_app():
         (r"/metadata", MetadataAPI),
         (r"/image", ImageAPI),
         (r"/ui-state", StateAPI),
+        (r"/dataset-record-ids",DatasetRecordIdsAPI),
         (r"/delete",DeleteRecord),
         (r"/keep", Keep),
         (r"/list-datasets",ListDatasets),
