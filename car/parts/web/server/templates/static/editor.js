@@ -77,6 +77,7 @@ var driveHandler = new function() {
         // Stop for a sufficiently bad error
         if (state.isVideoPlaying == true) {
             while (state.tele.ai.angleAbsError < 0.8) {
+                update_record_id();
                 updateUI();
             }
             // Pause at end of video or where encountering
@@ -223,11 +224,13 @@ var driveHandler = new function() {
       var aiSteeringAbsError = Math.abs(userSteeringRounded - aiSteeringRounded) * 100
       var aiThrottleAbsError = Math.abs(userThrottleRounded - aiThrottleRounded) * 100
 
-      $('#image-progress')
-        .css('width', state.dataset.percent_complete);
-
-      $('#text-image-progress')
-        .html('<b>Dataset Frames: </b>' + state.dataset.file_number + ' / '+ state.dataset.highest_index + '    ' + state.dataset.percent_complete)
+      if (dataset.length > 0) {
+          percent_complete = ((record_id_index / record_ids.length) * 100).toFixed(2) + '%';
+          $('#image-progress').css('width', percent_complete);
+          $('#text-image-progress').html('<b>Dataset Frames: </b>' + record_id_index + ' / '+ record_ids.length + ' ' + percent_complete)
+      } else {
+          $('#image-progress').css('width', '0%');
+      }
 
       if(state.tele.user.throttle < 0) {
         $('#user-throttle-bar-backward').css('width', userThrottlePercent).html(userThrottleRounded)
