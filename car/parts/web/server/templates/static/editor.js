@@ -131,10 +131,9 @@ var driveHandler = new function() {
         $.get( "/list-datasets", function(datasets) {
             $('#select_dataset').empty();
             $.each(datasets, function (i, dataset) {
-                console.log(dataset);
                 $('#select_dataset').append($('<option>', {
-                    value: dataset,
-                    text : dataset
+                    value: dataset, // What is sent to server
+                    text : dataset  // What user sees
                 }));
             });
         });
