@@ -89,7 +89,6 @@ var driveHandler = new function() {
     function update_record_id(){
       record_id_index = record_id_index + 1
       record_id = record_ids[record_id_index]
-      console.log(record_id)
     }
 
     var setBindings = function() {
@@ -174,11 +173,18 @@ var driveHandler = new function() {
 
     var updateUI = function() {
 
-
         if (dataset.length > 0) {
             image_url = '/image?dataset='+dataset+'&record-id='+record_id;
-            $("#image-thumbnail").html('<img id="mpeg-image", class="img-responsive" src="'+image_url+'"> </img>');
-            console.log('Image should be added')
+            if ($('#mpeg-image').length > 0) {
+                /*
+                Updating the src attribute rather than the whole html
+                element avoids the weird white flashing between image
+                updates
+                */
+                $('#mpeg-image')[0].src = image_url
+            } else {
+                $("#image-thumbnail").html('<img id="mpeg-image", class="img-responsive" src="'+image_url+'"> </img>');
+            }
         } else {
             $("#image-thumbnail").html('<div id="image_placeholder"><p>Select a dataset from the dropdown menu.</p></div>');
         }
