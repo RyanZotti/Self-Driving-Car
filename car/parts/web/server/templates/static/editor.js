@@ -46,7 +46,8 @@ var driveHandler = new function() {
                   }
 
     // Show available datasets in dataset drop-down menu
-    $.get( "/list-datasets", function(datasets) {
+    $.get( "/list-datasets", function(response) {
+        datasets = response.datasets
         // Option.value: What sent to the server
         // Option.text: What the user sees
         $('#select_dataset').append($('<option>', {
