@@ -262,7 +262,6 @@ if __name__ == "__main__":
 
     # TODO: Remove this hard-coded path
     app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data'
-    #app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper-emphasis/data'
     app.data_path_emphasis = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper-emphasis/data'
     app.record_reader = RecordReader(base_directory=app.data_path,overfit=False)
     app.all_files = iter(app.record_reader.all_ordered_label_files())

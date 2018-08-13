@@ -219,9 +219,15 @@ class RecordReader(object):
         return sorted_files
 
     # Used by editor API to show editable datasets
+    # This also returns the datasets in order
     def get_dataset_names(self,file_paths):
-        names = []
+        ordered_datasets = []
+        id_to_dataset = {}
         for file_path in file_paths:
-            name = basename(file_path)
-            names.append(name)
-        return names
+            dataset = basename(file_path)
+            number = int(re.search(r'(?<=dataset_)([0-9]*)(?=_)', dataset).group(1))
+            id_to_dataset[number] = dataset
+        sorted_tuples = sorted(id_to_dataset.items(), key=operator.itemgetter(0))
+        for number, dataset in sorted_tuples:
+            ordered_datasets.append(dataset)
+        return ordered_datasets
