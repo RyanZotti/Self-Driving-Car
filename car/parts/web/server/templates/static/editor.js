@@ -188,25 +188,33 @@ var driveHandler = new function() {
             } else {
                 $("#image-thumbnail").html('<img id="mpeg-image", class="img-responsive" src="'+image_url+'"> </img>');
             }
+            data = JSON.stringify({ 'dataset': dataset, 'record_id' : record_id})
+            $.post('/ai-angle', data, function(result){
+                record_ids = result.record_ids
+                record_id_index = record_id_index = 0
+                record_id = record_ids[record_id_index]
+                updateUI();
+            });
+
+            // AJAX is for all buttons to update
+            $.ajax({
+                        type:    "POST",
+                        url:     "/metadata",
+                        data:    {},
+                        async: false, // critical, or the image won't update. Not sure why
+                        success: function(data) {
+                              parseMetadata(data);
+                        },
+                        error:   function(jqXHR, textStatus, errorThrown) {
+                              alert("Error, status = " + textStatus + ", " +
+                                    "error thrown: " + errorThrown
+                              );
+                        }
+                      });
         } else {
             $("#image-thumbnail").html('<div id="image_placeholder"><p>Select a dataset from the dropdown menu.</p></div>');
         }
 
-      // AJAX is for all buttons to update
-      $.ajax({
-                  type:    "POST",
-                  url:     "/metadata",
-                  data:    {},
-                  async: false, // critical, or the image won't update. Not sure why
-                  success: function(data) {
-                        parseMetadata(data);
-                  },
-                  error:   function(jqXHR, textStatus, errorThrown) {
-                        alert("Error, status = " + textStatus + ", " +
-                              "error thrown: " + errorThrown
-                        );
-                  }
-                });
 
       $("#throttleInput").val(state.tele.user.throttle);
       $("#angleInput").val(state.tele.user.angle);
