@@ -1,6 +1,24 @@
 var driveHandler = new function() {
     //functions used to drive the vehicle.
 
+    function getAiAngle() {
+        return new Promise(function(resolve, reject) {
+            data = JSON.stringify({ 'dataset': dataset, 'record_id' : record_id})
+            $.post('/ai-angle', data, function(result){
+               resolve(result)
+            });
+        });
+    }
+
+    function getHumanAngleAndThrottle() {
+        return new Promise(function(resolve, reject) {
+            data = JSON.stringify({ 'dataset': dataset, 'record_id' : record_id})
+            $.post('/user-labels', data, function(result){
+               resolve(result)
+            });
+        });
+    }
+
     // Dataset selected via drop-down or entire pass
     var dataset = ''
 
@@ -12,21 +30,16 @@ var driveHandler = new function() {
     // Index of the record ID in record_ids
     var record_id_index = 0
 
-    var state = {'tele': {
-                          "user": {
-                                  'angle': 0,
-                                  'throttle': 0,
-                                  },
-                          "pilot": {
-                                  'angle': 0,
-                                  'throttle': 0,
-                                  },
-                          "ai":   {
-                                  'angle':0,
-                                  'throttle':0,
-                                  'angleAbsError':0,
-                                  'throttleAbsError':0
-                                  }
+    var state = {
+                  "human": {
+                          'angle': 0,
+                          'throttle': 0,
+                          },
+                  "ai":   {
+                          'angle':0,
+                          'throttle':0,
+                          'angleAbsError':0,
+                          'throttleAbsError':0
                           },
                   'brakeOn': true,
                   'isVideoPlaying':false,
@@ -77,7 +90,7 @@ var driveHandler = new function() {
         // Update everything in a loop if video is on
         // Stop for a sufficiently bad error
         if (state.isVideoPlaying == true) {
-            while (state.tele.ai.angleAbsError < 0.8) {
+            while (state.ai.angleAbsError < 0.8) {
                 update_record_id();
                 updateUI();
             }
@@ -153,22 +166,6 @@ var driveHandler = new function() {
 
     };
 
-
-    function parseMetadata(data, status) {
-      state.tele.user.angle = data.user.angle;
-      state.tele.user.throttle = data.user.throttle;
-      state.tele.ai.angle = data.ai.angle;
-      state.tele.ai.throttle = data.ai.throttle;
-
-      state.tele.ai.angleAbsError = Math.abs(state.tele.user.angle - state.tele.ai.angle);
-      state.tele.ai.throttleAbsError = Math.abs(state.tele.user.throttle - state.tele.ai.throttle);
-
-      state.dataset.file_number = data.dataset.file_number;
-      state.dataset.highest_index = data.dataset.highest_index;
-      state.dataset.percent_complete = ((data.dataset.file_number / data.dataset.highest_index) * 100).toFixed(2) + '%';
-
-    }
-
     var postPilot = function(){
         data = JSON.stringify({ 'pilot': state.pilot })
         $.post(vehicleURL, data)
@@ -188,47 +185,45 @@ var driveHandler = new function() {
             } else {
                 $("#image-thumbnail").html('<img id="mpeg-image", class="img-responsive" src="'+image_url+'"> </img>');
             }
-            data = JSON.stringify({ 'dataset': dataset, 'record_id' : record_id})
-            $.post('/ai-angle', data, function(result){
-                record_ids = result.record_ids
-                record_id_index = record_id_index = 0
-                record_id = record_ids[record_id_index]
-                updateUI();
+
+            labels = [
+                getHumanAngleAndThrottle(),
+                getAiAngle()
+            ];
+
+            Promise.all(labels).then(function AcceptHandler(results) {
+
+                state.human.angle = results[0].angle;
+                state.human.throttle = results[0].throttle;
+                state.ai.angle = results[1].angle;
+
+                // TODO: Figure out to do when selecting constant throttle
+                //state.ai.throttle = results[1].throttle;
+
+                state.ai.angleAbsError = Math.abs(state.human.angle - state.ai.angle);
+                state.ai.throttleAbsError = Math.abs(state.human.throttle - state.ai.throttle);
+
+                state.dataset.percent_complete = ((record_id_index / record_ids.length) * 100).toFixed(2) + '%';
             });
 
-            // AJAX is for all buttons to update
-            $.ajax({
-                        type:    "POST",
-                        url:     "/metadata",
-                        data:    {},
-                        async: false, // critical, or the image won't update. Not sure why
-                        success: function(data) {
-                              parseMetadata(data);
-                        },
-                        error:   function(jqXHR, textStatus, errorThrown) {
-                              alert("Error, status = " + textStatus + ", " +
-                                    "error thrown: " + errorThrown
-                              );
-                        }
-                      });
         } else {
             $("#image-thumbnail").html('<div id="image_placeholder"><p>Select a dataset from the dropdown menu.</p></div>');
         }
 
 
-      $("#throttleInput").val(state.tele.user.throttle);
-      $("#angleInput").val(state.tele.user.angle);
+      $("#throttleInput").val(state.human.throttle);
+      $("#angleInput").val(state.human.angle);
       $('#mode_select').val(state.driveMode);
 
-      var userThrottlePercent = Math.round(Math.abs(state.tele.user.throttle) * 100) + '%';
-      var userSteeringPercent = Math.round(Math.abs(state.tele.user.angle) * 100) + '%';
-      var userThrottleRounded = Number(state.tele.user.throttle.toFixed(2))
-      var userSteeringRounded = Number(state.tele.user.angle.toFixed(2))
+      var userThrottlePercent = Math.round(Math.abs(state.human.throttle) * 100) + '%';
+      var userSteeringPercent = Math.round(Math.abs(state.human.angle) * 100) + '%';
+      var userThrottleRounded = Number(state.human.throttle.toFixed(2))
+      var userSteeringRounded = Number(state.human.angle.toFixed(2))
 
-      var aiThrottlePercent = Math.round(Math.abs(state.tele.ai.throttle) * 100) + '%';
-      var aiSteeringPercent = Math.round(Math.abs(state.tele.ai.angle) * 100) + '%';
-      var aiThrottleRounded = Number(state.tele.ai.throttle.toFixed(2))
-      var aiSteeringRounded = Number(state.tele.ai.angle.toFixed(2))
+      var aiThrottlePercent = Math.round(Math.abs(state.ai.throttle) * 100) + '%';
+      var aiSteeringPercent = Math.round(Math.abs(state.ai.angle) * 100) + '%';
+      var aiThrottleRounded = Number(state.ai.throttle.toFixed(2))
+      var aiSteeringRounded = Number(state.ai.angle.toFixed(2))
 
       var aiSteeringAbsError = Math.abs(userSteeringRounded - aiSteeringRounded) * 100
       var aiThrottleAbsError = Math.abs(userThrottleRounded - aiThrottleRounded) * 100
@@ -241,11 +236,11 @@ var driveHandler = new function() {
           $('#image-progress').css('width', '0%');
       }
 
-      if(state.tele.user.throttle < 0) {
+      if(state.human.throttle < 0) {
         $('#user-throttle-bar-backward').css('width', userThrottlePercent).html(userThrottleRounded)
         $('#user-throttle-bar-forward').css('width', '0%').html('')
       }
-      else if (state.tele.user.throttle > 0) {
+      else if (state.human.throttle > 0) {
         $('#user-throttle-bar-backward').css('width', '0%').html('')
         $('#user-throttle-bar-forward').css('width', userThrottlePercent).html(userThrottleRounded)
       }
@@ -254,7 +249,7 @@ var driveHandler = new function() {
         $('#user-throttle-bar-backward').css('width', '0%').html('')
       }
 
-      if(state.tele.ai.throttle < 0) {
+      if(state.ai.throttle < 0) {
         $('#ai-throttle-bar-backward').css('width', aiThrottlePercent).html(aiThrottleRounded)
         $('#ai-throttle-bar-forward').css('width', '0%').html('')
         if (aiThrottleAbsError < 40) {
@@ -278,7 +273,7 @@ var driveHandler = new function() {
                 .addClass('progress-bar-danger').end()
         }
       }
-      else if (state.tele.ai.throttle > 0) {
+      else if (state.ai.throttle > 0) {
         $('#ai-throttle-bar-backward').css('width', '0%').html('')
         $('#ai-throttle-bar-forward').css('width', aiThrottlePercent).html(aiThrottleRounded)
         if (aiThrottleAbsError < 40) {
@@ -307,11 +302,11 @@ var driveHandler = new function() {
         $('#ai-throttle-bar-backward').css('width', '0%').html('')
       }
 
-      if(state.tele.user.angle < 0) {
+      if(state.human.angle < 0) {
         $('#user-angle-bar-backward').css('width', userSteeringPercent).html(userSteeringRounded)
         $('#user-angle-bar-forward').css('width', '0%').html('')
       }
-      else if (state.tele.user.angle > 0) {
+      else if (state.human.angle > 0) {
         $('#user-angle-bar-backward').css('width', '0%').html('')
         $('#user-angle-bar-forward').css('width', userSteeringPercent).html(userSteeringRounded)
       }
@@ -320,7 +315,7 @@ var driveHandler = new function() {
         $('#user-angle-bar-backward').css('width', '0%').html('')
       }
 
-      if(state.tele.ai.angle < 0) {
+      if(state.ai.angle < 0) {
         $('#ai-angle-bar-backward').css('width', aiSteeringPercent).html(aiSteeringRounded)
         $('#ai-angle-bar-forward').css('width', '0%').html('')
             if (aiSteeringAbsError < 40) {
@@ -344,7 +339,7 @@ var driveHandler = new function() {
                     .addClass('progress-bar-danger').end()
             }
         }
-      else if (state.tele.ai.angle > 0) {
+      else if (state.ai.angle > 0) {
         $('#ai-angle-bar-backward').css('width', '0%').html('')
         $('#ai-angle-bar-forward').css('width', aiSteeringPercent).html(aiSteeringRounded)
         if (aiSteeringAbsError < 40) {
@@ -378,8 +373,8 @@ var driveHandler = new function() {
     var postDrive = function() {
 
         //Send angle and throttle values
-        data = JSON.stringify({ 'angle': state.tele.user.angle,
-                                'throttle':state.tele.user.throttle,
+        data = JSON.stringify({ 'angle': state.human.angle,
+                                'throttle':state.human.throttle,
                                 'drive_mode':state.driveMode,
                                 'recording': state.recording,
                                 'brake':state.brakeOn,

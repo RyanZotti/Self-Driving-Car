@@ -89,6 +89,24 @@ class RecordReader(object):
         sorted_files = sorted(file_numbers.items(), key=operator.itemgetter(1))
         return sorted_files
 
+    def get_dataset_name_from_record_path(self,record_path):
+        regex = r'(?<=data\/)(.*)(?=\/)'
+        dataset_name = re.search(regex, record_path).group(1)
+        return dataset_name
+
+    def get_record_id_from_record_path(self, record_path):
+        regex = r'(?<=record_)(.*)(?=\.json)'
+        record_id = re.search(regex, record_path).group(1)
+        return record_id
+
+    # Used by the editor API to show labels
+    def get_label_path(self,dataset_name,record_id):
+        all_files = self.all_ordered_label_files()
+        for file_path, file_record_id in all_files:
+            file_dataset_name = self.get_dataset_name_from_record_path(file_path)
+            if record_id == file_record_id and dataset_name == file_dataset_name:
+                return file_path
+
     def ordered_folders(self,folders):
         ordered_numbers = []
         for folder in folders:
@@ -121,7 +139,6 @@ class RecordReader(object):
         dataset_path = join(self.base_directory, dataset_name)
         image_path = join(dataset_path,'{record_id}_cam-image_array_.png'.format(
             record_id=record_id))
-        print(image_path)
         frame = cv2.imread(image_path)
         return frame
 
@@ -213,7 +230,7 @@ class RecordReader(object):
         files = glob.glob(join(dataset_path, 'record*.json'))
         file_numbers = {}
         for file in files:
-            number = re.search(r'(?<=record_)(.*)(?=\.json)', file).group(1)
+            number = self.get_record_id_from_record_path(file)
             file_numbers[file] = int(number)
         sorted_files = sorted(file_numbers.items(), key=operator.itemgetter(1))
         return sorted_files

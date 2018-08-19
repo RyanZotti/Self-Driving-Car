@@ -67,7 +67,6 @@ class Keep(tornado.web.RequestHandler):
         with open(self.application.label_path, 'r') as f:
             contents = json.load(f)
             contents["cam/image_array"] = image_file_name
-        print(new_label_path)
         with open(new_label_path, 'w') as fp:
             json.dump(contents, fp)
 
@@ -96,59 +95,57 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
         }
         self.write(result)
 
+# Given a dataset name and record ID, return the user
+# angle and throttle
+class UserLabelsAPI(tornado.web.RequestHandler):
 
-class MetadataAPI(tornado.web.RequestHandler):
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+        record_id = int(json_input['record_id'])
+        label_file_path = self.application.record_reader.get_label_path(
+            dataset_name=dataset_name,
+            record_id=record_id
+        )
+        _, angle, throttle = self.application.record_reader.read_record(
+            label_path=label_file_path)
+        result = {
+            'angle' : angle,
+            'throttle': throttle
+        }
+        self.write(result)
+
+# This API might seem redundant given that I already have
+# a separate API for producing predictions, but UI's version
+# of the image has already been compressed once. Sending the
+# compressed image to the model API would compress the image
+# again (compression happens each time image is transferred)
+# and this would lead to slightly different results vs if
+# the image file is passed just once, between this API and
+# the model API
+class AIAngleAPI(tornado.web.RequestHandler):
 
     def post(self):
 
-        self.application.label_path, file_number = next(app.all_files)
-        self.application.image_path = self.application.record_reader.image_path_from_label_path(self.application.label_path)
-        highest_index = app.record_reader.ordered_label_files(dirname(self.application.image_path))[-1][1]
-        message = '{index}/{total}: path:{path}'.format(
-            index=file_number,
-            total=highest_index,
-            path=self.application.image_path
-        )
-        print(message)
-        _, angle, throttle = self.application.record_reader.read_record(label_path=self.application.label_path)
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+        record_id = json_input['record_id']
 
-        # Read image from disk
-        img_arr = cv2.imread(self.application.image_path)
-        self.application.image = img_arr
-        img = cv2.imencode('.jpg', img_arr)[1].tostring()
+        frame = self.application.record_reader.get_image(
+            dataset_name=dataset_name,
+            record_id=record_id
+        )
+
+        img = cv2.imencode('.jpg', frame)[1].tostring()
         files = {'image': img}
         # TODO: Remove hard-coded model API
         request = requests.post('http://localhost:8885/predict', files=files)
         response = json.loads(request.text)
         prediction = response['prediction']
-        if self.application.angle_only == True:
-            predicted_angle = prediction[0]
-            result = {
-                'ai': {
-                    'angle': predicted_angle,
-                    'throttle': 0.4},
-                'user': {
-                    'angle': angle,
-                    'throttle': throttle},
-                'dataset': {
-                    'file_number': file_number,
-                    'highest_index': highest_index
-                }
-            }
-        else:
-            predicted_angle, predicted_throttle = prediction
-            result = {
-                'ai': {
-                    'angle': predicted_angle,
-                    'throttle': predicted_throttle},
-                'user': {
-                    'angle': angle,
-                    'throttle': throttle},
-                'dataset': {
-                    'file_number': file_number,
-                    'highest_index': highest_index
-                }
-            }
+        predicted_angle = prediction[0]
+        result = {
+            'angle': predicted_angle
+        }
         self.write(result)
 
 class DeleteRecord(tornado.web.RequestHandler):
@@ -216,7 +213,8 @@ def make_app():
     handlers = [
         (r"/", tornado.web.RedirectHandler, dict(url="/drive")),
         (r"/drive", DriveAPI),
-        (r"/metadata", MetadataAPI),
+        (r"/ai-angle", AIAngleAPI),
+        (r"/user-labels", UserLabelsAPI),
         (r"/image", ImageAPI),
         (r"/ui-state", StateAPI),
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
@@ -264,7 +262,6 @@ if __name__ == "__main__":
     app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data'
     app.data_path_emphasis = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper-emphasis/data'
     app.record_reader = RecordReader(base_directory=app.data_path,overfit=False)
-    app.all_files = iter(app.record_reader.all_ordered_label_files())
     app.angle_only = args['angle_only']
 
     app.listen(port)
