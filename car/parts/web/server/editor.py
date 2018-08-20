@@ -52,27 +52,33 @@ class StateAPI(tornado.web.RequestHandler):
 class Keep(tornado.web.RequestHandler):
 
     def post(self):
-        dataset = re.search(r'(?<=data/)(.*)(?=/record)', self.application.label_path).group(1)
-
-        # TODO: Replace ugly file name hack with os package
-        label_file_name = self.application.label_path.split('/')[-1]
-        image_file_name = self.application.image_path.split('/')[-1]
-
-        directory = os.path.join(app.data_path_emphasis,dataset)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        new_label_path = os.path.join(directory,label_file_name)
-        new_image_path = os.path.join(directory, image_file_name)
-
-        with open(self.application.label_path, 'r') as f:
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+        record_id = json_input['record_id']
+        label_file_name = 'record_{id}.json'.format(id=record_id)
+        image_file_name = '{id}_cam-image_array_.png'.format(id=record_id)
+        source_directory = os.path.join(
+            self.application.data_path,
+            dataset_name
+        )
+        target_directory = os.path.join(
+            self.application.data_path_emphasis,
+            dataset_name
+        )
+        if not os.path.exists(target_directory):
+            os.makedirs(target_directory)
+        source_label_path = os.path.join(source_directory,label_file_name)
+        source_image_path = os.path.join(source_directory, image_file_name)
+        target_label_path = os.path.join(target_directory,label_file_name)
+        target_image_path = os.path.join(target_directory, image_file_name)
+        with open(source_label_path, 'r') as f:
             contents = json.load(f)
             contents["cam/image_array"] = image_file_name
-        with open(new_label_path, 'w') as fp:
+        with open(target_label_path, 'w') as fp:
             json.dump(contents, fp)
-
         copy_image_record = 'cp {source} {destination}'.format(
-            source=self.application.image_path,
-            destination=new_image_path
+            source=source_image_path,
+            destination=target_image_path
         )
         shell_command(copy_image_record)
 
@@ -83,7 +89,6 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
         json_input = tornado.escape.json_decode(self.request.body)
         dataset_name = json_input['dataset']
         path_id_pairs = self.application.record_reader.get_dataset_record_ids(dataset_name)
-
         # Comes in list of tuples: (/path/to/record, record_id), but
         # we don't want to show paths to the user b/e it's ugly
         record_ids = []
@@ -197,7 +202,6 @@ class ImageAPI(tornado.web.RequestHandler):
 
         self.served_image_timestamp = time.time()
         my_boundary = "--boundarydonotcross"
-
         frame = self.application.record_reader.get_image(
             dataset_name=dataset,
             record_id=record_id

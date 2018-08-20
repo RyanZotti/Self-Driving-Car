@@ -156,9 +156,11 @@ var driveHandler = new function() {
       });
 
       $("#keep_button").click(function(){
-        $.post("/keep");
-        update_record_id();
-        updateUI();
+        data = JSON.stringify({'dataset': dataset, 'record_id': record_id})
+        $.post('/keep', data, function(){
+          update_record_id();
+          updateUI();
+        });
       });
 
       $("#ignore_button").click(function(){
