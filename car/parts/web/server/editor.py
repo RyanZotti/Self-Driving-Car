@@ -151,8 +151,22 @@ class AIAngleAPI(tornado.web.RequestHandler):
 class DeleteRecord(tornado.web.RequestHandler):
 
     def post(self):
-        os.remove(self.application.label_path)
-        os.remove(self.application.image_path)
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+        record_id = json_input['record_id']
+
+        label_path = self.application.record_reader.get_label_path(
+            dataset_name=dataset_name,
+            record_id=record_id
+        )
+        image_path = self.application.record_reader.get_image_path(
+            dataset_name=dataset_name,
+            record_id=record_id
+        )
+
+        # TODO: Uncomment after testing delete functionality
+        #os.remove(label_path)
+        #os.remove(image_path)
 
 
 class ListDatasets(tornado.web.RequestHandler):

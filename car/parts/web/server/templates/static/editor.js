@@ -1,7 +1,43 @@
 var driveHandler = new function() {
     //functions used to drive the vehicle.
 
-    function getAiAngle() {
+    // Delete records that likely include human mistakes
+    function autoPurgeRecords(dataset,minThrottle) {
+        /*
+          dataset: String
+              Name of dataset to clean up
+          minThrottle: Integer
+              Threshold for deleting records. Any record with a
+              throttle value below this number is automatically
+              deleted
+        */
+
+        getDatasetRecordIds(dataset).then(function(recordIds){
+            recordIds.forEach(function(recordId) {
+                getHumanAngleAndThrottle(
+                    dataset,
+                    recordId
+                ).then(function(labels){
+                    throttle = labels.throttle;
+                    if (throttle < minThrottle) {
+                        // TODO: Call delete record API
+                        console.log('Delete: '+dataset+' '+recordId);
+                    }
+                });
+            });
+        });
+    }
+
+    function getDatasetRecordIds(dataset) {
+        return new Promise(function(resolve, reject){
+            data = JSON.stringify({ 'dataset': dataset})
+            $.post('/dataset-record-ids', data, function(result){
+                resolve(result.record_ids);
+            });
+        });
+    }
+
+    function getAiAngle(dataset, record_id) {
         return new Promise(function(resolve, reject) {
             data = JSON.stringify({ 'dataset': dataset, 'record_id' : record_id})
             $.post('/ai-angle', data, function(result){
@@ -10,7 +46,7 @@ var driveHandler = new function() {
         });
     }
 
-    function getHumanAngleAndThrottle() {
+    function getHumanAngleAndThrottle(dataset, record_id) {
         return new Promise(function(resolve, reject) {
             data = JSON.stringify({ 'dataset': dataset, 'record_id' : record_id})
             $.post('/user-labels', data, function(result){
@@ -113,7 +149,7 @@ var driveHandler = new function() {
         data = JSON.stringify({ 'dataset': dataset})
         $.post('/dataset-record-ids', data, function(result){
             record_ids = result.record_ids
-            record_id_index = record_id_index = 0
+            record_id_index = 0
             record_id = record_ids[record_id_index]
             updateUI();
         });
