@@ -121,17 +121,20 @@ var driveHandler = new function() {
       vehicleURL = '/drive'
 
       setBindings()
-      //updateUI();
     };
 
     async function playVideo() {
         recordId = updateRecordId(recordIds);
         updateImage(dataset, recordId);
         setDatasetProgress(dataset,recordIds,recordId);
-        updateLabelBars();
         await updateAiAndHumanLabelValues(dataset, recordId);
+        updateLabelBars();
+        console.log('record ID: '+recordId + ' '+ state.ai.angleAbsError);
         if (recordId <= maxRecordId && state.ai.angleAbsError < 0.8 && state.isVideoPlaying == true) {
+            console.log('record ID: '+recordId + ' continuing animation');
             window.requestAnimationFrame(playVideo);
+        } else {
+            state.isVideoPlaying = false;
         }
     }
 
