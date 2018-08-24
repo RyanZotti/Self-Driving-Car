@@ -214,7 +214,9 @@
 
       <div class="col-xs-8 col-sm-5 col-md-5"><!-- center column -->
         <div id="image-thumbnail" class="thumbnail">
-
+          <div id="image_placeholder">
+            <p>Select a dataset from the dropdown menu.</p>
+          </div>
         </div>
       </div><!-- end center column -->
 
@@ -268,7 +270,7 @@
 <script type="text/javascript">
   $( document ).ready(function() {
     console.log( "document ready!" );
-    driveHandler.load()
+    editor.load();
   });
 </script>
 </body>

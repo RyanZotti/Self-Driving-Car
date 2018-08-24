@@ -1,4 +1,4 @@
-var driveHandler = new function() {
+var editor = new function() {
     //functions used to drive the vehicle.
 
     // Dataset selected via drop-down or entire pass
@@ -217,11 +217,6 @@ var driveHandler = new function() {
       });
     };
 
-    var postPilot = function(){
-        data = JSON.stringify({ 'pilot': state.pilot })
-        $.post(vehicleURL, data)
-    }
-
     function updateImage(dataset, recordId) {
         imageUrl = '/image?dataset='+dataset+'&record-id='+recordId;
         if ($('#mpeg-image').length > 0) {
@@ -405,19 +400,6 @@ var driveHandler = new function() {
         } else {
             $("#image-thumbnail").html('<div id="image_placeholder"><p>Select a dataset from the dropdown menu.</p></div>');
         }
-    };
-
-    var postDrive = function() {
-
-        //Send angle and throttle values
-        data = JSON.stringify({ 'angle': state.human.angle,
-                                'throttle':state.human.throttle,
-                                'drive_mode':state.driveMode,
-                                'recording': state.recording,
-                                'brake':state.brakeOn,
-                                'max_throttle':state.maxThrottle})
-        $.post(driveURL, data)
-        updateUI();
     };
 
     // Math.sign() not available in iOS 8
