@@ -135,6 +135,13 @@ class RecordReader(object):
                 yield file
 
     # Used by the editor API
+    def get_image_path(self,dataset_name,record_id):
+        dataset_path = join(self.base_directory, dataset_name)
+        image_path = join(dataset_path, '{record_id}_cam-image_array_.png'.format(
+            record_id=record_id))
+        return image_path
+
+    # Used by the editor API
     def get_image(self,dataset_name,record_id):
         dataset_path = join(self.base_directory, dataset_name)
         image_path = join(dataset_path,'{record_id}_cam-image_array_.png'.format(
