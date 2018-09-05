@@ -174,6 +174,19 @@ class DeleteRecord(tornado.web.RequestHandler):
         #os.remove(image_path)
 
 
+class ImageCountFromDataset(tornado.web.RequestHandler):
+
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+        image_count = self.application.record_reader.get_image_count_from_dataset(
+            dataset_name=dataset_name
+        )
+        result = {
+            'image_count': image_count
+        }
+        self.write(result)
+
 class ListDatasets(tornado.web.RequestHandler):
 
     def get(self):
@@ -230,7 +243,7 @@ def make_app():
     static_file_path = os.path.join(this_dir, 'templates', 'static')
     handlers = [
         (r"/", tornado.web.RedirectHandler, dict(url="/drive")),
-        (r"/drive", DriveAPI),
+        (r"/editor", DriveAPI),
         (r"/ai-angle", AIAngleAPI),
         (r"/user-labels", UserLabelsAPI),
         (r"/image", ImageAPI),
@@ -239,6 +252,7 @@ def make_app():
         (r"/delete",DeleteRecord),
         (r"/keep", Keep),
         (r"/list-datasets",ListDatasets),
+        (r"/image-count-from-dataset", ImageCountFromDataset),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": static_file_path}),
     ]
     return tornado.web.Application(handlers)

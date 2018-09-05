@@ -107,6 +107,14 @@ class RecordReader(object):
             if record_id == file_record_id and dataset_name == file_dataset_name:
                 return file_path
 
+    # Used by the editor API
+    def get_image_count_from_dataset(self,dataset_name):
+        dataset_path = join(self.base_directory, dataset_name)
+        glob.glob(join(self.base_directory, dataset_name))
+        file_pattern = '{0}/*.png'.format(dataset_path)
+        file_paths = glob.glob(file_pattern)
+        return len(file_paths)
+
     def ordered_folders(self,folders):
         ordered_numbers = []
         for folder in folders:
