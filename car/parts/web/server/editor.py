@@ -187,6 +187,19 @@ class ImageCountFromDataset(tornado.web.RequestHandler):
         }
         self.write(result)
 
+class DatasetIdFromDataName(tornado.web.RequestHandler):
+
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+        dataset_id = self.application.record_reader.get_dataset_id_from_dataset_name(
+            dataset_name=dataset_name
+        )
+        result = {
+            'dataset_id': dataset_id
+        }
+        self.write(result)
+
 class ListDatasets(tornado.web.RequestHandler):
 
     def get(self):
@@ -253,6 +266,7 @@ def make_app():
         (r"/keep", Keep),
         (r"/list-datasets",ListDatasets),
         (r"/image-count-from-dataset", ImageCountFromDataset),
+        (r"/dataset-id-from-dataset-name", DatasetIdFromDataName),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": static_file_path}),
     ]
     return tornado.web.Application(handlers)

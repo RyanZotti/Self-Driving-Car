@@ -115,6 +115,11 @@ class RecordReader(object):
         file_paths = glob.glob(file_pattern)
         return len(file_paths)
 
+    def get_dataset_id_from_dataset_name(self, dataset_name):
+        regex = r'(?<=dataset_)(.*)(?=\_)'
+        dataset_id = re.search(regex, dataset_name).group(1)
+        return dataset_id
+
     def ordered_folders(self,folders):
         ordered_numbers = []
         for folder in folders:
