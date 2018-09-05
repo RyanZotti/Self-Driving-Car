@@ -200,6 +200,19 @@ class DatasetIdFromDataName(tornado.web.RequestHandler):
         }
         self.write(result)
 
+class DatasetDateFromDataName(tornado.web.RequestHandler):
+
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+        dataset_date = self.application.record_reader.get_dataset_date_from_dataset_name(
+            dataset_name=dataset_name
+        )
+        result = {
+            'dataset_date': dataset_date
+        }
+        self.write(result)
+
 class ListDatasets(tornado.web.RequestHandler):
 
     def get(self):
@@ -267,6 +280,7 @@ def make_app():
         (r"/list-datasets",ListDatasets),
         (r"/image-count-from-dataset", ImageCountFromDataset),
         (r"/dataset-id-from-dataset-name", DatasetIdFromDataName),
+        (r"/dataset-date-from-dataset-name", DatasetDateFromDataName),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": static_file_path}),
     ]
     return tornado.web.Application(handlers)

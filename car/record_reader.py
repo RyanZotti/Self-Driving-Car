@@ -1,4 +1,5 @@
 import cv2
+from datetime import datetime
 import glob
 import json
 import operator
@@ -119,6 +120,13 @@ class RecordReader(object):
         regex = r'(?<=dataset_)(.*)(?=\_)'
         dataset_id = re.search(regex, dataset_name).group(1)
         return dataset_id
+
+    def get_dataset_date_from_dataset_name(self, dataset_name):
+        regex = r'dataset_[0-9]+_(.*)'
+        date_str = re.search(regex, dataset_name).group(1)
+        date_dt = datetime.strptime(date_str, '%y-%m-%d')
+        new_date_str = date_dt.strftime("%Y-%m-%d")
+        return new_date_str
 
     def ordered_folders(self,folders):
         ordered_numbers = []
