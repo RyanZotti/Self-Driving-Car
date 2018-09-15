@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for src/utils/natural-sort.js</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../../index.html">All files</a> / <a href="index.html">src/utils</a> natural-sort.js
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">0% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>0/36</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">0% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>0/40</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">0% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>0/3</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">0% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>0/32</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line low'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/*
+ * Natural Sort algorithm for Javascript - Version 0.8.1 - Released under MIT license
+ * Author: Jim Palmer (based on chunking idea from Dave Koelle)
+ */
+<span class="cstat-no" title="statement not covered" >module.exports = <span class="fstat-no" title="function not covered" >fu</span>nction(a, b, opts) {</span>
+    var re = <span class="cstat-no" title="statement not covered" >/(^([+\-]?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?(?=\D|\s|$))|^0x[\da-fA-F]+$|\d+)/g,</span>
+        sr<span class="cstat-no" title="statement not covered" >e = /^\s+|\s+</span>$/g,   // trim pre-post whitespace
+        snr<span class="cstat-no" title="statement not covered" >e = /\s</span>+/g,        // normalize all whitespace to single ' ' character
+        dr<span class="cstat-no" title="statement not covered" >e = /(^([\w ]+,?[\w ]+)?[\w ]+,?[\w ]+\d+:\d+(:\d+)?[\w ]?|^\d{1,4}[\/\-]\d{1,4}[\/\-]\d{1,4}|^\w+, \w+ \d+, \d{4</span>})/,
+        hr<span class="cstat-no" title="statement not covered" >e = /^0x[0-9a-f]+</span>$/i,
+        or<span class="cstat-no" title="statement not covered" >e = /</span>^0/,
+        option<span class="cstat-no" title="statement not covered" >s = opts ||</span> {},
+<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >        i </span>= function(s) {</span>
+<span class="cstat-no" title="statement not covered" >            return (options.insensitive &amp;&amp; ('' + s).toLowerCase() || '' + s).replace(sre, '</span>');
+        },
+        // convert all to strings strip whitespace
+<span class="cstat-no" title="statement not covered" >        x = i</span>(a),
+<span class="cstat-no" title="statement not covered" >        y = i</span>(b),
+        // chunk/tokenize
+        x<span class="cstat-no" title="statement not covered" >N = x.replace(re, '\0$1\0').replace(/\0$/,'').replace(/^\0/,'').split('\0'</span>),
+        y<span class="cstat-no" title="statement not covered" >N = y.replace(re, '\0$1\0').replace(/\0$/,'').replace(/^\0/,'').split('\0'</span>),
+        // numeric, hex or date detection
+        x<span class="cstat-no" title="statement not covered" >D = parseInt(x.match(hre), 16) || (xN.length !== 1 &amp;&amp; Date.pars</span>e(x)),
+        y<span class="cstat-no" title="statement not covered" >D = parseInt(y.match(hre), 16) || xD &amp;&amp; y.match(dre) &amp;&amp; Date.parse(y) || n</span>ull,
+        normChun<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >k </span>= function(s, l) {</span>
+           // normalize spaces; find floats not starting with '0', string or 0 if not defined (Clint Priest)
+<span class="cstat-no" title="statement not covered" >           return (!s.match(ore) || l == 1) &amp;&amp; parseFloat(s) || s.replace(snre, ' ').replace(sre, '') || </span>0;
+        },
+        oFxNcL, oFyNcL;
+   // first try and sort Hex codes or Dates
+   i<span class="cstat-no" title="statement not covered" >f (yD) {</span>
+       i<span class="cstat-no" title="statement not covered" >f (xD &lt; yD) { <span class="cstat-no" title="statement not covered" >return -1; </span>}</span>
+       e<span class="cstat-no" title="statement not covered" >lse if (xD &gt; y<span class="cstat-no" title="statement not covered" >D) { retur</span>n</span> 1; }
+   }
+   // natural sorting through split numeric strings and default strings
+   f<span class="cstat-no" title="statement not covered" >or(var cLoc = 0, xNl = xN.length, yNl = yN.length, numS = Math.max(xNl, yNl); cLoc &lt; numS; cLoc++) {</span>
+       o<span class="cstat-no" title="statement not covered" >FxNcL = normChunk(xN[cLoc] || '', xNl);</span>
+       o<span class="cstat-no" title="statement not covered" >FyNcL = normChunk(yN[cLoc] || '', yNl);</span>
+       // handle numeric vs string comparison - number &lt; string - (Kyle Adams)
+       i<span class="cstat-no" title="statement not covered" >f (isNaN(oFxNcL) !== isNaN(oFyNcL)) {</span>
+           r<span class="cstat-no" title="statement not covered" >eturn isNaN(oFxNcL) ? 1 : -1;</span>
+       }
+       // if unicode use locale comparison
+       i<span class="cstat-no" title="statement not covered" >f (/[^\x00-\x80]/.test(oFxNcL + oFyNcL) &amp;&amp; oFxNcL.localeCompare) {</span>
+           var comp = o<span class="cstat-no" title="statement not covered" >FxNcL.localeCompare(oFyNcL);</span>
+           r<span class="cstat-no" title="statement not covered" >eturn comp / Math.abs(comp);</span>
+       }
+       i<span class="cstat-no" title="statement not covered" >f (oFxNcL &lt; oFyNcL) { <span class="cstat-no" title="statement not covered" >return -1; </span>}</span>
+       e<span class="cstat-no" title="statement not covered" >lse if (oFxNcL &gt; oFyNc<span class="cstat-no" title="statement not covered" >L) { retur</span>n</span> 1; }
+   }
+<span class="cstat-no" title="statement not covered" >    return 0;</span>
+};
+&nbsp;</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sun Jan 29 2017 19:33:05 GMT+0100 (CET)
+</div>
+</div>
+<script src="../../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../../sorter.js"></script>
+</body>
+</html>

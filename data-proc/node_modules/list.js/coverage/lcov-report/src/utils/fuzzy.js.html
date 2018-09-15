@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for src/utils/fuzzy.js</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../../index.html">All files</a> / <a href="index.html">src/utils</a> fuzzy.js
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">95.08% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>58/61</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">75% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>24/32</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>3/3</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">98.31% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>58/59</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line high'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124</td><td class="line-coverage quiet"><span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-yes">330x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-yes">330x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">698x</span>
+<span class="cline-any cline-yes">698x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">698x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">698x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">161x</span>
+<span class="cline-any cline-yes">161x</span>
+<span class="cline-any cline-yes">161x</span>
+<span class="cline-any cline-yes">515x</span>
+<span class="cline-any cline-yes">277x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">238x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">515x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">161x</span>
+<span class="cline-any cline-yes">161x</span>
+<span class="cline-any cline-yes">161x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">161x</span>
+<span class="cline-any cline-yes">161x</span>
+<span class="cline-any cline-yes">161x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3104x</span>
+<span class="cline-any cline-yes">3104x</span>
+<span class="cline-any cline-yes">1225x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1879x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3104x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">161x</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">101x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">module.exports = function(text, pattern, options) {
+    // Aproximately where in the text is the pattern expected to be found?
+    var Match_Location = options.location || 0;
+&nbsp;
+    //Determines how close the match must be to the fuzzy location (specified above). An exact letter match which is 'distance' characters away from the fuzzy location would score as a complete mismatch. A distance of '0' requires the match be at the exact location specified, a threshold of '1000' would require a perfect match to be within 800 characters of the fuzzy location to be found using a 0.8 threshold.
+    var Match_Distance = options.distance || <span class="branch-1 cbranch-no" title="branch not covered" >100;</span>
+&nbsp;
+    // At what point does the match algorithm give up. A threshold of '0.0' requires a perfect match (of both letters and location), a threshold of '1.0' would match anything.
+    var Match_Threshold = options.threshold || <span class="branch-1 cbranch-no" title="branch not covered" >0.4;</span>
+&nbsp;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (pattern === text) <span class="cstat-no" title="statement not covered" >return true; </span>// Exact match
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (pattern.length &gt; 32) <span class="cstat-no" title="statement not covered" >return false; </span>// This algorithm cannot be used
+&nbsp;
+    // Set starting location at beginning text and initialise the alphabet.
+    var loc = Match_Location,
+        s = (function() {
+            var q = {},
+                i;
+&nbsp;
+            for (i = 0; i &lt; pattern.length; i++) {
+                q[pattern.charAt(i)] = 0;
+            }
+&nbsp;
+            for (i = 0; i &lt; pattern.length; i++) {
+                q[pattern.charAt(i)] |= 1 &lt;&lt; (pattern.length - i - 1);
+            }
+&nbsp;
+            return q;
+        }());
+&nbsp;
+    // Compute and return the score for a match with e errors and x location.
+    // Accesses loc and pattern through being a closure.
+&nbsp;
+    function match_bitapScore_(e, x) {
+        var accuracy = e / pattern.length,
+            proximity = Math.abs(loc - x);
+&nbsp;
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (!Match_Distance) {
+            // Dodge divide by zero error.
+<span class="cstat-no" title="statement not covered" >            return proximity ? 1.0 : accuracy;</span>
+        }
+        return accuracy + (proximity / Match_Distance);
+    }
+&nbsp;
+    var score_threshold = Match_Threshold, // Highest score beyond which we give up.
+        best_loc = text.indexOf(pattern, loc); // Is there a nearby exact match? (speedup)
+&nbsp;
+    if (best_loc != -1) {
+        score_threshold = Math.min(match_bitapScore_(0, best_loc), score_threshold);
+        // What about in the other direction? (speedup)
+        best_loc = text.lastIndexOf(pattern, loc + pattern.length);
+&nbsp;
+        if (best_loc != -1) {
+            score_threshold = Math.min(match_bitapScore_(0, best_loc), score_threshold);
+        }
+    }
+&nbsp;
+    // Initialise the bit arrays.
+    var matchmask = 1 &lt;&lt; (pattern.length - 1);
+    best_loc = -1;
+&nbsp;
+    var bin_min, bin_mid;
+    var bin_max = pattern.length + text.length;
+    var last_rd;
+    for (var d = 0; d &lt; pattern.length; d++) {
+        // Scan for the best match; each iteration allows for one more error.
+        // Run a binary search to determine how far from 'loc' we can stray at this
+        // error level.
+        bin_min = 0;
+        bin_mid = bin_max;
+        while (bin_min &lt; bin_mid) {
+            if (match_bitapScore_(d, loc + bin_mid) &lt;= score_threshold) {
+                bin_min = bin_mid;
+            } else {
+                bin_max = bin_mid;
+            }
+            bin_mid = Math.floor((bin_max - bin_min) / 2 + bin_min);
+        }
+        // Use the result from this iteration as the maximum for the next.
+        bin_max = bin_mid;
+        var start = Math.max(1, loc - bin_mid + 1);
+        var finish = Math.min(loc + bin_mid, text.length) + pattern.length;
+&nbsp;
+        var rd = Array(finish + 2);
+        rd[finish + 1] = (1 &lt;&lt; d) - 1;
+        for (var j = finish; j &gt;= start; j--) {
+            // The alphabet (s) is a sparse hash, so the following line generates
+            // warnings.
+            var charMatch = s[text.charAt(j - 1)];
+            if (d === 0) {    // First pass: exact match.
+                rd[j] = ((rd[j + 1] &lt;&lt; 1) | 1) &amp; charMatch;
+            } else {    // Subsequent passes: fuzzy match.
+                rd[j] = (((rd[j + 1] &lt;&lt; 1) | 1) &amp; charMatch) |
+                                (((last_rd[j + 1] | last_rd[j]) &lt;&lt; 1) | 1) |
+                                last_rd[j + 1];
+            }
+            if (rd[j] &amp; matchmask) {
+                var score = match_bitapScore_(d, j - 1);
+                // This match will almost certainly be better than any existing match.
+                // But check anyway.
+                <span class="missing-if-branch" title="else path not taken" >E</span>if (score &lt;= score_threshold) {
+                    // Told you so.
+                    score_threshold = score;
+                    best_loc = j - 1;
+                    if (best_loc &gt; loc) {
+                        // When passing loc, don't exceed our current distance from loc.
+                        start = Math.max(1, 2 * loc - best_loc);
+                    } else {
+                        // Already passed loc, downhill from here on in.
+                        break;
+                    }
+                }
+            }
+        }
+        // No hope for a (better) match at greater error levels.
+        if (match_bitapScore_(d + 1, loc) &gt; score_threshold) {
+            break;
+        }
+        last_rd = rd;
+    }
+&nbsp;
+    return (best_loc &lt; 0) ? false : true;
+};
+&nbsp;</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sun Jan 29 2017 19:36:51 GMT+0100 (CET)
+</div>
+</div>
+<script src="../../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../../sorter.js"></script>
+</body>
+</html>

@@ -2318,11 +2318,6 @@ pre code
     background-color: #fff;
     box-shadow: transparent;
 }
-.form-control::-webkit-input-placeholder
-{
-    opacity: 1; 
-    color: #b1c2d9;
-}
 .form-control:-ms-input-placeholder
 {
     opacity: 1; 
@@ -18042,14 +18037,6 @@ button:focus
     outline: 0;
     background-color: #fff;
     box-shadow: transparent;
-}
-.select2-container .select2-selection--single::-webkit-input-placeholder,
-.select2-container--default.select2-container--focus .select2-selection--multiple::-webkit-input-placeholder,
-.select2-container--default .select2-selection--multiple::-webkit-input-placeholder,
-.select2-container--default .select2-search--dropdown .select2-search__field::-webkit-input-placeholder
-{
-    opacity: 1; 
-    color: #b1c2d9;
 }
 .select2-container .select2-selection--single:-ms-input-placeholder,
 .select2-container--default.select2-container--focus .select2-selection--multiple:-ms-input-placeholder,
