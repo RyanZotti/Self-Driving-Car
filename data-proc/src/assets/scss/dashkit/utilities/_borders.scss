@@ -1,0 +1,23 @@
+//
+// borders.scss
+//
+
+.border-2 {
+  border: $border-width * 2 solid $border-color !important;
+}
+
+.border-top-2 {
+  border-top: $border-width * 2 solid $border-color !important;
+}
+
+.border-right-2 {
+  border-right: $border-width * 2 solid $border-color !important;
+}
+
+.border-bottom-2 {
+  border-bottom: $border-width * 2 solid $border-color !important;
+}
+
+.border-left-2 {
+  border-left: $border-width * 2 solid $border-color !important;
+}

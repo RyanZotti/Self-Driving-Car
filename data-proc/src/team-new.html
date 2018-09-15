@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    @@include("partials/head.html", {
+      "title": "Dashkit"
+    })
+  </head>
+  <body>
+
+    <!-- MODALS
+    ================================================== -->
+    @@include("partials/modals.html")
+
+    <!-- SIDEBAR
+    ================================================== -->
+    @@include("partials/sidebar.html", {
+      "category": "pages",
+      "subcategory": "team",
+      "page": "team-new.html",
+      "user": true
+    })
+
+    <!-- MAIN CONTENT
+    ================================================== -->
+    <div class="main-content">
+      <div class="container-fluid">
+        <div class="row justify-content-center">
+          <div class="col-12 col-lg-10 col-xl-8">
+            
+            <!-- Header -->
+            <div class="header mt-md-5">
+              <div class="header-body">
+                <div class="row align-items-center">
+                  <div class="col">
+                    
+                    <!-- Pretitle -->
+                    <h6 class="header-pretitle">
+                      New team
+                    </h6>
+
+                    <!-- Title -->
+                    <h1 class="header-title">
+                      Create a new team
+                    </h1>
+
+                  </div>
+                </div> <!-- / .row -->
+              </div>
+            </div>
+
+            <!-- Form -->
+            <form class="mb-4">
+
+              <!-- Team name -->
+              <div class="form-group">
+                <label>
+                  Team name
+                </label>
+                <input type="text" class="form-control">
+              </div>
+
+              <!-- Team description -->
+              <div class="form-group">
+                <label class="mb-1">
+                  Team description
+                </label>
+                <small class="form-text text-muted">
+                  This is how others will learn about the project, so make it good!
+                </small>
+                <div data-toggle="quill"></div>
+              </div>
+
+              <!-- Team members -->
+              <div class="form-group">
+                <label>
+                  Add team members
+                </label>
+                <select class="form-control" data-toggle="select" multiple>
+                  <option data-avatar-src="assets/img/avatars/profiles/avatar-1.jpg">
+                    Dianna Smiley
+                  </option>
+                  <option data-avatar-src="assets/img/avatars/profiles/avatar-2.jpg">
+                    Ab Hadley
+                  </option>
+                  <option data-avatar-src="assets/img/avatars/profiles/avatar-3.jpg">
+                    Adolfo Hess
+                  </option>
+                  <option data-avatar-src="assets/img/avatars/profiles/avatar-4.jpg">
+                    Daniela Dewitt
+                  </option>
+                </select>
+              </div>
+
+              <!-- Divider -->
+              <hr class="mt-4 mb-5">
+
+              <!-- Project cover -->
+              <div class="form-group">
+                <label class="mb-1">
+                  Team cover
+                </label>
+                <small class="form-text text-muted">
+                  Please use an image no larger than 1200px * 600px. 
+                </small>
+                <div class="dropzone dropzone-single mb-3" data-toggle="dropzone" data-dropzone-url="http://">
+
+                  <div class="fallback">
+                    <div class="custom-file">
+                      <input type="file" class="custom-file-input" id="teamCoverUploads">
+                      <label class="custom-file-label" for="teamCoverUploads">Choose file</label>
+                    </div>
+                  </div>
+
+                  <div class="dz-preview dz-preview-single">
+                    <div class="dz-preview-cover">
+                      <img class="dz-preview-img" src="..." alt="..." data-dz-thumbnail>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Divider -->
+              <hr class="mt-5 mb-5">
+
+              <div class="row">
+                <div class="col-12 col-md-6">
+                  
+                  <!-- Private team -->
+                  <div class="form-group">
+                    <label class="mb-1">
+                      Private team
+                    </label>
+                    <small class="form-text text-muted">
+                      If you are available for hire outside of the current situation, you can encourage others to hire you.
+                    </small>
+                    <div class="custom-control custom-checkbox-toggle">
+                      <input type="checkbox" class="custom-control-input" id="exampleToggle" checked>
+                      <label class="custom-control-label" for="exampleToggle"></label>
+                    </div>
+                  </div>
+                  
+                </div>
+                <div class="col-12 col-md-6">
+
+                  <!-- Warning -->
+                  <div class="card bg-light border">
+                    <div class="card-body">
+                      
+                      <h4 class="mb-2">
+                        <i class="fe fe-alert-triangle"></i> Warning
+                      </h4>
+
+                      <p class="small text-muted mb-0">
+                        Once a team is made private, you cannot revert it to a public team.
+                      </p>
+
+                    </div>
+                  </div>
+                  
+                </div>
+              </div> <!-- / .row -->
+
+              <!-- Divider -->
+              <hr class="mt-5 mb-5">
+
+              <!-- Buttons -->
+              <a href="#" class="btn btn-block btn-primary">
+                Create team
+              </a>
+              <a href="#" class="btn btn-block btn-link text-muted">
+                Cancel this team
+              </a>
+
+            </form>
+
+          </div>
+        </div> <!-- / .row -->
+      </div> <!-- / .container-fluid -->
+    </div> <!-- / .main-content -->
+
+    <!-- JAVASCRIPT
+    ================================================== -->
+    @@include("partials/scripts.html")
+
+  </body>
+</html>

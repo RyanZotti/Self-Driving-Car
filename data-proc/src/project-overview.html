@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    @@include("partials/head.html", {
+      "title": "Dashkit"
+    })
+  </head>
+  <body>
+
+    <!-- MODALS
+    ================================================== -->
+    @@include("partials/modals.html")
+
+    <!-- SIDEBAR
+    ================================================== -->
+    @@include("partials/sidebar.html", {
+      "category": "pages",
+      "subcategory": "project",
+      "page": "project-overview.html",
+      "user": true
+    })
+
+    <!-- MAIN CONTENT
+    ================================================== -->
+    <div class="main-content">
+
+      <!-- HEADER -->
+      <div class="header">
+        <div class="container-fluid">
+          
+          <!-- Body -->
+          <div class="header-body">
+            <div class="row align-items-center">
+              <div class="col-auto">
+
+                <!-- Avatar -->
+                <div class="avatar avatar-lg avatar-4by3">
+                  <img src="assets/img/avatars/projects/project-1.jpg" alt="..." class="avatar-img rounded">
+                </div>
+
+              </div>
+              <div class="col ml--3 ml-md--2">
+                
+                <!-- Pretitle -->
+                <h6 class="header-pretitle">
+                  Projects
+                </h6>
+
+                <!-- Title -->
+                <h1 class="header-title">
+                  Homepage Redesign
+                </h1>
+
+              </div>
+              <div class="col-12 col-md-auto mt-3 mt-md-0">
+                
+                <!-- Avatar group -->
+                <div class="avatar-group">
+                  <a href="profile-posts.html" class="avatar" data-toggle="tooltip" title="Dianna Smiley">
+                    <img src="assets/img/avatars/profiles/avatar-1.jpg" alt="..." class="avatar-img rounded-circle border border-body">
+                  </a>
+                  <a href="profile-posts.html" class="avatar" data-toggle="tooltip" title="Ab Hadley">
+                    <img src="assets/img/avatars/profiles/avatar-2.jpg" alt="..." class="avatar-img rounded-circle border border-body">
+                  </a>
+                  <a href="profile-posts.html" class="avatar" data-toggle="tooltip" title="Adolfo Hess">
+                    <img src="assets/img/avatars/profiles/avatar-3.jpg" alt="..." class="avatar-img rounded-circle border border-body">
+                  </a>
+                  <a href="profile-posts.html" class="avatar" data-toggle="tooltip" title="Daniela Dewitt">
+                    <img src="assets/img/avatars/profiles/avatar-4.jpg" alt="..." class="avatar-img rounded-circle border border-body">
+                  </a>
+                </div>
+
+                <!-- Button -->
+                <a href="#modalMembers" class="btn btn-lg btn-rounded-circle btn-white" data-toggle="modal">
+                  +
+                </a>
+
+              </div>
+            </div> <!-- / .row -->
+            <div class="row align-items-center">
+              <div class="col">
+                
+                <!-- Nav -->
+                <ul class="nav nav-tabs nav-overflow header-tabs">
+                  <li class="nav-item">
+                    <a href="project-overview.html" class="nav-link active">
+                      Overview
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="project-files.html" class="nav-link">
+                      Files
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="project-reports.html" class="nav-link">
+                      Reports
+                    </a>
+                  </li>
+                </ul>
+
+              </div>
+            </div>
+          </div>
+
+        </div> <!-- / .container-fluid -->
+      </div> <!-- / .header -->
+
+      <!-- CONTENT -->
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            
+            <!-- Alert -->
+            <div class="alert alert-primary">
+              This project is forecasted to complete below budget!
+
+              <!-- Close -->
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">×</span>
+              </button>
+
+            </div>
+
+            <!-- Card -->
+            <div class="card">
+              <div class="card-header">
+                
+                <!-- Tabs -->
+                <ul class="nav nav-tabs card-header-tabs">
+                  <li class="nav-item" data-toggle="chart" data-target="#performanceChart" data-update='{"data":{"datasets":[{"data":[0,10,5,15,10,20,15,25,20,30,25,40]}]}}' data-prefix="$" data-suffix="k">
+                    <a class="nav-link active" href="#!" data-toggle="tab">
+                      Earned
+                    </a>
+                  </li>
+                  <li class="nav-item" data-toggle="chart" data-target="#performanceChart" data-update='{"data":{"datasets":[{"data":[7,35,12,27,34,17,19,30,28,32,24,39]}]}}' data-prefix="" data-suffix="hr">
+                    <a class="nav-link" href="#!" data-toggle="tab">
+                      Hours Worked
+                    </a>
+                  </li>
+                </ul>
+
+              </div>
+              <div class="card-body">
+                
+                <!-- Chart -->
+                <div class="chart">
+                  <canvas id="performanceChart" class="chart-canvas"></canvas>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div> <!-- / .row -->
+        <div class="row">
+          <div class="col-12 col-lg-6 col-xl">
+            
+            <!-- Card -->
+            <div class="card">
+              <div class="card-body">
+                <div class="row align-items-center">
+                  <div class="col">
+
+                    <!-- Title -->
+                    <h6 class="card-title text-uppercase text-muted mb-2">
+                      Budget
+                    </h6>
+                    
+                    <!-- Heading -->
+                    <span class="h2 mb-0">
+                      $24,500
+                    </span>
+
+                    <!-- Badge -->
+                    <span class="badge badge-soft-success mt--1">
+                      +3.5%
+                    </span>
+
+                  </div>
+                  <div class="col-auto">
+                    
+                    <!-- Icon -->
+                    <span class="h2 fe fe-dollar-sign text-muted mb-0"></span>
+
+                  </div>
+                </div> <!-- / .row -->
+
+              </div>
+            </div>
+
+          </div>
+          <div class="col-12 col-lg-6 col-xl">
+            
+            <!-- Card -->
+            <div class="card">
+              <div class="card-body">
+                <div class="row align-items-center">
+                  <div class="col">
+
+                    <!-- Title -->
+                    <h6 class="card-title text-uppercase text-muted mb-2">
+                      Total Hours
+                    </h6>
+                    
+                    <!-- Heading -->
+                    <span class="h2 mb-0">
+                      763.5
+                    </span>
+
+                  </div>
+                  <div class="col-auto">
+                    
+                    <!-- Icon -->
+                    <span class="h2 fe fe-briefcase text-muted mb-0"></span>
+
+                  </div>
+                </div> <!-- / .row -->
+
+              </div>
+            </div>
+              
+          </div>
+          <div class="col-12 col-lg-6 col-xl">
+            
+            <!-- Card -->
+            <div class="card">
+              <div class="card-body">
+                <div class="row align-items-center">
+                  <div class="col">
+
+                    <!-- Title -->
+                    <h6 class="card-title text-uppercase text-muted mb-2">
+                      Progress
+                    </h6>
+
+                    <div class="row align-items-center no-gutters">
+                      <div class="col-auto">
+
+                        <!-- Heading -->
+                        <span class="h2 mr-2 mb-0">
+                          84.5%
+                        </span>
+                        
+                      </div>
+                      <div class="col">
+                        
+                        <!-- Progress -->
+                        <div class="progress progress-sm">
+                          <div class="progress-bar" role="progressbar" style="width: 85%" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+
+                      </div>
+                    </div> <!-- / .row -->
+
+                  </div>
+                  <div class="col-auto">
+                    
+                    <!-- Icon -->
+                    <span class="h2 fe fe-clipboard text-muted mb-0"></span>
+
+                  </div>
+                </div> <!-- / .row -->
+
+              </div>
+            </div>
+              
+          </div>
+          <div class="col-12 col-lg-6 col-xl">
+            
+            <!-- Card -->
+            <div class="card">
+              <div class="card-body">
+                <div class="row align-items-center">
+                  <div class="col">
+
+                    <!-- Title -->
+                    <h6 class="card-title text-uppercase text-muted mb-2">
+                      Effective Hourly
+                    </h6>
+                    
+                    <!-- Heading -->
+                    <span class="h2 mb-0">
+                      $85.50
+                    </span>
+
+                  </div>
+                  <div class="col-auto">
+                    
+                    <!-- Icon -->
+                    <span class="h2 fe fe-clock text-muted mb-0"></span>
+
+                  </div>
+                </div> <!-- / .row -->
+
+              </div>
+            </div>
+              
+          </div>
+        </div> <!-- / .row -->
+        <div class="row">
+          <div class="col-12 col-xl-8">
+            
+            <!-- Performance -->
+            <div class="card">
+              <div class="card-header">
+                <div class="row align-items-center">
+                  <div class="col">
+                    
+                    <!-- Title -->
+                    <h4 class="card-header-title">
+                      Performance
+                    </h4>
+
+                  </div>
+                  <div class="col-auto">
+                    
+                    <!-- Button -->
+                    <a href="#!" class="btn btn-sm btn-white">
+                      Export
+                    </a>
+
+                  </div>
+                </div> <!-- / .row -->
+              </div>
+              <div class="table-responsive mb-0">
+                <table class="table table-sm table-nowrap card-table">
+                  <thead>
+                    <tr>
+                      <th>
+                        Member
+                      </th>
+                      <th>
+                        Schedule
+                      </th>
+                      <th>
+                        Hours Billed
+                      </th>
+                      <th>
+                        Completion
+                      </th>
+                      <th>
+                        Effective Rate
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+
+                        <!-- Avatar -->
+                        <a href="profile-posts.htmL" class="avatar avatar-xs d-inline-block mr-2">
+                          <img src="assets/img/avatars/profiles/avatar-1.jpg" alt="..." class="avatar-img rounded-circle">
+                        </a>
+                        
+                        <!-- Title -->
+                        <span>Dianna Smiley</span>
+
+                      </td>
+                      <td>
+                        <span class="text-success">●</span> On Schedule
+                      </td>
+                      <td>
+                        271
+                      </td>
+                      <td>
+                        <div class="row align-items-center no-gutters">
+                          <div class="col-auto">
+
+                            <span class="mr-2">55%</span>
+
+                          </div>
+                          <div class="col">
+
+                            <!-- Progress -->
+                            <div class="progress progress-sm">
+                              <div class="progress-bar bg-secondary" role="progressbar" style="width: 55%" aria-valuenow="55" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+
+                          </div>
+                        </div> <!-- / .row -->
+                      </td>
+                      <td>
+                        $55.25%
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+
+                        <!-- Avatar -->
+                        <a href="profile-posts.html" class="avatar avatar-xs d-inline-block mr-2">
+                          <img src="assets/img/avatars/profiles/avatar-2.jpg" alt="..." class="avatar-img rounded-circle">
+                        </a>
+                        
+                        <!-- Title -->
+                        <span>Ab Hadley</span>
+
+                      </td>
+                      <td>
+                        <span class="text-warning">●</span> Delayed
+                      </td>
+                      <td>
+                        44
+                      </td>
+                      <td>
+                        <div class="row align-items-center no-gutters">
+                          <div class="col-auto">
+
+                            <span class="mr-2">25%</span>
+
+                          </div>
+                          <div class="col">
+
+                            <!-- Progress -->
+                            <div class="progress progress-sm">
+                              <div class="progress-bar bg-secondary" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+
+                          </div>
+                        </div> <!-- / .row -->
+                      </td>
+                      <td>
+                        $122.52%
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+
+                        <!-- Avatar -->
+                        <a href="profile-posts.html" class="avatar avatar-xs d-inline-block mr-2">
+                          <img src="assets/img/avatars/profiles/avatar-3.jpg" alt="..." class="avatar-img rounded-circle">
+                        </a>
+                        
+                        <!-- Title -->
+                        <span>Adolfo Hess</span>
+
+                      </td>
+                      <td>
+                        <span class="text-success">●</span> On Schedule
+                      </td>
+                      <td>
+                        271
+                      </td>
+                      <td>
+                        <div class="row align-items-center no-gutters">
+                          <div class="col-auto">
+
+                            <span class="mr-2">55%</span>
+
+                          </div>
+                          <div class="col">
+
+                            <!-- Progress -->
+                            <div class="progress progress-sm">
+                              <div class="progress-bar bg-secondary" role="progressbar" style="width: 55%" aria-valuenow="55" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+
+                          </div>
+                        </div> <!-- / .row -->
+                      </td>
+                      <td>
+                        $55.25%
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+
+                        <!-- Avatar -->
+                        <a href="profile-posts.html" class="avatar avatar-xs d-inline-block mr-2">
+                          <img src="assets/img/avatars/profiles/avatar-4.jpg" alt="..." class="avatar-img rounded-circle">
+                        </a>
+                        
+                        <!-- Title -->
+                        <span>Daniela Dewitt</span>
+
+                      </td>
+                      <td>
+                        <span class="text-warning">●</span> Delayed
+                      </td>
+                      <td>
+                        44
+                      </td>
+                      <td>
+                        <div class="row align-items-center no-gutters">
+                          <div class="col-auto">
+
+                            <span class="mr-2">25%</span>
+
+                          </div>
+                          <div class="col">
+
+                            <!-- Progress -->
+                            <div class="progress progress-sm">
+                              <div class="progress-bar bg-secondary" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+
+                          </div>
+                        </div> <!-- / .row -->
+                      </td>
+                      <td>
+                        $122.52%
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+
+                        <!-- Avatar -->
+                        <a href="profile-posts.html" class="avatar avatar-xs d-inline-block mr-2">
+                          <img src="assets/img/avatars/profiles/avatar-5.jpg" alt="..." class="avatar-img rounded-circle">
+                        </a>
+                        
+                        <!-- Title -->
+                        <span>Miyah Myles</span>
+
+                      </td>
+                      <td>
+                        <span class="text-success">●</span> On Schedule
+                      </td>
+                      <td>
+                        271
+                      </td>
+                      <td>
+                        <div class="row align-items-center no-gutters">
+                          <div class="col-auto">
+
+                            <span class="mr-2">55%</span>
+
+                          </div>
+                          <div class="col">
+
+                            <!-- Progress -->
+                            <div class="progress progress-sm">
+                              <div class="progress-bar bg-secondary" role="progressbar" style="width: 55%" aria-valuenow="55" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+
+                          </div>
+                        </div> <!-- / .row -->
+                      </td>
+                      <td>
+                        $55.25%
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+          <div class="col-12 col-xl-4">
+            
+            <!-- Latest Files -->
+            <div class="card">
+              <div class="card-header">
+                <div class="row align-items-center">
+                  <div class="col">
+                    
+                    <!-- Title -->
+                    <h4 class="card-header-title">
+                      Latest Files
+                    </h4>
+
+                  </div>
+                  <div class="col-auto">
+
+                    <!-- Link -->
+                    <a href="#!" class="small">View all</a>
+                    
+                  </div>
+                </div> <!-- / .row -->
+              </div>
+              <div class="card-body">
+
+                <div class="row align-items-center">
+                  <div class="col-auto">
+                    
+                    <!-- Avatar -->
+                    <a href="#!" class="avatar">
+                      <img src="assets/img/files/file-1.jpg" alt="..." class="avatar-img rounded">
+                    </a>
+
+                  </div>
+                  <div class="col ml--2">
+
+                    <!-- Title -->
+                    <h4 class="card-title mb-1">
+                      <a href="#!">Launchday Logo</a>
+                    </h4>
+
+                    <!-- Time -->
+                    <p class="card-text small text-muted">
+                      2.5kb SVG
+                    </p>
+                    
+                  </div>
+                  <div class="col-auto">
+                    
+                    <!-- Dropdown -->
+                    <div class="dropdown">
+                      <a href="#!" class="dropdown-ellipses dropdown-toggle" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fe fe-more-vertical"></i>
+                      </a>
+                      <div class="dropdown-menu dropdown-menu-right">
+                        <a href="#!" class="dropdown-item">
+                          Action
+                        </a>
+                        <a href="#!" class="dropdown-item">
+                          Another action
+                        </a>
+                        <a href="#!" class="dropdown-item">
+                          Something else here
+                        </a>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </div> <!-- / .row -->
+
+                <!-- Divider -->
+                <hr>
+
+                <div class="row align-items-center">
+                  <div class="col-auto">
+                    
+                    <!-- Avatar -->
+                    <a href="#!" class="avatar">
+                      <img src="assets/img/files/file-2.jpg" alt="..." class="avatar-img rounded">
+                    </a>
+
+                  </div>
+                  <div class="col ml--2">
+
+                    <!-- Title -->
+                    <h4 class="card-title mb-1">
+                      <a href="#!">Example Grid</a>
+                    </h4>
+
+                    <!-- Time -->
+                    <p class="card-text small text-muted">
+                      1.5mb PNG
+                    </p>
+                    
+                  </div>
+                  <div class="col-auto">
+                    
+                    <!-- Dropdown -->
+                    <div class="dropdown">
+                      <a href="#!" class="dropdown-ellipses dropdown-toggle" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fe fe-more-vertical"></i>
+                      </a>
+                      <div class="dropdown-menu dropdown-menu-right">
+                        <a href="#!" class="dropdown-item">
+                          Action
+                        </a>
+                        <a href="#!" class="dropdown-item">
+                          Another action
+                        </a>
+                        <a href="#!" class="dropdown-item">
+                          Something else here
+                        </a>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </div> <!-- / .row -->
+
+                <!-- Divider -->
+                <hr>
+
+                <div class="row align-items-center">
+                  <div class="col-auto">
+                    
+                    <!-- Avatar -->
+                    <a href="#!" class="avatar">
+                      <div class="avatar-title rounded bg-white text-secondary">
+                        <span class="fe fe-folder"></span>
+                      </div>
+                    </a>
+
+                  </div>
+                  <div class="col ml--2">
+
+                    <!-- Title -->
+                    <h4 class="card-title mb-1">
+                      <a href="#!">Screenshot Collection</a>
+                    </h4>
+
+                    <!-- Time -->
+                    <p class="card-text small text-muted">
+                      6.9mb directory
+                    </p>
+                    
+                  </div>
+                  <div class="col-auto">
+                    
+                    <!-- Dropdown -->
+                    <div class="dropdown">
+                      <a href="#!" class="dropdown-ellipses dropdown-toggle" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fe fe-more-vertical"></i>
+                      </a>
+                      <div class="dropdown-menu dropdown-menu-right">
+                        <a href="#!" class="dropdown-item">
+                          Action
+                        </a>
+                        <a href="#!" class="dropdown-item">
+                          Another action
+                        </a>
+                        <a href="#!" class="dropdown-item">
+                          Something else here
+                        </a>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </div> <!-- / .row -->
+
+                <!-- Divider -->
+                <hr>
+
+                <div class="row align-items-center">
+                  <div class="col-auto">
+                    
+                    <!-- Avatar -->
+                    <a href="#!" class="avatar">
+                      <img src="assets/img/files/file-3.jpg" alt="..." class="avatar-img rounded">
+                    </a>
+
+                  </div>
+                  <div class="col ml--2">
+
+                    <!-- Title -->
+                    <h4 class="card-title mb-1">
+                      <a href="#!">Launchday Cover</a>
+                    </h4>
+
+                    <!-- Time -->
+                    <p class="card-text small text-muted">
+                      750kb JPG
+                    </p>
+                    
+                  </div>
+                  <div class="col-auto">
+                    
+                    <!-- Dropdown -->
+                    <div class="dropdown">
+                      <a href="#!" class="dropdown-ellipses dropdown-toggle" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fe fe-more-vertical"></i>
+                      </a>
+                      <div class="dropdown-menu dropdown-menu-right">
+                        <a href="#!" class="dropdown-item">
+                          Action
+                        </a>
+                        <a href="#!" class="dropdown-item">
+                          Another action
+                        </a>
+                        <a href="#!" class="dropdown-item">
+                          Something else here
+                        </a>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </div> <!-- / .row -->
+
+              </div> <!-- / .card-body -->
+            </div> <!-- / .card -->
+
+          </div>
+        </div> <!-- / .row -->
+      </div> <!-- / .container-fluid -->
+      
+    </div> <!-- / .main-content -->
+
+    <!-- JAVASCRIPT
+    ================================================== -->
+    @@include("partials/scripts.html")
+
+  </body>
+</html>

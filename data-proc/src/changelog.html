@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    @@include("partials/head.html", {
+      "title": "Dashkit"
+    })
+  </head>
+  <body>
+
+    <!-- MODALS
+    ================================================== -->
+    @@include("partials/modals.html")
+
+    <!-- SIDEBAR
+    ================================================== -->
+    @@include("partials/sidebar.html", {
+      "category": "",
+      "subcategory": "",
+      "page": "changelog.html",
+      "user": true
+    })
+
+    <!-- MAIN CONTENT
+    ================================================== -->
+    <div class="main-content">
+      <div class="container-fluid">
+        <div class="row justify-content-center">
+          <div class="col-12 col-lg-10 col-xl-8">
+
+              <!-- Header -->
+              <div class="header mt-md-5">
+                <div class="header-body">
+
+                  <!-- Pretitle -->
+                  <h6 class="header-pretitle">
+                    Documentation
+                  </h6>
+  
+                  <!-- Title -->
+                  <h1 class="header-title">
+                    Changelog
+                  </h1>
+
+                </div>
+              </div>
+
+              <h2 class="d-inline-block"><span class="badge badge-soft-primary mt--1">v1.1.2</span></h2><span class="text-muted"> – August 17th, 2018</span>
+              <ul class="mb-5">
+                <li>Added <code>$font-path</code> SCSS variable.</li>
+                <li>Updated to Bootstrap v4.1.3.</li>
+                <li>Improved SCSS of the Select2 plugin styles overrides.</li>
+                <li>Fixed radio button issue.</li>
+                <li>Fixed card tables border radius issue.</li>
+                <li>Fixed validation styles for <code>.input-group-merge</code>.</li>
+                <li>Fixed Select2 dropdown items highlighting when using keyboard navigation.</li>
+                <li>Made Select2 dropdowns respect <code>.form-control-sm</code> and <code>.form-control-lg</code>.</li>
+                <li>Made Select2 searchbox optional.</li>
+              </ul>
+
+              <h2 class="d-inline-block"><span class="badge badge-soft-primary mt--1">v1.1.1</span></h2><span class="text-muted"> – July 31st, 2018</span>
+              <ul class="mb-5">
+                <li>Specified the exact Bootstrap version in <code>package.json</code> since latest Bootstrap update (v4.1.3) made change to input height that caused issues. Interim solution until we integrate 4.1.3 properly to Dashkit.</li>
+              </ul>
+
+              <h2 class="d-inline-block"><span class="badge badge-soft-primary mt--1">v1.1.0</span></h2><span class="text-muted"> – July 24th, 2018</span>
+              <ul class="mb-5">
+                <li>
+                  New/Extended components:
+                  <ul>
+                    <li>Universal loading component with <code>.is-loading</code> convenience helper</li>
+                    <li>WYSIWYG editor powered by Quill.js</li>
+                    <li>Drag and drop file handling powered by Dropzone.js</li>
+                    <li>Rich select/multi-select powered by Select2</li>
+                    <li>Icon buttons</li>
+                  </ul>
+                </li>
+                <li>
+                  New example pages:
+                  <ul>
+                    <li>Orders page</li>
+                    <li>Invoice page</li>
+                    <li>Pricing page</li>
+                    <li>Create a project page</li>
+                    <li>Create a team page</li>
+                  </ul>
+                </li>
+                <li>
+                  Moved all plugin related styles into their own SCSS files.
+                </li>
+                <li>
+                  Small improvements to variable importing and modal animations. 
+                </li>
+              </ul>
+
+              <h2 class="d-inline-block"><span class="badge badge-soft-primary mt--1">v1.0.2</span></h2><span class="text-muted"> – July 20th, 2018</span>
+              <ul class="mb-5">
+                <li>
+                  Updated to Bootstrap v4.1.2.
+                </li>
+                <li>
+                  Fixed border utilities.
+                </li>
+                <li>
+                  Fixed an issue where tabs didn't get toggled while charts did.
+                </li>
+              </ul>
+
+              <h2 class="d-inline-block"><span class="badge badge-soft-primary mt--1">v1.0.1</span></h2><span class="text-muted"> – July 18th, 2018</span>
+              <ul class="mb-5">
+                <li>
+                  Removed page header from the topnav version.
+                </li>
+                <li>
+                  Changed variables import order. Added <code>!default</code> flag to custom variables.
+                </li>
+                <li>
+                  Fixed scrolling issue on authentication pages.
+                </li>
+                <li>
+                  Fixed Chart.js issue causing errors on pages with no charts.
+                </li>
+              </ul>
+
+              <h2 class="d-inline-block"><span class="badge badge-soft-primary mt--1">v1.0.0</span></h2><span class="text-muted"> – June 25th, 2018</span>
+              <ul>
+                <li>
+                  Initial release of Dashkit! Lots more coming soon though 😁
+                </li>
+              </ul>
+
+          </div>
+        </div> <!-- / .row -->
+      </div> <!-- / .container-fluid -->
+    </div> <!-- / .main-content -->
+
+    <!-- JAVASCRIPT
+    ================================================== -->
+    @@include("partials/scripts.html")
+
+  </body>
+</html>

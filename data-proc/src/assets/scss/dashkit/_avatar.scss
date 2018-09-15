@@ -1,0 +1,150 @@
+//
+// avatar.scss
+// Dashkit component
+//
+
+// Avatar
+//
+// General styles
+
+.avatar {
+  position: relative;
+  display: inline-block;
+}
+
+.avatar-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+
+.avatar-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%; height: 100%;
+  background-color: $gray-500;
+  color: $white;
+}
+
+
+// Status
+//
+// Adds a status cicle in the bottom right corner
+
+.avatar-online::before,
+.avatar-offline::before, {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 30%; height: 30%;
+  border-radius: 50%;
+  border: 3px solid $white;
+}
+
+.avatar-online::before {
+  background-color: $success;
+}
+
+.avatar-offline::before {
+  background-color: $gray-500;
+}
+
+
+// Sizes
+//
+// Controls the size of avatar images, avatar sizes, and avatar statuses
+// ($avatarSize, $borderWidth, $borderRadius, $fontSize, $statusBorderWidth)
+
+.avatar {
+  @include avatar($avatar-size-base, 4px, 6px, 18px, 3px);
+}
+
+.avatar-xs {
+  @include avatar($avatar-size-xs, 2px, 4px, 10px, 1px);
+}
+
+.avatar-sm {
+  @include avatar($avatar-size-sm, 3px, 4px, 13px, 2px);
+}
+
+.avatar-lg {
+  @include avatar($avatar-size-lg, 3px, 8px, 24px, 3px);
+}
+
+.avatar-xl {
+  @include avatar($avatar-size-xl, 4px, 8px, 30px, 4px);
+}
+
+.avatar-xxl {
+  @include avatar($avatar-size-xl, 6px, 8px, 30px, 4px);
+
+  @include media-breakpoint-up(md) {
+    @include avatar($avatar-size-xxl, 4px, 12px, 42px, 4px); 
+  }
+}
+
+
+
+// Avatar group
+//
+// Avatars placed inline with negative margin
+
+.avatar-group {
+  display: inline-flex;
+
+  // Shift every next avatar left
+
+  .avatar +.avatar {
+    margin-left: -$avatar-size-base / 4;
+  }
+  .avatar-xs +.avatar-xs {
+    margin-left: -$avatar-size-xs / 4;
+  }
+  .avatar-sm +.avatar-sm {
+    margin-left: -$avatar-size-sm / 4;
+  }
+  .avatar-lg +.avatar-lg {
+    margin-left: -$avatar-size-lg / 4;
+  }
+  .avatar-xl +.avatar-xl {
+    margin-left: -$avatar-size-xl / 4;
+  }
+
+  // Bring an avatar to front on hover
+
+  .avatar {
+
+    &:hover {
+      z-index: 1;
+    }
+  }
+}
+
+
+// 4 by 3
+//
+// Creates avatars of a different aspect ratio
+
+.avatar-4by3 {
+  width: $avatar-size-base * 4 / 3;
+}
+
+.avatar-xs.avatar-4by3 {
+  width: $avatar-size-xs * 4 / 3;
+}
+
+.avatar-sm.avatar-4by3 {
+  width: $avatar-size-sm * 4 / 3;
+}
+
+.avatar-lg.avatar-4by3 {
+  width: $avatar-size-lg * 4 / 3;
+}
+
+.avatar-xl.avatar-4by3 {
+  width: $avatar-size-xl * 4 / 3;
+}
+
+.avatar-xxl.avatar-4by3 {
+  width: $avatar-size-xxl * 4 / 3;
+}
