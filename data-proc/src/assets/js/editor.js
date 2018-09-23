@@ -20,6 +20,12 @@ function addDatasetRows() {
     loadDatasetMetadata().then(function (datasets){
         datasets.forEach(function(dataset) {
             getDatasetRowHtml().then(function (tr){
+                tdDatasetId = tr.querySelector('td.orders-order')
+                tdDatasetId.innerHTML = dataset.id
+                tdDatasetDate = tr.querySelector('td.orders-date')
+                tdDatasetDate.innerHTML = dataset.date
+                tdDatasetImages = tr.querySelector('td.orders-total')
+                tdDatasetImages.innerHTML = dataset.images
                 tbody.appendChild(tr);
             });
         });
