@@ -91,3 +91,7 @@ function getDatasetIdFromDataset(dataset) {
         });
     });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    addDatasetRows();
+}, false);
