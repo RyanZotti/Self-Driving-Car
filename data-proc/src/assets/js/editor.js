@@ -7,45 +7,39 @@ function htmlToElement(html) {
 }
 
 
-function addRow() {
-
-  // Get a reference to the table
-  var tbody = document.querySelectorAll('tbody')[0];
-
-  $.get( "/dataset.html", function(datasetString) {
-    const dataset = htmlToElement(datasetString)
-    tbody.appendChild(dataset);
-  });
-
-}
-
-function loadDatasetMetadataBackup() {
-    const allMetadata = []
-    $.get( "/list-datasets", function(response) {
-        datasets = response.datasets
-        $.each(datasets, function (i, dataset) {
-            getDatasetMetadata(dataset).then(function(metadata){
-                document.getElementById("myList").appendChild(node);
-                allMetadata.push(metadata);
-            });
-
+function getDatasetRowHtml() {
+    return new Promise(function(resolve, reject) {
+        $.get( "/dataset.html", function(datasetString) {
+            resolve(htmlToElement(datasetString));
         });
     });
-    return allMetadata;
+}
+
+function addDatasetRows() {
+    const tbody = document.querySelectorAll('tbody')[0];
+    loadDatasetMetadata().then(function (datasets){
+        datasets.forEach(function(dataset) {
+            getDatasetRowHtml().then(function (tr){
+                tbody.appendChild(tr);
+            });
+        });
+    });
 }
 
 function loadDatasetMetadata() {
-    const allMetadata = []
-    $.get( "/list-datasets", function(response) {
-        datasets = response.datasets
-        $.each(datasets, function (i, dataset) {
-            getDatasetMetadata(dataset).then(function(metadata){
-                allMetadata.push(metadata);
+    return new Promise(function(resolve, reject) {
+        const allMetadata = []
+        $.get( "/list-datasets", function(response) {
+            datasets = response.datasets
+            $.each(datasets, function (i, dataset) {
+                getDatasetMetadata(dataset).then(function(metadata){
+                    allMetadata.push(metadata);
+                });
             });
-
+        }).then(function (){
+            resolve(allMetadata);
         });
     });
-    return allMetadata;
 }
 
 
