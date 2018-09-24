@@ -17,37 +17,40 @@ function getDatasetRowHtml() {
 
 function addDatasetRows() {
     const tbody = document.querySelectorAll('tbody')[0];
-    loadDatasetMetadata().then(function (datasets){
-        datasets.forEach(function(dataset) {
-            getDatasetRowHtml().then(function (tr){
-                tdDatasetId = tr.querySelector('td.orders-order')
-                tdDatasetId.innerHTML = dataset.id
-                tdDatasetDate = tr.querySelector('td.orders-date')
-                tdDatasetDate.innerHTML = dataset.date
-                tdDatasetImages = tr.querySelector('td.orders-total')
-                tdDatasetImages.innerHTML = dataset.images
-                tbody.appendChild(tr);
+    loadDatasetMetadata().then(function (datasetPromises){
+        datasetPromises.forEach(function(datsetPromise) {
+            datsetPromise.then(function(dataset) {
+                getDatasetRowHtml().then(function (tr){
+                    tdDatasetId = tr.querySelector('td.orders-order')
+                    tdDatasetId.innerHTML = dataset.id
+                    tdDatasetDate = tr.querySelector('td.orders-date')
+                    tdDatasetDate.innerHTML = dataset.date
+                    tdDatasetImages = tr.querySelector('td.orders-total')
+                    tdDatasetImages.innerHTML = dataset.images
+                    tbody.appendChild(tr);
+                });
             });
+
         });
     });
 }
 
 function loadDatasetMetadata() {
-    return new Promise(function(resolve, reject) {
-        const allMetadata = []
-        $.get( "/list-datasets", function(response) {
-            datasets = response.datasets
-            $.each(datasets, function (i, dataset) {
-                getDatasetMetadata(dataset).then(function(metadata){
-                    allMetadata.push(metadata);
+    return new Promise(function(resolveLoad, reject) {
+        $.get( "/list-datasets").then(function(response){
+            return response.datasets;
+        }).then(function(datasets){
+            let allMetadata = datasets.map(function (dataset) {
+                return new Promise(function (resolve) {
+                  resolve(getDatasetMetadata(dataset));
                 });
             });
-        }).then(function (){
-            resolve(allMetadata);
+            Promise.all(allMetadata).then(function() {
+                resolveLoad(allMetadata);
+            });
         });
     });
 }
-
 
 function getDatasetMetadata(dataset) {
     apiResults = [
