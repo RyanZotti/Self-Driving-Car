@@ -97,4 +97,13 @@ function getDatasetIdFromDataset(dataset) {
 
 document.addEventListener('DOMContentLoaded', function() {
     addDatasetRows();
+    // TODO: Replace with plain javascript instead of jquery
+    $("#dataset-review").click(function(){
+        $("#dataset-import").removeClass('active');
+        $("#dataset-review").addClass('active');
+    });
+    $("#dataset-import").click(function(){
+        $("#dataset-review").removeClass('active');
+        $("#dataset-import").addClass('active');
+    });
 }, false);
