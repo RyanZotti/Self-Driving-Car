@@ -210,6 +210,16 @@ class ListDatasets(tornado.web.RequestHandler):
         }
         self.write(results)
 
+class ListMistakeDatasets(tornado.web.RequestHandler):
+
+    def get(self):
+
+        folder_file_paths = self.application.record_reader_mistakes.folders
+        dataset_names = self.application.record_reader_mistakes.get_dataset_names(folder_file_paths)
+        results = {
+            'datasets' : dataset_names
+        }
+        self.write(results)
 
 class ImageAPI(tornado.web.RequestHandler):
     '''
@@ -255,7 +265,6 @@ def make_app():
     assets_absolute_path = os.path.join(this_dir, 'dist', 'assets')
     html_absolute_path = os.path.join(this_dir, 'dist')
     handlers = [
-        #(r"/", tornado.web.RedirectHandler, dict(url="/home")),
         (r"/", tornado.web.RedirectHandler, dict(url="/index.html")),
         (r"/home", Home),
         (r"/ai-angle", AIAngleAPI),
@@ -266,6 +275,7 @@ def make_app():
         (r"/delete",DeleteRecord),
         (r"/keep", Keep),
         (r"/list-datasets",ListDatasets),
+        (r"/list-mistake-datasets", ListMistakeDatasets),
         (r"/image-count-from-dataset", ImageCountFromDataset),
         (r"/dataset-id-from-dataset-name", DatasetIdFromDataName),
         (r"/dataset-date-from-dataset-name", DatasetDateFromDataName),
@@ -280,7 +290,7 @@ if __name__ == "__main__":
         "--port",
         required=False,
         help="Server port to use",
-        default=8881)
+        default=8883)
     ap.add_argument(
         "--new_data_path",
         required=False,
@@ -311,6 +321,10 @@ if __name__ == "__main__":
     app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data'
     app.data_path_emphasis = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper-emphasis/data'
     app.record_reader = RecordReader(base_directory=app.data_path,overfit=False)
+    app.record_reader_mistakes = RecordReader(
+        base_directory=app.data_path_emphasis,
+        overfit=True
+    )
     app.angle_only = args['angle_only']
 
     app.listen(port)
