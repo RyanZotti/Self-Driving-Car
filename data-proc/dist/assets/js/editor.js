@@ -99,8 +99,25 @@ function getDatasetIdFromDataset(dataset) {
     });
 }
 
+function getDatasetReviewTableHtml() {
+    return new Promise(function(resolve, reject) {
+        $.get( "/datasets-review-table.html", function(datasetString) {
+           resolve(htmlToElement(datasetString));
+        });
+    });
+}
+
+function loadReviewDatasetsTable() {
+    getDatasetReviewTableHtml().then(function(tableHtml){
+        const parentDiv = document.querySelector('div#table-wrapping-div');
+        parentDiv.appendChild(tableHtml);
+    }).then(function(){
+        addDatasetRows();
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    addDatasetRows();
+    loadReviewDatasetsTable();
     // TODO: Replace with plain javascript instead of jquery
     $("#dataset-review").click(function(){
         $("#dataset-import").removeClass('active');

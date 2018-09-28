@@ -1,0 +1,73 @@
+<div class="card" id="datasets-table-div" data-toggle="lists" data-lists-values='["orders-order", "orders-product", "orders-date", "orders-total", "orders-status", "orders-method"]'>
+  <div class="card-header">
+    <div class="row align-items-center">
+      <div class="col">
+
+        <!-- Search -->
+        <form class="row align-items-center">
+          <div class="col-auto pr-0">
+            <span class="fe fe-search text-muted"></span>
+          </div>
+          <div class="col">
+              <input type="search" class="form-control form-control-flush search" placeholder="Search">
+          </div>
+        </form>
+
+      </div>
+      <div class="col-auto">
+
+        <!-- Button -->
+
+        <div class="dropdown">
+          <button class="btn btn-sm btn-white dropdown-toggle" type="button" id="bulkActionDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Bulk action
+          </button>
+          <div class="dropdown-menu dropdown-menu-right" aria-labelledby="bulkActionDropdown">
+            <a class="dropdown-item" href="#!">Action</a>
+            <a class="dropdown-item" href="#!">Another action</a>
+            <a class="dropdown-item" href="#!">Something else here</a>
+          </div>
+        </div>
+
+      </div>
+    </div> <!-- / .row -->
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm table-nowrap card-table">
+      <thead>
+        <tr>
+          <th>
+            <div class="custom-control custom-checkbox table-checkbox">
+              <input type="checkbox" class="custom-control-input" name="ordersSelect" id="ordersSelectAll">
+              <label class="custom-control-label" for="ordersSelectAll">
+                &nbsp;
+              </label>
+            </div>
+          </th>
+          <th>
+            <a href="#" class="text-muted sort" data-sort="orders-order">
+              Dataset ID
+            </a>
+          </th>
+          <th>
+            <a href="#" class="text-muted sort" data-sort="orders-date">
+              Created Date
+            </a>
+          </th>
+          <th>
+            <a href="#" class="text-muted sort" data-sort="orders-total">
+              Images
+            </a>
+          </th>
+          <th colspan="2">
+            <a href="#" class="text-muted sort" data-sort="download-status">
+              Download Status
+            </a>
+          </th>
+        </tr>
+      </thead>
+      <tbody class="list" id="datasetsTbody">
+      </tbody>
+    </table>
+  </div>
+</div>
