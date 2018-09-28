@@ -6,32 +6,36 @@ function htmlToElement(html) {
     return template.content.firstChild;
 }
 
-
-function getDatasetRowHtml() {
+function getDatasetRowString() {
     return new Promise(function(resolve, reject) {
         $.get( "/dataset.html", function(datasetString) {
-            resolve(htmlToElement(datasetString));
+            resolve(datasetString);
         });
     });
 }
 
 function addDatasetRows() {
-    const tbody = document.querySelectorAll('tbody')[0];
-    loadDatasetMetadata().then(function (datasetPromises){
-        datasetPromises.forEach(function(datsetPromise) {
-            datsetPromise.then(function(dataset) {
-                getDatasetRowHtml().then(function (tr){
-                    tdDatasetId = tr.querySelector('td.orders-order')
-                    tdDatasetId.innerHTML = dataset.id
-                    tdDatasetDate = tr.querySelector('td.orders-date')
-                    tdDatasetDate.innerHTML = dataset.date
-                    tdDatasetImages = tr.querySelector('td.orders-total')
-                    tdDatasetImages.innerHTML = dataset.images
-                    tbody.appendChild(tr);
+    const promises = [
+        getDatasetRowString(),
+        loadDatasetMetadata()
+    ];
+    Promise.all(promises).then(function(promiseResults){
+        const datasetRowString = promiseResults[0];
+        const datasetPromises = promiseResults[1];
+        var options = {
+            valueNames: [ 'orders-order', 'orders-date', 'orders-total' ],
+            item: datasetRowString
+        };
+        var userList = new List("datasets-table-div", options);
+        for (datsetPromise of datasetPromises) {
+            datsetPromise.then(function(dataset){
+                userList.add({
+                    'orders-order':dataset.id,
+                    'orders-date':dataset.date,
+                    'orders-total':dataset.images
                 });
             });
-
-        });
+        }
     });
 }
 
