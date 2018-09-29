@@ -6,17 +6,58 @@ function htmlToElement(html) {
     return template.content.firstChild;
 }
 
-function getDatasetRowString() {
+function getDatasetImportRowString() {
     return new Promise(function(resolve, reject) {
-        $.get( "/dataset.html", function(datasetString) {
+        $.get( "/dataset-import.html", function(datasetString) {
             resolve(datasetString);
         });
     });
 }
 
-function addDatasetRows() {
+function getDatasetReviewRowString() {
+    return new Promise(function(resolve, reject) {
+        $.get( "/dataset-review.html", function(datasetString) {
+            resolve(datasetString);
+        });
+    });
+}
+
+function getDatasetMistakeRowString() {
+    return new Promise(function(resolve, reject) {
+        $.get( "/dataset-mistake.html", function(datasetString) {
+            resolve(datasetString);
+        });
+    });
+}
+
+function addDatasetImportRows() {
     const promises = [
-        getDatasetRowString(),
+        getDatasetImportRowString(),
+        loadDatasetMetadata()
+    ];
+    Promise.all(promises).then(function(promiseResults){
+        const datasetRowString = promiseResults[0];
+        const datasetPromises = promiseResults[1];
+        var options = {
+            valueNames: [ 'orders-order', 'orders-date', 'orders-total' ],
+            item: datasetRowString
+        };
+        var userList = new List("datasets-table-div", options);
+        for (datsetPromise of datasetPromises) {
+            datsetPromise.then(function(dataset){
+                userList.add({
+                    'orders-order':dataset.id,
+                    'orders-date':dataset.date,
+                    'orders-total':dataset.images
+                });
+            });
+        }
+    });
+}
+
+function addDatasetReviewRows() {
+    const promises = [
+        getDatasetReviewRowString(),
         loadDatasetMetadata()
     ];
     Promise.all(promises).then(function(promiseResults){
@@ -41,7 +82,7 @@ function addDatasetRows() {
 
 function addDatasetMistakeRows() {
     const promises = [
-        getDatasetRowString(),
+        getDatasetMistakeRowString(),
         loadMistakeDatasetMetadata()
     ];
     Promise.all(promises).then(function(promiseResults){
@@ -157,6 +198,14 @@ function getDatasetMistakesTableHtml() {
     });
 }
 
+function getDatasetImportTableHtml() {
+    return new Promise(function(resolve, reject) {
+        $.get( "/datasets-import-table.html", function(datasetString) {
+           resolve(htmlToElement(datasetString));
+        });
+    });
+}
+
 function loadReviewDatasetsTable() {
     getDatasetReviewTableHtml().then(function(tableHtml){
         // Remove the previous table if it exists
@@ -168,7 +217,7 @@ function loadReviewDatasetsTable() {
         const parentDiv = document.querySelector('div#table-wrapping-div');
         parentDiv.appendChild(tableHtml);
     }).then(function(){
-        addDatasetRows();
+        addDatasetReviewRows();
     });
 }
 
@@ -187,8 +236,23 @@ function loadMistakeDatasetsTable() {
     });
 }
 
+function loadImportDatasetsTable() {
+    getDatasetImportTableHtml().then(function(tableHtml){
+        // Remove the previous table if it exists
+        const previousTable = document.querySelector('div#datasets-table-div');
+        if (previousTable != null){
+            previousTable.remove();
+        }
+        // Add new table
+        const parentDiv = document.querySelector('div#table-wrapping-div');
+        parentDiv.appendChild(tableHtml);
+    }).then(function(){
+        addDatasetImportRows();
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    loadReviewDatasetsTable();
+    loadImportDatasetsTable();
     // TODO: Replace with plain javascript instead of jquery
     $("#dataset-review").click(function(){
         $("#dataset-import").removeClass('active');
@@ -200,6 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
         $("#dataset-review").removeClass('active');
         $("#dataset-mistakes").removeClass('active');
         $("#dataset-import").addClass('active');
+        loadImportDatasetsTable();
     });
     $("#dataset-mistakes").click(function(){
         $("#dataset-import").removeClass('active');
