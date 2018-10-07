@@ -6,3 +6,4 @@ video_timestamps.txt
 *.tmp/*
 data-proc/dist/assets/libs
 data-proc/src/.tmp/
+node_modules
