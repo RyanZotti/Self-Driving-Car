@@ -39,16 +39,16 @@ function addDatasetImportRows() {
         const datasetRowString = promiseResults[0];
         const datasetPromises = promiseResults[1];
         var options = {
-            valueNames: [ 'orders-order', 'orders-date', 'orders-total' ],
+            valueNames: [ 'dataset-id', 'created-date', 'images' ],
             item: datasetRowString
         };
         var userList = new List("datasets-table-div", options);
         for (datsetPromise of datasetPromises) {
             datsetPromise.then(function(dataset){
                 userList.add({
-                    'orders-order':dataset.id,
-                    'orders-date':dataset.date,
-                    'orders-total':dataset.images
+                    'dataset-id':dataset.id,
+                    'created-date':dataset.date,
+                    'images':dataset.images
                 });
             });
         }
@@ -64,16 +64,16 @@ function addDatasetReviewRows() {
         const datasetRowString = promiseResults[0];
         const datasetPromises = promiseResults[1];
         var options = {
-            valueNames: [ 'orders-order', 'orders-date', 'orders-total' ],
+            valueNames: [ 'dataset-id', 'created-date', 'images' ],
             item: datasetRowString
         };
         var userList = new List("datasets-table-div", options);
         for (datsetPromise of datasetPromises) {
             datsetPromise.then(function(dataset){
                 userList.add({
-                    'orders-order':dataset.id,
-                    'orders-date':dataset.date,
-                    'orders-total':dataset.images
+                    'dataset-id':dataset.id,
+                    'created-date':dataset.date,
+                    'images':dataset.images
                 });
             });
         }
@@ -89,16 +89,16 @@ function addDatasetMistakeRows() {
         const datasetRowString = promiseResults[0];
         const datasetPromises = promiseResults[1];
         var options = {
-            valueNames: [ 'orders-order', 'orders-date', 'orders-total' ],
+            valueNames: [ 'dataset-id', 'created-date', 'images' ],
             item: datasetRowString
         };
         var userList = new List("datasets-table-div", options);
         for (datsetPromise of datasetPromises) {
             datsetPromise.then(function(dataset){
                 userList.add({
-                    'orders-order':dataset.id,
-                    'orders-date':dataset.date,
-                    'orders-total':dataset.images
+                    'dataset-id':dataset.id,
+                    'created-date':dataset.date,
+                    'images':dataset.images
                 });
             });
         }
@@ -140,7 +140,7 @@ function loadMistakeDatasetMetadata() {
 }
 
 function getDatasetMetadata(dataset) {
-    apiResults = [
+    const apiResults = [
         getDatasetIdFromDataset(dataset),
         getDateFromDataset(dataset),
         getImageCountFromDataset(dataset)
