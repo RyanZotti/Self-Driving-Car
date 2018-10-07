@@ -4,3 +4,4 @@ __pycache__/
 output.mov
 video_timestamps.txt
 *.tmp/*
+data-proc/dist/assets/libs
