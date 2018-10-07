@@ -288,6 +288,9 @@ def parse_args():
     ap.add_argument("--crop_factor", required=False,
                     help="Chop top 1/crop_factor off of image",
                     default=1.0)
+    ap.add_argument("--angle_only", required=False,
+                    help="Use angle only model (Y/N)?",
+                    default='N')
     ap.add_argument(
         "--image_scale",
         required=False,
@@ -302,6 +305,7 @@ def parse_args():
     args['crop_factor'] = float(args['crop_factor'])
     args['show_speed'] = parse_boolean_cli_args(args['show_speed'])
     args['overfit'] = parse_boolean_cli_args(args['overfit'])
+    args['angle_only'] = parse_boolean_cli_args(args['angle_only'])
     if args['s3_sync']:
         args['s3_sync'] = parse_boolean_cli_args(args['s3_sync'])
     if args['save_to_disk']:
