@@ -140,7 +140,7 @@ function loadMistakeDatasetMetadata() {
 }
 
 function getDatasetMetadata(dataset) {
-    apiResults = [
+    const apiResults = [
         getDatasetIdFromDataset(dataset),
         getDateFromDataset(dataset),
         getImageCountFromDataset(dataset)

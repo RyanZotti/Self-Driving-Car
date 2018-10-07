@@ -14,7 +14,7 @@ const postcss = require('gulp-postcss');
 const runsequence = require('run-sequence');
 const replace = require('gulp-replace');
 const sass = require('gulp-sass');
-const uglify = require('gulp-uglify');
+const uglify = require('gulp-uglify-es').default;
 const useref = require('gulp-useref-plus');
 const wait = require('gulp-wait');
 
@@ -165,7 +165,7 @@ gulp.task('useref', function() {
 
 gulp.task('build', function(callback) {
   runsequence(['clean:tmp', 'clean:packageLock', 'clean:dist', 'copy:all', 'copy:libs'],
-    ['sass', 'useref'], 
+    ['sass', 'useref'],
     callback);
 });
 

@@ -34,6 +34,7 @@
     "chart.js": "^2.7.2",
     "dropzone": "^5.5.1",
     "flatpickr": "^4.5.0",
+    "gulp-uglify-es": "^1.0.4",
     "jquery": "^3.3.1",
     "jquery-mask-plugin": "^1.14.15",
     "list.js": "^1.5.0",
