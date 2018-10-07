@@ -9,7 +9,63 @@
 
     <!-- MODALS
     ================================================== -->
-    @@include("partials/modals.html")
+    <div class="modal fade" id="modalMembers" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-card card" data-toggle="lists" data-lists-values='["name"]'>
+            <div class="card-header">
+              <div class="row align-items-center">
+                <div class="col">
+
+                  <!-- Title -->
+                  <h4 class="card-header-title" id="exampleModalCenterTitle">
+                    Add a member
+                  </h4>
+
+                </div>
+                <div class="col-auto">
+
+                  <!-- Close -->
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+
+                </div>
+              </div> <!-- / .row -->
+            </div>
+            <div class="card-header">
+
+              <!-- Form -->
+              <form>
+                <div class="input-group input-group-flush input-group-merge">
+                  <input type="search" class="form-control form-control-prepended search" placeholder="Search">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <span class="fe fe-search"></span>
+                    </div>
+                  </div>
+                </div>
+              </form>
+
+            </div>
+            <div class="card-body">
+              <div class="row justify-content-md-center">
+                <div class="col-md-auto">
+                  <img id="mpeg-image" src="/image?dataset=dataset_2_18-07-07&amp;record-id=77">
+                </div>
+              </div>
+              <div class="row">
+                <div class="col">
+                  <span class="fe fe-play mr-4"></span>
+                  <span class="fe fe-flag mr-4"></span>
+                  <span class="fe fe-trash-2 mr-4"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- SIDEBAR
     ================================================== -->
