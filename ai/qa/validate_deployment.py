@@ -1,12 +1,13 @@
 import argparse
-from util import *
-from ai.record_reader import RecordReader
-from data_augmentation import apply_transformations
-import traceback
 import functools
-import requests
 import json
+import traceback
 
+import requests
+
+from car.record_reader import RecordReader
+from data_augmentation import apply_transformations
+from util import *
 
 ap = argparse.ArgumentParser()
 ap.add_argument(
@@ -49,7 +50,7 @@ port=args['port']
 repo_dir=args['repo_dir']
 
 # Run prediction API as a subprocess
-api_path = functools.reduce(os.path.join, [repo_dir, 'ai','prediction_api.py'])
+api_path = functools.reduce(os.path.join, [repo_dir, 'ai','ai.py'])
 cmd = '''
     python {api_path} \
         --checkpoint_dir {checkpoint_dir} \

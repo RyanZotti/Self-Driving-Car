@@ -45,6 +45,7 @@ class PredictionHandler(tornado.web.RequestHandler):
         self.x = x
         self.image_scale = image_scale
         self.crop_factor = crop_factor
+        self.angle_only = angle_only
 
     @property
     def sess(self):
@@ -91,7 +92,13 @@ class PredictionHandler(tornado.web.RequestHandler):
         # Ignore second prediction set, which is flipped image, a hack
         prediction = list(prediction[0])
 
+        if self.angle_only == True:
+            default_throttle = 0.5
+            prediction.append(default_throttle)
+
+        # Result will look something like: '{"prediction": [0.4731147885322571, 0.25]}'
         result = {'prediction': prediction}
+        print(result)
         self.write(result)
 
 
@@ -126,8 +133,9 @@ if __name__ == "__main__":
         default=8885)
     ap.add_argument(
         "--angle_only",
-        required=True,
-        help="Should model output only angle (Y/n)")
+        required=False,
+        help="Should model output only angle (Y/n)",
+        default='y')
     ap.add_argument(
         "--crop_factor",
         required=False,
