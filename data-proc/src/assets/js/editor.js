@@ -39,16 +39,25 @@ function addDatasetImportRows() {
         const datasetRowString = promiseResults[0];
         const datasetPromises = promiseResults[1];
         var options = {
-            valueNames: [ 'dataset-id', 'created-date', 'images' ],
+            valueNames: [
+                'dataset-id',
+                'created-date',
+                'images',
+                { attr: 'dataset', name: 'download-dataset-button' },
+                { attr: 'dataset', name: 'trash-dataset-button' }
+            ],
             item: datasetRowString
         };
         var userList = new List("datasets-table-div", options);
         for (datsetPromise of datasetPromises) {
             datsetPromise.then(function(dataset){
+                const datasetText = 'dataset_' + dataset.id + '_' + dataset.date;
                 userList.add({
                     'dataset-id':dataset.id,
                     'created-date':dataset.date,
-                    'images':dataset.images
+                    'images':dataset.images,
+                    'download-dataset-button':datasetText,
+                    'trash-dataset-button':datasetText
                 });
             });
         }
@@ -64,16 +73,25 @@ function addDatasetReviewRows() {
         const datasetRowString = promiseResults[0];
         const datasetPromises = promiseResults[1];
         var options = {
-            valueNames: [ 'dataset-id', 'created-date', 'images' ],
+            valueNames: [
+                'dataset-id',
+                'created-date',
+                'images',
+                { attr: 'dataset', name: 'play-dataset-button' },
+                { attr: 'dataset', name: 'trash-dataset-button' }
+            ],
             item: datasetRowString
         };
         var userList = new List("datasets-table-div", options);
         for (datsetPromise of datasetPromises) {
             datsetPromise.then(function(dataset){
+                const datasetText = 'dataset_' + dataset.id + '_' + dataset.date;
                 userList.add({
                     'dataset-id':dataset.id,
                     'created-date':dataset.date,
-                    'images':dataset.images
+                    'images':dataset.images,
+                    'play-dataset-button':datasetText,
+                    'trash-dataset-button':datasetText
                 });
             });
         }
@@ -89,16 +107,25 @@ function addDatasetMistakeRows() {
         const datasetRowString = promiseResults[0];
         const datasetPromises = promiseResults[1];
         var options = {
-            valueNames: [ 'dataset-id', 'created-date', 'images' ],
+            valueNames: [
+                'dataset-id',
+                'created-date',
+                'images',
+                { attr: 'dataset', name: 'play-dataset-button' },
+                { attr: 'dataset', name: 'trash-dataset-button' }
+            ],
             item: datasetRowString
         };
         var userList = new List("datasets-table-div", options);
         for (datsetPromise of datasetPromises) {
             datsetPromise.then(function(dataset){
+                const datasetText = 'dataset_' + dataset.id + '_' + dataset.date;
                 userList.add({
                     'dataset-id':dataset.id,
                     'created-date':dataset.date,
-                    'images':dataset.images
+                    'images':dataset.images,
+                    'play-dataset-button':datasetText,
+                    'trash-dataset-button':datasetText
                 });
             });
         }
