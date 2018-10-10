@@ -51,7 +51,7 @@ function addDatasetImportRows() {
         var userList = new List("datasets-table-div", options);
         for (datsetPromise of datasetPromises) {
             datsetPromise.then(function(dataset){
-                const datasetText = 'dataset_' + dataset.id + '_' + dataset.date;
+                const datasetText = dataset.name;
                 userList.add({
                     'dataset-id':dataset.id,
                     'created-date':dataset.date,
@@ -85,7 +85,7 @@ function addDatasetReviewRows() {
         var userList = new List("datasets-table-div", options);
         for (datsetPromise of datasetPromises) {
             datsetPromise.then(function(dataset){
-                const datasetText = 'dataset_' + dataset.id + '_' + dataset.date;
+                const datasetText = dataset.name;
                 userList.add({
                     'dataset-id':dataset.id,
                     'created-date':dataset.date,
@@ -95,7 +95,67 @@ function addDatasetReviewRows() {
                 });
             });
         }
+    }).then(function(){
+        // Test that the promise worked and that at this point
+        // all of the rows have been updated
+        var tbody = document.querySelector("tbody#datasetsTbody");
+        var buttons = tbody.querySelectorAll("tr > td > button.fe-play");
+        for (button of buttons){
+            button.onclick = function() {
+                const dataset = this.getAttribute('dataset');
+                getDatasetRecordIds(dataset).then(function(recordIds){
+                    var recordIdIndex = 0;
+                    playVideo([dataset, recordIds, recordIdIndex]);
+                });
+            }
+        }
     });
+}
+
+function getDatasetRecordIds(dataset) {
+    return new Promise(function(resolve, reject){
+        data = JSON.stringify({ 'dataset': dataset})
+        $.post('/dataset-record-ids', data, function(result){
+            resolve(result.record_ids);
+        });
+    });
+}
+
+function updateRecordId(recordIds, recordIdIndex){
+    // Check if last record has been reached
+    if (recordIdIndex < recordIds.length){
+       recordId = recordIds[recordIdIndex];
+    } else {
+       recordId = -1
+    }
+    return recordId;
+}
+
+function updateImage(dataset, recordId) {
+    imageUrl = '/image?dataset='+dataset+'&record-id='+recordId;
+    const videoFrame = document.querySelector("#mpeg-image")
+    videoFrame.setAttribute('src',imageUrl);
+}
+
+async function playVideo(args) {
+    const dataset = args[0];
+    const recordIds = args[1];
+    const recordIdIndex = args[2]
+    console.log(args);
+    const newRecordIdIndex = recordIdIndex + 1;
+    const recordId = updateRecordId(recordIds, newRecordIdIndex);
+    updateImage(dataset, recordId);
+    //setDatasetProgress(dataset,recordIds,recordId);
+    //await updateAiAndHumanLabelValues(dataset, recordId);
+    //updateLabelBars();
+    window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, newRecordIdIndex]));
+    //console.log('record ID: '+recordId + ' '+ state.ai.angleAbsError);
+    //if (recordId <= maxRecordId && state.ai.angleAbsError < 0.8 && state.isVideoPlaying == true) {
+    //    console.log('record ID: '+recordId + ' continuing animation');
+    //    window.requestAnimationFrame(playVideo);
+    //} else {
+    //    state.isVideoPlaying = false;
+    //}
 }
 
 function addDatasetMistakeRows() {
@@ -119,7 +179,7 @@ function addDatasetMistakeRows() {
         var userList = new List("datasets-table-div", options);
         for (datsetPromise of datasetPromises) {
             datsetPromise.then(function(dataset){
-                const datasetText = 'dataset_' + dataset.id + '_' + dataset.date;
+                const datasetText = dataset.name;
                 userList.add({
                     'dataset-id':dataset.id,
                     'created-date':dataset.date,
@@ -170,13 +230,15 @@ function getDatasetMetadata(dataset) {
     const apiResults = [
         getDatasetIdFromDataset(dataset),
         getDateFromDataset(dataset),
-        getImageCountFromDataset(dataset)
+        getImageCountFromDataset(dataset),
+        Promise.resolve(dataset)
     ]
     return Promise.all(apiResults).then(function(apiResults){
         const result = {
                 'id' : apiResults[0],
                 'date' : apiResults[1],
-                'images' : apiResults[2]
+                'images' : apiResults[2],
+                'name' : apiResults[3]
             }
         return result
     });
