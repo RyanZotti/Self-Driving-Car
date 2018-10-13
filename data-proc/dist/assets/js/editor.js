@@ -112,7 +112,7 @@ function addDatasetReviewRows() {
                 const dataset = this.getAttribute('dataset');
                 datasetPlaying = dataset; // set global variable in case of pause and then resume
                 getDatasetRecordIds(dataset).then(function(recordIds){
-                    var recordIdIndex = 0;
+                    var recordIdIndex = -1;
                     playVideo([dataset, recordIds, recordIdIndex]);
                 });
             }
@@ -149,9 +149,17 @@ async function playVideo(args) {
     const dataset = args[0];
     const recordIds = args[1];
     const recordIdIndex = args[2]
-    const newRecordIdIndex = recordIdIndex + 1;
-    const recordId = updateRecordId(recordIds, newRecordIdIndex);
-    updateImage(dataset, recordId);
+    const newRecordIdIndex = recordIdIndex + 1;  // recordIdIndex starts at -1
+    if (newRecordIdIndex < recordIds.length && isVideoPlaying == true){
+        const recordId = updateRecordId(recordIds, newRecordIdIndex);
+        updateImage(dataset, recordId);
+        window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, newRecordIdIndex]));
+    } else {
+        isVideoPlaying = false;
+        const closeModalButton = document.querySelector('button#closeModal');
+        closeModalButton.click();
+    }
+
     // Set global variables in case of play and then resume
     datasetPlaying = dataset;
     recordIdsPlaying = recordIds;
@@ -159,9 +167,8 @@ async function playVideo(args) {
     //setDatasetProgress(dataset,recordIds,recordId);
     //await updateAiAndHumanLabelValues(dataset, recordId);
     //updateLabelBars();
-    if (isVideoPlaying == true){
-        window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, newRecordIdIndex]));
-    }
+
+
     //console.log('record ID: '+recordId + ' '+ state.ai.angleAbsError);
     //if (recordId <= maxRecordId && state.ai.angleAbsError < 0.8 && state.isVideoPlaying == true) {
     //    console.log('record ID: '+recordId + ' continuing animation');
@@ -394,11 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Stop playing video when user closes the video modal
     const closeModalButton = document.querySelector("button#closeModal");
     closeModalButton.onclick = function() {
-        if(isVideoPlaying == true){
-            isVideoPlaying = false;
-        } else {
-            isVideoPlaying = true;
-        }
+        isVideoPlaying = false;
     }
 
 }, false);
