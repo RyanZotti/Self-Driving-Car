@@ -391,6 +391,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    // Stop playing video when user closes the video modal
+    const closeModalButton = document.querySelector("button#closeModal");
+    closeModalButton.onclick = function() {
+        if(isVideoPlaying == true){
+            isVideoPlaying = false;
+        } else {
+            isVideoPlaying = true;
+        }
+    }
+
 }, false);
 
 // Global variables
