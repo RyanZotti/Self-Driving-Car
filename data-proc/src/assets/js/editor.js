@@ -150,10 +150,12 @@ async function playVideo(args) {
     const recordIds = args[1];
     const recordIdIndex = args[2]
     const newRecordIdIndex = recordIdIndex + 1;  // recordIdIndex starts at -1
-    if (newRecordIdIndex < recordIds.length && isVideoPlaying == true){
-        const recordId = updateRecordId(recordIds, newRecordIdIndex);
-        updateImage(dataset, recordId);
-        window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, newRecordIdIndex]));
+    if (newRecordIdIndex < recordIds.length){
+        if (isVideoPlaying == true){
+            const recordId = updateRecordId(recordIds, newRecordIdIndex);
+            updateImage(dataset, recordId);
+            window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, newRecordIdIndex]));
+        }
     } else {
         isVideoPlaying = false;
         const closeModalButton = document.querySelector('button#closeModal');
