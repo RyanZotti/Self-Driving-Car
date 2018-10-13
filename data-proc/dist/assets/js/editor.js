@@ -145,6 +145,49 @@ function updateImage(dataset, recordId) {
     videoFrame.setAttribute('src',imageUrl);
 }
 
+function getAiAngle(dataset, recordId) {
+    return new Promise(function(resolve, reject) {
+        data = JSON.stringify({ 'dataset': dataset, 'record_id' : recordId})
+        console.log(data);
+        $.post('/ai-angle', data, function(result){
+           resolve(result)
+        });
+    });
+}
+
+function getHumanAngleAndThrottle(dataset, recordId) {
+    return new Promise(function(resolve, reject) {
+        data = JSON.stringify({ 'dataset': dataset, 'record_id' : recordId})
+        $.post('/user-labels', data, function(result){
+           resolve(result)
+        });
+    });
+}
+
+function updateAiAndHumanLabelValues(dataset, recordId){
+    labels = [
+        getHumanAngleAndThrottle(
+            dataset,
+            recordId
+        ),
+        getAiAngle(
+            dataset,
+            recordId
+        )
+    ];
+
+    return Promise.all(labels).then(function AcceptHandler(results) {
+        state.human.angle = results[0].angle;
+        state.human.throttle = results[0].throttle;
+        state.ai.angle = results[1].angle;
+        console.log(results[1]);
+        // TODO: Figure out to do when selecting constant throttle
+        //state.ai.throttle = results[1].throttle;
+        state.ai.angleAbsError = Math.abs(state.human.angle - state.ai.angle);
+        state.ai.throttleAbsError = Math.abs(state.human.throttle - state.ai.throttle);
+    });
+}
+
 async function playVideo(args) {
     const dataset = args[0];
     const recordIds = args[1];
@@ -153,6 +196,7 @@ async function playVideo(args) {
     if (newRecordIdIndex < recordIds.length){
         if (isVideoPlaying == true){
             const recordId = updateRecordId(recordIds, newRecordIdIndex);
+            await updateAiAndHumanLabelValues(dataset, recordId);
             updateImage(dataset, recordId);
             window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, newRecordIdIndex]));
         }
@@ -167,7 +211,7 @@ async function playVideo(args) {
     recordIdsPlaying = recordIds;
     recordIdIndexPlaying = recordIdIndex;
     //setDatasetProgress(dataset,recordIds,recordId);
-    //await updateAiAndHumanLabelValues(dataset, recordId);
+
     //updateLabelBars();
 
 
@@ -413,3 +457,15 @@ var isVideoPlaying = false;
 var datasetPlaying = '';
 var recordIdIndexPlaying = -1;
 var recordIdsPlaying = [];
+var state = {
+    "human": {
+        'angle': 0,
+        'throttle': 0,
+    },
+    "ai":{
+        'angle':0,
+        'throttle':0,
+        'angleAbsError':0,
+        'throttleAbsError':0
+    }
+}
