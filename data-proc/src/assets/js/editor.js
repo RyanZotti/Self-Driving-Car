@@ -102,7 +102,15 @@ function addDatasetReviewRows() {
         var buttons = tbody.querySelectorAll("tr > td > button.fe-play");
         for (button of buttons){
             button.onclick = function() {
+                const modalPlayPauseButton = document.querySelector("span#modalPlayPauseButton");
+                // Ensure that video starts playing when modal first opens
+                if(modalPlayPauseButton.classList.contains("fe-play")){
+                    modalPlayPauseButton.classList.remove("fe-play");
+                    modalPlayPauseButton.classList.add("fe-pause");
+                }
+                isVideoPlaying = true; // set global variable in case of pause and then resume
                 const dataset = this.getAttribute('dataset');
+                datasetPlaying = dataset; // set global variable in case of pause and then resume
                 getDatasetRecordIds(dataset).then(function(recordIds){
                     var recordIdIndex = 0;
                     playVideo([dataset, recordIds, recordIdIndex]);
@@ -141,14 +149,19 @@ async function playVideo(args) {
     const dataset = args[0];
     const recordIds = args[1];
     const recordIdIndex = args[2]
-    console.log(args);
     const newRecordIdIndex = recordIdIndex + 1;
     const recordId = updateRecordId(recordIds, newRecordIdIndex);
     updateImage(dataset, recordId);
+    // Set global variables in case of play and then resume
+    datasetPlaying = dataset;
+    recordIdsPlaying = recordIds;
+    recordIdIndexPlaying = recordIdIndex;
     //setDatasetProgress(dataset,recordIds,recordId);
     //await updateAiAndHumanLabelValues(dataset, recordId);
     //updateLabelBars();
-    window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, newRecordIdIndex]));
+    if (isVideoPlaying == true){
+        window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, newRecordIdIndex]));
+    }
     //console.log('record ID: '+recordId + ' '+ state.ai.angleAbsError);
     //if (recordId <= maxRecordId && state.ai.angleAbsError < 0.8 && state.isVideoPlaying == true) {
     //    console.log('record ID: '+recordId + ' continuing animation');
@@ -361,4 +374,27 @@ document.addEventListener('DOMContentLoaded', function() {
         $("#dataset-mistakes").addClass('active');
         loadMistakeDatasetsTable();
     });
+
+    const modalPlayPauseButton = document.querySelector("span#modalPlayPauseButton");
+    modalPlayPauseButton.onclick = function(){
+        if(isVideoPlaying == true){
+            isVideoPlaying = false;
+            modalPlayPauseButton.classList.remove("fe-pause");
+            modalPlayPauseButton.classList.add("fe-play");
+        } else {
+            isVideoPlaying = true;
+            modalPlayPauseButton.classList.remove("fe-play");
+            modalPlayPauseButton.classList.add("fe-pause");
+            getDatasetRecordIds(datasetPlaying).then(function(recordIds){
+                playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying]);
+            });
+        }
+    };
+
 }, false);
+
+// Global variables
+var isVideoPlaying = false;
+var datasetPlaying = '';
+var recordIdIndexPlaying = -1;
+var recordIdsPlaying = [];
