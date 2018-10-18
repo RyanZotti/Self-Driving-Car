@@ -194,12 +194,23 @@ async function playVideo(args) {
     const recordIdIndex = args[2]
     const newRecordIdIndex = recordIdIndex + 1;  // recordIdIndex starts at -1
     if (newRecordIdIndex < recordIds.length){
+        const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
+        const badThreshold = 0.3; // TODO: Make this user-configurable
+        const isMistakeBad = state.ai.throttleAbsError > badThreshold;
         if (isVideoPlaying == true){
-            const recordId = updateRecordId(recordIds, newRecordIdIndex);
-            await updateAiAndHumanLabelValues(dataset, recordId);
-            updateImage(dataset, recordId);
-            window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, newRecordIdIndex]));
+            if (pauseOnBadMistake && isMistakeBad){
+                isVideoPlaying = false;
+                const modalPlayPauseButton = document.querySelector("span#modalPlayPauseButton");
+                modalPlayPauseButton.classList.remove("fe-pause");
+                modalPlayPauseButton.classList.add("fe-play");
+            } else {
+                const recordId = updateRecordId(recordIds, newRecordIdIndex);
+                await updateAiAndHumanLabelValues(dataset, recordId);
+                updateImage(dataset, recordId);
+                window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, newRecordIdIndex]));
+            }
         }
+        console.log(newRecordIdIndex);
     } else {
         isVideoPlaying = false;
         const closeModalButton = document.querySelector('button#closeModal');
