@@ -193,9 +193,9 @@ async function playVideo(args) {
     const recordIds = args[1];
     const recordIdIndex = args[2]
     const recordId = updateRecordId(recordIds, recordIdIndexPlaying);
-    await updateAiAndHumanLabelValues(dataset, recordId);
-    updateImage(dataset, recordId);
     if (recordIdIndexPlaying < recordIds.length){
+        await updateAiAndHumanLabelValues(dataset, recordId);
+        updateImage(dataset, recordId);
         const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
         const isMistakeBad = state.ai.throttleAbsError > pauseOnBadMistakeThreshold;
         if (isVideoPlaying == true){
