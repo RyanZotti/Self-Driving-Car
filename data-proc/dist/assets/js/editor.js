@@ -112,8 +112,8 @@ function addDatasetReviewRows() {
                 const dataset = this.getAttribute('dataset');
                 datasetPlaying = dataset; // set global variable in case of pause and then resume
                 getDatasetRecordIds(dataset).then(function(recordIds){
-                    var recordIdIndex = -1;
-                    playVideo([dataset, recordIds, recordIdIndex]);
+                    recordIdIndexPlaying = 0;
+                    playVideo([dataset, recordIds, recordIdIndexPlaying]);
                 });
             }
         }
@@ -192,8 +192,10 @@ async function playVideo(args) {
     const dataset = args[0];
     const recordIds = args[1];
     const recordIdIndex = args[2]
-    const newRecordIdIndex = recordIdIndex + 1;  // recordIdIndex starts at -1
-    if (newRecordIdIndex < recordIds.length){
+    const recordId = updateRecordId(recordIds, recordIdIndexPlaying);
+    await updateAiAndHumanLabelValues(dataset, recordId);
+    updateImage(dataset, recordId);
+    if (recordIdIndexPlaying < recordIds.length){
         const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
         const badThreshold = 0.3; // TODO: Make this user-configurable
         const isMistakeBad = state.ai.throttleAbsError > badThreshold;
@@ -204,13 +206,11 @@ async function playVideo(args) {
                 modalPlayPauseButton.classList.remove("fe-pause");
                 modalPlayPauseButton.classList.add("fe-play");
             } else {
-                const recordId = updateRecordId(recordIds, newRecordIdIndex);
-                await updateAiAndHumanLabelValues(dataset, recordId);
-                updateImage(dataset, recordId);
-                window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, newRecordIdIndex]));
+                recordIdIndexPlaying = recordIdIndex + 1;
+                window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, recordIdIndexPlaying]));
             }
         }
-        console.log(newRecordIdIndex);
+        console.log(state.ai.throttleAbsError);
     } else {
         isVideoPlaying = false;
         const closeModalButton = document.querySelector('button#closeModal');
@@ -233,6 +233,7 @@ async function playVideo(args) {
     //} else {
     //    state.isVideoPlaying = false;
     //}
+    console.log(recordIdIndexPlaying);
 }
 
 function addDatasetMistakeRows() {
@@ -450,6 +451,7 @@ document.addEventListener('DOMContentLoaded', function() {
             modalPlayPauseButton.classList.remove("fe-play");
             modalPlayPauseButton.classList.add("fe-pause");
             getDatasetRecordIds(datasetPlaying).then(function(recordIds){
+                recordIdIndexPlaying = recordIdIndexPlaying + 1;
                 playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying]);
             });
         }
