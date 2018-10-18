@@ -197,8 +197,7 @@ async function playVideo(args) {
     updateImage(dataset, recordId);
     if (recordIdIndexPlaying < recordIds.length){
         const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
-        const badThreshold = 0.3; // TODO: Make this user-configurable
-        const isMistakeBad = state.ai.throttleAbsError > badThreshold;
+        const isMistakeBad = state.ai.throttleAbsError > pauseOnBadMistakeThreshold;
         if (isVideoPlaying == true){
             if (pauseOnBadMistake && isMistakeBad){
                 isVideoPlaying = false;
@@ -470,6 +469,7 @@ var isVideoPlaying = false;
 var datasetPlaying = '';
 var recordIdIndexPlaying = -1;
 var recordIdsPlaying = [];
+var pauseOnBadMistakeThreshold = 0.8
 var state = {
     "human": {
         'angle': 0,
