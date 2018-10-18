@@ -223,8 +223,8 @@ async function playVideo(args) {
     if (recordIdIndexPlaying < recordIds.length){
         await updateAiAndHumanLabelValues(dataset, recordId);
         updateImage(dataset, recordId);
-        adjustAngleDonut('aiAngleDonut',state.ai.angle);
-        adjustAngleDonut('humanAngleDonut',state.human.angle);
+        await adjustAngleDonut('aiAngleDonut',state.ai.angle);
+        await adjustAngleDonut('humanAngleDonut',state.human.angle);
         const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
         const isMistakeBad = state.ai.throttleAbsError > pauseOnBadMistakeThreshold;
         if (isVideoPlaying == true){
