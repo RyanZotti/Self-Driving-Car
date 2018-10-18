@@ -188,6 +188,33 @@ function updateAiAndHumanLabelValues(dataset, recordId){
     });
 }
 
+function adjustAngleDonut(donutId, angle){
+    /*
+    Angle is between -1 and 1 so need to scale
+    to rotate donut appropriately. Full left is
+    -0.5, middle is 0.0, and full right is 0.5
+    */
+    const scaledAngle = angle / 2;
+    const options = {
+        'cutoutPercentage':50,
+        'rotation':scaledAngle * Math.PI,
+        'animation': {
+            'animateRotate':false
+        }
+    }
+    new Chart(donutId, {
+      type: 'doughnut',
+      data: {
+        datasets: [{
+          data: [50, 50],
+          'borderWidth':[1,1],
+          'backgroundColor':['#E3EBF6','#2C7BE5']
+        }]
+      },
+      options: options
+    });
+}
+
 async function playVideo(args) {
     const dataset = args[0];
     const recordIds = args[1];
@@ -196,6 +223,8 @@ async function playVideo(args) {
     if (recordIdIndexPlaying < recordIds.length){
         await updateAiAndHumanLabelValues(dataset, recordId);
         updateImage(dataset, recordId);
+        adjustAngleDonut('aiAngleDonut',state.ai.angle);
+        adjustAngleDonut('humanAngleDonut',state.human.angle);
         const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
         const isMistakeBad = state.ai.throttleAbsError > pauseOnBadMistakeThreshold;
         if (isVideoPlaying == true){
