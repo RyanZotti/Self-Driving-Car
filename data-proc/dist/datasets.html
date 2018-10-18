@@ -46,6 +46,11 @@
               </div> <!-- / .row -->
             </div>
             <div class="card-header">
+              <div class="row align-items-center">
+                <div class="chart-container" style="position: relative; height:5vh; width:10vw">
+                  <canvas id="aiAngleDonut" class="chart-canvas"></canvas>
+                </div>
+              </div>
             </div>
             <div class="card-body">
               <div class="row justify-content-md-center">
@@ -67,8 +72,8 @@
                 <div class="col-auto">
                   <!-- Toggle -->
                   <div class="custom-control custom-checkbox-toggle">
-                    <input type="checkbox" class="custom-control-input" id="cardToggle">
-                    <label class="custom-control-label" for="cardToggle"></label>
+                    <input type="checkbox" class="custom-control-input" id="pauseOnMistakeToggle">
+                    <label class="custom-control-label" for="pauseOnMistakeToggle"></label>
                   </div>
                 </div>
               </div>
