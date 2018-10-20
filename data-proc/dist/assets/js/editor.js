@@ -114,8 +114,10 @@ function addDatasetReviewRows() {
                     recordIdIndexPlaying = 0;
                     playVideo([dataset, recordIds, recordIdIndexPlaying]);
                 });
-                const modalHeader = document.getElementById("playModalHeader");
-                modalHeader.innerHTML = "Dataset ID: "+datasetIdPlaying+" Record ID: "+recordIdsPlaying[recordIdIndexPlaying];
+                const modalHeaderDatasetId = document.getElementById("playModalHeaderDatasetId");
+                modalHeaderDatasetId.innerHTML = datasetIdPlaying;
+                const modalHeaderRecordId = document.getElementById("playModalHeaderRecordId");
+                modalHeaderRecordId.innerHTML = recordId;
             }
         }
     });
@@ -221,8 +223,10 @@ async function playVideo(args) {
     const recordIds = args[1];
     const recordIdIndex = args[2]
     const recordId = updateRecordId(recordIds, recordIdIndexPlaying);
-    const modalHeader = document.getElementById("playModalHeader");
-    modalHeader.innerHTML = "Dataset ID: "+datasetIdPlaying+" Record ID: "+recordId;
+    const modalHeaderDatasetId = document.getElementById("playModalHeaderDatasetId");
+    modalHeaderDatasetId.innerHTML = datasetIdPlaying;
+    const modalHeaderRecordId = document.getElementById("playModalHeaderRecordId");
+    modalHeaderRecordId.innerHTML = recordId;
     if (recordIdIndexPlaying < recordIds.length){
         await updateAiAndHumanLabelValues(dataset, recordId);
         updateImage(dataset, recordId);
