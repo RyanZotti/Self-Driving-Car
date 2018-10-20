@@ -109,10 +109,13 @@ function addDatasetReviewRows() {
                 isVideoPlaying = true; // set global variable in case of pause and then resume
                 const dataset = this.getAttribute('dataset');
                 datasetPlaying = dataset; // set global variable in case of pause and then resume
+                datasetIdPlaying = datasetNameToId(dataset);
                 getDatasetRecordIds(dataset).then(function(recordIds){
                     recordIdIndexPlaying = 0;
                     playVideo([dataset, recordIds, recordIdIndexPlaying]);
                 });
+                const modalHeader = document.getElementById("playModalHeader");
+                modalHeader.innerHTML = "Dataset ID: "+datasetIdPlaying+" Record ID: "+recordIdsPlaying[recordIdIndexPlaying];
             }
         }
     });
@@ -218,6 +221,8 @@ async function playVideo(args) {
     const recordIds = args[1];
     const recordIdIndex = args[2]
     const recordId = updateRecordId(recordIds, recordIdIndexPlaying);
+    const modalHeader = document.getElementById("playModalHeader");
+    modalHeader.innerHTML = "Dataset ID: "+datasetIdPlaying+" Record ID: "+recordId;
     if (recordIdIndexPlaying < recordIds.length){
         await updateAiAndHumanLabelValues(dataset, recordId);
         updateImage(dataset, recordId);
@@ -245,6 +250,7 @@ async function playVideo(args) {
 
     // Set global variables in case of play and then resume
     datasetPlaying = dataset;
+    datasetIdPlaying = datasetNameToId(dataset);
     recordIdsPlaying = recordIds;
     recordIdIndexPlaying = recordIdIndex;
     //setDatasetProgress(dataset,recordIds,recordId);
@@ -444,6 +450,12 @@ function loadImportDatasetsTable() {
     });
 }
 
+function datasetNameToId(datasetName){
+    const regex = /(?<=dataset_)([0-9]*)(?=_)/g;
+    const datasetId = datasetName.match(regex)[0];
+    return datasetId
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadImportDatasetsTable();
     // TODO: Replace with plain javascript instead of jquery
@@ -494,6 +506,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Global variables
 var isVideoPlaying = false;
 var datasetPlaying = '';
+var dadtasetIdPlaying = '';
 var recordIdIndexPlaying = -1;
 var recordIdsPlaying = [];
 var pauseOnBadMistakeThreshold = 0.8
