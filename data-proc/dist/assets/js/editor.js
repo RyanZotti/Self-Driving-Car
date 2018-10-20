@@ -102,12 +102,10 @@ function addDatasetReviewRows() {
         var buttons = tbody.querySelectorAll("tr > td > button.fe-play");
         for (button of buttons){
             button.onclick = function() {
-                const modalPlayPauseButton = document.querySelector("span#modalPlayPauseButton");
+                const modalPlayPauseButton = document.querySelector("img#modalPlayPauseButton");
                 // Ensure that video starts playing when modal first opens
-                if(modalPlayPauseButton.classList.contains("fe-play")){
-                    modalPlayPauseButton.classList.remove("fe-play");
-                    modalPlayPauseButton.classList.add("fe-pause");
-                }
+                modalPlayPauseButton.removeAttribute("src");
+                modalPlayPauseButton.setAttribute("src","assets/img/icons/pause.svg");
                 isVideoPlaying = true; // set global variable in case of pause and then resume
                 const dataset = this.getAttribute('dataset');
                 datasetPlaying = dataset; // set global variable in case of pause and then resume
@@ -230,9 +228,9 @@ async function playVideo(args) {
         if (isVideoPlaying == true){
             if (pauseOnBadMistake && isMistakeBad){
                 isVideoPlaying = false;
-                const modalPlayPauseButton = document.querySelector("span#modalPlayPauseButton");
-                modalPlayPauseButton.classList.remove("fe-pause");
-                modalPlayPauseButton.classList.add("fe-play");
+                const modalPlayPauseButton = document.querySelector("img#modalPlayPauseButton");
+                modalPlayPauseButton.removeAttribute("src");
+                modalPlayPauseButton.setAttribute("src","assets/img/icons/play.svg");
             } else {
                 recordIdIndexPlaying = recordIdIndex + 1;
                 window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, recordIdIndexPlaying]));
@@ -468,16 +466,16 @@ document.addEventListener('DOMContentLoaded', function() {
         loadMistakeDatasetsTable();
     });
 
-    const modalPlayPauseButton = document.querySelector("span#modalPlayPauseButton");
+    const modalPlayPauseButton = document.querySelector("img#modalPlayPauseButton");
     modalPlayPauseButton.onclick = function(){
         if(isVideoPlaying == true){
             isVideoPlaying = false;
-            modalPlayPauseButton.classList.remove("fe-pause");
-            modalPlayPauseButton.classList.add("fe-play");
+            modalPlayPauseButton.removeAttribute("src");
+            modalPlayPauseButton.setAttribute("src","assets/img/icons/play.svg");
         } else {
             isVideoPlaying = true;
-            modalPlayPauseButton.classList.remove("fe-play");
-            modalPlayPauseButton.classList.add("fe-pause");
+            modalPlayPauseButton.removeAttribute("src");
+            modalPlayPauseButton.setAttribute("src","assets/img/icons/pause.svg");
             getDatasetRecordIds(datasetPlaying).then(function(recordIds){
                 recordIdIndexPlaying = recordIdIndexPlaying + 1;
                 playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying]);
