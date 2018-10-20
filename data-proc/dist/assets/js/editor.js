@@ -117,7 +117,7 @@ function addDatasetReviewRows() {
                 const modalHeaderDatasetId = document.getElementById("playModalHeaderDatasetId");
                 modalHeaderDatasetId.innerHTML = datasetIdPlaying;
                 const modalHeaderRecordId = document.getElementById("playModalHeaderRecordId");
-                modalHeaderRecordId.innerHTML = recordId;
+                modalHeaderRecordId.innerHTML = recordIdsPlaying[recordIdIndexPlaying];
             }
         }
     });
