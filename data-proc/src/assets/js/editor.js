@@ -227,6 +227,11 @@ async function playVideo(args) {
     modalHeaderDatasetId.innerHTML = datasetIdPlaying;
     const modalHeaderRecordId = document.getElementById("playModalHeaderRecordId");
     modalHeaderRecordId.innerHTML = recordId;
+
+    const percentComplete = ((recordIdIndex / recordIds.length) * 100).toFixed(2) + '%';
+    const videoModalProgressBar = document.getElementById("videoModalProgressBar");
+    videoModalProgressBar.style.setProperty("width", percentComplete);
+
     if (recordIdIndexPlaying < recordIds.length){
         await updateAiAndHumanLabelValues(dataset, recordId);
         updateImage(dataset, recordId);
