@@ -110,7 +110,8 @@ function addDatasetReviewRows() {
                 const dataset = this.getAttribute('dataset');
                 datasetPlaying = dataset; // set global variable in case of pause and then resume
                 datasetIdPlaying = datasetNameToId(dataset);
-                getDatasetRecordIds(dataset).then(function(recordIds){
+                const datasetType = getActiveDatasetType();
+                getDatasetRecordIds("review", dataset).then(function(recordIds){
                     recordIdIndexPlaying = 0;
                     playVideo([dataset, recordIds, recordIdIndexPlaying]);
                 });
@@ -123,9 +124,12 @@ function addDatasetReviewRows() {
     });
 }
 
-function getDatasetRecordIds(dataset) {
+function getDatasetRecordIds(datasetType, dataset) {
     return new Promise(function(resolve, reject){
-        data = JSON.stringify({ 'dataset': dataset})
+        data = JSON.stringify({
+            'dataset': dataset,
+            'dataset_type':datasetType
+        })
         $.post('/dataset-record-ids', data, function(result){
             resolve(result.record_ids);
         });
@@ -318,7 +322,7 @@ function loadDatasetMetadata() {
         }).then(function(datasets){
             let allMetadata = datasets.map(function (dataset) {
                 return new Promise(function (resolve) {
-                  resolve(getDatasetMetadata(dataset));
+                  resolve(getDatasetMetadata("review",dataset));
                 });
             });
             Promise.all(allMetadata).then(function() {
@@ -335,7 +339,7 @@ function loadMistakeDatasetMetadata() {
         }).then(function(datasets){
             let allMetadata = datasets.map(function (dataset) {
                 return new Promise(function (resolve) {
-                  resolve(getDatasetMetadata(dataset));
+                  resolve(getDatasetMetadata("mistake",dataset));
                 });
             });
             Promise.all(allMetadata).then(function() {
@@ -345,11 +349,11 @@ function loadMistakeDatasetMetadata() {
     });
 }
 
-function getDatasetMetadata(dataset) {
+function getDatasetMetadata(datasetType, dataset) {
     const apiResults = [
         getDatasetIdFromDataset(dataset),
         getDateFromDataset(dataset),
-        getImageCountFromDataset(dataset),
+        getImageCountFromDataset(datasetType, dataset),
         Promise.resolve(dataset)
     ]
     return Promise.all(apiResults).then(function(apiResults){
@@ -363,9 +367,9 @@ function getDatasetMetadata(dataset) {
     });
 }
 
-function getImageCountFromDataset(dataset) {
+function getImageCountFromDataset(datasetType, dataset) {
     return new Promise(function(resolve, reject){
-        let data = JSON.stringify({'dataset': dataset})
+        let data = JSON.stringify({'dataset_type':datasetType,'dataset': dataset});
         $.post('/image-count-from-dataset', data, function(result){
             resolve(result.image_count);
         });
@@ -374,7 +378,7 @@ function getImageCountFromDataset(dataset) {
 
 function getDateFromDataset(dataset) {
     return new Promise(function(resolve, reject){
-        let data = JSON.stringify({'dataset': dataset})
+        let data = JSON.stringify({'dataset': dataset});
         $.post('/dataset-date-from-dataset-name', data, function(result){
             resolve(result.dataset_date);
         });
@@ -470,9 +474,18 @@ function updateDatasetsCountBadge(datasetType){
         return response.datasets;
     }).then(function(datasets){
         const badge = document.querySelector("a#dataset-"+datasetType+" > span");
-        console.log(datasets.length);
         badge.innerText = datasets.length;
     });
+}
+
+function getActiveDatasetType(){
+    const datasetTypes = ["import","review","mistake"];
+    for (let datasetType of datasetTypes){
+        const badge = document.querySelector("a#dataset-"+datasetType);
+        if(badge.classList.contains("active")){
+            return datasetType
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -510,7 +523,8 @@ document.addEventListener('DOMContentLoaded', function() {
             isVideoPlaying = true;
             modalPlayPauseButton.removeAttribute("src");
             modalPlayPauseButton.setAttribute("src","assets/img/icons/pause.svg");
-            getDatasetRecordIds(datasetPlaying).then(function(recordIds){
+            const datasetType = getActiveDatasetType();
+            getDatasetRecordIds(datasetType, datasetPlaying).then(function(recordIds){
                 recordIdIndexPlaying = recordIdIndexPlaying + 1;
                 playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying]);
             });

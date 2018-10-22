@@ -73,7 +73,16 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
     def post(self):
         json_input = tornado.escape.json_decode(self.request.body)
         dataset_name = json_input['dataset']
-        path_id_pairs = self.application.record_reader.get_dataset_record_ids(dataset_name)
+        dataset_type = json_input['dataset_type']
+        if dataset_type.lower() == 'import':
+            # TODO: Change to point to real import datasets
+            path_id_pairs = self.application.record_reader.get_dataset_record_ids(dataset_name)
+        elif dataset_type.lower() == 'review':
+            path_id_pairs = self.application.record_reader.get_dataset_record_ids(dataset_name)
+        elif dataset_type.lower() == 'mistake':
+            path_id_pairs = self.application.record_reader_mistakes.get_dataset_record_ids(dataset_name)
+        else:
+            print('Unknown dataset_type: '+dataset_type)
         # Comes in list of tuples: (/path/to/record, record_id), but
         # we don't want to show paths to the user b/e it's ugly
         record_ids = []
@@ -165,9 +174,22 @@ class ImageCountFromDataset(tornado.web.RequestHandler):
     def post(self):
         json_input = tornado.escape.json_decode(self.request.body)
         dataset_name = json_input['dataset']
-        image_count = self.application.record_reader.get_image_count_from_dataset(
-            dataset_name=dataset_name
-        )
+        dataset_type = json_input['dataset_type']
+        if dataset_type.lower() == 'import':
+            # TODO: Change to point to real import datasets
+            image_count = self.application.record_reader.get_image_count_from_dataset(
+                dataset_name=dataset_name
+            )
+        elif dataset_type.lower() == 'review':
+            image_count = self.application.record_reader.get_image_count_from_dataset(
+                dataset_name=dataset_name
+            )
+        elif dataset_type.lower() == 'mistake':
+            image_count = self.application.record_reader_mistakes.get_image_count_from_dataset(
+                dataset_name=dataset_name
+            )
+        else:
+            print('Unknown dataset_type: ' + dataset_type)
         result = {
             'image_count': image_count
         }
