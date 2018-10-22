@@ -242,7 +242,7 @@ async function playVideo(args) {
         await adjustAngleDonut('aiAngleDonut',state.ai.angle);
         await adjustAngleDonut('humanAngleDonut',state.human.angle);
         const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
-        const isMistakeBad = state.ai.throttleAbsError > pauseOnBadMistakeThreshold;
+        const isMistakeBad = state.ai.angleAbsError > pauseOnBadMistakeThreshold;
         if (isVideoPlaying == true){
             if (pauseOnBadMistake && isMistakeBad){
                 isVideoPlaying = false;
