@@ -94,6 +94,24 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
         }
         self.write(result)
 
+class IsRecordAlreadyFlagged(tornado.web.RequestHandler):
+
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+        record_id = json_input['record_id']
+        path_id_pairs = self.application.record_reader_mistakes.get_dataset_record_ids(dataset_name)
+        # Comes in list of tuples: (/path/to/record, record_id), but
+        # we don't want to show paths to the user b/e it's ugly
+        record_ids = []
+        for pair in path_id_pairs:
+            path, id = pair
+            record_ids.append(id)
+        result = {
+            'is_already_flagged': record_id in record_ids
+        }
+        self.write(result)
+
 # Given a dataset name and record ID, return the user
 # angle and throttle
 class UserLabelsAPI(tornado.web.RequestHandler):
@@ -300,6 +318,7 @@ def make_app():
         (r"/list-review-datasets", ListReviewDatasets),
         (r"/list-mistake-datasets", ListMistakeDatasets),
         (r"/image-count-from-dataset", ImageCountFromDataset),
+        (r"/is-record-already-flagged", IsRecordAlreadyFlagged),
         (r"/dataset-id-from-dataset-name", DatasetIdFromDataName),
         (r"/dataset-date-from-dataset-name", DatasetDateFromDataName),
         (r"/(.*.html)", tornado.web.StaticFileHandler, {"path": html_absolute_path}),

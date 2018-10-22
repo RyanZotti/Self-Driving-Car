@@ -222,6 +222,10 @@ function adjustAngleDonut(donutId, angle){
     });
 }
 
+function setModalFlagColor(color){
+
+}
+
 async function playVideo(args) {
     const dataset = args[0];
     const recordIds = args[1];
@@ -238,6 +242,10 @@ async function playVideo(args) {
 
     if (recordIdIndexPlaying < recordIds.length){
         await updateAiAndHumanLabelValues(dataset, recordId);
+        await isRecordAlreadyFlagged(dataset,recordId);
+        if (isRecordIdFlagged == true){
+
+        }
         updateImage(dataset, recordId);
         await adjustAngleDonut('aiAngleDonut',state.ai.angle);
         await adjustAngleDonut('humanAngleDonut',state.human.angle);
@@ -488,6 +496,20 @@ function getActiveDatasetType(){
     }
 }
 
+function isRecordAlreadyFlagged(dataset, recordId){
+    return new Promise(function(resolve, reject) {
+        data = JSON.stringify({
+            'dataset': dataset,
+            'record_id':recordId
+        })
+        $.post('/is-record-already-flagged', data, function(result){
+           resolve(result['is_already_flagged']);
+        }).then(function(result){
+            isRecordIdFlagged = result;
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadImportDatasetsTable();
     // TODO: Replace with plain javascript instead of jquery
@@ -546,6 +568,7 @@ var dadtasetIdPlaying = '';
 var recordIdIndexPlaying = -1;
 var recordIdsPlaying = [];
 var pauseOnBadMistakeThreshold = 0.8
+var isRecordIdFlagged = false;
 var state = {
     "human": {
         'angle': 0,
