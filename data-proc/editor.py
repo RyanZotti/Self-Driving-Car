@@ -199,7 +199,7 @@ class DatasetDateFromDataName(tornado.web.RequestHandler):
         }
         self.write(result)
 
-class ListDatasets(tornado.web.RequestHandler):
+class ListReviewDatasets(tornado.web.RequestHandler):
 
     def get(self):
 
@@ -274,7 +274,8 @@ def make_app():
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
         (r"/delete",DeleteRecord),
         (r"/keep", Keep),
-        (r"/list-datasets",ListDatasets),
+        (r"/list-import-datasets", ListReviewDatasets),
+        (r"/list-review-datasets", ListReviewDatasets),
         (r"/list-mistake-datasets", ListMistakeDatasets),
         (r"/image-count-from-dataset", ImageCountFromDataset),
         (r"/dataset-id-from-dataset-name", DatasetIdFromDataName),

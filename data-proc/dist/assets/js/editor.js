@@ -313,7 +313,7 @@ function addDatasetMistakeRows() {
 
 function loadDatasetMetadata() {
     return new Promise(function(resolveLoad, reject) {
-        $.get( "/list-datasets").then(function(response){
+        $.get( "/list-review-datasets").then(function(response){
             return response.datasets;
         }).then(function(datasets){
             let allMetadata = datasets.map(function (dataset) {
@@ -465,27 +465,40 @@ function datasetNameToId(datasetName){
     return datasetId
 }
 
+function updateDatasetsCountBadge(datasetType){
+    $.get( "/list-"+datasetType+"-datasets").then(function(response){
+        return response.datasets;
+    }).then(function(datasets){
+        const badge = document.querySelector("a#dataset-"+datasetType+" > span");
+        console.log(datasets.length);
+        badge.innerText = datasets.length;
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadImportDatasetsTable();
     // TODO: Replace with plain javascript instead of jquery
     $("#dataset-review").click(function(){
         $("#dataset-import").removeClass('active');
-        $("#dataset-mistakes").removeClass('active');
+        $("#dataset-mistake").removeClass('active');
         $("#dataset-review").addClass('active');
         loadReviewDatasetsTable();
     });
+    updateDatasetsCountBadge('review');
     $("#dataset-import").click(function(){
         $("#dataset-review").removeClass('active');
-        $("#dataset-mistakes").removeClass('active');
+        $("#dataset-mistake").removeClass('active');
         $("#dataset-import").addClass('active');
         loadImportDatasetsTable();
     });
-    $("#dataset-mistakes").click(function(){
+    updateDatasetsCountBadge('import');
+    $("#dataset-mistake").click(function(){
         $("#dataset-import").removeClass('active');
         $("#dataset-review").removeClass('active');
-        $("#dataset-mistakes").addClass('active');
+        $("#dataset-mistake").addClass('active');
         loadMistakeDatasetsTable();
     });
+    updateDatasetsCountBadge('mistake');
 
     const modalPlayPauseButton = document.querySelector("img#modalPlayPauseButton");
     modalPlayPauseButton.onclick = function(){
