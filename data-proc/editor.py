@@ -147,7 +147,6 @@ class AIAngleAPI(tornado.web.RequestHandler):
         json_input = tornado.escape.json_decode(self.request.body)
         dataset_name = json_input['dataset']
         record_id = json_input['record_id']
-        print(dataset_name+' '+str(record_id))
 
         frame = self.application.record_reader.get_image(
             dataset_name=dataset_name,
@@ -172,7 +171,6 @@ class DeleteRecord(tornado.web.RequestHandler):
         json_input = tornado.escape.json_decode(self.request.body)
         dataset_name = json_input['dataset']
         record_id = json_input['record_id']
-
         label_path = self.application.record_reader.get_label_path(
             dataset_name=dataset_name,
             record_id=record_id
@@ -181,10 +179,8 @@ class DeleteRecord(tornado.web.RequestHandler):
             dataset_name=dataset_name,
             record_id=record_id
         )
-
-        # TODO: Uncomment after testing delete functionality
-        #os.remove(label_path)
-        #os.remove(image_path)
+        os.remove(label_path)
+        os.remove(image_path)
 
 
 class ImageCountFromDataset(tornado.web.RequestHandler):

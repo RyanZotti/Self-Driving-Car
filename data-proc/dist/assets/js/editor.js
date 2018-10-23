@@ -535,6 +535,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     updateDatasetsCountBadge('mistake');
 
+    $('#modalTrashButton').click(function () {
+        const recordId = recordIdsPlaying[recordIdIndexPlaying];
+        data = JSON.stringify({'dataset': datasetPlaying, 'record_id': recordId})
+        $.post('/delete', data);
+        recordIdIndexPlaying = recordIdIndexPlaying + 1;
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying]);
+    });
+
     const modalPlayPauseButton = document.querySelector("img#modalPlayPauseButton");
     modalPlayPauseButton.onclick = function(){
         if(isVideoPlaying == true){
