@@ -172,7 +172,7 @@ var editor = new function() {
       });
 
       $("#keep_button").click(function(){
-        data = JSON.stringify({'dataset': dataset, 'record_id': record_id})
+        data = JSON.stringify({'dataset': dataset, 'record_id': recordId})
         $.post('/keep', data, function(){
           recordId = updateRecordId(recordIds);
           updateUI();
@@ -186,7 +186,7 @@ var editor = new function() {
 
       // Tell the server to delete the current record
       $('#delete_button').click(function () {
-          data = JSON.stringify({'dataset': dataset, 'record_id': record_id})
+          data = JSON.stringify({'dataset': dataset, 'record_id': recordId})
           $.post('/delete', data);
           recordId = updateRecordId(recordIds);
           updateUI();
