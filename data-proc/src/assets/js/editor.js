@@ -242,9 +242,15 @@ async function playVideo(args) {
 
     if (recordIdIndexPlaying < recordIds.length){
         await updateAiAndHumanLabelValues(dataset, recordId);
-        await isRecordAlreadyFlagged(dataset,recordId);
+        const isFlaggedIcon = document.getElementById("isFlagged");
+        const isFlaggedButton = document.getElementById("isFlaggedCheckBox").checked;
+        const isRecordIdFlagged = await isRecordAlreadyFlagged(dataset,recordId);
         if (isRecordIdFlagged == true){
-
+            isFlaggedIcon.style.fill='#E53757';
+            isFlaggedButton.checked = true;
+        } else {
+            isFlaggedIcon.style.fill='None';
+            isFlaggedButton.checked = false;
         }
         updateImage(dataset, recordId);
         await adjustAngleDonut('aiAngleDonut',state.ai.angle);
@@ -505,7 +511,7 @@ function isRecordAlreadyFlagged(dataset, recordId){
         $.post('/is-record-already-flagged', data, function(result){
            resolve(result['is_already_flagged']);
         }).then(function(result){
-            isRecordIdFlagged = result;
+            return result;
         });
     });
 }
@@ -543,6 +549,18 @@ document.addEventListener('DOMContentLoaded', function() {
         playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying]);
     });
 
+    const flagButton = document.querySelector("#isFlagged");
+    flagButton.onclick = function () {
+        const isFlagged = document.getElementById("isFlaggedCheckBox").checked;
+        if (isFlagged == true){
+            flagButton.style.fill='#E53757';
+        } else {
+            flagButton.style.fill='None';
+        }
+        recordIdIndexPlaying = recordIdIndexPlaying + 1;
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying]);
+    };
+
     const modalPlayPauseButton = document.querySelector("img#modalPlayPauseButton");
     modalPlayPauseButton.onclick = function(){
         if(isVideoPlaying == true){
@@ -576,7 +594,6 @@ var dadtasetIdPlaying = '';
 var recordIdIndexPlaying = -1;
 var recordIdsPlaying = [];
 var pauseOnBadMistakeThreshold = 0.8
-var isRecordIdFlagged = false;
 var state = {
     "human": {
         'angle': 0,
