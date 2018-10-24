@@ -18243,3 +18243,22 @@ button:focus
 {
     line-height: 1.59375rem;
 }
+
+button.fe-trash-2,
+button.fe-play,
+button.fe-cloud-rain
+{
+    border: 0;
+}
+
+input.iconCheckBox
+{
+    position: absolute;
+
+    width: 0; 
+    height: 0;
+
+    cursor: pointer;
+
+    opacity: 0;
+}
