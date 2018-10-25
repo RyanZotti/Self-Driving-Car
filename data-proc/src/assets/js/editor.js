@@ -155,7 +155,6 @@ function updateImage(dataset, recordId) {
 function getAiAngle(dataset, recordId) {
     return new Promise(function(resolve, reject) {
         data = JSON.stringify({ 'dataset': dataset, 'record_id' : recordId})
-        console.log(data);
         $.post('/ai-angle', data, function(result){
            resolve(result)
         });
@@ -187,7 +186,6 @@ function updateAiAndHumanLabelValues(dataset, recordId){
         state.human.angle = results[0].angle;
         state.human.throttle = results[0].throttle;
         state.ai.angle = results[1].angle;
-        console.log(results[1]);
         // TODO: Figure out to do when selecting constant throttle
         //state.ai.throttle = results[1].throttle;
         state.ai.angleAbsError = Math.abs(state.human.angle - state.ai.angle);
@@ -243,7 +241,16 @@ async function playVideo(args) {
     if (recordIdIndexPlaying < recordIds.length){
         await updateAiAndHumanLabelValues(dataset, recordId);
         const isFlaggedIcon = document.getElementById("isFlagged");
-        const isFlaggedButton = document.getElementById("isFlaggedCheckBox").checked;
+        /*
+        Turns out that the 'checked' status of this button is
+        unreliable because I was modifying via standard html
+        behavior with my click but also with my playVideo
+        javascript and I *think* there was some sort of race
+        condition. Anyways, I'm keeping it in only because it's
+        helpful to see how to add an SVG label to a button. I
+        don't actually use its 'checked' status any more though
+        */
+        const isFlaggedButton = document.getElementById("isFlaggedCheckBox");
         const isRecordIdFlagged = await isRecordAlreadyFlagged(dataset,recordId);
         if (isRecordIdFlagged == true){
             isFlaggedIcon.style.fill='#E53757';
@@ -268,7 +275,6 @@ async function playVideo(args) {
                 window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, recordIdIndexPlaying]));
             }
         }
-        console.log(state.ai.throttleAbsError);
     } else {
         isVideoPlaying = false;
         const closeModalButton = document.querySelector('button#closeModal');
@@ -279,20 +285,6 @@ async function playVideo(args) {
     datasetPlaying = dataset;
     datasetIdPlaying = datasetNameToId(dataset);
     recordIdsPlaying = recordIds;
-    recordIdIndexPlaying = recordIdIndex;
-    //setDatasetProgress(dataset,recordIds,recordId);
-
-    //updateLabelBars();
-
-
-    //console.log('record ID: '+recordId + ' '+ state.ai.angleAbsError);
-    //if (recordId <= maxRecordId && state.ai.angleAbsError < 0.8 && state.isVideoPlaying == true) {
-    //    console.log('record ID: '+recordId + ' continuing animation');
-    //    window.requestAnimationFrame(playVideo);
-    //} else {
-    //    state.isVideoPlaying = false;
-    //}
-    console.log(recordIdIndexPlaying);
 }
 
 function addDatasetMistakeRows() {
@@ -550,12 +542,31 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     const flagButton = document.querySelector("#isFlagged");
-    flagButton.onclick = function () {
-        const isFlagged = document.getElementById("isFlaggedCheckBox").checked;
-        if (isFlagged == true){
-            flagButton.style.fill='#E53757';
+    flagButton.onclick = async function () {
+
+        /*
+        Turns out that the 'checked' status of this button is
+        unreliable because I was modifying via standard html
+        behavior with my click but also with my playVideo
+        javascript and I *think* there was some sort of race
+        condition. Anyways, I'm keeping it in only because it's
+        helpful to see how to add an SVG label to a button. I
+        don't actually use its 'checked' status any more though
+        */
+        const isFlaggedButton = document.getElementById("isFlaggedCheckBox");
+
+        const recordId = recordIdsPlaying[recordIdIndexPlaying];
+        data = JSON.stringify({'dataset': datasetPlaying, 'record_id': recordId});
+        const isFlaggedIcon = document.getElementById("isFlagged");
+        const isPreviouslyRecordIdFlagged = await isRecordAlreadyFlagged(datasetPlaying,recordId);
+        if (isPreviouslyRecordIdFlagged == true){
+            isFlaggedIcon.style.fill='None';
+            isFlaggedButton.checked = false;
+            $.post('/delete-flagged-record', data);
         } else {
-            flagButton.style.fill='None';
+            isFlaggedIcon.style.fill='#E53757';
+            isFlaggedButton.checked = true;
+            $.post('/add-flagged-record', data);
         }
         recordIdIndexPlaying = recordIdIndexPlaying + 1;
         playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying]);

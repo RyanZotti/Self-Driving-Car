@@ -183,6 +183,24 @@ class DeleteRecord(tornado.web.RequestHandler):
         os.remove(image_path)
 
 
+class DeleteFlaggedRecord(tornado.web.RequestHandler):
+
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+        record_id = json_input['record_id']
+        label_path = self.application.record_reader_mistakes.get_label_path(
+            dataset_name=dataset_name,
+            record_id=record_id
+        )
+        image_path = self.application.record_reader_mistakes.get_image_path(
+            dataset_name=dataset_name,
+            record_id=record_id
+        )
+        os.remove(label_path)
+        os.remove(image_path)
+        self.write({})
+
 class ImageCountFromDataset(tornado.web.RequestHandler):
 
     def post(self):
@@ -309,7 +327,8 @@ def make_app():
         (r"/ui-state", StateAPI),
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
         (r"/delete",DeleteRecord),
-        (r"/keep", Keep),
+        (r"/delete-flagged-record", DeleteFlaggedRecord),
+        (r"/add-flagged-record", Keep),
         (r"/list-import-datasets", ListReviewDatasets),
         (r"/list-review-datasets", ListReviewDatasets),
         (r"/list-mistake-datasets", ListMistakeDatasets),
