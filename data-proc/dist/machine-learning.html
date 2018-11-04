@@ -1302,7 +1302,13 @@
                 </div>
               </div>
             </div>
-
+                <div class="row">
+                    <div class="col">
+                        <h2>
+                         Select Datasets
+                     </h2>
+                    </div>
+                </div>
                 <div class="row">
                 <div class="col-12 col-md-6">
 
@@ -1386,9 +1392,6 @@
                 </div>
               </div>
 
-                <!-- Divider -->
-              <hr class="mt-4 mb-5">
-
               <div class="card" id="datasets-table-div" data-toggle="lists" data-lists-values='["dataset-id", "created-date", "images"]'>
                 <div class="card-header">
                   <div class="row align-items-center">
@@ -1456,54 +1459,44 @@
               <hr class="mt-4 mb-5">
 
               <div class="row">
-                <div class="col-12 col-md-6">
+                  <div class="col">
 
-                  <!-- Label -->
-                    <label class="mb-1">
-                      Train Model
-                    </label>
-
-                    <!-- Form text -->
-                    <small class="form-text text-muted">
-                      Making your profile public means that anyone on the Dashkit network will be able to find you.
+                     <h2>
+                         Train Model
+                     </h2>
+                      <small class="form-text text-muted">
+                      Start the training of a new model or resume the training of an existing model with transfer learning. The model learns from datasets specified in the previous section.
                     </small>
-
-                    <div class="row justify-content-md-center">
-                      <div class="col-auto">
-                        <button type="submit" class="btn btn-primary btn-md" style="margin: auto">
-                          Train
-                        </button>
-                      </div>
-
-                    </div> <!-- / .row -->
-
-                </div>
-                <div class="col-12 col-md-6">
-
-                  <!-- Allow for additional Bookings -->
-                  <div class="form-group">
-
-                    <!-- Label -->
-                    <label class="mb-1">
-                      Deploy to Vehicle
-                    </label>
-
-                    <!-- Form text -->
-                    <small class="form-text text-muted">
-                      If you are available for hire outside of the current situation, you can encourage others to hire you.
-                    </small>
-
-                    <div class="row justify-content-md-center">
-                      <div class="col-auto">
-                        <button type="submit" class="btn btn-primary btn-md" style="margin: auto">
-                          Deploy
-                        </button>
-                      </div>
-                    </div> <!-- / .row -->
                   </div>
+              </div>
+              <div class="row">
+                  <div class="col">
+                      <button type="submit" class="btn btn-primary btn-md">
+                          Train Model
+                      </button>
+                  </div>
+              </div>
 
-                </div>
-              </div> <!-- / .row -->
+              <!-- Divider -->
+              <hr class="mt-4 mb-5">
+
+              <div class="row">
+                  <div class="col">
+                      <h2>
+                         Deploy to Vehicle
+                     </h2>
+                      <small class="form-text text-muted">
+                      This creates an ssh connection to your raspberry pi, terminates any processes associated with the old model, transfers the new model, starts a new model API server, and tests that the API server is able to receive images.
+                    </small>
+                  </div>
+              </div>
+              <div class="row">
+                  <div class="col">
+                      <button type="submit" class="btn btn-primary btn-md">
+                          Deploy Model
+                      </button>
+                  </div>
+              </div>
 
               <!-- Divider -->
               <hr class="mt-4 mb-5">
