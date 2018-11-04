@@ -604,7 +604,7 @@
             </div>
 
             <!-- Form -->
-            <form oninput="endpoint.value = user.value +'@'+ host.value" class="mb-4">
+            <form oninput="endpoint.value = user.value +'@'+ host.value">
 
               <div class="row">
                 <div class="col-3 col-md-3">
@@ -635,20 +635,54 @@
                 </div>
               </div> <!-- / .row -->
             </form>
-              <form class="mb-4">
-                <div class="row">
-                  <div class="col-12 col-md-6">
-                    <div class="form-group">
-                      <label>
-                        Password
-                      </label>
-                      <input type="password" class="form-control">
-                    </div>
-                    <button type="submit" class="btn btn-primary">
-                      Test Connection
-                    </button>
+            <form class="mb-5">
+              <div class="row">
+                <div class="col-12 col-md-6">
+                  <div class="form-group">
+                    <label>
+                      Password
+                    </label>
+                    <input type="password" class="form-control">
                   </div>
                 </div>
+              </div>
+              <div class="row">
+                <div class="col-12 col-md-12">
+                  <div class="form-group">
+                    <label>
+                      Git Repo Location
+                    </label>
+                    <input type="text" class="form-control" placeholder="~/">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12 col-md-12">
+                  <div class="form-group">
+                    <label>
+                      Deployed Model Location
+                    </label>
+                    <input type="text" class="form-control" placeholder="~/Self-Driving-Car/car/parts/model/">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12 col-md-12">
+                  <div class="form-group">
+                    <label>
+                      Datasets Location
+                    </label>
+                    <input type="text" class="form-control" placeholder="~/Self-Driving-Car/car/templates/data/">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12 col-md-6">
+                  <button type="submit" class="btn btn-primary">
+                    Test Connection
+                  </button>
+                </div>
+              </div>
             </form>
 
           </div>
