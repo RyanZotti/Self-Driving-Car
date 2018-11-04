@@ -579,7 +579,6 @@
 
       </div> <!-- / .container-fluid -->
     </nav>
-
     <!-- MAIN CONTENT
     ================================================== -->
     <div class="main-content">
@@ -600,209 +599,213 @@
 
                     <!-- Title -->
                     <h1 class="header-title">
-                      Machine Learning
+                      Settings
                     </h1>
 
                   </div>
                 </div> <!-- / .row -->
+                <div class="row align-items-center">
+                  <div class="col">
 
+                    <!-- Nav -->
+                    <ul class="nav nav-tabs nav-overflow header-tabs">
+                      <li class="nav-item">
+                        <a href="#!" class="nav-link active">
+                          General
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a href="#!" class="nav-link">
+                          Profile
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a href="#!" class="nav-link">
+                          Billing
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a href="#!" class="nav-link">
+                          Notifications
+                        </a>
+                      </li>
+                    </ul>
+
+                  </div>
+                </div>
               </div>
             </div>
-                <div class="row">
-                    <div class="col">
-                        <h2>
-                         Select Datasets
-                     </h2>
-                    </div>
-                </div>
-                <div class="row">
+
+            <!-- Form -->
+            <form class="mb-4">
+
+              <div class="row">
                 <div class="col-12 col-md-6">
 
-                  <!-- Flagged Records -->
+                  <!-- First name -->
+                  <div class="form-group">
+
+                    <!-- Label -->
+                    <label>
+                      First name
+                    </label>
+
+                    <!-- Input -->
+                    <input type="text" class="form-control">
+
+                  </div>
+
+                </div>
+                <div class="col-12 col-md-6">
+
+                  <!-- Last name -->
+                  <div class="form-group">
+
+                    <!-- Label -->
+                    <label>
+                      Last name
+                    </label>
+
+                    <!-- Input -->
+                    <input type="text" class="form-control">
+
+                  </div>
+
+                </div>
+                <div class="col-12">
+
+                  <!-- Email address -->
                   <div class="form-group">
 
                     <!-- Label -->
                     <label class="mb-1">
-                      Flagged Records
+                      Email address
                     </label>
 
                     <!-- Form text -->
                     <small class="form-text text-muted">
-                      Incorporate records that you flagged in the datasets section. This gives you the ability to focus on the images where the car struggles the most.
+                      This contact will be shown to others publicly, so choose it carefully.
                     </small>
 
-                    <div class="row" style="text-align:center !important">
-                      <div class="col">
+                    <!-- Input -->
+                    <input type="email" class="form-control">
+
+                  </div>
+
+                </div>
+                <div class="col-12 col-md-6">
+
+                  <!-- Phone -->
+                  <div class="form-group">
+
+                    <!-- Label -->
+                    <label>
+                      Phone
+                    </label>
+
+                    <!-- Input -->
+                    <input type="text" class="form-control mb-3" placeholder="(___)___-____" data-mask="(000) 000-0000">
+
+                  </div>
+
+                </div>
+                <div class="col-12 col-md-6">
+
+                  <!-- Birthday -->
+                  <div class="form-group">
+
+                    <!-- Label -->
+                    <label>
+                      Birthday
+                    </label>
+
+                    <!-- Input -->
+                    <input type="text" class="form-control" data-toggle="flatpickr">
+
+                  </div>
+
+                </div>
+              </div> <!-- / .row -->
+
+              <!-- Divider -->
+              <hr class="mt-4 mb-5">
+
+              <div class="row">
+                <div class="col-12 col-md-6">
+
+                  <!-- Public profile -->
+                  <div class="form-group">
+
+                    <!-- Label -->
+                    <label class="mb-1">
+                      Public profile
+                    </label>
+
+                    <!-- Form text -->
+                    <small class="form-text text-muted">
+                      Making your profile public means that anyone on the Dashkit network will be able to find you.
+                    </small>
+
+                    <div class="row">
+                      <div class="col-auto">
+
                         <!-- Toggle -->
-                          <small class="text-muted">
-                          Train
-                        </small>
-                        <div class="custom-control custom-checkbox-toggle" style="margin:auto">
+                        <div class="custom-control custom-checkbox-toggle">
                           <input type="checkbox" class="custom-control-input" id="toggleOne">
                           <label class="custom-control-label" for="toggleOne"></label>
                         </div>
+
                       </div>
-                        <div class="col">
-                        <!-- Toggle -->
-                            <small class="text-muted">
-                          Test
+                      <div class="col ml--2">
+
+                        <!-- Help text -->
+                        <small class="text-muted">
+                          You're currently invisible
                         </small>
-                        <div class="custom-control custom-checkbox-toggle" style="margin:auto">
-                          <input type="checkbox" class="custom-control-input" id="toggleZero">
-                          <label class="custom-control-label" for="toggleZero"></label>
-                        </div>
+
                       </div>
-                    </div>
+                    </div> <!-- / .row -->
                   </div>
 
                 </div>
                 <div class="col-12 col-md-6">
 
-                  <!-- Real-Time Records -->
+                  <!-- Allow for additional Bookings -->
                   <div class="form-group">
 
                     <!-- Label -->
                     <label class="mb-1">
-                      Real-Time Records
+                      Allow for additional Bookings
                     </label>
 
                     <!-- Form text -->
                     <small class="form-text text-muted">
-                      Allows you to train on images that are streamed real-time from the car as you drive around. This creates a rapid feedback loop.
+                      If you are available for hire outside of the current situation, you can encourage others to hire you.
                     </small>
 
-                    <div class="row" style="text-align:center !important">
-                      <div class="col">
+                    <div class="row">
+                      <div class="col-auto">
+
                         <!-- Toggle -->
-                          <small class="text-muted">
-                          Train
-                        </small>
-                        <div class="custom-control custom-checkbox-toggle" style="margin:auto">
-                          <input type="checkbox" class="custom-control-input" id="toggleOne2">
-                          <label class="custom-control-label" for="toggleOne2"></label>
+                        <div class="custom-control custom-checkbox-toggle">
+                          <input type="checkbox" class="custom-control-input" id="toggleTwo" checked>
+                          <label class="custom-control-label" for="toggleTwo"></label>
                         </div>
+
                       </div>
-                        <div class="col">
-                        <!-- Toggle -->
-                            <small class="text-muted">
-                          Test
+                      <div class="col ml--2">
+
+                        <!-- Help text -->
+                        <small class="text-muted">
+                          You're currently available
                         </small>
-                        <div class="custom-control custom-checkbox-toggle" style="margin:auto">
-                          <input type="checkbox" class="custom-control-input" id="toggleZero2">
-                          <label class="custom-control-label" for="toggleZero2"></label>
-                        </div>
+
                       </div>
-                    </div>
+                    </div> <!-- / .row -->
                   </div>
 
                 </div>
-              </div>
-
-              <div class="card" id="datasets-table-div" data-toggle="lists" data-lists-values='["dataset-id", "created-date", "images"]'>
-                <div class="card-header">
-                  <div class="row align-items-center">
-                    <div class="col">
-                      <!-- Search -->
-                      <form class="row align-items-center">
-                        <div class="col-auto pr-0">
-                          <span class="fe fe-search text-muted"></span>
-                        </div>
-                        <div class="col">
-                            <input type="search" class="form-control form-control-flush search" placeholder="Search">
-                        </div>
-                      </form>
-                    </div>
-                  </div> <!-- / .row -->
-                </div>
-                <div class="table-responsive">
-                  <table class="table table-sm table-nowrap card-table">
-                    <thead>
-                      <tr>
-                        <th>
-                          <div class="custom-control custom-checkbox table-checkbox">
-                            <input type="checkbox" class="custom-control-input" name="ordersSelect" id="ordersSelectAll">
-                            <label class="custom-control-label" for="ordersSelectAll">
-                              &nbsp;
-                            </label>
-                          </div>
-                        </th>
-                        <th>
-                          <a href="#" class="text-muted sort" data-sort="dataset-id">
-                            Dataset ID
-                          </a>
-                        </th>
-                        <th>
-                          <a href="#" class="text-muted sort" data-sort="created-date">
-                            Created Date
-                          </a>
-                        </th>
-                        <th>
-                          <a href="#" class="text-muted sort" data-sort="images">
-                            Images
-                          </a>
-                        </th>
-                        <th>
-                          <a href="#" class="text-muted sort">
-                            Review
-                          </a>
-                        </th>
-                        <th>
-                          <a href="#" class="text-muted sort">
-                            Delete
-                          </a>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody class="list" id="datasetsTbody">
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-
-
-              <!-- Divider -->
-              <hr class="mt-4 mb-5">
-
-              <div class="row">
-                  <div class="col">
-
-                     <h2>
-                         Train Model
-                     </h2>
-                      <small class="form-text text-muted">
-                      Start the training of a new model or resume the training of an existing model with transfer learning. The model learns from datasets specified in the previous section.
-                    </small>
-                  </div>
-              </div>
-              <div class="row">
-                  <div class="col">
-                      <button type="submit" class="btn btn-primary btn-md">
-                          Train Model
-                      </button>
-                  </div>
-              </div>
-
-              <!-- Divider -->
-              <hr class="mt-4 mb-5">
-
-              <div class="row">
-                  <div class="col">
-                      <h2>
-                         Deploy to Vehicle
-                     </h2>
-                      <small class="form-text text-muted">
-                      This creates an ssh connection to your raspberry pi, terminates any processes associated with the old model, transfers the new model, starts a new model API server, and tests that the API server is able to receive images.
-                    </small>
-                  </div>
-              </div>
-              <div class="row">
-                  <div class="col">
-                      <button type="submit" class="btn btn-primary btn-md">
-                          Deploy Model
-                      </button>
-                  </div>
-              </div>
+              </div> <!-- / .row -->
 
               <!-- Divider -->
               <hr class="mt-4 mb-5">
