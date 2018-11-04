@@ -592,140 +592,50 @@
                 <div class="row align-items-center">
                   <div class="col">
 
-                    <!-- Pretitle -->
-                    <h6 class="header-pretitle">
-                      Overview
-                    </h6>
-
                     <!-- Title -->
                     <h1 class="header-title">
-                      Settings
+                      Raspberry Pi
                     </h1>
 
                   </div>
                 </div> <!-- / .row -->
-                <div class="row align-items-center">
-                  <div class="col">
 
-                    <!-- Nav -->
-                    <ul class="nav nav-tabs nav-overflow header-tabs">
-                      <li class="nav-item">
-                        <a href="#!" class="nav-link active">
-                          General
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="#!" class="nav-link">
-                          Profile
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="#!" class="nav-link">
-                          Billing
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="#!" class="nav-link">
-                          Notifications
-                        </a>
-                      </li>
-                    </ul>
-
-                  </div>
-                </div>
               </div>
             </div>
 
             <!-- Form -->
-            <form class="mb-4">
+            <form oninput="endpoint.value = user.value +'@'+ host.value" class="mb-4">
 
               <div class="row">
-                <div class="col-12 col-md-6">
-
-                  <!-- First name -->
+                <div class="col-3 col-md-3">
                   <div class="form-group">
-
-                    <!-- Label -->
                     <label>
-                      First name
+                      Login Name
                     </label>
-
-                    <!-- Input -->
-                    <input type="text" class="form-control">
-
+                    <input name="user" type="text" class="form-control" placeholder="pi">
                   </div>
-
                 </div>
-                <div class="col-12 col-md-6">
-
-                  <!-- Last name -->
+                <div class="col-4 col-md-4">
                   <div class="form-group">
-
-                    <!-- Label -->
                     <label>
-                      Last name
+                      Host Name
                     </label>
-
-                    <!-- Input -->
-                    <input type="text" class="form-control">
-
+                    <input name="host" type="text" class="form-control" placeholder="raspberrypi.local">
                   </div>
-
                 </div>
-                <div class="col-12">
-
-                  <!-- Email address -->
+                  <div class="col-3 col-md-3">
                   <div class="form-group">
-
-                    <!-- Label -->
-                    <label class="mb-1">
-                      Email address
-                    </label>
-
-                    <!-- Form text -->
-                    <small class="form-text text-muted">
-                      This contact will be shown to others publicly, so choose it carefully.
-                    </small>
-
-                    <!-- Input -->
-                    <input type="email" class="form-control">
-
-                  </div>
-
-                </div>
-                <div class="col-12 col-md-6">
-
-                  <!-- Phone -->
-                  <div class="form-group">
-
-                    <!-- Label -->
                     <label>
-                      Phone
+                      Endpoint
                     </label>
-
-                    <!-- Input -->
-                    <input type="text" class="form-control mb-3" placeholder="(___)___-____" data-mask="(000) 000-0000">
-
+                      <output name="endpoint" class="form-text text-muted" style="margin-top:0.5rem">
+                      pi@raspberrypi.local
+                    </output>
                   </div>
-
-                </div>
-                <div class="col-12 col-md-6">
-
-                  <!-- Birthday -->
-                  <div class="form-group">
-
-                    <!-- Label -->
-                    <label>
-                      Birthday
-                    </label>
-
-                    <!-- Input -->
-                    <input type="text" class="form-control" data-toggle="flatpickr">
-
-                  </div>
-
                 </div>
               </div> <!-- / .row -->
+            </form>
+              <form oninput="endpoint.value = user.value +'@'+ host.value" class="mb-4">
 
               <!-- Divider -->
               <hr class="mt-4 mb-5">
