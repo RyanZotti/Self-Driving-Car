@@ -82,6 +82,10 @@ function addDatasetReviewRows() {
                 tr.querySelector('td.images').textContent = dataset.images;
                 tr.querySelector('button.play-dataset-button').setAttribute("dataset",datasetText);
                 tr.querySelector('button.trash-dataset-button').setAttribute("dataset",datasetText);
+                const input = tr.querySelector('input[name="datasetsSelect"]');
+                input.setAttribute('id','dataset-id-'+dataset.id);
+                const label = tr.querySelector('label[name="datasetsSelect"]');
+                label.setAttribute('for','dataset-id-'+dataset.id);
                 tbody.appendChild(tr);
             });
         }
