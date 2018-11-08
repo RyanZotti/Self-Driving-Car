@@ -424,7 +424,26 @@ function getDatasetImportTableHtml() {
     });
 }
 
+/*
+Normally this event trigger should be defined where all of the
+other "on change" triggers are, in the global scope, but because
+I add/remove the datasets table on the fly, depending on the type
+of dataset workflow (import, review, mistake), the event trigger
+gets overwritten and needs to be added again each time the table
+is added
+*/
+function selectAllDatasetsTrigger(){
+    const selectAllDatasetsButton = document.querySelector("input#datasetsSelectAll");
+    selectAllDatasetsButton.onchange = function() {
+        var buttons = document.querySelectorAll('input[name="datasetsSelect"]');
+        for (let button of buttons){
+            button.checked = selectAllDatasetsButton.checked;
+        }
+    };
+};
+
 function loadReviewDatasetsTable() {
+
     getDatasetReviewTableHtml().then(function(tableHtml){
         // Remove the previous table if it exists
         const previousTable = document.querySelector('div#datasets-table-div');
@@ -436,6 +455,8 @@ function loadReviewDatasetsTable() {
         parentDiv.appendChild(tableHtml);
     }).then(function(){
         addDatasetReviewRows();
+    }).then(function(){
+        selectAllDatasetsTrigger();
     });
 }
 
@@ -451,6 +472,8 @@ function loadMistakeDatasetsTable() {
         parentDiv.appendChild(tableHtml);
     }).then(function(){
         addDatasetMistakeRows();
+    }).then(function(){
+        selectAllDatasetsTrigger();
     });
 }
 
@@ -466,6 +489,8 @@ function loadImportDatasetsTable() {
         parentDiv.appendChild(tableHtml);
     }).then(function(){
         addDatasetImportRows();
+    }).then(function(){
+        selectAllDatasetsTrigger();
     });
 }
 
