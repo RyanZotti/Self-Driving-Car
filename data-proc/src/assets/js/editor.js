@@ -72,27 +72,17 @@ function addDatasetReviewRows() {
     Promise.all(promises).then(function(promiseResults){
         const datasetRowString = promiseResults[0];
         const datasetPromises = promiseResults[1];
-        var options = {
-            valueNames: [
-                'dataset-id',
-                'created-date',
-                'images',
-                { attr: 'dataset', name: 'play-dataset-button' },
-                { attr: 'dataset', name: 'trash-dataset-button' }
-            ],
-            item: datasetRowString
-        };
-        var userList = new List("datasets-table-div", options);
+        const tbody = document.querySelector("tbody#datasetsTbody");
         for (datsetPromise of datasetPromises) {
+            const tr = htmlToElement(datasetRowString);
             datsetPromise.then(function(dataset){
                 const datasetText = dataset.name;
-                userList.add({
-                    'dataset-id':dataset.id,
-                    'created-date':dataset.date,
-                    'images':dataset.images,
-                    'play-dataset-button':datasetText,
-                    'trash-dataset-button':datasetText
-                });
+                tr.querySelector('td.dataset-id').textContent = dataset.id;
+                tr.querySelector('td.created-date').textContent = dataset.date;
+                tr.querySelector('td.images').textContent = dataset.images;
+                tr.querySelector('button.play-dataset-button').setAttribute("dataset",datasetText);
+                tr.querySelector('button.trash-dataset-button').setAttribute("dataset",datasetText);
+                tbody.appendChild(tr);
             });
         }
     }).then(function(){
