@@ -698,7 +698,7 @@
                 </div>
               </div>
 
-              <div class="card" id="datasets-table-div" data-toggle="lists" data-lists-values='["dataset-id", "created-date", "images"]'>
+              <div class="card" id="datasets-table-div" data-toggle="lists" data-lists-values='["dataset-id", "images"]'>
                 <div class="card-header">
                   <div class="row align-items-center">
                     <div class="col">
@@ -720,9 +720,17 @@
                       <tr>
                         <th>
                           <div class="custom-control custom-checkbox table-checkbox">
-                            <input type="checkbox" class="custom-control-input" name="ordersSelect" id="ordersSelectAll">
-                            <label class="custom-control-label" for="ordersSelectAll">
-                              &nbsp;
+                            <input type="checkbox" class="custom-control-input" id="trainSelectAll">
+                            <label class="custom-control-label" for="trainSelectAll">
+                              &nbsp; Train
+                            </label>
+                          </div>
+                        </th>
+                        <th>
+                          <div class="custom-control custom-checkbox table-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="validationSelectAll">
+                            <label class="custom-control-label" for="validationSelectAll">
+                              &nbsp; Validation
                             </label>
                           </div>
                         </th>
@@ -732,23 +740,8 @@
                           </a>
                         </th>
                         <th>
-                          <a href="#" class="text-muted sort" data-sort="created-date">
-                            Created Date
-                          </a>
-                        </th>
-                        <th>
                           <a href="#" class="text-muted sort" data-sort="images">
                             Images
-                          </a>
-                        </th>
-                        <th>
-                          <a href="#" class="text-muted sort">
-                            Review
-                          </a>
-                        </th>
-                        <th>
-                          <a href="#" class="text-muted sort">
-                            Delete
                           </a>
                         </th>
                       </tr>
@@ -828,6 +821,9 @@
 
     <!-- Theme JS -->
     <script src="assets/js/theme.min.js"></script>
+    <script src="assets/js/datasets-common.js"></script>
+    <script src="assets/js/machine-learning.js"></script>
+    <script src="assets/js/common.js"></script>
 
   </body>
 </html>
