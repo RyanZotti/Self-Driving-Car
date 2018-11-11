@@ -93,7 +93,7 @@ function addDatasetReviewRows() {
                 const datasetType = getActiveDatasetType();
                 getDatasetRecordIds("review", dataset).then(function(recordIds){
                     recordIdIndexPlaying = 0;
-                    playVideo([dataset, recordIds, recordIdIndexPlaying]);
+                    playVideo([dataset, recordIds, recordIdIndexPlaying, videoSessionId]);
                 });
                 const modalHeaderDatasetId = document.getElementById("playModalHeaderDatasetId");
                 modalHeaderDatasetId.innerHTML = datasetIdPlaying;
@@ -208,6 +208,7 @@ async function playVideo(args) {
     const dataset = args[0];
     const recordIds = args[1];
     const recordIdIndex = args[2]
+    const oldVideoSessionId = args[3]
     const recordId = updateRecordId(recordIds, recordIdIndexPlaying);
     const modalHeaderDatasetId = document.getElementById("playModalHeaderDatasetId");
     modalHeaderDatasetId.innerHTML = datasetIdPlaying;
@@ -245,14 +246,25 @@ async function playVideo(args) {
         const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
         const isMistakeBad = state.ai.angleAbsError > pauseOnBadMistakeThreshold;
         if (isVideoPlaying == true){
-            if (pauseOnBadMistake && isMistakeBad){
+            if (oldVideoSessionId != videoSessionId){
+                /*
+                If the code reaches this point it means that I've hit
+                the rewind button and there now multiple video sessions
+                going and this is an old session. Since this function is
+                recursive I can kill the session by not making the
+                function call itself again. I don't want to set the stop
+                variable though because I don't want to halt all of the
+                sessions, just the old ones. I am deliberately doing
+                nothing here
+                */
+            } else if (pauseOnBadMistake && isMistakeBad){
                 isVideoPlaying = false;
                 const modalPlayPauseButton = document.querySelector("img#modalPlayPauseButton");
                 modalPlayPauseButton.removeAttribute("src");
                 modalPlayPauseButton.setAttribute("src","assets/img/icons/play.svg");
             } else {
                 recordIdIndexPlaying = recordIdIndex + 1;
-                window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, recordIdIndexPlaying]));
+                window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, recordIdIndexPlaying, oldVideoSessionId]));
             }
         }
     } else {
@@ -446,6 +458,11 @@ function isRecordAlreadyFlagged(dataset, recordId){
     });
 }
 
+function rewindFrameIndex(){
+    recordIdIndexPlaying = recordIdIndexPlaying - 15;
+    recordIdIndexPlaying = Math.max(0,recordIdIndexPlaying);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadImportDatasetsTable();
     // TODO: Replace with plain javascript instead of jquery
@@ -476,7 +493,8 @@ document.addEventListener('DOMContentLoaded', function() {
         data = JSON.stringify({'dataset': datasetPlaying, 'record_id': recordId})
         $.post('/delete', data);
         recordIdIndexPlaying = recordIdIndexPlaying + 1;
-        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying]);
+        videoSessionId = Date.now();
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
     });
 
     const flagButton = document.querySelector("#isFlagged");
@@ -507,7 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $.post('/add-flagged-record', data);
         }
         recordIdIndexPlaying = recordIdIndexPlaying + 1;
-        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying]);
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
     };
 
     const modalPlayPauseButton = document.querySelector("img#modalPlayPauseButton");
@@ -523,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const datasetType = getActiveDatasetType();
             getDatasetRecordIds(datasetType, datasetPlaying).then(function(recordIds){
                 recordIdIndexPlaying = recordIdIndexPlaying + 1;
-                playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying]);
+                playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
             });
         }
     };
@@ -534,9 +552,17 @@ document.addEventListener('DOMContentLoaded', function() {
         isVideoPlaying = false;
     }
 
+    const rewindButton = document.querySelector("span#rewind");
+    rewindButton.onclick = function(){
+        rewindFrameIndex();
+        videoSessionId = Date.now();
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
+    }
+
 }, false);
 
 // Global variables
+var videoSessionId = -1;
 var isVideoPlaying = false;
 var datasetPlaying = '';
 var dadtasetIdPlaying = '';
