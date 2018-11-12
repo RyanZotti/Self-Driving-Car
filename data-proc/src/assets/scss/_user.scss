@@ -17,3 +17,24 @@ input.iconCheckBox {
   height: 0;
   width: 0;
 }
+
+.progress-bar-vertical {
+  width: 10px;
+  min-height: 28px;
+  display: flex;
+  align-items: flex-end;
+  margin: 0 auto;
+  border: 1px solid #95A9C9;
+  background-color: #fff;
+  border-radius: 0px;
+}
+
+.progress-bar-vertical .progress-bar {
+  width: 100%;
+  height: 0;
+  -webkit-transition: height 0.6s ease;
+  -o-transition: height 0.6s ease;
+  transition: height 0.6s ease;
+  border-radius: 0px;
+    background-color: #2c7be5;
+}
