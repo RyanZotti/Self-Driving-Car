@@ -260,6 +260,18 @@ async function playVideo(args) {
         const speedBar = document.querySelector("div#speedBar");
         const speedPercent = (state.human.throttle * 100).toFixed(2) + '%';
         speedBar.style.height = speedPercent;
+
+        const speedText = document.querySelector("div#speedText");
+        const humanSteeringText = document.querySelector("div#humanSteeringText");
+        const aiSteeringText = document.querySelector("div#aiSteeringText");
+        const errorText = document.querySelector("div#errorText");
+
+        speedText.textContent = (state.human.throttle * 100).toFixed(0) + '%';
+        humanSteeringText.textContent = (state.human.angle * 100).toFixed(0) + '%';
+        aiSteeringText.textContent = (state.ai.angle * 100).toFixed(0) + '%';
+        // Use `rawErrorPercent` if you don't want values above 100%
+        errorText.textContent = (state.ai.angleAbsError * 100).toFixed(0) + '%';
+
         const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
         const isMistakeBad = state.ai.angleAbsError > pauseOnBadMistakeThreshold;
         if (isVideoPlaying == true){
