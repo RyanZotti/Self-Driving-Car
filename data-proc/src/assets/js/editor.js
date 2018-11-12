@@ -243,6 +243,23 @@ async function playVideo(args) {
         updateImage(dataset, recordId);
         await adjustAngleDonut('aiAngleDonut',state.ai.angle);
         await adjustAngleDonut('humanAngleDonut',state.human.angle);
+        /*
+        Technically the error could go to 200%, but it rarely
+        does, so I cap at 100% to get better visual feedback
+        from the error bar
+        */
+        const errorBar = document.querySelector("div#errorBar");
+        const rawErrorPercent = Math.min((state.ai.angleAbsError * 100),100);
+        if (rawErrorPercent <= 80){
+            errorBar.style.backgroundColor = "#2c7be5";
+        } else {
+            errorBar.style.backgroundColor = "#E43757";
+        }
+        const errorPercent = rawErrorPercent.toFixed(2) + '%';
+        errorBar.style.height = errorPercent;
+        const speedBar = document.querySelector("div#speedBar");
+        const speedPercent = (state.human.throttle * 100).toFixed(2) + '%';
+        speedBar.style.height = speedPercent;
         const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
         const isMistakeBad = state.ai.angleAbsError > pauseOnBadMistakeThreshold;
         if (isVideoPlaying == true){
