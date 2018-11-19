@@ -338,6 +338,9 @@ def make_app():
         (r"/dataset-date-from-dataset-name", DatasetDateFromDataName),
         (r"/(.*.html)", tornado.web.StaticFileHandler, {"path": html_absolute_path}),
         (r"/assets/(.*)", tornado.web.StaticFileHandler, {"path": assets_absolute_path}),
+        (r"/resume-training", ResumeTraining),
+        (r"/stop-training", StopTraining),
+        (r"/train-new-model", TrainNewModel),
     ]
     return tornado.web.Application(handlers)
 

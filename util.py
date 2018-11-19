@@ -238,3 +238,43 @@ def live_video_stream(ip):
             if cv2.waitKey(1) == 27:
                 exit(0)
             yield frame
+
+
+def stop_training():
+    scripts = [
+        'tiny_cropped_angle_model.py',
+        'resume_training.py'
+    ]
+    for script in scripts:
+        command = "ps -ef | grep "+script+" | grep -iv grep | awk '{print $2}' | xargs kill -9"
+        print(command)
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=True
+        )
+
+
+def train_new_model():
+    stop_training()
+    # The & is required or Tornado will get stuck
+    command = 'python /Users/ryanzotti/Documents/repos/Self-Driving-Car/tiny_cropped_angle_model.py &'
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        shell=True
+    )
+
+
+def resume_training():
+    stop_training()
+    # The & is required or Tornado will get stuck
+    command = 'python /Users/ryanzotti/Documents/repos/Self-Driving-Car/resume_training.py &'
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        shell=True
+    )
