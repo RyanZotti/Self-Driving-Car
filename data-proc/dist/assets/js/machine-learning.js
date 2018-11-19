@@ -59,4 +59,10 @@ function selectAllMachineLearningDatasetsTrigger(){
 document.addEventListener('DOMContentLoaded', function() {
     selectAllMachineLearningDatasetsTrigger();
     addDatasetMachineLearningRows();
+
+    const trainModelButton = document.querySelector("button#train-model-button");
+    trainModelButton.onclick = function(){
+        $.post('/train-new-model');
+    };
+
 }, false);
