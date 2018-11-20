@@ -278,3 +278,30 @@ def resume_training():
         stderr=subprocess.STDOUT,
         shell=True
     )
+
+def is_training():
+    number_of_running_processes = 0
+    commands = [
+        "ps -ef | grep tiny_cropped_angle_model.py | grep -iv grep | wc -l | awk '{print $1}'",
+        "ps -ef | grep resume_training.py | grep -iv grep | wc -l | awk '{print $1}'"
+    ]
+    for command in commands:
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=True
+        )
+        for line in iter(process.stdout.readline, b''):
+            # TODO:
+            count = str(line)\
+                .replace("b","")\
+                .replace("\\","")\
+                .replace("n","")\
+                .replace("\'","")
+            number_of_running_processes += int(count)
+    if number_of_running_processes == 0:
+        return False
+    else:
+        return True
+

@@ -314,6 +314,37 @@ class ImageAPI(tornado.web.RequestHandler):
         yield tornado.gen.Task(self.flush)
 
 
+class ResumeTraining(tornado.web.RequestHandler):
+
+    def post(self):
+        resume_training()
+        result = {}
+        self.write(result)
+
+
+class StopTraining(tornado.web.RequestHandler):
+
+    def post(self):
+        stop_training()
+        result = {}
+        self.write(result)
+
+
+class TrainNewModel(tornado.web.RequestHandler):
+
+    def post(self):
+        train_new_model()
+        result = {}
+        self.write(result)
+
+
+class IsTraining(tornado.web.RequestHandler):
+
+    def post(self):
+        result = {'is_running':is_training()}
+        self.write(result)
+
+
 def make_app():
     this_dir = os.path.dirname(os.path.realpath(__file__))
     assets_absolute_path = os.path.join(this_dir, 'dist', 'assets')
@@ -341,6 +372,7 @@ def make_app():
         (r"/resume-training", ResumeTraining),
         (r"/stop-training", StopTraining),
         (r"/train-new-model", TrainNewModel),
+        (r"/is-training", IsTraining),
     ]
     return tornado.web.Application(handlers)
 
