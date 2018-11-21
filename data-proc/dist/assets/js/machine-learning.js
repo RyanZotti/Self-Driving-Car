@@ -56,13 +56,103 @@ function selectAllMachineLearningDatasetsTrigger(){
     }
 };
 
+function stopTraining() {
+    return new Promise(function(resolve, reject){
+        $.post('/stop-training', function(result){
+            resolve(result.is_running);
+        });
+    });
+}
+
+// TODO: Allow transfer learning
+function startTraining() {
+    return new Promise(function(resolve, reject){
+        $.post('/train-new-model', function(result){
+            resolve(result);
+        });
+    });
+}
+
+/*
+The list of processes should be the source of
+truth regarding the current state of training.
+It's better to look up proceesses than to save
+the state in a variable somewhere, especially
+if users are going to switch screens frequently
+*/
+function isTraining() {
+    return new Promise(function(resolve, reject){
+        $.post('/is-training', function(result){
+            resolve(result.is_running);
+        });
+    });
+}
+
+function setTrainButtonState() {
+    if (isAttemptingTrainingStop == false){
+        console.log('isAttemptingTrainingStop: '+isAttemptingTrainingStop);
+        const trainModelButton = document.querySelector("button#train-model-button");
+        isTraining().then(function(processExists){
+            isTrainingLastState = processExists;
+            if(processExists == true){
+                trainModelButton.textContent = 'Stop Training'
+                if(trainModelButton.classList.contains("btn-primary")){
+                     trainModelButton.classList.remove("btn-primary");
+                }
+                if(!trainModelButton.classList.contains("btn-danger")){
+                    trainModelButton.classList.add("btn-danger");
+                }
+            } else {
+                trainModelButton.textContent = 'Start Training'
+                if(trainModelButton.classList.contains("btn-danger")){
+                    trainModelButton.classList.remove("btn-danger");
+                }
+                if(!trainModelButton.classList.contains("btn-primary")){
+                    trainModelButton.classList.add("btn-primary");
+                }
+            }
+        });
+    };
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     selectAllMachineLearningDatasetsTrigger();
     addDatasetMachineLearningRows();
 
+    /*
+    The training could complete successfully or fail at any
+    time, so make sure to check it every 5 seconds. The time
+    loop can be quit with a call to clearInterval(<timevar>);
+    */
+    const trainingStateTimer = setInterval(function(){
+      setTrainButtonState()
+    }, 5000);
+
     const trainModelButton = document.querySelector("button#train-model-button");
     trainModelButton.onclick = function(){
-        $.post('/train-new-model');
+        if(isTrainingLastState == true){
+            const trainModelButton = document.querySelector("button#train-model-button");
+            isAttemptingTrainingStop = true;
+            trainModelButton.textContent = 'Stopping Training ...'
+            stopTraining().then(function(){
+                setTrainButtonState();
+                isAttemptingTrainingStop = false;
+            });
+        } else {
+            startTraining().then(function(){
+                setTrainButtonState();
+            });
+        }
     };
 
 }, false);
+
+var isTrainingLastState = false;
+
+/*
+Used to ensure that the train button doesn't go
+from "stop training..." to "stop training" briefly
+as this might cause users to double click and
+accidentally start training again
+*/
+var isAttemptingTrainingStop = false;
