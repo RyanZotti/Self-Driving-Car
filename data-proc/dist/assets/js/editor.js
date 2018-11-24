@@ -449,8 +449,14 @@ function loadImportDatasetsTable() {
 }
 
 function datasetNameToId(datasetName){
-    const regex = /(?<=dataset_)([0-9]*)(?=_)/g;
-    const datasetId = datasetName.match(regex)[0];
+    /*
+    Javascript doesn't yet support positive lookbehind
+    and this caused an nothing to load on iOS Safari
+    and my Mac
+    */
+    const datasetNameScrubbed = datasetName.replace("dataset_", "");
+    const regex = /([0-9]*)(?=_)/g;
+    const datasetId = datasetNameScrubbed.match(regex)[0];
     return datasetId
 }
 
