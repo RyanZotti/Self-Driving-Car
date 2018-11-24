@@ -353,11 +353,7 @@ class IsTraining(tornado.web.RequestHandler):
 class DoesModelAlreadyExist(tornado.web.RequestHandler):
 
     def post(self):
-        print(app.model_path)
-        #model_path = os.path.join(self.application.model_path, 'tf_visual_data', 'runs','1')
-        #print(model_path)
         exists = os.path.exists(self.application.model_path)
-        print(exists)
         result = {'exists':exists}
         self.write(result)
 
