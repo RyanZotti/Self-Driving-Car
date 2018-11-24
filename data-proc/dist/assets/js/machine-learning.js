@@ -67,8 +67,29 @@ function stopTraining() {
 // TODO: Allow transfer learning
 function startTraining() {
     return new Promise(function(resolve, reject){
-        $.post('/train-new-model', function(result){
-            resolve(result);
+        doesModelExist().then(function(exists){
+            if (exists == true){
+                $.post('/resume-training', function(result){
+                    resolve(result);
+                });
+            } else {
+                $.post('/train-new-model', function(result){
+                    resolve(result);
+                });
+            }
+        });
+    });
+}
+
+/*
+Used to check if model API train a model from
+scratch or apply transfer learning to an existing
+model
+*/
+function doesModelExist() {
+    return new Promise(function(resolve, reject){
+        $.post('/does-model-already-exist', function(result){
+            resolve(result.exists);
         });
     });
 }

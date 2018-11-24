@@ -247,35 +247,83 @@ def stop_training():
     ]
     for script in scripts:
         command = "ps -ef | grep "+script+" | grep -iv grep | awk '{print $2}' | xargs kill -9"
-        print(command)
         process = subprocess.Popen(
             command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
             shell=True
         )
 
 
-def train_new_model():
+def train_new_model(data_path,epochs=10,show_speed='Y', save_to_disk='N',image_scale=0.125,crop_factor=2, s3_bucket='self-driving-car'):
     stop_training()
     # The & is required or Tornado will get stuck
-    command = 'python /Users/ryanzotti/Documents/repos/Self-Driving-Car/tiny_cropped_angle_model.py &'
+    command = '''python /Users/ryanzotti/Documents/repos/Self-Driving-Car/tiny_cropped_angle_model.py \
+    --datapath {data_path} \
+    --epochs {epochs} \
+    --show_speed {show_speed} \
+    --save_to_disk {save_to_disk} \
+    --image_scale {image_scale} \
+    --s3_bucket {s3_bucket} \
+    --crop_factor {crop_factor} &
+    '''.format(
+        data_path=data_path,
+        epochs=epochs,
+        show_speed=show_speed,
+        save_to_disk=save_to_disk,
+        image_scale=image_scale,
+        crop_factor=crop_factor,
+        s3_bucket=s3_bucket
+    )
+    print(command)
     process = subprocess.Popen(
         command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
         shell=True
     )
 
 
-def resume_training():
+def resume_training(
+        data_path,
+        model_dir,
+        s3_bucket='self-driving-car',
+        show_speed='False',
+        s3_sync='n',
+        epochs=10,
+        save_to_disk='y',
+        overfit='n',
+        image_scale='0.125',
+        crop_factor='2',
+        batch_size='50',
+        angle_only='y'):
+
     stop_training()
     # The & is required or Tornado will get stuck
-    command = 'python /Users/ryanzotti/Documents/repos/Self-Driving-Car/resume_training.py &'
+    command = 'python /Users/ryanzotti/Documents/repos/Self-Driving-Car/resume_training.py \
+    --datapath {data_path} \
+    --epochs {epochs} \
+    --model_dir {model_dir} \
+    --s3_bucket {s3_bucket} \
+    --show_speed {show_speed} \
+    --s3_sync {s3_sync} \
+    --save_to_disk {save_to_disk} \
+    --overfit {overfit} \
+    --image_scale {image_scale} \
+    --crop_factor {crop_factor} \
+    --batch_size {batch_size} \
+    --angle_only {angle_only} &'.format(
+        data_path=data_path,
+        epochs=epochs,
+        model_dir=model_dir,
+        s3_bucket=s3_bucket,
+        show_speed=show_speed,
+        s3_sync=s3_sync,
+        save_to_disk=save_to_disk,
+        overfit=overfit,
+        image_scale=image_scale,
+        crop_factor=crop_factor,
+        batch_size=batch_size,
+        angle_only=angle_only
+    )
     process = subprocess.Popen(
         command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
         shell=True
     )
 
@@ -304,4 +352,3 @@ def is_training():
         return False
     else:
         return True
-

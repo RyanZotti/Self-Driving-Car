@@ -317,7 +317,10 @@ class ImageAPI(tornado.web.RequestHandler):
 class ResumeTraining(tornado.web.RequestHandler):
 
     def post(self):
-        resume_training()
+        resume_training(
+            data_path=self.application.data_path,
+            model_dir=self.application.model_path
+        )
         result = {}
         self.write(result)
 
@@ -333,7 +336,9 @@ class StopTraining(tornado.web.RequestHandler):
 class TrainNewModel(tornado.web.RequestHandler):
 
     def post(self):
-        train_new_model()
+        train_new_model(
+            data_path=self.application.data_path
+        )
         result = {}
         self.write(result)
 
@@ -342,6 +347,18 @@ class IsTraining(tornado.web.RequestHandler):
 
     def post(self):
         result = {'is_running':is_training()}
+        self.write(result)
+
+
+class DoesModelAlreadyExist(tornado.web.RequestHandler):
+
+    def post(self):
+        print(app.model_path)
+        #model_path = os.path.join(self.application.model_path, 'tf_visual_data', 'runs','1')
+        #print(model_path)
+        exists = os.path.exists(self.application.model_path)
+        print(exists)
+        result = {'exists':exists}
         self.write(result)
 
 
@@ -373,6 +390,7 @@ def make_app():
         (r"/stop-training", StopTraining),
         (r"/train-new-model", TrainNewModel),
         (r"/is-training", IsTraining),
+        (r"/does-model-already-exist", DoesModelAlreadyExist),
     ]
     return tornado.web.Application(handlers)
 
@@ -410,8 +428,9 @@ if __name__ == "__main__":
     app.new_data_path = args['new_data_path']
 
     # TODO: Remove this hard-coded path
-    app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data'
-    app.data_path_emphasis = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper-emphasis/data'
+    app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
+    app.model_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data/tf_visual_data/runs/1'
+    app.data_path_emphasis = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet-flagged/data'
     app.record_reader = RecordReader(base_directory=app.data_path,overfit=False)
     app.record_reader_mistakes = RecordReader(
         base_directory=app.data_path_emphasis,
