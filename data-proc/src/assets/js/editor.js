@@ -523,10 +523,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     updateDatasetsCountBadge('mistake');
 
-    $('#modalTrashButton').click(function () {
+    $('#modalTrashButton').click(async function () {
         const recordId = recordIdsPlaying[recordIdIndexPlaying];
         data = JSON.stringify({'dataset': datasetPlaying, 'record_id': recordId})
         $.post('/delete', data);
+        const isRecordIdFlagged = await isRecordAlreadyFlagged(datasetPlaying,recordId);
+        if (isRecordIdFlagged == true){
+            $.post('/delete-flagged-record', data);
+        }
         recordIdIndexPlaying = recordIdIndexPlaying + 1;
         videoSessionId = Date.now();
         playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
