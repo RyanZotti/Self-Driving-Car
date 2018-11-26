@@ -493,9 +493,50 @@ function isRecordAlreadyFlagged(dataset, recordId){
     });
 }
 
+Array.min = function(array){
+    return Math.min.apply( Math, array );
+};
+
+function batchMatchRecordIdsToIndices(sample, population){
+    var sampleIndex = 0;
+    var sampleIndices = [];
+    for (var populationIndex = 0; populationIndex < population.length; populationIndex++){
+        const populationRecord = population[populationIndex];
+        if (sampleIndex >= sample.length){
+            break;
+        }
+        const sampleRecord = sample[sampleIndex];
+        if (sampleRecord == populationRecord){
+            sampleIndices.push(populationIndex);
+            sampleIndex = sampleIndex + 1;
+        }
+    }
+    return sampleIndices;
+}
+
 function rewindFrameIndex(){
     recordIdIndexPlaying = recordIdIndexPlaying - 15;
     recordIdIndexPlaying = Math.max(0,recordIdIndexPlaying);
+}
+
+function fastForwardFrameIndexToNextFlag(){
+    return new Promise(function(resolve, reject) {
+        const data = JSON.stringify({
+            'dataset': datasetPlaying,
+            'dataset_type':'mistake'
+        });
+        $.post('/dataset-record-ids', data, function(response){
+            const flaggedRecordIds = response.record_ids;
+            const sampleIndices = batchMatchRecordIdsToIndices(
+                flaggedRecordIds,
+                recordIdsPlaying
+            );
+            const higherIndices = sampleIndices.filter(index => index > recordIdIndexPlaying);
+            const nextFlaggedRecordIndex = Array.min(higherIndices);
+            recordIdIndexPlaying = nextFlaggedRecordIndex;
+            resolve(response.record_ids);
+        });
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -594,6 +635,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const rewindButton = document.querySelector("span#rewind");
     rewindButton.onclick = function(){
         rewindFrameIndex();
+        videoSessionId = Date.now();
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
+    }
+
+    const fastForwardFlagButton = document.querySelector("span#fastForwardFlag");
+    fastForwardFlagButton.onclick = async function(){
+        await fastForwardFrameIndexToNextFlag();
         videoSessionId = Date.now();
         playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
     }
