@@ -58,6 +58,7 @@ function addDatasetReviewRows() {
     Promise.all(promises).then(function(promiseResults){
         const datasetRowString = promiseResults[0];
         const datasetPromises = promiseResults[1];
+        const datasetFlagPromises = promiseResults[2];
         const tbody = document.querySelector("tbody#datasetsTbody");
         for (datsetPromise of datasetPromises) {
             const tr = htmlToElement(datasetRowString);
@@ -66,6 +67,7 @@ function addDatasetReviewRows() {
                 tr.querySelector('td.dataset-id').textContent = dataset.id;
                 tr.querySelector('td.created-date').textContent = dataset.date;
                 tr.querySelector('td.images').textContent = dataset.images;
+                tr.querySelector('td.flagged').textContent = dataset.flags;
                 tr.querySelector('button.play-dataset-button').setAttribute("dataset",datasetText);
                 tr.querySelector('button.trash-dataset-button').setAttribute("dataset",datasetText);
                 const input = tr.querySelector('input[name="datasetsSelect"]');
