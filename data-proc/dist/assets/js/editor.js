@@ -51,6 +51,11 @@ function addDatasetImportRows() {
 }
 
 function addDatasetReviewRows() {
+    const tbody = document.querySelector("tbody#datasetsTbody");
+    const existingRows = tbody.querySelectorAll("tr.dataset-row");
+    for (row of existingRows){
+        row.parentNode.removeChild(row);
+    }
     const promises = [
         getDatasetReviewRowString(),
         loadDatasetMetadata()
@@ -59,7 +64,6 @@ function addDatasetReviewRows() {
         const datasetRowString = promiseResults[0];
         const datasetPromises = promiseResults[1];
         const datasetFlagPromises = promiseResults[2];
-        const tbody = document.querySelector("tbody#datasetsTbody");
         for (datsetPromise of datasetPromises) {
             const tr = htmlToElement(datasetRowString);
             datsetPromise.then(function(dataset){
@@ -70,6 +74,19 @@ function addDatasetReviewRows() {
                 tr.querySelector('td.flagged').textContent = dataset.flags;
                 tr.querySelector('button.play-dataset-button').setAttribute("dataset",datasetText);
                 tr.querySelector('button.trash-dataset-button').setAttribute("dataset",datasetText);
+                const removeFlagsButton = tr.querySelector('button.remove-flags-action');
+                removeFlagsButton.setAttribute("dataset",datasetText);
+                removeFlagsButton.onclick = function (){
+                    deleteDatasetPayload = JSON.stringify({
+                        'dataset': datasetText
+                    })
+                    $.post('/delete-flagged-dataset', deleteDatasetPayload, function(){
+                        // Update all rows
+                        addDatasetReviewRows();
+                    });
+                };
+                const deleteDatasetButton = tr.querySelector('button.delete-dataset-action');
+                deleteDatasetButton.setAttribute("dataset",datasetText);
                 const input = tr.querySelector('input[name="datasetsSelect"]');
                 input.setAttribute('id','dataset-id-'+dataset.id);
                 const label = tr.querySelector('label[name="datasetsSelect"]');
@@ -80,7 +97,6 @@ function addDatasetReviewRows() {
     }).then(function(){
         // Test that the promise worked and that at this point
         // all of the rows have been updated
-        var tbody = document.querySelector("tbody#datasetsTbody");
         var buttons = tbody.querySelectorAll("tr > td > button.fe-play");
         for (button of buttons){
             button.onclick = function() {
