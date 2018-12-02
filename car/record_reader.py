@@ -7,6 +7,7 @@ from os.path import dirname, join, basename
 import numpy as np
 from random import shuffle
 import re
+from shutil import rmtree
 
 
 class RecordReader(object):
@@ -70,6 +71,14 @@ class RecordReader(object):
         self.test_paths = self.merge_paths(self.test_folders)
         self.batch_size = batch_size
         self.batches_per_epoch = int(len(self.train_paths) / self.batch_size)
+
+    def get_dataset_absolute_path(self, dataset_name):
+        full_path = join(self.base_directory, dataset_name)
+        return full_path
+
+    def delete_dataset(self, dataset_name):
+        full_path = self.get_dataset_absolute_path(dataset_name)
+        rmtree(full_path)
 
     # Merge paths into single numpy array for fast random selection
     def merge_paths(self,folders):
