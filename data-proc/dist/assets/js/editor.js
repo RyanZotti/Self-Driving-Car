@@ -81,7 +81,7 @@ function addDatasetReviewRows() {
                         'dataset': datasetText
                     })
                     $.post('/delete-flagged-dataset', deleteDatasetPayload, function(){
-                        // Update all rows
+                        // Update all rows to exclude the deleted dataset
                         addDatasetReviewRows();
                     });
                 };
@@ -648,6 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeModalButton = document.querySelector("button#closeModal");
     closeModalButton.onclick = function() {
         isVideoPlaying = false;
+        addDatasetReviewRows();
     }
 
     const rewindButton = document.querySelector("span#rewind");
