@@ -14,14 +14,6 @@ function getDatasetReviewRowString() {
     });
 }
 
-function getDatasetMistakeRowString() {
-    return new Promise(function(resolve, reject) {
-        $.get( "/dataset-mistake.html", function(datasetString) {
-            resolve(datasetString);
-        });
-    });
-}
-
 function addDatasetImportRows() {
     const promises = [
         getDatasetImportRowString(),
@@ -51,6 +43,11 @@ function addDatasetImportRows() {
 }
 
 function addDatasetReviewRows() {
+    const tbody = document.querySelector("tbody#datasetsTbody");
+    const existingRows = tbody.querySelectorAll("tr.dataset-row");
+    for (row of existingRows){
+        row.parentNode.removeChild(row);
+    }
     const promises = [
         getDatasetReviewRowString(),
         loadDatasetMetadata()
@@ -58,7 +55,7 @@ function addDatasetReviewRows() {
     Promise.all(promises).then(function(promiseResults){
         const datasetRowString = promiseResults[0];
         const datasetPromises = promiseResults[1];
-        const tbody = document.querySelector("tbody#datasetsTbody");
+        const datasetFlagPromises = promiseResults[2];
         for (datsetPromise of datasetPromises) {
             const tr = htmlToElement(datasetRowString);
             datsetPromise.then(function(dataset){
@@ -66,8 +63,22 @@ function addDatasetReviewRows() {
                 tr.querySelector('td.dataset-id').textContent = dataset.id;
                 tr.querySelector('td.created-date').textContent = dataset.date;
                 tr.querySelector('td.images').textContent = dataset.images;
+                tr.querySelector('td.flagged').textContent = dataset.flags;
                 tr.querySelector('button.play-dataset-button').setAttribute("dataset",datasetText);
                 tr.querySelector('button.trash-dataset-button').setAttribute("dataset",datasetText);
+                const removeFlagsButton = tr.querySelector('button.remove-flags-action');
+                removeFlagsButton.setAttribute("dataset",datasetText);
+                removeFlagsButton.onclick = function (){
+                    deleteDatasetPayload = JSON.stringify({
+                        'dataset': datasetText
+                    })
+                    $.post('/delete-flagged-dataset', deleteDatasetPayload, function(){
+                        // Update all rows to exclude the deleted dataset
+                        addDatasetReviewRows();
+                    });
+                };
+                const deleteDatasetButton = tr.querySelector('button.delete-dataset-action');
+                deleteDatasetButton.setAttribute("dataset",datasetText);
                 const input = tr.querySelector('input[name="datasetsSelect"]');
                 input.setAttribute('id','dataset-id-'+dataset.id);
                 const label = tr.querySelector('label[name="datasetsSelect"]');
@@ -78,7 +89,6 @@ function addDatasetReviewRows() {
     }).then(function(){
         // Test that the promise worked and that at this point
         // all of the rows have been updated
-        var tbody = document.querySelector("tbody#datasetsTbody");
         var buttons = tbody.querySelectorAll("tr > td > button.fe-play");
         for (button of buttons){
             button.onclick = function() {
@@ -308,63 +318,10 @@ async function playVideo(args) {
     recordIdsPlaying = recordIds;
 }
 
-function addDatasetMistakeRows() {
-    const promises = [
-        getDatasetMistakeRowString(),
-        loadMistakeDatasetMetadata()
-    ];
-    Promise.all(promises).then(function(promiseResults){
-        const datasetRowString = promiseResults[0];
-        const datasetPromises = promiseResults[1];
-
-        const tbody = document.querySelector("tbody#datasetsTbody");
-        for (datsetPromise of datasetPromises) {
-            const tr = htmlToElement(datasetRowString);
-            datsetPromise.then(function(dataset){
-                const datasetText = dataset.name;
-                tr.querySelector('td.dataset-id').textContent = dataset.id;
-                tr.querySelector('td.created-date').textContent = dataset.date;
-                tr.querySelector('td.images').textContent = dataset.images;
-                tr.querySelector('button.play-dataset-button').setAttribute("dataset",datasetText);
-                tr.querySelector('button.trash-dataset-button').setAttribute("dataset",datasetText);
-                const input = tr.querySelector('input[name="datasetsSelect"]');
-                input.setAttribute('id','dataset-id-'+dataset.id);
-                const label = tr.querySelector('label[name="datasetsSelect"]');
-                label.setAttribute('for','dataset-id-'+dataset.id);
-                tbody.appendChild(tr);
-            });
-        }
-    });
-}
-
-function loadMistakeDatasetMetadata() {
-    return new Promise(function(resolveLoad, reject) {
-        $.get( "/list-mistake-datasets").then(function(response){
-            return response.datasets;
-        }).then(function(datasets){
-            let allMetadata = datasets.map(function (dataset) {
-                return new Promise(function (resolve) {
-                  resolve(getDatasetMetadata("mistake",dataset));
-                });
-            });
-            Promise.all(allMetadata).then(function() {
-                resolveLoad(allMetadata);
-            });
-        });
-    });
-}
 
 function getDatasetReviewTableHtml() {
     return new Promise(function(resolve, reject) {
         $.get( "/datasets-review-table.html", function(datasetString) {
-           resolve(htmlToElement(datasetString));
-        });
-    });
-}
-
-function getDatasetMistakesTableHtml() {
-    return new Promise(function(resolve, reject) {
-        $.get( "/datasets-mistakes-table.html", function(datasetString) {
            resolve(htmlToElement(datasetString));
         });
     });
@@ -414,22 +371,6 @@ function loadReviewDatasetsTable() {
     });
 }
 
-function loadMistakeDatasetsTable() {
-    getDatasetMistakesTableHtml().then(function(tableHtml){
-        // Remove the previous table if it exists
-        const previousTable = document.querySelector('div#datasets-table-div');
-        if (previousTable != null){
-            previousTable.remove();
-        }
-        // Add new table
-        const parentDiv = document.querySelector('div#table-wrapping-div');
-        parentDiv.appendChild(tableHtml);
-    }).then(function(){
-        addDatasetMistakeRows();
-    }).then(function(){
-        selectAllDatasetsTrigger();
-    });
-}
 
 function loadImportDatasetsTable() {
     getDatasetImportTableHtml().then(function(tableHtml){
@@ -544,25 +485,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // TODO: Replace with plain javascript instead of jquery
     $("#dataset-review").click(function(){
         $("#dataset-import").removeClass('active');
-        $("#dataset-mistake").removeClass('active');
         $("#dataset-review").addClass('active');
         loadReviewDatasetsTable();
     });
     updateDatasetsCountBadge('review');
     $("#dataset-import").click(function(){
         $("#dataset-review").removeClass('active');
-        $("#dataset-mistake").removeClass('active');
         $("#dataset-import").addClass('active');
         loadImportDatasetsTable();
     });
     updateDatasetsCountBadge('import');
-    $("#dataset-mistake").click(function(){
-        $("#dataset-import").removeClass('active');
-        $("#dataset-review").removeClass('active');
-        $("#dataset-mistake").addClass('active');
-        loadMistakeDatasetsTable();
-    });
-    updateDatasetsCountBadge('mistake');
 
     $('#modalTrashButton').click(async function () {
         const recordId = recordIdsPlaying[recordIdIndexPlaying];
@@ -630,6 +562,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeModalButton = document.querySelector("button#closeModal");
     closeModalButton.onclick = function() {
         isVideoPlaying = false;
+        addDatasetReviewRows();
     }
 
     const rewindButton = document.querySelector("span#rewind");
