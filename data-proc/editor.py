@@ -34,6 +34,13 @@ def execute_sql(sql):
     cursor.close()
     connection.close()
 
+def get_sql_rows(sql):
+    connection, cursor = connect_to_postgres()
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return rows
 
 class Home(tornado.web.RequestHandler):
     def get(self):
@@ -456,6 +463,32 @@ class BatchPredict(tornado.web.RequestHandler):
         self.write(result)
 
 
+class IsDatasetPredictionSyncing(tornado.web.RequestHandler):
+
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+        batch_predict(
+            dataset=dataset_name,
+            # TODO: Remove this hardcoded port
+            predictions_port='8885',
+            datasets_port=self.application.port
+        )
+        sql_query = '''
+            SELECT
+              COUNT(*) > 0 AS answer
+            FROM live_prediction_sync
+            WHERE LOWER(dataset) LIKE LOWER('%{dataset}%')
+        '''.format(
+            dataset=dataset_name
+        )
+        rows = get_sql_rows(sql=sql_query)
+        first_row = rows[0]
+        self.write({
+            'is_syncing':first_row['answer']
+        })
+
+
 def make_app():
     this_dir = os.path.dirname(os.path.realpath(__file__))
     assets_absolute_path = os.path.join(this_dir, 'dist', 'assets')
@@ -488,6 +521,7 @@ def make_app():
         (r"/is-training", IsTraining),
         (r"/does-model-already-exist", DoesModelAlreadyExist),
         (r"/batch-predict", BatchPredict),
+        (r"/is-dataset-prediction-syncing", IsDatasetPredictionSyncing),
     ]
     return tornado.web.Application(handlers)
 

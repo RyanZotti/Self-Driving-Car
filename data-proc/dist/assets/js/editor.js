@@ -145,6 +145,17 @@ function batchPredict(dataset){
     });
 }
 
+function isDatasetPredictionSyncing(dataset){
+    const data = JSON.stringify({
+        'dataset': dataset
+    });
+    return new Promise(resolve => {
+        $.post('/is-dataset-prediction-syncing', data, (response) => {
+            resolve(response);
+        });
+    });
+}
+
 // This migt not be necessary if I save all datasets
 // incrementally as they're imported. I loop through
 // each dataset's records in sequence because unleashing
