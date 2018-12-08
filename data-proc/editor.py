@@ -505,7 +505,7 @@ class DatasetPredictionSyncPercent(tornado.web.RequestHandler):
         rows = get_sql_rows(sql=sql_query)
         first_row = rows[0]
         self.write({
-            'percent':first_row['completion_percent']
+            'percent':float(first_row['completion_percent'])
         })
 
 
