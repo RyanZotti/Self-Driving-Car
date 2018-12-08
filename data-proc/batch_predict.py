@@ -40,7 +40,7 @@ args = vars(ap.parse_args())
 predictions_port = args['predictions_port']
 datasets_port = args['datasets_port']
 dataset = args['dataset']
-# python batch_predict.py --dataset dataset_1_18-10-20 --predictions_port 8885 --datasets_port 8883
+# python batch_predict.py --dataset dataset_3_18-10-20 --predictions_port 8885 --datasets_port 8883
 
 def get_record_ids(dataset, port):
     data = {
@@ -103,10 +103,11 @@ record_ids = get_record_ids(
 process_id = os.getpid()
 start_sql = '''
     BEGIN;
-    INSERT INTO live_prediction_sync (pid, start_time)
-    VALUES ({pid}, NOW());
+    INSERT INTO live_prediction_sync (dataset, pid, start_time)
+    VALUES ('{dataset}',{pid}, NOW());
     COMMIT;
     '''.format(
+        dataset=dataset,
         pid=process_id
     )
 execute_sql(start_sql)
@@ -133,10 +134,10 @@ with ThreadPoolExecutor(max_workers=5) as executor:
 
 execute_sql('''
     BEGIN;
-    DELETE FROM live_prediction_sync WHERE pid = {pid};
+    DELETE FROM live_prediction_sync WHERE dataset = '{dataset}';
     COMMIT;
     '''.format(
-        pid=process_id
+    dataset=dataset
     )
 )
 

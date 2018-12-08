@@ -1,8 +1,9 @@
 BEGIN;
 CREATE TABLE IF NOT EXISTS live_prediction_sync(
+  dataset character(100),
   pid int,
   start_time TIMESTAMP,
-PRIMARY KEY(pid));
+PRIMARY KEY(dataset));
 COMMIT;
 
 BEGIN;
