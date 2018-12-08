@@ -9,9 +9,7 @@ BEGIN;
 CREATE TABLE IF NOT EXISTS predictions(
   dataset character(100),
   record_id INT,
-  angle_ai float8,
-  angle_human float8,
-  angle_abs_error float8,
+  angle float8,
 PRIMARY KEY(dataset, record_id));
 COMMIT;
 
