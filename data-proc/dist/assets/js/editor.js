@@ -126,30 +126,34 @@ function getDatasetRecordIds(datasetType, dataset) {
     });
 }
 
+function listDatasets(){
+    return new Promise(resolve => {
+        $.get("/list-review-datasets",(response) => {
+            resolve(response.datasets);
+        });
+    });
+}
+
 // This migt not be necessary if I save all datasets
 // incrementally as they're imported. I loop through
 // each dataset's records in sequence because unleashing
 // everything in parallel causes some records to be
 // dropped in Chrome
-function saveAllRecordsToDB(){
-    $.get( "/list-review-datasets").then(function(response){
-        return response.datasets;
-    }).then(function(datasets){
-       for (const dataset of datasets){
-           const recordIds = getDatasetRecordIds(
-               'review',
-               dataset
-           ).then(async function(recordIds){
-               for (const recordId of recordIds){
-                   const data = JSON.stringify({
-                       'dataset': dataset,
-                       'record_id':recordId
-                   });
-                   await $.post('/save-reocord-to-db', data);
-               }
-           });
-       }
-    });
+async function saveAllRecordsToDB(){
+    const datasets = await listDatasets();
+    for (const dataset of datasets){
+        const recordIds = await getDatasetRecordIds(
+            'review',
+            dataset
+        );
+        for (const recordId of recordIds){
+            const data = JSON.stringify({
+                'dataset': dataset,
+                'record_id':recordId
+            });
+            await $.post('/save-reocord-to-db', data);
+        }
+    }
 }
 
 function updateRecordId(recordIds, recordIdIndex){
