@@ -441,6 +441,21 @@ class DoesModelAlreadyExist(tornado.web.RequestHandler):
         self.write(result)
 
 
+class BatchPredict(tornado.web.RequestHandler):
+
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+        batch_predict(
+            dataset=dataset_name,
+            # TODO: Remove this hardcoded port
+            predictions_port='8885',
+            datasets_port=self.application.port
+        )
+        result = {}
+        self.write(result)
+
+
 def make_app():
     this_dir = os.path.dirname(os.path.realpath(__file__))
     assets_absolute_path = os.path.join(this_dir, 'dist', 'assets')
@@ -472,6 +487,7 @@ def make_app():
         (r"/train-new-model", TrainNewModel),
         (r"/is-training", IsTraining),
         (r"/does-model-already-exist", DoesModelAlreadyExist),
+        (r"/batch-predict", BatchPredict),
     ]
     return tornado.web.Application(handlers)
 

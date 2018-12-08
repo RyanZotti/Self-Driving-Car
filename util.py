@@ -256,6 +256,7 @@ def stop_training():
 def train_new_model(data_path,epochs=10,show_speed='Y', save_to_disk='N',image_scale=0.125,crop_factor=2, s3_bucket='self-driving-car'):
     stop_training()
     # The & is required or Tornado will get stuck
+    # TODO: Remove the hardcoded script path
     command = '''python /Users/ryanzotti/Documents/repos/Self-Driving-Car/tiny_cropped_angle_model.py \
     --datapath {data_path} \
     --epochs {epochs} \
@@ -280,6 +281,23 @@ def train_new_model(data_path,epochs=10,show_speed='Y', save_to_disk='N',image_s
     )
 
 
+def batch_predict(dataset, predictions_port, datasets_port):
+    # The & is required or Tornado will get stuck
+    # TODO: Remove the hardcoded script path
+    command = 'python /Users/ryanzotti/Documents/repos/Self-Driving-Car/data-proc/batch_predict.py \
+        --dataset {dataset} \
+        --predictions_port {predictions_port} \
+        --datasets_port {datasets_port} &'.format(
+        dataset=dataset,
+        predictions_port=predictions_port,
+        datasets_port=datasets_port
+    )
+    process = subprocess.Popen(
+        command,
+        shell=True
+    )
+
+
 def resume_training(
         data_path,
         model_dir,
@@ -296,6 +314,7 @@ def resume_training(
 
     stop_training()
     # The & is required or Tornado will get stuck
+    # TODO: Remove the hardcoded script path
     command = 'python /Users/ryanzotti/Documents/repos/Self-Driving-Car/resume_training.py \
     --datapath {data_path} \
     --epochs {epochs} \
