@@ -483,6 +483,32 @@ class IsDatasetPredictionSyncing(tornado.web.RequestHandler):
         })
 
 
+class DatasetPredictionSyncPercent(tornado.web.RequestHandler):
+
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+        sql_query = '''
+            SELECT
+              AVG(CASE
+                WHEN predictions.angle IS NOT NULL
+                  THEN 100.0
+                ELSE 0.0 END) AS completion_percent
+            FROM records
+            LEFT JOIN predictions
+              ON records.dataset = predictions.dataset
+                AND records.record_id = predictions.record_id
+            WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%')
+        '''.format(
+            dataset=dataset_name
+        )
+        rows = get_sql_rows(sql=sql_query)
+        first_row = rows[0]
+        self.write({
+            'percent':first_row['completion_percent']
+        })
+
+
 def make_app():
     this_dir = os.path.dirname(os.path.realpath(__file__))
     assets_absolute_path = os.path.join(this_dir, 'dist', 'assets')
@@ -516,6 +542,7 @@ def make_app():
         (r"/does-model-already-exist", DoesModelAlreadyExist),
         (r"/batch-predict", BatchPredict),
         (r"/is-dataset-prediction-syncing", IsDatasetPredictionSyncing),
+        (r"/dataset-prediction-sync-percent", DatasetPredictionSyncPercent),
     ]
     return tornado.web.Application(handlers)
 

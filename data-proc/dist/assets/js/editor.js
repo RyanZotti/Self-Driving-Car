@@ -156,6 +156,17 @@ function isDatasetPredictionSyncing(dataset){
     });
 }
 
+function datasetPredictionSyncPercent(dataset){
+    const data = JSON.stringify({
+        'dataset': dataset
+    });
+    return new Promise(resolve => {
+        $.post('/dataset-prediction-sync-percent', data, (response) => {
+            resolve(response);
+        });
+    });
+}
+
 // This migt not be necessary if I save all datasets
 // incrementally as they're imported. I loop through
 // each dataset's records in sequence because unleashing
