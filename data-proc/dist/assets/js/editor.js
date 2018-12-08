@@ -127,7 +127,10 @@ function getDatasetRecordIds(datasetType, dataset) {
 }
 
 // This migt not be necessary if I save all datasets
-// incrementally as they're imported
+// incrementally as they're imported. I loop through
+// each dataset's records in sequence because unleashing
+// everything in parallel causes some records to be
+// dropped in Chrome
 function saveAllRecordsToDB(){
     $.get( "/list-review-datasets").then(function(response){
         return response.datasets;
@@ -136,15 +139,13 @@ function saveAllRecordsToDB(){
            const recordIds = getDatasetRecordIds(
                'review',
                dataset
-           ).then(function(recordIds){
+           ).then(async function(recordIds){
                for (const recordId of recordIds){
-                   data = JSON.stringify({
+                   const data = JSON.stringify({
                        'dataset': dataset,
                        'record_id':recordId
                    });
-                   $.post('/save-reocord-to-db', data, function(result){
-                       console.log(result);
-                   });
+                   await $.post('/save-reocord-to-db', data);
                }
            });
        }
