@@ -9,9 +9,30 @@ import numpy as np
 import tornado.gen
 import tornado.ioloop
 import tornado.web
+import tornado.websocket
 import requests
 import json
 from util import *
+import json
+import psycopg2
+import psycopg2.extras
+import traceback
+
+
+# A single place for all connection related details
+# Storing a password in plain text is bad, but this is for a temp db with default credentials
+def connect_to_postgres(host='localhost'):
+    connection_string = "host='localhost' dbname='cars' user='ryanzotti' password='' port=5432"
+    connection = psycopg2.connect(connection_string)
+    cursor = connection.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+    return connection, cursor
+
+
+def execute_sql(sql):
+    connection, cursor = connect_to_postgres()
+    cursor.execute(sql)
+    cursor.close()
+    connection.close()
 
 
 class Home(tornado.web.RequestHandler):
@@ -93,6 +114,58 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
             'record_ids' : record_ids
         }
         self.write(result)
+
+class SaveRecordToDB(tornado.web.RequestHandler):
+
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        try:
+            dataset_name = json_input['dataset']
+            record_id = json_input['record_id']
+
+            label_path = self.application.record_reader.get_label_path(
+                dataset_name=dataset_name,
+                record_id=record_id
+            )
+            image_path = self.application.record_reader.get_image_path(
+                dataset_name=dataset_name,
+                record_id=record_id
+            )
+            _, angle, throttle = self.application.record_reader.read_record(
+                label_path=label_path
+            )
+            sql_query = '''
+                    BEGIN;
+                    INSERT INTO records (
+                        dataset,
+                        record_id,
+                        label_path,
+                        image_path,
+                        angle,
+                        throttle
+                    )
+                    VALUES (
+                       '{dataset}',
+                        {record_id},
+                       '{label_path}',
+                       '{image_path}',
+                        {angle},
+                        {throttle}
+                    );
+                    COMMIT;
+                    '''.format(
+                dataset=dataset_name,
+                record_id=record_id,
+                label_path=label_path,
+                image_path=image_path,
+                angle=angle,
+                throttle=throttle
+            )
+            execute_sql(sql_query)
+        except:
+            print(json_input)
+            traceback.print_exc()
+        self.write({})
 
 class IsRecordAlreadyFlagged(tornado.web.RequestHandler):
 
@@ -381,6 +454,7 @@ def make_app():
         (r"/ui-state", StateAPI),
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
         (r"/delete",DeleteRecord),
+        (r"/save-reocord-to-db", SaveRecordToDB),
         (r"/delete-flagged-record", DeleteFlaggedRecord),
         (r"/delete-flagged-dataset", DeleteFlaggedDataset),
         (r"/add-flagged-record", Keep),

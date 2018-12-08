@@ -126,6 +126,31 @@ function getDatasetRecordIds(datasetType, dataset) {
     });
 }
 
+// This migt not be necessary if I save all datasets
+// incrementally as they're imported
+function saveAllRecordsToDB(){
+    $.get( "/list-review-datasets").then(function(response){
+        return response.datasets;
+    }).then(function(datasets){
+       for (const dataset of datasets){
+           const recordIds = getDatasetRecordIds(
+               'review',
+               dataset
+           ).then(function(recordIds){
+               for (const recordId of recordIds){
+                   data = JSON.stringify({
+                       'dataset': dataset,
+                       'record_id':recordId
+                   });
+                   $.post('/save-reocord-to-db', data, function(result){
+                       console.log(result);
+                   });
+               }
+           });
+       }
+    });
+}
+
 function updateRecordId(recordIds, recordIdIndex){
     // Check if last record has been reached
     if (recordIdIndex < recordIds.length){
