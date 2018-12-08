@@ -468,12 +468,6 @@ class IsDatasetPredictionSyncing(tornado.web.RequestHandler):
     def post(self):
         json_input = tornado.escape.json_decode(self.request.body)
         dataset_name = json_input['dataset']
-        batch_predict(
-            dataset=dataset_name,
-            # TODO: Remove this hardcoded port
-            predictions_port='8885',
-            datasets_port=self.application.port
-        )
         sql_query = '''
             SELECT
               COUNT(*) > 0 AS answer
