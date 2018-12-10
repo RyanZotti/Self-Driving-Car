@@ -18,3 +18,8 @@
   border-radius: 0px;
     background-color: #2c7be5;
 }
+
+.pretty-button {
+    background-color:transparent;
+    border: 0px;
+}

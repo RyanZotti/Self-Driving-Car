@@ -65,7 +65,7 @@ function addDatasetReviewRows() {
                 tr.querySelector('td.images').textContent = dataset.images;
                 tr.querySelector('td.flagged').textContent = dataset.flags;
                 tr.querySelector('button.play-dataset-button').setAttribute("dataset",datasetText);
-                tr.querySelector('button.trash-dataset-button').setAttribute("dataset",datasetText);
+                tr.querySelector('button.delete-dataset-action').setAttribute("dataset",datasetText);
                 const removeFlagsButton = tr.querySelector('button.remove-flags-action');
                 removeFlagsButton.setAttribute("dataset",datasetText);
                 removeFlagsButton.onclick = function (){
@@ -89,7 +89,7 @@ function addDatasetReviewRows() {
     }).then(function(){
         // Test that the promise worked and that at this point
         // all of the rows have been updated
-        var buttons = tbody.querySelectorAll("tr > td > button.fe-play");
+        var buttons = tbody.querySelectorAll("button.play-dataset-button");
         for (button of buttons){
             button.onclick = function() {
                 const modalPlayPauseButton = document.querySelector("img#modalPlayPauseButton");
