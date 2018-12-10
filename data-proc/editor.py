@@ -102,25 +102,50 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
         json_input = tornado.escape.json_decode(self.request.body)
         dataset_name = json_input['dataset']
         dataset_type = json_input['dataset_type']
-        if dataset_type.lower() == 'import':
-            # TODO: Change to point to real import datasets
-            path_id_pairs = self.application.record_reader.get_dataset_record_ids(dataset_name)
-        elif dataset_type.lower() == 'review':
-            path_id_pairs = self.application.record_reader.get_dataset_record_ids(dataset_name)
-        elif dataset_type.lower() == 'mistake':
-            path_id_pairs = self.application.record_reader_mistakes.get_dataset_record_ids(dataset_name)
+        if dataset_type.lower() in ['import','review','flagged']:
+            if dataset_type.lower() == 'import':
+                # TODO: Change to point to real import datasets
+                path_id_pairs = self.application.record_reader.get_dataset_record_ids(dataset_name)
+            elif dataset_type.lower() == 'review':
+                path_id_pairs = self.application.record_reader.get_dataset_record_ids(dataset_name)
+            elif dataset_type.lower() == 'flagged':
+                path_id_pairs = self.application.record_reader_mistakes.get_dataset_record_ids(dataset_name)
+            else:
+                print('Unknown dataset_type: ' + dataset_type)
+                # Comes in list of tuples: (/path/to/record, record_id), but
+            # we don't want to show paths to the user b/e it's ugly
+            record_ids = []
+            for pair in path_id_pairs:
+                path, record_id = pair
+                record_ids.append(record_id)
+            result = {
+                'record_ids': record_ids
+            }
+            self.write(result)
+        elif dataset_type.lower() == 'critical-errors':
+            record_ids = []
+            sql_query = '''
+                SELECT
+                  records.record_id
+                FROM records
+                LEFT JOIN predictions
+                  ON records.dataset = predictions.dataset
+                    AND records.record_id = predictions.record_id
+                WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%')
+                  AND ABS(records.angle - predictions.angle) >= 0.8
+                ORDER BY record_id ASC
+                '''.format(dataset=dataset_name)
+            rows = get_sql_rows(sql_query)
+            for row in rows:
+                record_id = row['record_id']
+                record_ids.append(record_id)
+            result = {
+                'record_ids': record_ids
+            }
+            self.write(result)
         else:
             print('Unknown dataset_type: '+dataset_type)
-        # Comes in list of tuples: (/path/to/record, record_id), but
-        # we don't want to show paths to the user b/e it's ugly
-        record_ids = []
-        for pair in path_id_pairs:
-            path, record_id = pair
-            record_ids.append(record_id)
-        result = {
-            'record_ids' : record_ids
-        }
-        self.write(result)
+
 
 class SaveRecordToDB(tornado.web.RequestHandler):
 

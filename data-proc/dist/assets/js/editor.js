@@ -523,21 +523,21 @@ function rewindFrameIndex(){
     recordIdIndexPlaying = Math.max(0,recordIdIndexPlaying);
 }
 
-function fastForwardFrameIndexToNextFlag(){
+function fastForwardFrameIndex(recordType){
     return new Promise(function(resolve, reject) {
         const data = JSON.stringify({
             'dataset': datasetPlaying,
-            'dataset_type':'mistake'
+            'dataset_type':recordType
         });
         $.post('/dataset-record-ids', data, function(response){
-            const flaggedRecordIds = response.record_ids;
+            const queriedRecordIds = response.record_ids;
             const sampleIndices = batchMatchRecordIdsToIndices(
-                flaggedRecordIds,
+                queriedRecordIds,
                 recordIdsPlaying
             );
             const higherIndices = sampleIndices.filter(index => index > recordIdIndexPlaying);
-            const nextFlaggedRecordIndex = Array.min(higherIndices);
-            recordIdIndexPlaying = nextFlaggedRecordIndex;
+            const nextFastForwardedRecordIndex = Array.min(higherIndices);
+            recordIdIndexPlaying = nextFastForwardedRecordIndex;
             resolve(response.record_ids);
         });
     });
@@ -637,7 +637,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const fastForwardFlagButton = document.querySelector("span#fastForwardFlag");
     fastForwardFlagButton.onclick = async function(){
-        await fastForwardFrameIndexToNextFlag();
+        const recordType = "flagged";
+        await fastForwardFrameIndex(recordType);
+        videoSessionId = Date.now();
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
+    }
+
+    const fastForwardCriticalErrorButton = document.querySelector("button#fastForwardCriticalError");
+    fastForwardCriticalErrorButton.onclick = async function(){
+        const recordType = "critical-errors";
+        await fastForwardFrameIndex(recordType);
         videoSessionId = Date.now();
         playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
     }
