@@ -31,6 +31,7 @@ def connect_to_postgres(host='localhost'):
 def execute_sql(sql):
     connection, cursor = connect_to_postgres()
     cursor.execute(sql)
+    connection.commit()
     cursor.close()
     connection.close()
 
@@ -284,6 +285,24 @@ class DeleteRecord(tornado.web.RequestHandler):
             dataset_name=dataset_name,
             record_id=record_id
         )
+        delete_records_sql = """
+        DELETE FROM records
+        WHERE record_id = {record_id}
+          AND LOWER(dataset) LIKE '{dataset}';
+        """.format(
+            record_id=record_id,
+            dataset=dataset_name
+        )
+        execute_sql(delete_records_sql)
+        delete_predictions_sql = """
+            DELETE FROM predictions
+            WHERE record_id = {record_id}
+              AND LOWER(dataset) LIKE '{dataset}';
+            """.format(
+            record_id=record_id,
+            dataset=dataset_name
+        )
+        execute_sql(delete_predictions_sql)
         os.remove(label_path)
         os.remove(image_path)
 
