@@ -417,7 +417,8 @@ function selectAllDatasetsTrigger(){
 };
 
 function loadReviewDatasetsTable() {
-
+    $("#dataset-import").removeClass('active');
+    $("#dataset-review").addClass('active');
     getDatasetReviewTableHtml().then(function(tableHtml){
         // Remove the previous table if it exists
         const previousTable = document.querySelector('div#datasets-table-div');
@@ -544,7 +545,7 @@ function fastForwardFrameIndex(recordType){
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    loadImportDatasetsTable();
+    loadReviewDatasetsTable();
     // TODO: Replace with plain javascript instead of jquery
     $("#dataset-review").click(function(){
         $("#dataset-import").removeClass('active');
