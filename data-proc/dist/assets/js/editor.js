@@ -64,6 +64,7 @@ function addDatasetReviewRows() {
                 tr.querySelector('td.created-date').textContent = dataset.date;
                 tr.querySelector('td.images').textContent = dataset.images;
                 tr.querySelector('td.flagged').textContent = dataset.flags;
+                tr.querySelector('td.dataset-errors').textContent = dataset.flags;
                 tr.querySelector('button.play-dataset-button').setAttribute("dataset",datasetText);
                 tr.querySelector('button.delete-dataset-action').setAttribute("dataset",datasetText);
                 const removeFlagsButton = tr.querySelector('button.remove-flags-action');
@@ -203,6 +204,15 @@ function updateImage(dataset, recordId) {
     imageUrl = '/image?dataset='+dataset+'&record-id='+recordId;
     const videoFrame = document.querySelector("#mpeg-image")
     videoFrame.setAttribute('src',imageUrl);
+}
+
+function getDatasetErrorMetrics(dataset) {
+    return new Promise(function(resolve, reject) {
+        data = JSON.stringify({'dataset': dataset})
+        $.post('/get-dataset-error-metrics', data, function(result){
+           resolve(result)
+        });
+    });
 }
 
 function getAiAngle(dataset, recordId) {

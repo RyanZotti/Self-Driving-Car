@@ -553,6 +553,35 @@ class DatasetPredictionSyncPercent(tornado.web.RequestHandler):
         })
 
 
+class GetDatasetErrorMetrics(tornado.web.RequestHandler):
+
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+        sql_query = '''
+            SELECT
+              SUM(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
+                THEN 1 ELSE 0 END) AS critical_count,
+              AVG(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
+                THEN 100.0 ELSE 0.0 END)::FLOAT AS critical_percent,
+              AVG(ABS(records.angle - predictions.angle)) AS avg_abs_error
+            FROM records
+            LEFT JOIN predictions
+              ON records.dataset = predictions.dataset
+                AND records.record_id = predictions.record_id
+            WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%');
+        '''.format(
+            dataset=dataset_name
+        )
+        rows = get_sql_rows(sql=sql_query)
+        first_row = rows[0]
+        self.write({
+            'critical_count':float(first_row['critical_count']),
+            'critical_percent': float(first_row['critical_percent']),
+            'avg_abs_error': float(first_row['avg_abs_error'])
+        })
+
+
 def make_app():
     this_dir = os.path.dirname(os.path.realpath(__file__))
     assets_absolute_path = os.path.join(this_dir, 'dist', 'assets')
@@ -587,6 +616,7 @@ def make_app():
         (r"/batch-predict", BatchPredict),
         (r"/is-dataset-prediction-syncing", IsDatasetPredictionSyncing),
         (r"/dataset-prediction-sync-percent", DatasetPredictionSyncPercent),
+        (r"/get-dataset-error-metrics", GetDatasetErrorMetrics),
     ]
     return tornado.web.Application(handlers)
 
