@@ -30,14 +30,16 @@ function getDatasetMetadata(datasetType, dataset) {
         getDatasetIdFromDataset(dataset),
         getDateFromDataset(dataset),
         getImageCountFromDataset(datasetType, dataset),
-        Promise.resolve(dataset)
+        Promise.resolve(dataset),
+        getImageCountFromDataset('mistake', dataset)
     ]
     return Promise.all(apiResults).then(function(apiResults){
         const result = {
                 'id' : apiResults[0],
                 'date' : apiResults[1],
                 'images' : apiResults[2],
-                'name' : apiResults[3]
+                'name' : apiResults[3],
+                'flags' : apiResults[4]
             }
         return result
     });

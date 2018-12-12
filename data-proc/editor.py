@@ -575,11 +575,20 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
         )
         rows = get_sql_rows(sql=sql_query)
         first_row = rows[0]
-        self.write({
-            'critical_count':float(first_row['critical_count']),
-            'critical_percent': float(first_row['critical_percent']),
-            'avg_abs_error': float(first_row['avg_abs_error'])
-        })
+        print(first_row)
+        if first_row['avg_abs_error'] is None:
+            self.write({
+                'critical_count': 'N/A',
+                'critical_percent': 'N/A',
+                'avg_abs_error': 'N/A'
+            })
+        else:
+            result = {
+                'critical_count': float(first_row['critical_count']),
+                'critical_percent': str(round(float(first_row['critical_percent']),1))+'%',
+                'avg_abs_error': round(float(first_row['avg_abs_error']),2)
+            }
+            self.write(result)
 
 
 def make_app():
