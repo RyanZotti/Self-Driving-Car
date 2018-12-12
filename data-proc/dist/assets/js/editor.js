@@ -59,7 +59,6 @@ function addDatasetReviewRows() {
         for (datsetPromise of datasetPromises) {
             const tr = htmlToElement(datasetRowString);
             datsetPromise.then(function(dataset){
-                console.log(dataset);
                 const datasetText = dataset.name;
                 tr.querySelector('td.dataset-id').textContent = dataset.id;
                 tr.querySelector('td.created-date').textContent = dataset.date;
