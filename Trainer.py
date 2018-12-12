@@ -10,8 +10,7 @@ from tensorflow.python.client import timeline
 
 from car.record_reader import RecordReader
 from data_augmentation import process_data_continuous
-from util import mkdir, sync_from_aws, sync_to_aws
-from util import mkdir_tfboard_run_dir, shell_command, delete_old_model_backups
+from util import *
 
 
 class Trainer:
@@ -148,6 +147,15 @@ class Trainer:
         if not self.is_restored_model and self.save_to_disk is True:
             with open(self.results_file,'a') as f:
                 f.write(message.format(self.start_epoch, train_accuracy, test_accuracy)+'\n')
+                sql_query = '''
+                    INSERT INTO epochs(epoch, train, validation)
+                    VALUES ({epoch},{train},{validation});
+                '''.format(
+                    epoch=0,
+                    train=train_accuracy,
+                    validation=test_accuracy
+                )
+                execute_sql(sql_query)
             self.save_model(sess, epoch=self.start_epoch)
             if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
                 sync_to_aws(s3_path=self.s3_bucket, local_path=self.data_path)  # Save to AWS
@@ -220,6 +228,15 @@ class Trainer:
             if self.save_to_disk is True:
                 with open(self.results_file, 'a') as f:
                     f.write(message.format(epoch, train_accuracy, test_accuracy)+'\n')
+                    sql_query = '''
+                        INSERT INTO epochs(epoch, train, validation)
+                        VALUES ({epoch},{train},{validation});
+                    '''.format(
+                        epoch=epoch,
+                        train=train_accuracy,
+                        validation=test_accuracy
+                    )
+                    execute_sql(sql_query)
 
                 # Save a model checkpoint after every epoch
                 self.save_model(sess,epoch=epoch)

@@ -3,6 +3,8 @@ import subprocess
 from os import listdir
 import numpy as np
 import os
+import psycopg2
+import psycopg2.extras
 import boto3
 from pathlib import Path
 import re
@@ -238,6 +240,32 @@ def live_video_stream(ip):
             if cv2.waitKey(1) == 27:
                 exit(0)
             yield frame
+
+
+# A single place for all connection related details
+# Storing a password in plain text is bad, but this is for a temp db with default credentials
+def connect_to_postgres(host='localhost'):
+    connection_string = "host='localhost' dbname='cars' user='ryanzotti' password='' port=5432"
+    connection = psycopg2.connect(connection_string)
+    cursor = connection.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+    return connection, cursor
+
+
+def execute_sql(sql):
+    connection, cursor = connect_to_postgres()
+    cursor.execute(sql)
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+
+def get_sql_rows(sql):
+    connection, cursor = connect_to_postgres()
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return rows
 
 
 def stop_training():

@@ -15,6 +15,14 @@ PRIMARY KEY(dataset, record_id));
 COMMIT;
 
 BEGIN;
+CREATE TABLE IF NOT EXISTS epochs(
+  epoch INT,
+  train float8,
+  validation float8,
+PRIMARY KEY(epoch));
+COMMIT;
+
+BEGIN;
 CREATE TABLE IF NOT EXISTS records(
     dataset character(100),
     record_id INT,
