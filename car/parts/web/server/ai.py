@@ -137,6 +137,16 @@ if __name__ == "__main__":
         help="Should model output only angle (Y/n)",
         default='y')
     ap.add_argument(
+        "--model_id",
+        required=False, # TODO: Fix PYTHONPATH and make this required
+        help="Unique identifier for the model",
+        default=1)
+    ap.add_argument(
+        "--epoch",
+        required=False,  # TODO: Fix PYTHONPATH and make this required
+        help="The model epoch, which is used as a means to version the model",
+        default=38)
+    ap.add_argument(
         "--crop_factor",
         required=False,
         help="Image is cropped to 1/crop_factor",
@@ -151,6 +161,24 @@ if __name__ == "__main__":
     image_scale = float(args['image_scale'])
     crop_factor = float(args['crop_factor'])
     port=args['port']
+    model_id = args['model_id']
+    epoch = args['epoch']
+    sql_query = '''
+        INSERT INTO deploy(
+          model_id,
+          epoch,
+          timestamp
+        )
+        VALUES (
+          {model_id},
+          {epoch},
+          NOW()
+        )
+    '''.format(
+        model_id=model_id,
+        epoch=epoch
+    )
+    execute_sql(sql_query)
 
     # Load model just once and store in memory for all future calls
     sess, x, prediction = load_model(path)

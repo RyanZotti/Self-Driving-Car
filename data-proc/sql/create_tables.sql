@@ -23,6 +23,14 @@ PRIMARY KEY(epoch));
 COMMIT;
 
 BEGIN;
+CREATE TABLE IF NOT EXISTS deploy(
+  model_id INT,
+  epoch INT,
+  timestamp TIMESTAMP
+);
+COMMIT;
+
+BEGIN;
 CREATE TABLE IF NOT EXISTS records(
     dataset character(100),
     record_id INT,
