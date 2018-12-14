@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 import os
 import psycopg2
 import psycopg2.extras
+from util import get_sql_rows
 
 
 # A single place for all connection related details
@@ -59,7 +60,7 @@ def get_record_ids(dataset, port):
     return record_ids
 
 
-def get_prediction(dataset, record_id, port):
+def get_prediction(dataset, record_id, model_id, epoch, port):
     data = {
         'dataset': dataset,
         'record_id': record_id
@@ -78,17 +79,23 @@ def get_prediction(dataset, record_id, port):
         INSERT INTO predictions (
             dataset,
             record_id,
+            model_id,
+            epoch,
             angle
         )
         VALUES (
            '{dataset}',
             {record_id},
+            {model_id},
+            {epoch},
             {angle}
         );
         COMMIT;
         '''.format(
         dataset=dataset,
         record_id=record_id,
+        model_id=model_id,
+        epoch=epoch,
         angle=angle
     )
     execute_sql(start_sql)
@@ -100,6 +107,22 @@ record_ids = get_record_ids(
     port=datasets_port
 )
 
+sql_deployed = '''
+    SELECT
+      model_id,
+      epoch
+    FROM deploy
+    ORDER BY
+      timestamp DESC
+    LIMIT 1
+'''
+rows = get_sql_rows(
+    sql_deployed
+)
+first_row = rows[0]
+model_id = first_row['model_id']
+epoch = first_row['epoch']
+
 process_id = os.getpid()
 start_sql = '''
     BEGIN;
@@ -108,7 +131,7 @@ start_sql = '''
     COMMIT;
     '''.format(
         dataset=dataset,
-        pid=process_id
+        pid=process_id,
     )
 execute_sql(start_sql)
 
@@ -127,6 +150,8 @@ with ThreadPoolExecutor(max_workers=5) as executor:
         get_prediction(
                 dataset=dataset,
                 record_id=record_id,
+                model_id=model_id,
+                epoch=epoch,
                 port=datasets_port
             ),
             record_ids

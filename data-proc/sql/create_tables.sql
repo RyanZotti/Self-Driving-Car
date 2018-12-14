@@ -10,8 +10,10 @@ BEGIN;
 CREATE TABLE IF NOT EXISTS predictions(
   dataset character(100),
   record_id INT,
+  model_id INT,
+  epoch INT,
   angle float8,
-PRIMARY KEY(dataset, record_id));
+PRIMARY KEY(dataset, record_id, model_id, epoch));
 COMMIT;
 
 BEGIN;
