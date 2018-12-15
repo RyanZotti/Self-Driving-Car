@@ -55,10 +55,38 @@ function getCheckedDatasets(){
     return checkedDatasets;
 }
 
-function addDatasetReviewRows() {
-    const bulkActionRemoveFlagsButton = document.querySelector('buttton#remove-flags-bulk-action');
-    const bulkActionAnalyzeButton = document.querySelector('button#analyze-dataset-bulk-button');
+function unflagDataset(dataset) {
+    return new Promise(function(resolve, reject) {
+        deleteDatasetPayload = JSON.stringify({
+            'dataset': dataset
+        })
+        $.post('/delete-flagged-dataset', deleteDatasetPayload, function(){
+            resolve();
+        });
+    });
+}
 
+function addDatasetReviewRows() {
+    const bulkActionRemoveFlagsButton = document.querySelector('button#remove-flags-bulk-action');
+    bulkActionRemoveFlagsButton.onclick = async function(){
+        const checkedDatasets = getCheckedDatasets();
+        const promises = [];
+        for (const dataset of checkedDatasets){
+            promises.push(unflagDataset(dataset));
+        }
+        await Promise.all(promises);
+        addDatasetReviewRows();
+    }
+    const bulkActionAnalyzeButton = document.querySelector('button#analyze-dataset-bulk-button');
+    bulkActionAnalyzeButton.onclick = async function(){
+        const checkedDatasets = getCheckedDatasets();
+        const promises = [];
+        for (const dataset of checkedDatasets){
+            promises.push(batchPredict(dataset));
+        }
+        await Promise.all(promises);
+        addDatasetReviewRows();
+    }
     const tbody = document.querySelector("tbody#datasetsTbody");
     const existingRows = tbody.querySelectorAll("tr.dataset-row");
     for (const row of existingRows){
