@@ -293,6 +293,9 @@ async function checkPredictionUpdateStatuses(){
         const analyzeDatasetButton = row.querySelector('button.analyze-dataset-button');
         const statusCompleteIcon = row.querySelector('svg.analyze-up-to-date');
         if (isUpdated == true){
+            const errorMetrics = await getDatasetErrorMetrics(dataset);
+            row.querySelector('td.dataset-error').textContent = errorMetrics['avg_abs_error'];
+            row.querySelector('td.dataset-critical-percent').textContent = errorMetrics['critical_percent'];
             analyzeDatasetButton.style.display = 'none';
             statusCompleteIcon.style.display = 'block';
         } else {
