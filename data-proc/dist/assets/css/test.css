@@ -23,3 +23,7 @@
     background-color:transparent;
     border: 0px;
 }
+
+.centered {
+    margin: 0 auto;
+}
