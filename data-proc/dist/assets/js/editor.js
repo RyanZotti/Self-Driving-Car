@@ -240,11 +240,14 @@ async function checkPredictionUpdateStatuses(){
     for (const row of rows){
         const dataset = row.getAttribute("dataset");
         const isUpdated = await areDatasetPredictionsUpdated(dataset);
+        const analyzeDatasetButton = row.querySelector('button.analyze-dataset-button');
+        const statusCompleteIcon = row.querySelector('svg.analyze-up-to-date');
         if (isUpdated == true){
-            const analyzeDatasetButton = row.querySelector('button.analyze-dataset-button');
-            analyzeDatasetButton.style.display = 'None';
-            const statusCompleteIcon = row.querySelector('svg.analyze-up-to-date');
-            statusCompleteIcon.style.display = 'Block';
+            analyzeDatasetButton.style.display = 'none';
+            statusCompleteIcon.style.display = 'block';
+        } else {
+            analyzeDatasetButton.style.display = 'block';
+            statusCompleteIcon.style.display = 'none';
         }
         console.log(dataset + ' ' + isUpdated);
     }
