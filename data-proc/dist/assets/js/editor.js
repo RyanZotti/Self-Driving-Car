@@ -225,6 +225,15 @@ function getHumanAngleAndThrottle(dataset, recordId) {
     });
 }
 
+function areDatasetPredictionsUpdated(dataset) {
+    return new Promise(function(resolve, reject) {
+        data = JSON.stringify({ 'dataset': dataset})
+        $.post('/are-dataset-predictions-updated', data, function(result){
+           resolve(result)
+        });
+    });
+}
+
 function updateAiAndHumanLabelValues(dataset, recordId){
     labels = [
         getHumanAngleAndThrottle(

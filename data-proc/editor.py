@@ -122,6 +122,38 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
             print('Unknown dataset_type: '+dataset_type)
 
 
+class IsDatasetPredictionFromLatestDeployedModel(tornado.web.RequestHandler):
+
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        dataset_name = json_input['dataset']
+
+        sql_query = '''
+            CREATE TEMP TABLE latest_deployment AS (
+              SELECT
+                model_id,
+                epoch
+              FROM deploy
+              ORDER BY TIMESTAMP DESC
+              LIMIT 1
+            );
+
+            SELECT
+              COUNT(CASE WHEN deploy.model_id IS NOT NULL THEN 1 ELSE 0 END) > 0 AS is_up_to_date
+            FROM predictions
+            JOIN latest_deployment AS deploy
+              ON predictions.model_id = deploy.model_id
+                AND predictions.epoch = deploy.epoch
+            WHERE LOWER(predictions.dataset) LIKE LOWER('%{dataset}%')
+            '''.format(dataset=dataset_name)
+        first_row = get_sql_rows(sql_query)[0]
+        is_up_to_date = first_row['is_up_to_date']
+        result = {
+            'is_up_to_date': is_up_to_date
+        }
+        self.write(result)
+
+
 class SaveRecordToDB(tornado.web.RequestHandler):
 
     def post(self):
@@ -594,6 +626,7 @@ def make_app():
         (r"/resume-training", ResumeTraining),
         (r"/stop-training", StopTraining),
         (r"/train-new-model", TrainNewModel),
+        (r"/are-dataset-predictions-updated", IsDatasetPredictionFromLatestDeployedModel),
         (r"/is-training", IsTraining),
         (r"/does-model-already-exist", DoesModelAlreadyExist),
         (r"/batch-predict", BatchPredict),
