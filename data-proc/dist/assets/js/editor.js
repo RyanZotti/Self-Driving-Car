@@ -42,7 +42,23 @@ function addDatasetImportRows() {
     });
 }
 
+function getCheckedDatasets(){
+    const rows = document.querySelectorAll("tbody#datasetsTbody > tr");
+    const checkedDatasets = [];
+    for (const row of rows){
+        const dataset = row.getAttribute('dataset');
+        const checkBox = row.querySelector("input.dataset-check-box");
+        if (checkBox.checked == true){
+            checkedDatasets.push(dataset);
+        }
+    }
+    return checkedDatasets;
+}
+
 function addDatasetReviewRows() {
+    const bulkActionRemoveFlagsButton = document.querySelector('buttton#remove-flags-bulk-action');
+    const bulkActionAnalyzeButton = document.querySelector('button#analyze-dataset-bulk-button');
+
     const tbody = document.querySelector("tbody#datasetsTbody");
     const existingRows = tbody.querySelectorAll("tr.dataset-row");
     for (const row of existingRows){
