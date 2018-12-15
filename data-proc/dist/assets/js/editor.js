@@ -45,7 +45,7 @@ function addDatasetImportRows() {
 function addDatasetReviewRows() {
     const tbody = document.querySelector("tbody#datasetsTbody");
     const existingRows = tbody.querySelectorAll("tr.dataset-row");
-    for (row of existingRows){
+    for (const row of existingRows){
         row.parentNode.removeChild(row);
     }
     const promises = [
@@ -56,7 +56,7 @@ function addDatasetReviewRows() {
         const datasetRowString = promiseResults[0];
         const datasetPromises = promiseResults[1];
         const datasetFlagPromises = promiseResults[2];
-        for (datsetPromise of datasetPromises) {
+        for (const datsetPromise of datasetPromises) {
             const tr = htmlToElement(datasetRowString);
             datsetPromise.then(function(dataset){
                 const datasetText = dataset.name;
@@ -80,6 +80,12 @@ function addDatasetReviewRows() {
                         addDatasetReviewRows();
                     });
                 };
+                const analyzeDatasetButton = tr.querySelector("button.analyze-dataset-button");
+                analyzeDatasetButton.setAttribute("dataset",datasetText);
+                analyzeDatasetButton.onclick = function() {
+                    const dataset = this.getAttribute("dataset");
+                    batchPredict(dataset);
+                }
                 const deleteDatasetButton = tr.querySelector('button.delete-dataset-action');
                 deleteDatasetButton.setAttribute("dataset",datasetText);
                 const input = tr.querySelector('input[name="datasetsSelect"]');
@@ -92,8 +98,8 @@ function addDatasetReviewRows() {
     }).then(function(){
         // Test that the promise worked and that at this point
         // all of the rows have been updated
-        var buttons = tbody.querySelectorAll("button.play-dataset-button");
-        for (button of buttons){
+        const buttons = tbody.querySelectorAll("button.play-dataset-button");
+        for (const button of buttons){
             button.onclick = function() {
                 const modalPlayPauseButton = document.querySelector("img#modalPlayPauseButton");
                 // Ensure that video starts playing when modal first opens
@@ -249,7 +255,6 @@ async function checkPredictionUpdateStatuses(){
             analyzeDatasetButton.style.display = 'block';
             statusCompleteIcon.style.display = 'none';
         }
-        console.log(dataset + ' ' + isUpdated);
     }
 }
 
