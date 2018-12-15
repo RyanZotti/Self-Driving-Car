@@ -60,6 +60,7 @@ function addDatasetReviewRows() {
             const tr = htmlToElement(datasetRowString);
             datsetPromise.then(function(dataset){
                 const datasetText = dataset.name;
+                tr.setAttribute("dataset",datasetText);
                 tr.querySelector('td.dataset-id').textContent = dataset.id;
                 tr.querySelector('td.created-date').textContent = dataset.date;
                 tr.querySelector('td.images').textContent = dataset.images;
@@ -235,9 +236,16 @@ function areDatasetPredictionsUpdated(dataset) {
 }
 
 async function checkPredictionUpdateStatuses(){
-    const datasets = await listDatasets();
-    for (const dataset of datasets){
+    const rows = document.querySelectorAll('tbody#datasetsTbody > tr')
+    for (const row of rows){
+        const dataset = row.getAttribute("dataset");
         const isUpdated = await areDatasetPredictionsUpdated(dataset);
+        if (isUpdated == true){
+            const analyzeDatasetButton = row.querySelector('button.analyze-dataset-button');
+            analyzeDatasetButton.style.display = 'None';
+            const statusCompleteIcon = row.querySelector('svg.analyze-up-to-date');
+            statusCompleteIcon.style.display = 'Block';
+        }
         console.log(dataset + ' ' + isUpdated);
     }
 }
