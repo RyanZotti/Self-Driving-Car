@@ -229,9 +229,17 @@ function areDatasetPredictionsUpdated(dataset) {
     return new Promise(function(resolve, reject) {
         data = JSON.stringify({ 'dataset': dataset})
         $.post('/are-dataset-predictions-updated', data, function(result){
-           resolve(result)
+           resolve(result['is_up_to_date'])
         });
     });
+}
+
+async function checkPredictionUpdateStatuses(){
+    const datasets = await listDatasets();
+    for (const dataset of datasets){
+        const isUpdated = await areDatasetPredictionsUpdated(dataset);
+        console.log(dataset + ' ' + isUpdated);
+    }
 }
 
 function updateAiAndHumanLabelValues(dataset, recordId){
@@ -662,6 +670,10 @@ document.addEventListener('DOMContentLoaded', function() {
         videoSessionId = Date.now();
         playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
     }
+
+    const trainingStateTimer = setInterval(function(){
+      checkPredictionUpdateStatuses()
+    }, 1000);
 
 }, false);
 
