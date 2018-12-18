@@ -136,6 +136,15 @@ function setTrainButtonState() {
     };
 }
 
+function getNewEpochs(modelId) {
+    return new Promise(function(resolve, reject) {
+        data = JSON.stringify({'model_id': modelId})
+        $.post('/get-new-epochs', data, function(result){
+           resolve(result['epochs'])
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     selectAllMachineLearningDatasetsTrigger();
     addDatasetMachineLearningRows();

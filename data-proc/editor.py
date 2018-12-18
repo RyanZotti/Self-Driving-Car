@@ -533,6 +533,41 @@ class IsDatasetPredictionSyncing(tornado.web.RequestHandler):
         })
 
 
+class NewEpochs(tornado.web.RequestHandler):
+
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        model_id = json_input['model_id']
+        sql_query = '''
+            DROP TABLE IF EXISTS unique_deploy;
+
+            CREATE TEMP TABLE unique_deploy AS (
+              SELECT
+                model_id,
+                MAX(epoch) AS epoch
+              FROM deploy
+              WHERE model_id = {model_id}
+              GROUP BY model_id
+            );
+
+            SELECT
+              epochs.epoch,
+              epochs.train,
+              epochs.validation
+            FROM unique_deploy
+            LEFT JOIN epochs
+              ON epochs.epoch > COALESCE(unique_deploy.epoch,0)
+            WHERE epochs.epoch > COALESCE(unique_deploy.epoch,0)
+            ORDER BY epochs.epoch ASC;
+        '''.format(
+            model_id=model_id
+        )
+        epochs = get_sql_rows(sql=sql_query)
+        self.write({
+            'epochs':epochs
+        })
+
+
 class DatasetPredictionSyncPercent(tornado.web.RequestHandler):
 
     def post(self):
@@ -633,6 +668,7 @@ def make_app():
         (r"/is-dataset-prediction-syncing", IsDatasetPredictionSyncing),
         (r"/dataset-prediction-sync-percent", DatasetPredictionSyncPercent),
         (r"/get-dataset-error-metrics", GetDatasetErrorMetrics),
+        (r"/get-new-epochs", NewEpochs),
     ]
     return tornado.web.Application(handlers)
 
