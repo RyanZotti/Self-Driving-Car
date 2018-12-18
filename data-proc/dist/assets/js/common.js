@@ -5,3 +5,17 @@ function htmlToElement(html) {
     template.innerHTML = html;
     return template.content.firstChild;
 }
+
+function getHtmlString(url) {
+    return new Promise(function(resolve, reject) {
+        $.get( url, function(htmlString) {
+            resolve(htmlString);
+        });
+    });
+}
+
+async function getHtml(url){
+    const htmlString = await getHtmlString(url);
+    const html = htmlToElement(htmlString);
+    return html
+}

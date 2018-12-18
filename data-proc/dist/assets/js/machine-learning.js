@@ -145,17 +145,54 @@ function getNewEpochs(modelId) {
     });
 }
 
+function checkIfEpochAlreadyInTable(epoch){
+    var exists = false;
+    const epochsTable = document.querySelector("tbody#epochs-tbody");
+    const rows = epochsTable.querySelectorAll("tr");
+    for (const row of rows){
+        const epochTd = row.querySelector('td.epoch-id');
+        const existingEpochId = epochTd.textContent;
+        if (epoch == existingEpochId){
+            exists = true;
+            break;
+        }
+    }
+    return exists;
+}
+
+async function fillEpochsTable(modelId){
+    const epochs = await getNewEpochs(modelId);
+    const epochsTable = document.querySelector("tbody#epochs-tbody");
+    for (epoch of epochs){
+        const row = await getHtml("machine-learning-epoch.html");
+        const rowExists = checkIfEpochAlreadyInTable(epoch['epoch']);
+        if (rowExists != true){
+            const epochIdTd = row.querySelector("td.epoch-id");
+            epochIdTd.textContent = epoch['epoch'];
+            const trainingTd = row.querySelector("td.epoch-train");
+            trainingTd.textContent = (epoch['train']).toFixed(2);
+            const validationTd = row.querySelector("td.epoch-validation");
+            validationTd.textContent = (epoch['validation']).toFixed(2);
+            epochsTable.appendChild(row);
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     selectAllMachineLearningDatasetsTrigger();
     addDatasetMachineLearningRows();
-
+    var modelId = 1;
+    fillEpochsTable(modelId)
     /*
     The training could complete successfully or fail at any
     time, so make sure to check it every 5 seconds. The time
     loop can be quit with a call to clearInterval(<timevar>);
     */
     const trainingStateTimer = setInterval(function(){
-      setTrainButtonState()
+      setTrainButtonState();
+      // TODO: Remove hardcoded modelId
+      var modelId = 1;
+      fillEpochsTable(modelId);
     }, 5000);
 
     const trainModelButton = document.querySelector("button#train-model-button");
