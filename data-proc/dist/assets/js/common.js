@@ -56,6 +56,7 @@ function updateProgressCircle(svg,percent){
     if (percent == 100){
         fullGreenCircle.style.display = 'block';
         partialGreenCircle.style.display = 'none';
+        progressText.textContent = percent;
     } else {
         fullGreenCircle.style.display = 'none';
         partialGreenCircle.style.display = 'block';
