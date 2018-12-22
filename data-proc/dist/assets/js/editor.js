@@ -204,7 +204,7 @@ function isDatasetPredictionSyncing(dataset){
     });
     return new Promise(resolve => {
         $.post('/is-dataset-prediction-syncing', data, (response) => {
-            resolve(response);
+            resolve(response['is_syncing']);
         });
     });
 }
