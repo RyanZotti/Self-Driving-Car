@@ -291,16 +291,25 @@ async function checkPredictionUpdateStatuses(){
         const dataset = row.getAttribute("dataset");
         const isUpdated = await areDatasetPredictionsUpdated(dataset);
         const analyzeDatasetButton = row.querySelector('button.analyze-dataset-button');
-        const statusCompleteIcon = row.querySelector('svg.analyze-up-to-date');
+        const progressCircle = row.querySelector('svg.analyze-progress-circle');
         if (isUpdated == true){
             const errorMetrics = await getDatasetErrorMetrics(dataset);
             row.querySelector('td.dataset-error').textContent = errorMetrics['avg_abs_error'];
             row.querySelector('td.dataset-critical-percent').textContent = errorMetrics['critical_percent'];
             analyzeDatasetButton.style.display = 'none';
-            statusCompleteIcon.style.display = 'block';
+            progressCircle.style.display = 'block';
+            updateProgressCircle(progressCircle,100);
         } else {
-            analyzeDatasetButton.style.display = 'block';
-            statusCompleteIcon.style.display = 'none';
+            const isSyncing = await isDatasetPredictionSyncing(dataset);
+            if (isSyncing == true){
+                const syncPercent = await datasetPredictionSyncPercent(dataset);
+                updateProgressCircle(progressCircle,syncPercent);
+                analyzeDatasetButton.style.display = 'none';
+                progressCircle.style.display = 'block';
+            } else {
+                analyzeDatasetButton.style.display = 'block';
+                progressCircle.style.display = 'none';
+            }
         }
     }
 }

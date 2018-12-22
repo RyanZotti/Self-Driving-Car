@@ -616,7 +616,6 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
         )
         rows = get_sql_rows(sql=sql_query)
         first_row = rows[0]
-        print(first_row)
         if first_row['avg_abs_error'] is None:
             self.write({
                 'critical_count': 'N/A',

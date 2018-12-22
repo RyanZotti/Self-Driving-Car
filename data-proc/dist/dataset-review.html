@@ -24,15 +24,18 @@
         </button>
     </td>
     <td class="text-center td-analyze">
-        <button class="pretty-button analyze-dataset-button" data-toggle="modal">
+        <button class="pretty-button analyze-dataset-button" style="display:block;" data-toggle="modal">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-filter">
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
             </svg>
         </button>
-        <svg class="analyze-up-to-date centered" style="display:none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00D97E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-reactid="251">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        <svg class="analyze-progress-circle" style="height:2em; width:2em; display:none;" viewBox="-50 -50 100 100">
+            <circle class="circle-progress-background" cx="0" cy="0" fill="none" r="40" stroke="#E3EBF5" stroke-width="8" ></circle>
+            <path class="partial-circle-progress" fill="none" stroke="#00D97E" stroke-width="8" />
+            <circle class="full-circle-progress" style="display:'none'" cx="0" cy="0" fill="none" r="40" stroke="#00D97E" stroke-width="8" ></circle>
+            <text class="circle-progress-text" style="font-size:30; font-family:Arial" fill="#00D97E" stroke-width="0.75" dy="0.35em" y="0" dx="0" x="0" text-anchor="middle">0</text>
         </svg>
+
     </td>
     <td class="dataset-error">
     </td>
