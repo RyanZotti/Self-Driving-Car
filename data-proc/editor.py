@@ -17,6 +17,7 @@ from util import *
 import json
 import traceback
 from concurrent.futures import ThreadPoolExecutor
+from data_augmentation import pseduo_crop
 
 
 class Home(tornado.web.RequestHandler):
@@ -558,6 +559,15 @@ class ImageAPI(tornado.web.RequestHandler):
             dataset_name=dataset,
             record_id=record_id
         )
+
+        crop_factor_args = self.get_arguments(name="crop-factor")
+        if len(crop_factor_args) > 0:
+            crop_factor = int(crop_factor_args[0])
+            frame = pseduo_crop(
+                image=frame,
+                crop_factor=crop_factor,
+                alpha=0.65
+            )
 
         # Can't serve the OpenCV numpy array
         # Tornando: "... only accepts bytes, unicode, and dict objects" (from Tornado error Traceback)

@@ -123,6 +123,53 @@ def crop_images(images, crop_factor):
         cropped_images.append(cropped_image)
     return cropped_images
 
+
+# https://www.pyimagesearch.com/2016/03/07/transparent-overlays-with-opencv/
+def pseduo_crop(image, crop_factor, alpha):
+    shape = image.shape
+    new_top_position = int(shape[0]) - int(shape[0] / crop_factor)
+
+    # Create two copies of the original image -- one for
+    # the overlay and one for the final output image
+    overlay = image.copy()
+    output = image.copy()
+
+    # Draw a white rectangle over the cropped area
+    # Open CV's coordinate system:
+    # https://stackoverflow.com/a/25644503/554481
+    '''
+    0/0---column--->
+     |
+     |
+    row
+     |
+     |
+     v
+    '''
+    top_left_corner = (0, 0)
+    bottom_right_corner = (shape[1], new_top_position)
+    rgb_color = (255, 255, 255)
+    cv2.rectangle(
+        overlay,
+        top_left_corner,
+        bottom_right_corner,
+        rgb_color,
+        -1
+    )
+
+    # Apply the overlay
+    cv2.addWeighted(
+        overlay,
+        alpha,
+        output,
+        1 - alpha,
+        0,
+        output
+    )
+
+    return output
+
+
 # I've separated this from `process_data` so that I can use it in both training
 # and scoring. Relying on process_data alone wasn't sufficient for scoring
 # because during scoring the true labels aren't known at runtime

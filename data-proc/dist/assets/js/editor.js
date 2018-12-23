@@ -156,7 +156,15 @@ function addDatasetReviewRows() {
                 const datasetType = getActiveDatasetType();
                 getDatasetRecordIds("review", dataset).then(function(recordIds){
                     recordIdIndexPlaying = 0;
-                    playVideo([dataset, recordIds, recordIdIndexPlaying, videoSessionId]);
+                    const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
+                    if (pauseOnBadMistake){
+                        const cropFactor = 2;
+                        recordIdIndexPlaying = recordIdIndexPlaying + 1;
+                        playVideo([datasetPlaying, recordIds, recordIdIndexPlaying, videoSessionId, cropFactor]);
+                    } else {
+                        recordIdIndexPlaying = recordIdIndexPlaying + 1;
+                        playVideo([datasetPlaying, recordIds, recordIdIndexPlaying, videoSessionId, null]);
+                    }
                 });
                 const modalHeaderDatasetId = document.getElementById("playModalHeaderDatasetId");
                 modalHeaderDatasetId.innerHTML = datasetIdPlaying;
@@ -252,10 +260,15 @@ function updateRecordId(recordIds, recordIdIndex){
     return recordId;
 }
 
-function updateImage(dataset, recordId) {
-    imageUrl = '/image?dataset='+dataset+'&record-id='+recordId;
+function updateImage(dataset, recordId, cropFactor) {
     const videoFrame = document.querySelector("#mpeg-image")
-    videoFrame.setAttribute('src',imageUrl);
+    if (cropFactor != null){
+        const imageUrl = '/image?dataset='+dataset+'&record-id='+recordId+'&crop-factor='+cropFactor;
+        videoFrame.setAttribute('src',imageUrl);
+    } else {
+        const imageUrl = '/image?dataset='+dataset+'&record-id='+recordId;
+        videoFrame.setAttribute('src',imageUrl);
+    }
 }
 
 function getAiAngle(dataset, recordId) {
@@ -373,6 +386,7 @@ async function playVideo(args) {
     const recordIds = args[1];
     const recordIdIndex = args[2]
     const oldVideoSessionId = args[3]
+    const cropFactor = args[4];
     const recordId = updateRecordId(recordIds, recordIdIndexPlaying);
     const modalHeaderDatasetId = document.getElementById("playModalHeaderDatasetId");
     modalHeaderDatasetId.innerHTML = datasetIdPlaying;
@@ -404,7 +418,7 @@ async function playVideo(args) {
             isFlaggedIcon.style.fill='None';
             isFlaggedButton.checked = false;
         }
-        updateImage(dataset, recordId);
+        updateImage(dataset, recordId, cropFactor);
         await adjustAngleDonut('aiAngleDonut',state.ai.angle);
         await adjustAngleDonut('humanAngleDonut',state.human.angle);
         /*
@@ -450,14 +464,12 @@ async function playVideo(args) {
                 sessions, just the old ones. I am deliberately doing
                 nothing here
                 */
-            } else if (pauseOnBadMistake && isMistakeBad){
-                isVideoPlaying = false;
-                const modalPlayPauseButton = document.querySelector("img#modalPlayPauseButton");
-                modalPlayPauseButton.removeAttribute("src");
-                modalPlayPauseButton.setAttribute("src","assets/img/icons/play.svg");
+            } else if (pauseOnBadMistake){
+                recordIdIndexPlaying = recordIdIndex + 1;
+                window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, recordIdIndexPlaying, oldVideoSessionId, cropFactor]));
             } else {
                 recordIdIndexPlaying = recordIdIndex + 1;
-                window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, recordIdIndexPlaying, oldVideoSessionId]));
+                window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, recordIdIndexPlaying, oldVideoSessionId, null]));
             }
         }
     } else {
@@ -661,7 +673,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         recordIdIndexPlaying = recordIdIndexPlaying + 1;
         videoSessionId = Date.now();
-        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
+        const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
+        if (pauseOnBadMistake){
+            const cropFactor = 2;
+            recordIdIndexPlaying = recordIdIndexPlaying + 1;
+            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
+        } else {
+            recordIdIndexPlaying = recordIdIndexPlaying + 1;
+            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, null]);
+        }
+
     });
 
     const flagButton = document.querySelector("#isFlagged");
@@ -692,7 +713,14 @@ document.addEventListener('DOMContentLoaded', function() {
             $.post('/add-flagged-record', data);
         }
         recordIdIndexPlaying = recordIdIndexPlaying + 1;
-        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
+        const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
+        if (pauseOnBadMistake){
+            const cropFactor = 2;
+            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
+        } else {
+            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, null]);
+        }
+
     };
 
     const modalPlayPauseButton = document.querySelector("img#modalPlayPauseButton");
@@ -708,7 +736,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const datasetType = getActiveDatasetType();
             getDatasetRecordIds(datasetType, datasetPlaying).then(function(recordIds){
                 recordIdIndexPlaying = recordIdIndexPlaying + 1;
-                playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
+                const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
+                if (pauseOnBadMistake){
+                    const cropFactor = 2;
+                    playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
+                } else {
+                    playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, null]);
+                }
             });
         }
     };
@@ -724,7 +758,13 @@ document.addEventListener('DOMContentLoaded', function() {
     rewindButton.onclick = function(){
         rewindFrameIndex();
         videoSessionId = Date.now();
-        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
+        const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
+        if (pauseOnBadMistake){
+            const cropFactor = 2;
+            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
+        } else {
+            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, null]);
+        }
     }
 
     const fastForwardFlagButton = document.querySelector("span#fastForwardFlag");
@@ -732,7 +772,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const recordType = "flagged";
         await fastForwardFrameIndex(recordType);
         videoSessionId = Date.now();
-        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
+        const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
+        if (pauseOnBadMistake){
+            const cropFactor = 2;
+            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
+        } else {
+            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, null]);
+        }
     }
 
     const fastForwardCriticalErrorButton = document.querySelector("button#fastForwardCriticalError");
@@ -740,7 +786,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const recordType = "critical-errors";
         await fastForwardFrameIndex(recordType);
         videoSessionId = Date.now();
-        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId]);
+        const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
+        if (pauseOnBadMistake){
+            const cropFactor = 2;
+            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
+        } else {
+            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, null]);
+        }
     }
 
     const trainingStateTimer = setInterval(function(){
