@@ -156,15 +156,8 @@ function addDatasetReviewRows() {
                 const datasetType = getActiveDatasetType();
                 getDatasetRecordIds("review", dataset).then(function(recordIds){
                     recordIdIndexPlaying = 0;
-                    const pauseOnBadMistake = document.getElementById("show-cut-image").checked;
-                    if (pauseOnBadMistake){
-                        const cropFactor = 2;
-                        recordIdIndexPlaying = recordIdIndexPlaying + 1;
-                        playVideo([datasetPlaying, recordIds, recordIdIndexPlaying, videoSessionId, cropFactor]);
-                    } else {
-                        recordIdIndexPlaying = recordIdIndexPlaying + 1;
-                        playVideo([datasetPlaying, recordIds, recordIdIndexPlaying, videoSessionId, null]);
-                    }
+                    recordIdIndexPlaying = recordIdIndexPlaying + 1;
+                    playVideo([datasetPlaying, recordIds, recordIdIndexPlaying, videoSessionId, cropFactor]);
                 });
                 const modalHeaderDatasetId = document.getElementById("playModalHeaderDatasetId");
                 modalHeaderDatasetId.innerHTML = datasetIdPlaying;
@@ -261,8 +254,9 @@ function updateRecordId(recordIds, recordIdIndex){
 }
 
 function updateImage(dataset, recordId, cropFactor) {
+    const showCutImageButton = document.getElementById("show-cut-image");
     const videoFrame = document.querySelector("#mpeg-image")
-    if (cropFactor != null){
+    if (showCutImageButton.checked){
         const imageUrl = '/image?dataset='+dataset+'&record-id='+recordId+'&crop-factor='+cropFactor;
         videoFrame.setAttribute('src',imageUrl);
     } else {
@@ -464,12 +458,9 @@ async function playVideo(args) {
                 sessions, just the old ones. I am deliberately doing
                 nothing here
                 */
-            } else if (showCutImage){
-                recordIdIndexPlaying = recordIdIndex + 1;
-                window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, recordIdIndexPlaying, oldVideoSessionId, cropFactor]));
             } else {
                 recordIdIndexPlaying = recordIdIndex + 1;
-                window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, recordIdIndexPlaying, oldVideoSessionId, null]));
+                window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, recordIdIndexPlaying, oldVideoSessionId, cropFactor]));
             }
         }
     } else {
@@ -673,15 +664,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         recordIdIndexPlaying = recordIdIndexPlaying + 1;
         videoSessionId = Date.now();
-        const showCutImage = document.getElementById("show-cut-image").checked;
-        if (showCutImage){
-            const cropFactor = 2;
-            recordIdIndexPlaying = recordIdIndexPlaying + 1;
-            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
-        } else {
-            recordIdIndexPlaying = recordIdIndexPlaying + 1;
-            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, null]);
-        }
+        recordIdIndexPlaying = recordIdIndexPlaying + 1;
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
 
     });
 
@@ -713,13 +697,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $.post('/add-flagged-record', data);
         }
         recordIdIndexPlaying = recordIdIndexPlaying + 1;
-        const showCutImage = document.getElementById("show-cut-image").checked;
-        if (showCutImage){
-            const cropFactor = 2;
-            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
-        } else {
-            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, null]);
-        }
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
 
     };
 
@@ -736,13 +714,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const datasetType = getActiveDatasetType();
             getDatasetRecordIds(datasetType, datasetPlaying).then(function(recordIds){
                 recordIdIndexPlaying = recordIdIndexPlaying + 1;
-                const showCutImage = document.getElementById("show-cut-image").checked;
-                if (showCutImage){
-                    const cropFactor = 2;
-                    playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
-                } else {
-                    playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, null]);
-                }
+                playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
             });
         }
     };
@@ -758,13 +730,8 @@ document.addEventListener('DOMContentLoaded', function() {
     rewindButton.onclick = function(){
         rewindFrameIndex();
         videoSessionId = Date.now();
-        const showCutImage = document.getElementById("show-cut-image").checked;
-        if (showCutImage){
-            const cropFactor = 2;
-            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
-        } else {
-            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, null]);
-        }
+        recordIdIndexPlaying = recordIdIndexPlaying + 1;
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
     }
 
     const fastForwardFlagButton = document.querySelector("span#fastForwardFlag");
@@ -772,13 +739,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const recordType = "flagged";
         await fastForwardFrameIndex(recordType);
         videoSessionId = Date.now();
-        const showCutImage = document.getElementById("show-cut-image").checked;
-        if (showCutImage){
-            const cropFactor = 2;
-            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
-        } else {
-            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, null]);
-        }
+        recordIdIndexPlaying = recordIdIndexPlaying + 1;
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
     }
 
     const fastForwardCriticalErrorButton = document.querySelector("button#fastForwardCriticalError");
@@ -786,25 +748,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const recordType = "critical-errors";
         await fastForwardFrameIndex(recordType);
         videoSessionId = Date.now();
-        const showCutImage = document.getElementById("show-cut-image").checked;
-        if (showCutImage){
-            const cropFactor = 2;
-            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
-        } else {
-            playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, null]);
-        }
+        recordIdIndexPlaying = recordIdIndexPlaying + 1;
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
     }
 
 
     const showCutImageButton = document.getElementById("show-cut-image");
     showCutImageButton.onclick = function(){
         const recordId = updateRecordId(recordIdsPlaying, recordIdIndexPlaying);
-        if (showCutImageButton.checked){
-            const cropFactor = 2;
-            updateImage(datasetPlaying, recordId, cropFactor);
-        } else {
-            updateImage(datasetPlaying, recordId, null);
-        }
+        updateImage(datasetPlaying, recordId, cropFactor);
     }
 
     const trainingStateTimer = setInterval(function(){
@@ -814,6 +766,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }, false);
 
 // Global variables
+var cropFactor = 2;
 var videoSessionId = -1;
 var isVideoPlaying = false;
 var datasetPlaying = '';
