@@ -653,6 +653,8 @@ class IsTraining(tornado.web.RequestHandler):
 
 class DoesModelAlreadyExist(tornado.web.RequestHandler):
 
+    executor = ThreadPoolExecutor(5)
+
     @tornado.concurrent.run_on_executor
     def does_model_exist(self):
         exists = os.path.exists(self.application.model_path)
