@@ -795,6 +795,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+
+    const showCutImageButton = document.getElementById("show-cut-image");
+    showCutImageButton.onclick = function(){
+        const recordId = updateRecordId(recordIdsPlaying, recordIdIndexPlaying);
+        if (showCutImageButton.checked){
+            const cropFactor = 2;
+            updateImage(datasetPlaying, recordId, cropFactor);
+        } else {
+            updateImage(datasetPlaying, recordId, null);
+        }
+    }
+
     const trainingStateTimer = setInterval(function(){
       checkPredictionUpdateStatuses()
     }, 1000);
