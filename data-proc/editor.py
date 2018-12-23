@@ -41,8 +41,10 @@ class StateAPI(tornado.web.RequestHandler):
 # Makes a copy of record for model to focus on this record
 class Keep(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def keep(self,json_input):
         dataset_name = json_input['dataset']
         record_id = json_input['record_id']
         label_file_name = 'record_{id}.json'.format(id=record_id)
@@ -57,9 +59,9 @@ class Keep(tornado.web.RequestHandler):
         )
         if not os.path.exists(target_directory):
             os.makedirs(target_directory)
-        source_label_path = os.path.join(source_directory,label_file_name)
+        source_label_path = os.path.join(source_directory, label_file_name)
         source_image_path = os.path.join(source_directory, image_file_name)
-        target_label_path = os.path.join(target_directory,label_file_name)
+        target_label_path = os.path.join(target_directory, label_file_name)
         target_image_path = os.path.join(target_directory, image_file_name)
         with open(source_label_path, 'r') as f:
             contents = json.load(f)
@@ -72,14 +74,21 @@ class Keep(tornado.web.RequestHandler):
         )
         shell_command(copy_image_record)
 
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        yield self.keep(json_input=json_input)
+
 
 class DatasetRecordIdsAPI(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_record_ids(self,json_input):
         dataset_name = json_input['dataset']
         dataset_type = json_input['dataset_type']
-        if dataset_type.lower() in ['import','review','flagged']:
+        if dataset_type.lower() in ['import', 'review', 'flagged']:
             if dataset_type.lower() == 'import':
                 # TODO: Change to point to real import datasets
                 path_id_pairs = self.application.record_reader.get_dataset_record_ids(dataset_name)
@@ -98,7 +107,7 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
             result = {
                 'record_ids': record_ids
             }
-            self.write(result)
+            return result
         elif dataset_type.lower() == 'critical-errors':
             record_ids = []
             sql_query = '''
@@ -119,17 +128,23 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
             result = {
                 'record_ids': record_ids
             }
-            self.write(result)
+            return result
         else:
-            print('Unknown dataset_type: '+dataset_type)
+            print('Unknown dataset_type: ' + dataset_type)
 
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.get_record_ids(json_input=json_input)
+        self.write(result)
 
 class IsDatasetPredictionFromLatestDeployedModel(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
-        dataset_name = json_input['dataset']
+    executor = ThreadPoolExecutor(5)
 
+    @tornado.concurrent.run_on_executor
+    def are_predictions_from_deployed_model(self, json_input):
+        dataset_name = json_input['dataset']
         sql_query = '''
             DROP TABLE IF EXISTS latest_deployment;
             CREATE TEMP TABLE latest_deployment AS (
@@ -160,13 +175,21 @@ class IsDatasetPredictionFromLatestDeployedModel(tornado.web.RequestHandler):
         result = {
             'is_up_to_date': is_up_to_date
         }
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.are_predictions_from_deployed_model(json_input=json_input)
         self.write(result)
 
 
 class SaveRecordToDB(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def save_record_to_db(self, json_input):
         try:
             dataset_name = json_input['dataset']
             record_id = json_input['record_id']
@@ -183,25 +206,25 @@ class SaveRecordToDB(tornado.web.RequestHandler):
                 label_path=label_path
             )
             sql_query = '''
-                    BEGIN;
-                    INSERT INTO records (
-                        dataset,
-                        record_id,
-                        label_path,
-                        image_path,
-                        angle,
-                        throttle
-                    )
-                    VALUES (
-                       '{dataset}',
-                        {record_id},
-                       '{label_path}',
-                       '{image_path}',
-                        {angle},
-                        {throttle}
-                    );
-                    COMMIT;
-                    '''.format(
+                BEGIN;
+                INSERT INTO records (
+                    dataset,
+                    record_id,
+                    label_path,
+                    image_path,
+                    angle,
+                    throttle
+                )
+                VALUES (
+                   '{dataset}',
+                    {record_id},
+                   '{label_path}',
+                   '{image_path}',
+                    {angle},
+                    {throttle}
+                );
+                COMMIT;
+            '''.format(
                 dataset=dataset_name,
                 record_id=record_id,
                 label_path=label_path,
@@ -210,15 +233,23 @@ class SaveRecordToDB(tornado.web.RequestHandler):
                 throttle=throttle
             )
             execute_sql(sql_query)
+            return {}
         except:
             print(json_input)
             traceback.print_exc()
-        self.write({})
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = self.save_record_to_db(json_input=json_input)
+        self.write(result)
 
 class IsRecordAlreadyFlagged(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def is_record_already_flagged(self,json_input):
         dataset_name = json_input['dataset']
         record_id = json_input['record_id']
         path_id_pairs = self.application.record_reader_mistakes.get_dataset_record_ids(dataset_name)
@@ -231,14 +262,22 @@ class IsRecordAlreadyFlagged(tornado.web.RequestHandler):
         result = {
             'is_already_flagged': record_id in record_ids
         }
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.is_record_already_flagged(json_input=json_input)
         self.write(result)
 
 # Given a dataset name and record ID, return the user
 # angle and throttle
 class UserLabelsAPI(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_user_babels(self,json_input):
         dataset_name = json_input['dataset']
         record_id = int(json_input['record_id'])
         label_file_path = self.application.record_reader.get_label_path(
@@ -248,9 +287,15 @@ class UserLabelsAPI(tornado.web.RequestHandler):
         _, angle, throttle = self.application.record_reader.read_record(
             label_path=label_file_path)
         result = {
-            'angle' : angle,
+            'angle': angle,
             'throttle': throttle
         }
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.get_user_babels(json_input=json_input)
         self.write(result)
 
 # This API might seem redundant given that I already have
@@ -284,21 +329,23 @@ class AIAngleAPI(tornado.web.RequestHandler):
         response = json.loads(request.text)
         prediction = response['prediction']
         predicted_angle = prediction[0]
-        return predicted_angle
+        result = {
+            'angle': predicted_angle
+        }
+        return result
 
     @tornado.gen.coroutine
     def post(self):
         json_input = tornado.escape.json_decode(self.request.body)
-        predicted_angle = yield self.get_prediction(json_input)
-        result = {
-            'angle': predicted_angle
-        }
+        result = yield self.get_prediction(json_input)
         self.write(result)
 
 class DeleteRecord(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def delete_record(self,json_input):
         dataset_name = json_input['dataset']
         record_id = json_input['record_id']
         label_path = self.application.record_reader.get_label_path(
@@ -310,9 +357,9 @@ class DeleteRecord(tornado.web.RequestHandler):
             record_id=record_id
         )
         delete_records_sql = """
-        DELETE FROM records
-        WHERE record_id = {record_id}
-          AND LOWER(dataset) LIKE '{dataset}';
+            DELETE FROM records
+            WHERE record_id = {record_id}
+              AND LOWER(dataset) LIKE '{dataset}';
         """.format(
             record_id=record_id,
             dataset=dataset_name
@@ -322,7 +369,7 @@ class DeleteRecord(tornado.web.RequestHandler):
             DELETE FROM predictions
             WHERE record_id = {record_id}
               AND LOWER(dataset) LIKE '{dataset}';
-            """.format(
+        """.format(
             record_id=record_id,
             dataset=dataset_name
         )
@@ -330,11 +377,18 @@ class DeleteRecord(tornado.web.RequestHandler):
         os.remove(label_path)
         os.remove(image_path)
 
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        yield self.delete_record(json_input=json_input)
+
 
 class DeleteFlaggedRecord(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def delete_flagged_record(self,json_input):
         dataset_name = json_input['dataset']
         record_id = json_input['record_id']
         label_path = self.application.record_reader_mistakes.get_label_path(
@@ -347,22 +401,37 @@ class DeleteFlaggedRecord(tornado.web.RequestHandler):
         )
         os.remove(label_path)
         os.remove(image_path)
-        self.write({})
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.delete_flagged_record(json_input=json_input)
+        self.write(result)
 
 class DeleteFlaggedDataset(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def delete_flagged_dataset(self,json_input):
         dataset_name = json_input['dataset']
         self.application.record_reader_mistakes.delete_dataset(
             dataset_name=dataset_name,
         )
-        self.write({})
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.delete_flagged_dataset(json_input=json_input)
+        self.write(result)
 
 class ImageCountFromDataset(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_image_count(self,json_input):
         dataset_name = json_input['dataset']
         dataset_type = json_input['dataset_type']
         if dataset_type.lower() == 'import':
@@ -383,12 +452,20 @@ class ImageCountFromDataset(tornado.web.RequestHandler):
         result = {
             'image_count': image_count
         }
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.get_image_count(json_input=json_input)
         self.write(result)
 
 class DatasetIdFromDataName(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_dataset_id_from_name(self,json_input):
         dataset_name = json_input['dataset']
         dataset_id = self.application.record_reader.get_dataset_id_from_dataset_name(
             dataset_name=dataset_name
@@ -396,12 +473,20 @@ class DatasetIdFromDataName(tornado.web.RequestHandler):
         result = {
             'dataset_id': dataset_id
         }
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.get_dataset_id_from_name(json_input=json_input)
         self.write(result)
 
 class DatasetDateFromDataName(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_dataset_date(self,json_input):
         dataset_name = json_input['dataset']
         dataset_date = self.application.record_reader.get_dataset_date_from_dataset_name(
             dataset_name=dataset_name
@@ -409,28 +494,48 @@ class DatasetDateFromDataName(tornado.web.RequestHandler):
         result = {
             'dataset_date': dataset_date
         }
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.get_dataset_date(json_input=json_input)
         self.write(result)
 
 class ListReviewDatasets(tornado.web.RequestHandler):
 
-    def get(self):
+    executor = ThreadPoolExecutor(5)
 
+    @tornado.concurrent.run_on_executor
+    def get_review_datasets(self):
         folder_file_paths = self.application.record_reader.folders
         dataset_names = self.application.record_reader.get_dataset_names(folder_file_paths)
         results = {
-            'datasets' : dataset_names
+            'datasets': dataset_names
         }
+        return results
+
+    @tornado.gen.coroutine
+    def get(self):
+        results = yield self.get_review_datasets()
         self.write(results)
 
 class ListMistakeDatasets(tornado.web.RequestHandler):
 
-    def get(self):
+    executor = ThreadPoolExecutor(5)
 
+    @tornado.concurrent.run_on_executor
+    def get_mistake_datasets(self):
         folder_file_paths = self.application.record_reader_mistakes.folders
         dataset_names = self.application.record_reader_mistakes.get_dataset_names(folder_file_paths)
         results = {
-            'datasets' : dataset_names
+            'datasets': dataset_names
         }
+        return results
+
+    @tornado.gen.coroutine
+    def get(self):
+        results = yield self.get_mistake_datasets()
         self.write(results)
 
 class ImageAPI(tornado.web.RequestHandler):
@@ -474,52 +579,88 @@ class ImageAPI(tornado.web.RequestHandler):
 
 class ResumeTraining(tornado.web.RequestHandler):
 
-    def post(self):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def resume_training(self):
         resume_training(
             data_path=self.application.data_path,
             model_dir=self.application.model_path
         )
-        result = {}
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.resume_training()
         self.write(result)
 
 
 class StopTraining(tornado.web.RequestHandler):
 
-    def post(self):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def stop_training(self):
         stop_training()
-        result = {}
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.stop_training()
         self.write(result)
 
 
 class TrainNewModel(tornado.web.RequestHandler):
 
-    def post(self):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def train_new_model(self):
         train_new_model(
             data_path=self.application.data_path
         )
-        result = {}
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.train_new_model()
         self.write(result)
 
 
 class IsTraining(tornado.web.RequestHandler):
 
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def is_training(self):
+        return {'is_running':is_training()}
+
+    @tornado.gen.coroutine
     def post(self):
-        result = {'is_running':is_training()}
+        result = yield self.is_training()
         self.write(result)
 
 
 class DoesModelAlreadyExist(tornado.web.RequestHandler):
 
-    def post(self):
+    @tornado.concurrent.run_on_executor
+    def does_model_exist(self):
         exists = os.path.exists(self.application.model_path)
-        result = {'exists':exists}
+        result = {'exists': exists}
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.does_model_exist()
         self.write(result)
 
 
 class BatchPredict(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def batch_predict(self,json_input):
         dataset_name = json_input['dataset']
         process = batch_predict(
             dataset=dataset_name,
@@ -528,13 +669,21 @@ class BatchPredict(tornado.web.RequestHandler):
             datasets_port=self.application.port
         )
         result = {}
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.batch_predict(json_input=json_input)
         self.write(result)
 
 
 class IsDatasetPredictionSyncing(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def is_prediction_syncing(self,json_input):
         dataset_name = json_input['dataset']
         sql_query = '''
             SELECT
@@ -546,16 +695,24 @@ class IsDatasetPredictionSyncing(tornado.web.RequestHandler):
         )
         rows = get_sql_rows(sql=sql_query)
         first_row = rows[0]
-        self.write({
-            'is_syncing':first_row['answer']
-        })
+        return {
+            'is_syncing': first_row['answer']
+        }
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.is_prediction_syncing(json_input=json_input)
+        self.write(result)
 
 
 class NewEpochs(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
-        model_id = json_input['model_id']
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_epochs(self,json_inputs):
+        model_id = json_inputs['model_id']
         sql_query = '''
             DROP TABLE IF EXISTS unique_deploy;
 
@@ -581,16 +738,25 @@ class NewEpochs(tornado.web.RequestHandler):
             model_id=model_id
         )
         epochs = get_sql_rows(sql=sql_query)
-        self.write({
+        result = {
             'epochs':epochs
-        })
+        }
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_inputs = tornado.escape.json_decode(self.request.body)
+        result = yield self.get_epochs(json_inputs=json_inputs)
+        self.write(result)
 
 
 class DatasetPredictionSyncPercent(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
-        dataset_name = json_input['dataset']
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_sync_percent(self,json_inputs):
+        dataset_name = json_inputs['dataset']
         sql_query = '''
             DROP TABLE IF EXISTS latest_deployment;
             CREATE TEMP TABLE latest_deployment AS (
@@ -620,16 +786,25 @@ class DatasetPredictionSyncPercent(tornado.web.RequestHandler):
         )
         rows = get_sql_rows(sql=sql_query)
         first_row = rows[0]
-        self.write({
+        result = {
             'percent':float(first_row['completion_percent'])
-        })
+        }
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_inputs = tornado.escape.json_decode(self.request.body)
+        result = yield self.get_sync_percent(json_inputs=json_inputs)
+        self.write(result)
 
 
 class GetDatasetErrorMetrics(tornado.web.RequestHandler):
 
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
-        dataset_name = json_input['dataset']
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_error_metrics(self,json_inputs):
+        dataset_name = json_inputs['dataset']
         sql_query = '''
             SELECT
               SUM(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
@@ -648,19 +823,24 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
         rows = get_sql_rows(sql=sql_query)
         first_row = rows[0]
         if first_row['avg_abs_error'] is None:
-            self.write({
+            return {
                 'critical_count': 'N/A',
                 'critical_percent': 'N/A',
                 'avg_abs_error': 'N/A'
-            })
+            }
         else:
             result = {
                 'critical_count': float(first_row['critical_count']),
-                'critical_percent': str(round(float(first_row['critical_percent']),1))+'%',
-                'avg_abs_error': round(float(first_row['avg_abs_error']),2)
+                'critical_percent': str(round(float(first_row['critical_percent']), 1)) + '%',
+                'avg_abs_error': round(float(first_row['avg_abs_error']), 2)
             }
-            self.write(result)
+            return result
 
+    @tornado.gen.coroutine
+    def post(self):
+        json_inputs = tornado.escape.json_decode(self.request.body)
+        result = yield self.get_error_metrics(json_inputs=json_inputs)
+        self.write(result)
 
 def make_app():
     this_dir = os.path.dirname(os.path.realpath(__file__))
