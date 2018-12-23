@@ -156,7 +156,7 @@ function addDatasetReviewRows() {
                 const datasetType = getActiveDatasetType();
                 getDatasetRecordIds("review", dataset).then(function(recordIds){
                     recordIdIndexPlaying = 0;
-                    const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
+                    const pauseOnBadMistake = document.getElementById("show-cut-image").checked;
                     if (pauseOnBadMistake){
                         const cropFactor = 2;
                         recordIdIndexPlaying = recordIdIndexPlaying + 1;
@@ -450,7 +450,7 @@ async function playVideo(args) {
         // Use `rawErrorPercent` if you don't want values above 100%
         errorText.textContent = (state.ai.angleAbsError * 100).toFixed(0) + '%';
 
-        const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
+        const showCutImage = document.getElementById("show-cut-image").checked;
         const isMistakeBad = state.ai.angleAbsError > pauseOnBadMistakeThreshold;
         if (isVideoPlaying == true){
             if (oldVideoSessionId != videoSessionId){
@@ -464,7 +464,7 @@ async function playVideo(args) {
                 sessions, just the old ones. I am deliberately doing
                 nothing here
                 */
-            } else if (pauseOnBadMistake){
+            } else if (showCutImage){
                 recordIdIndexPlaying = recordIdIndex + 1;
                 window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, recordIdIndexPlaying, oldVideoSessionId, cropFactor]));
             } else {
@@ -673,8 +673,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         recordIdIndexPlaying = recordIdIndexPlaying + 1;
         videoSessionId = Date.now();
-        const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
-        if (pauseOnBadMistake){
+        const showCutImage = document.getElementById("show-cut-image").checked;
+        if (showCutImage){
             const cropFactor = 2;
             recordIdIndexPlaying = recordIdIndexPlaying + 1;
             playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
@@ -713,8 +713,8 @@ document.addEventListener('DOMContentLoaded', function() {
             $.post('/add-flagged-record', data);
         }
         recordIdIndexPlaying = recordIdIndexPlaying + 1;
-        const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
-        if (pauseOnBadMistake){
+        const showCutImage = document.getElementById("show-cut-image").checked;
+        if (showCutImage){
             const cropFactor = 2;
             playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
         } else {
@@ -736,8 +736,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const datasetType = getActiveDatasetType();
             getDatasetRecordIds(datasetType, datasetPlaying).then(function(recordIds){
                 recordIdIndexPlaying = recordIdIndexPlaying + 1;
-                const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
-                if (pauseOnBadMistake){
+                const showCutImage = document.getElementById("show-cut-image").checked;
+                if (showCutImage){
                     const cropFactor = 2;
                     playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
                 } else {
@@ -758,8 +758,8 @@ document.addEventListener('DOMContentLoaded', function() {
     rewindButton.onclick = function(){
         rewindFrameIndex();
         videoSessionId = Date.now();
-        const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
-        if (pauseOnBadMistake){
+        const showCutImage = document.getElementById("show-cut-image").checked;
+        if (showCutImage){
             const cropFactor = 2;
             playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
         } else {
@@ -772,8 +772,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const recordType = "flagged";
         await fastForwardFrameIndex(recordType);
         videoSessionId = Date.now();
-        const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
-        if (pauseOnBadMistake){
+        const showCutImage = document.getElementById("show-cut-image").checked;
+        if (showCutImage){
             const cropFactor = 2;
             playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
         } else {
@@ -786,8 +786,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const recordType = "critical-errors";
         await fastForwardFrameIndex(recordType);
         videoSessionId = Date.now();
-        const pauseOnBadMistake = document.getElementById("pauseOnMistakeToggle").checked;
-        if (pauseOnBadMistake){
+        const showCutImage = document.getElementById("show-cut-image").checked;
+        if (showCutImage){
             const cropFactor = 2;
             playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
         } else {
