@@ -18,6 +18,7 @@ COMMIT;
 
 BEGIN;
 CREATE TABLE IF NOT EXISTS epochs(
+  model_id INT,
   epoch INT,
   train float8,
   validation float8,

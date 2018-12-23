@@ -64,6 +64,9 @@ class Trainer:
             self.tfboard_basedir = os.path.join(self.data_path, 'tf_visual_data', 'runs')
             self.model_dir = mkdir_tfboard_run_dir(self.tfboard_basedir)
 
+        # Assumes model ID is always last element of model_dir
+        self.model_id = self.get_model_id_from_model_dir()
+
         if self.save_to_disk is True:
             self.results_file = os.path.join(self.model_dir, 'results.txt')
             self.speed_file = os.path.join(self.model_dir, 'speed.txt')
@@ -75,6 +78,10 @@ class Trainer:
 
         # Prints batch processing speed, among other things
         self.show_speed = show_speed
+
+    def get_model_id_from_model_dir(self):
+        path_parts = os.path.normpath(self.model_dir)
+        return path_parts[-1]
 
     # Create this function to make it threadable / parallelizable
     def get_batch(self,is_train):
@@ -148,9 +155,10 @@ class Trainer:
             with open(self.results_file,'a') as f:
                 f.write(message.format(self.start_epoch, train_accuracy, test_accuracy)+'\n')
                 sql_query = '''
-                    INSERT INTO epochs(epoch, train, validation)
-                    VALUES ({epoch},{train},{validation});
+                    INSERT INTO epochs(model_id, epoch, train, validation)
+                    VALUES ({model_id},{epoch},{train},{validation});
                 '''.format(
+                    model_id=self.model_id,
                     epoch=0,
                     train=train_accuracy,
                     validation=test_accuracy
@@ -229,9 +237,10 @@ class Trainer:
                 with open(self.results_file, 'a') as f:
                     f.write(message.format(epoch, train_accuracy, test_accuracy)+'\n')
                     sql_query = '''
-                        INSERT INTO epochs(epoch, train, validation)
-                        VALUES ({epoch},{train},{validation});
+                        INSERT INTO epochs(model_id, epoch, train, validation)
+                        VALUES ({model_id},{epoch},{train},{validation});
                     '''.format(
+                        model_id=self.model_id,
                         epoch=epoch,
                         train=train_accuracy,
                         validation=test_accuracy
