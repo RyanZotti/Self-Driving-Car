@@ -312,18 +312,27 @@ def train_new_model(data_path,epochs=10,show_speed='Y', save_to_disk='N',image_s
 def batch_predict(dataset, predictions_port, datasets_port):
     # The & is required or Tornado will get stuck
     # TODO: Remove the hardcoded script path
-    command = 'python /Users/ryanzotti/Documents/repos/Self-Driving-Car/data-proc/batch_predict.py \
-        --dataset {dataset} \
-        --predictions_port {predictions_port} \
-        --datasets_port {datasets_port} &'.format(
-        dataset=dataset,
-        predictions_port=predictions_port,
-        datasets_port=datasets_port
-    )
+    # If you use subprocess.Open(..., shell=True) then the
+    # subprocess you get back is not useful, it's the process
+    # of a short-termed parent, and the PID you care about is
+    # not always +1 greater than the parent, so it's not reliable
+    # https://stackoverflow.com/questions/7989922/opening-a-process-with-popen-and-getting-the-pid#comment32785237_7989922
+    # Using shell=False and passing the arg list works though
+    command_list = [
+        'python',
+        '/Users/ryanzotti/Documents/repos/Self-Driving-Car/data-proc/batch_predict.py',
+        '--dataset',
+        str(dataset),
+        '--predictions_port',
+        str(predictions_port),
+        '--datasets_port',
+        str(datasets_port)
+    ]
     process = subprocess.Popen(
-        command,
-        shell=True
+        args=command_list,
+        shell=False
     )
+    return process
 
 
 def resume_training(

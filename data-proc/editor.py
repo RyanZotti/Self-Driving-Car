@@ -1,3 +1,4 @@
+from tornado import gen
 import argparse
 import cv2
 import time
@@ -15,6 +16,7 @@ import json
 from util import *
 import json
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Home(tornado.web.RequestHandler):
@@ -129,6 +131,7 @@ class IsDatasetPredictionFromLatestDeployedModel(tornado.web.RequestHandler):
         dataset_name = json_input['dataset']
 
         sql_query = '''
+            DROP TABLE IF EXISTS latest_deployment;
             CREATE TEMP TABLE latest_deployment AS (
               SELECT
                 model_id,
@@ -139,12 +142,18 @@ class IsDatasetPredictionFromLatestDeployedModel(tornado.web.RequestHandler):
             );
 
             SELECT
-              COUNT(CASE WHEN deploy.model_id IS NOT NULL THEN 1 ELSE 0 END) > 0 AS is_up_to_date
-            FROM predictions
-            JOIN latest_deployment AS deploy
+              AVG(CASE
+                WHEN predictions.angle IS NOT NULL
+                  THEN 100.0
+                ELSE 0.0 END) = 100 AS is_up_to_date
+            FROM records
+            LEFT JOIN predictions
+              ON records.dataset = predictions.dataset
+                AND records.record_id = predictions.record_id
+            LEFT JOIN latest_deployment AS deploy
               ON predictions.model_id = deploy.model_id
                 AND predictions.epoch = deploy.epoch
-            WHERE LOWER(predictions.dataset) LIKE LOWER('%{dataset}%')
+            WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%')
             '''.format(dataset=dataset_name)
         first_row = get_sql_rows(sql_query)[0]
         is_up_to_date = first_row['is_up_to_date']
@@ -254,9 +263,12 @@ class UserLabelsAPI(tornado.web.RequestHandler):
 # the model API
 class AIAngleAPI(tornado.web.RequestHandler):
 
-    def post(self):
+    # Prevents awful blocking
+    # https://infinitescript.com/2017/06/making-requests-non-blocking-in-tornado/
+    executor = ThreadPoolExecutor(100)
 
-        json_input = tornado.escape.json_decode(self.request.body)
+    @tornado.concurrent.run_on_executor
+    def get_prediction(self, json_input):
         dataset_name = json_input['dataset']
         record_id = json_input['record_id']
 
@@ -272,6 +284,12 @@ class AIAngleAPI(tornado.web.RequestHandler):
         response = json.loads(request.text)
         prediction = response['prediction']
         predicted_angle = prediction[0]
+        return predicted_angle
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        predicted_angle = yield self.get_prediction(json_input)
         result = {
             'angle': predicted_angle
         }
@@ -503,7 +521,7 @@ class BatchPredict(tornado.web.RequestHandler):
     def post(self):
         json_input = tornado.escape.json_decode(self.request.body)
         dataset_name = json_input['dataset']
-        batch_predict(
+        process = batch_predict(
             dataset=dataset_name,
             # TODO: Remove this hardcoded port
             predictions_port='8885',
@@ -574,6 +592,16 @@ class DatasetPredictionSyncPercent(tornado.web.RequestHandler):
         json_input = tornado.escape.json_decode(self.request.body)
         dataset_name = json_input['dataset']
         sql_query = '''
+            DROP TABLE IF EXISTS latest_deployment;
+            CREATE TEMP TABLE latest_deployment AS (
+              SELECT
+                model_id,
+                epoch
+              FROM deploy
+              ORDER BY TIMESTAMP DESC
+              LIMIT 1
+            );
+
             SELECT
               AVG(CASE
                 WHEN predictions.angle IS NOT NULL
@@ -583,6 +611,9 @@ class DatasetPredictionSyncPercent(tornado.web.RequestHandler):
             LEFT JOIN predictions
               ON records.dataset = predictions.dataset
                 AND records.record_id = predictions.record_id
+            LEFT JOIN latest_deployment AS deploy
+              ON predictions.model_id = deploy.model_id
+                AND predictions.epoch = deploy.epoch
             WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%')
         '''.format(
             dataset=dataset_name
@@ -714,6 +745,5 @@ if __name__ == "__main__":
         overfit=True
     )
     app.angle_only = args['angle_only']
-
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()

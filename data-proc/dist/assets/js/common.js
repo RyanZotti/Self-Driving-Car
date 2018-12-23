@@ -43,8 +43,8 @@ function describeArc(x, y, radius, startAngle, endAngle){
  * @param {element} svg - SVG element containing the circle progress
  * @param {int} percent - Amount between 0 and 100
  */
-function updateProgressCircle(svg,percent){
-
+function updateProgressCircle(svg,rawPercent){
+    const percent = rawPercent.toFixed(0);
     /*
      * My circular path function fails with I specify a full 360
      * degrees, so I rely on a circle svg instead when I want to

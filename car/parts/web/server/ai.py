@@ -3,9 +3,43 @@ from data_augmentation import apply_transformations
 import tornado.ioloop
 import tornado.web
 from util import *
+from concurrent.futures import ThreadPoolExecutor
 
 
 class PredictionHandler(tornado.web.RequestHandler):
+
+    # Prevents awful blocking
+    # https://infinitescript.com/2017/06/making-requests-non-blocking-in-tornado/
+    executor = ThreadPoolExecutor(500)
+
+    @tornado.concurrent.run_on_executor
+    def get_prediction(self, file_body):
+        # Ugly code to convert string to image
+        # https://stackoverflow.com/questions/17170752/python-opencv-load-image-from-byte-string/17170855
+        nparr = np.fromstring(file_body, np.uint8)
+        img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        # TODO: Fix this bug. Right now if I don't pass mirror image, model outputs unchanging prediction
+        flipped_image = cv2.flip(img_np, 1)
+        normalized_images = [img_np, flipped_image]
+        normalized_images = np.array(normalized_images)
+
+        # Normalize for contrast and pixel size
+        normalized_images = apply_transformations(
+            images=normalized_images,
+            image_scale=self.image_scale,
+            crop_factor=self.crop_factor)
+
+        prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess).astype(float)
+
+        # Ignore second prediction set, which is flipped image, a hack
+        prediction = list(prediction[0])
+
+        if self.angle_only == True:
+            default_throttle = 0.6
+            prediction.append(default_throttle)
+
+        return prediction
 
     @property
     def prediction(self):
@@ -63,6 +97,7 @@ class PredictionHandler(tornado.web.RequestHandler):
     def x(self, x):
         self._x = x
 
+    @tornado.gen.coroutine
     def post(self):
 
         # I don't quite understand how this works. "image" is what
@@ -71,30 +106,7 @@ class PredictionHandler(tornado.web.RequestHandler):
         # tornado.HTTPFile class. Anyways, it works.
         file_body = self.request.files['image'][0]['body']
 
-        # Ugly code to convert string to image
-        # https://stackoverflow.com/questions/17170752/python-opencv-load-image-from-byte-string/17170855
-        nparr = np.fromstring(file_body, np.uint8)
-        img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-        # TODO: Fix this bug. Right now if I don't pass mirror image, model outputs unchanging prediction
-        flipped_image = cv2.flip(img_np, 1)
-        normalized_images = [img_np, flipped_image]
-        normalized_images = np.array(normalized_images)
-
-        # Normalize for contrast and pixel size
-        normalized_images = apply_transformations(
-            images=normalized_images,
-            image_scale=self.image_scale,
-            crop_factor=self.crop_factor)
-
-        prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess).astype(float)
-
-        # Ignore second prediction set, which is flipped image, a hack
-        prediction = list(prediction[0])
-
-        if self.angle_only == True:
-            default_throttle = 0.5
-            prediction.append(default_throttle)
+        prediction = yield self.get_prediction(file_body=file_body)
 
         # Result will look something like: '{"prediction": [0.4731147885322571, 0.25]}'
         result = {'prediction': prediction}

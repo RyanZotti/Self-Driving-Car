@@ -215,7 +215,7 @@ function datasetPredictionSyncPercent(dataset){
     });
     return new Promise(resolve => {
         $.post('/dataset-prediction-sync-percent', data, (response) => {
-            resolve(response);
+            resolve(response['percent']);
         });
     });
 }
