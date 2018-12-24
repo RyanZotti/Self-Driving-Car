@@ -730,7 +730,6 @@ document.addEventListener('DOMContentLoaded', function() {
     rewindButton.onclick = function(){
         rewindFrameIndex();
         videoSessionId = Date.now();
-        recordIdIndexPlaying = recordIdIndexPlaying + 1;
         playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
     }
 
@@ -739,7 +738,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const recordType = "flagged";
         await fastForwardFrameIndex(recordType);
         videoSessionId = Date.now();
-        recordIdIndexPlaying = recordIdIndexPlaying + 1;
         playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
     }
 
@@ -748,7 +746,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const recordType = "critical-errors";
         await fastForwardFrameIndex(recordType);
         videoSessionId = Date.now();
-        recordIdIndexPlaying = recordIdIndexPlaying + 1;
         playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
     }
 
