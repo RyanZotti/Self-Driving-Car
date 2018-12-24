@@ -15,7 +15,7 @@ function addDatasetMachineLearningRows() {
         const datasetRowString = promiseResults[0];
         const datasetPromises = promiseResults[1];
         const tbody = document.querySelector("tbody#datasetsTbody");
-        for (datsetPromise of datasetPromises) {
+        for (const datsetPromise of datasetPromises) {
             const tr = htmlToElement(datasetRowString);
             datsetPromise.then(function(dataset){
                 const datasetText = dataset.name;
@@ -24,17 +24,17 @@ function addDatasetMachineLearningRows() {
 
                 // Make sure train select buttons are functional
                 const trainSelectInput = tr.querySelector('input[name="trainSelect"]');
-                trainSelectInput.setAttribute('id','dataset-id-'+dataset.id);
+                trainSelectInput.setAttribute('id','train-dataset-id-'+dataset.id);
                 trainSelectInput.setAttribute('dataset',datasetText);
                 const trainSelectLabel = tr.querySelector('label[name="trainSelect"]');
-                trainSelectLabel.setAttribute('for','dataset-id-'+dataset.id);
+                trainSelectLabel.setAttribute('for','train-dataset-id-'+dataset.id);
 
                 // Make sure validation select buttons are functional
                 const validationSelectInput = tr.querySelector('input[name="validationSelect"]');
-                validationSelectInput.setAttribute('id','dataset-id-'+dataset.id);
+                validationSelectInput.setAttribute('id','validation-dataset-id-'+dataset.id);
                 validationSelectInput.setAttribute('dataset',datasetText);
                 const validationSelectLabel = tr.querySelector('label[name="validationSelect"]');
-                validationSelectLabel.setAttribute('for','dataset-id-'+dataset.id);
+                validationSelectLabel.setAttribute('for','validation-dataset-id-'+dataset.id);
 
                 tbody.appendChild(tr);
             });
