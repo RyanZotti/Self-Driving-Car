@@ -914,6 +914,16 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
     def get_error_metrics(self,json_inputs):
         dataset_name = json_inputs['dataset']
         sql_query = '''
+            DROP TABLE IF EXISTS latest_deployment;
+            CREATE TEMP TABLE latest_deployment AS (
+              SELECT
+                model_id,
+                epoch
+              FROM deploy
+              ORDER BY TIMESTAMP DESC
+              LIMIT 1
+            );
+
             SELECT
               SUM(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
                 THEN 1 ELSE 0 END) AS critical_count,
@@ -924,6 +934,9 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
             LEFT JOIN predictions
               ON records.dataset = predictions.dataset
                 AND records.record_id = predictions.record_id
+            LEFT JOIN latest_deployment AS deploy
+              ON predictions.model_id = deploy.model_id
+                AND predictions.epoch = deploy.epoch
             WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%');
         '''.format(
             dataset=dataset_name
