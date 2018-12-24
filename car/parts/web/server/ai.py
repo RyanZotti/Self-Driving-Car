@@ -1,10 +1,26 @@
 import argparse
 from data_augmentation import apply_transformations
+import os
 import tornado.ioloop
 import tornado.web
 from util import *
 from concurrent.futures import ThreadPoolExecutor
 
+
+class HealthCheck(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_prediction(self):
+        process_id = os.getpid()
+        result = {'process_id':process_id}
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.get_prediction()
+        self.write(result)
 
 class PredictionHandler(tornado.web.RequestHandler):
 
@@ -122,7 +138,8 @@ def make_app(sess, x, prediction, image_scale, crop_factor, angle_only):
            'prediction':prediction,
            'image_scale':image_scale,
            'crop_factor':crop_factor,
-           'angle_only':angle_only})])
+           'angle_only':angle_only}),
+         (r"/health-check", HealthCheck),])
 
 
 if __name__ == "__main__":
