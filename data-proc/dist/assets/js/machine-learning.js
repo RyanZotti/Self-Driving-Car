@@ -94,6 +94,14 @@ function doesModelExist() {
     });
 }
 
+function laptoModelApiHealth() {
+    return new Promise(function(resolve, reject){
+        $.post('/laptop-model-api-health', function(result){
+            resolve(result['process_id']);
+        });
+    });
+}
+
 /*
 The list of processes should be the source of
 truth regarding the current state of training.

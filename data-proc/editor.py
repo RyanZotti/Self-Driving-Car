@@ -39,6 +39,21 @@ class StateAPI(tornado.web.RequestHandler):
         self.write(state)
 
 
+class LaptopModelDeploymentHealth(tornado.web.RequestHandler):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_laptop_model_deploy_health(self):
+        request = requests.post('http://localhost:8885/health-check')
+        response = json.loads(request.text)
+        return response
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.get_laptop_model_deploy_health()
+        self.write(result)
+
+
 # Makes a copy of record for model to focus on this record
 class Keep(tornado.web.RequestHandler):
 
@@ -879,6 +894,7 @@ def make_app():
         (r"/image", ImageAPI),
         (r"/ui-state", StateAPI),
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
+        (r"/laptop-model-api-health", LaptopModelDeploymentHealth),
         (r"/delete",DeleteRecord),
         (r"/save-reocord-to-db", SaveRecordToDB),
         (r"/delete-flagged-record", DeleteFlaggedRecord),
