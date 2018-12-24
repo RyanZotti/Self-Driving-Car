@@ -195,7 +195,7 @@ class IsDatasetPredictionFromLatestDeployedModel(tornado.web.RequestHandler):
 
             SELECT
               AVG(CASE
-                WHEN predictions.angle IS NOT NULL
+                WHEN deploy.epoch IS NOT NULL
                   THEN 100.0
                 ELSE 0.0 END) = 100 AS is_up_to_date
             FROM records
