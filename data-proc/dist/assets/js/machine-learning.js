@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // TODO: Remove hardcoded modelId
       var modelId = 1;
       fillEpochsTable(modelId);
-    }, 5000);
+    }, 1000);
 
     const trainModelButton = document.querySelector("button#train-model-button");
     trainModelButton.onclick = function(){
