@@ -112,12 +112,25 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
         elif dataset_type.lower() == 'critical-errors':
             record_ids = []
             sql_query = '''
+                DROP TABLE IF EXISTS latest_deployment;
+                CREATE TEMP TABLE latest_deployment AS (
+                  SELECT
+                    model_id,
+                    epoch
+                  FROM deploy
+                  ORDER BY TIMESTAMP DESC
+                  LIMIT 1
+                );
+
                 SELECT
                   records.record_id
                 FROM records
                 LEFT JOIN predictions
                   ON records.dataset = predictions.dataset
                     AND records.record_id = predictions.record_id
+                LEFT JOIN latest_deployment AS deploy
+                  ON predictions.model_id = deploy.model_id
+                    AND predictions.epoch = deploy.epoch
                 WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%')
                   AND ABS(records.angle - predictions.angle) >= 0.8
                 ORDER BY record_id ASC
