@@ -44,9 +44,16 @@ class LaptopModelDeploymentHealth(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def get_laptop_model_deploy_health(self):
-        request = requests.post('http://localhost:8885/health-check')
-        response = json.loads(request.text)
-        return response
+        seconds = 5
+        try:
+            request = requests.post(
+                'http://localhost:8885/health-check',
+                timeout=seconds
+            )
+            response = json.loads(request.text)
+            return response
+        except:
+            return {'process_id': -1}
 
     @tornado.gen.coroutine
     def post(self):
