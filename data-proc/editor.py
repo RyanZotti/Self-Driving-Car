@@ -325,6 +325,17 @@ class DeployModel(tornado.web.RequestHandler):
         if process_id > -1:
             os.kill(process_id, signal.SIGTERM)
 
+        # TODO: Remove hard-coded model ID
+        model_id = 1
+        sql_query = """
+            SELECT
+              max(epoch) AS epoch
+            FROM epochs
+            WHERE model_id = {model_id}
+        """.format(
+            model_id=model_id
+        )
+        epoch = get_sql_rows(sql_query)[0]['epoch']
         # The & is required or Tornado will get stuck
         # TODO: Remove the hardcoded script path
         # If you use subprocess.Open(..., shell=True) then the
@@ -337,7 +348,11 @@ class DeployModel(tornado.web.RequestHandler):
         # export PYTHONPATH=${PYTHONPATH}:/Users/ryanzotti/Documents/repos/Self-Driving-Car/
         command_list = [
             'python',
-            '/Users/ryanzotti/Documents/repos/Self-Driving-Car/car/parts/web/server/ai.py'
+            '/Users/ryanzotti/Documents/repos/Self-Driving-Car/car/parts/web/server/ai.py',
+            '--model_id',
+            str(model_id),
+            '--epoch',
+            str(epoch)
         ]
         process = subprocess.Popen(
             args=command_list,
