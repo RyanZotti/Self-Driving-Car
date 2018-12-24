@@ -102,6 +102,14 @@ function laptoModelApiHealth() {
     });
 }
 
+function deployModelLaptop() {
+    return new Promise(function(resolve, reject){
+        $.post('/deploy-laptop-model', function(result){
+            resolve(result);
+        });
+    });
+}
+
 /*
 The list of processes should be the source of
 truth regarding the current state of training.
@@ -219,6 +227,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     };
+
+    // TODO: Figure out how to differentiate from Pi model deployment
+    const deployModelButton = document.querySelector("button#deploy-model-button");
+    deployModelButton.onclick = function(){
+        deployModelLaptop();
+    }
 
 }, false);
 

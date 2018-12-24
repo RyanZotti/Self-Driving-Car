@@ -299,6 +299,41 @@ class IsRecordAlreadyFlagged(tornado.web.RequestHandler):
         result = yield self.is_record_already_flagged(json_input=json_input)
         self.write(result)
 
+
+class DeployModel(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def deploy_model(self):
+
+        # The & is required or Tornado will get stuck
+        # TODO: Remove the hardcoded script path
+        # If you use subprocess.Open(..., shell=True) then the
+        # subprocess you get back is not useful, it's the process
+        # of a short-termed parent, and the PID you care about is
+        # not always +1 greater than the parent, so it's not reliable
+        # https://stackoverflow.com/questions/7989922/opening-a-process-with-popen-and-getting-the-pid#comment32785237_7989922
+        # Using shell=False and passing the arg list works though
+        # Need to export python path from Terminal or CLI will die
+        # export PYTHONPATH=${PYTHONPATH}:/Users/ryanzotti/Documents/repos/Self-Driving-Car/
+        command_list = [
+            'python',
+            '/Users/ryanzotti/Documents/repos/Self-Driving-Car/car/parts/web/server/ai.py'
+        ]
+        process = subprocess.Popen(
+            args=command_list,
+            shell=False
+        )
+        result = {}
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.deploy_model()
+        self.write(result)
+
+
 # Given a dataset name and record ID, return the user
 # angle and throttle
 class UserLabelsAPI(tornado.web.RequestHandler):
@@ -912,6 +947,7 @@ def make_app():
         (r"/resume-training", ResumeTraining),
         (r"/stop-training", StopTraining),
         (r"/train-new-model", TrainNewModel),
+        (r"/deploy-laptop-model", DeployModel),
         (r"/are-dataset-predictions-updated", IsDatasetPredictionFromLatestDeployedModel),
         (r"/is-training", IsTraining),
         (r"/does-model-already-exist", DoesModelAlreadyExist),
