@@ -25,12 +25,14 @@ function addDatasetMachineLearningRows() {
                 // Make sure train select buttons are functional
                 const trainSelectInput = tr.querySelector('input[name="trainSelect"]');
                 trainSelectInput.setAttribute('id','dataset-id-'+dataset.id);
+                trainSelectInput.setAttribute('dataset',datasetText);
                 const trainSelectLabel = tr.querySelector('label[name="trainSelect"]');
                 trainSelectLabel.setAttribute('for','dataset-id-'+dataset.id);
 
                 // Make sure validation select buttons are functional
                 const validationSelectInput = tr.querySelector('input[name="validationSelect"]');
                 validationSelectInput.setAttribute('id','dataset-id-'+dataset.id);
+                validationSelectInput.setAttribute('dataset',datasetText);
                 const validationSelectLabel = tr.querySelector('label[name="validationSelect"]');
                 validationSelectLabel.setAttribute('for','dataset-id-'+dataset.id);
 
