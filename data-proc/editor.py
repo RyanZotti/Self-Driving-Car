@@ -13,6 +13,7 @@ import tornado.web
 import tornado.websocket
 import requests
 import json
+import signal
 from util import *
 import json
 import traceback
@@ -44,7 +45,7 @@ class LaptopModelDeploymentHealth(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def get_laptop_model_deploy_health(self):
-        seconds = 5
+        seconds = 1
         try:
             request = requests.post(
                 'http://localhost:8885/health-check',
@@ -313,6 +314,16 @@ class DeployModel(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def deploy_model(self):
+
+        # Kill any currently running model API
+        endpoint = 'http://localhost:{port}/laptop-model-api-health'.format(
+            port=self.application.port
+        )
+        request = requests.post(endpoint)
+        response = json.loads(request.text)
+        process_id = response['process_id']
+        if process_id > -1:
+            os.kill(process_id, signal.SIGTERM)
 
         # The & is required or Tornado will get stuck
         # TODO: Remove the hardcoded script path
