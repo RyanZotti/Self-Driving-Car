@@ -70,6 +70,7 @@ class ReadToggle(tornado.web.RequestHandler):
         web_page = json_input['web_page']
         name = json_input['name']
         detail = json_input['detail']
+        result = {}
         sql_query = '''
             SELECT
               is_on
@@ -84,11 +85,13 @@ class ReadToggle(tornado.web.RequestHandler):
             name=name,
             detail=detail
         )
-        first_row = get_sql_rows(sql_query)[0]
-        is_on = first_row['is_on']
-        result = {
-            'is_on': is_on
-        }
+        rows = get_sql_rows(sql_query)
+        if len(rows) > 0:
+            first_row = rows[0]
+            is_on = first_row['is_on']
+            result['is_on'] = is_on
+        else:
+            result['is_on'] = False
         return result
 
     @tornado.gen.coroutine
