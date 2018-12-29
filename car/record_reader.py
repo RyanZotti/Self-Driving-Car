@@ -7,6 +7,7 @@ from os.path import dirname, join, basename
 import numpy as np
 from random import shuffle
 import re
+from util import get_sql_rows
 from shutil import rmtree
 
 
@@ -18,7 +19,7 @@ class RecordReader(object):
     batches to a model trainer.
     """
 
-    def __init__(self,base_directory,batch_size=50,overfit=False,angle_only=False):
+    def __init__(self,base_directory,batch_size=50,overfit=False,angle_only=False,is_for_model=False):
 
         """
         Create a RecordReader object
@@ -41,17 +42,24 @@ class RecordReader(object):
             Whether to focus on angle only. Possibly focuses model's
             attention on the most egregious errors, turning right when
             the car should turn left, etc
+        is_for_model : boolean
+            Will this be used to feed data to a model, as opposed to an
+            API? The API doesn't care about train / validation selections,
+            but the model does and pulls the selections from Postgres
+
         """
 
         self.base_directory = base_directory
         self.folders = glob.glob(join(self.base_directory,'*'))
         self.overfit = overfit
         self.angle_only = angle_only
+        self.is_for_model = is_for_model
 
         # Filter out any folder (like tf_visual_data/runs) not related
         # to datasets. Assumes dataset is not elsewhere in the file path
         self.folders = [folder for folder in self.folders if 'dataset' in folder]
 
+        # TODO: Check if this is no longer needed
         # Train and test are the same in overfit mode
         if overfit == True:
             self.train_folders = [folder for folder in self.folders]
@@ -64,6 +72,16 @@ class RecordReader(object):
             self.train_folders = [folder for folder in self.folders[:train_folder_size]]
             self.test_folders = list(set(self.folders) - set(self.train_folders))
 
+        if self.is_for_model == True:
+            self.train_folders = []
+            for dataset in self.get_dataset_selections('train'):
+                absolute_path = self.get_dataset_absolute_path(dataset)
+                self.train_folders.append(absolute_path)
+            self.test_folders = []
+            for dataset in self.get_dataset_selections('validation'):
+                absolute_path = self.get_dataset_absolute_path(dataset)
+                self.test_folders.append(absolute_path)
+
         # Combine all train folder file paths into single list
         self.train_paths = self.merge_paths(self.train_folders)
 
@@ -71,6 +89,51 @@ class RecordReader(object):
         self.test_paths = self.merge_paths(self.test_folders)
         self.batch_size = batch_size
         self.batches_per_epoch = int(len(self.train_paths) / self.batch_size)
+
+    def get_dataset_selections(self, dataset_type):
+        """
+        Gets the user-selected train or validation datasets that are
+        stored in Postgres. Users choose their selections in the UI
+
+        Parameters
+        ----------
+        dataset_type : string
+            Whether to pull train or validation datasets. Must be
+            either "train" or "validation"
+        """
+        sql_query = '''
+            DROP TABLE IF EXISTS latest;
+            CREATE TEMP TABLE latest AS (
+              SELECT
+                detail,
+                is_on,
+                ROW_NUMBER() OVER(
+                  PARTITION BY
+                    web_page,
+                    name,
+                    detail
+                  ORDER BY
+                    event_ts DESC
+                ) AS temporal_rank
+              FROM toggles
+              WHERE LOWER(name) LIKE '%{dataset_type}%'
+            );
+
+            SELECT
+              detail AS dataset
+            FROM latest
+            WHERE temporal_rank = 1
+              AND is_on = TRUE
+        '''.format(
+            dataset_type=dataset_type
+        )
+        rows = get_sql_rows(sql=sql_query)
+        datasets = []
+        if len(rows) > 0:
+            for row in rows:
+                dataset = row['dataset']
+                datasets.append(dataset)
+        return datasets
 
     def get_dataset_absolute_path(self, dataset_name):
         full_path = join(self.base_directory, dataset_name)

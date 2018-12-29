@@ -47,9 +47,9 @@ COMMIT;
 BEGIN;
 CREATE TABLE IF NOT EXISTS toggles(
     event_ts TIMESTAMP,
-    web_page character(100),
-    name character(100),
-    detail character(100),
+    web_page VARCHAR(100),
+    name VARCHAR(100),
+    detail VARCHAR(100),
     is_on BOOLEAN,
 PRIMARY KEY(event_ts, web_page, name, detail));
 COMMIT;

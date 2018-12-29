@@ -121,18 +121,19 @@ function stopTraining() {
 
 // TODO: Allow transfer learning
 function startTraining() {
-    return new Promise(function(resolve, reject){
-        doesModelExist().then(function(exists){
-            if (exists == true){
-                $.post('/resume-training', function(result){
-                    resolve(result);
-                });
-            } else {
-                $.post('/train-new-model', function(result){
-                    resolve(result);
-                });
-            }
-        });
+    return new Promise(async function(resolve, reject){
+        const trainDatasets = getMLCheckedDatasets('train');
+        const validationDatasets = getMLCheckedDatasets('validation');
+        const exists = await doesModelExist();
+        if (exists == true){
+            $.post('/resume-training', function(result){
+                resolve(result);
+            });
+        } else {
+            $.post('/train-new-model', function(result){
+                resolve(result);
+            });
+        }
     });
 }
 

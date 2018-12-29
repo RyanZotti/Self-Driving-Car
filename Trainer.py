@@ -44,7 +44,9 @@ class Trainer:
             base_directory=self.data_path,
             batch_size=self.batch_size,
             overfit=self.overfit,
-            angle_only=self.angle_only)
+            angle_only=self.angle_only,
+            is_for_model=True
+        )
         self.s3_bucket = format_s3_bucket(s3_bucket)
         self.model_file = model_file
         self.n_epochs = int(epochs)
