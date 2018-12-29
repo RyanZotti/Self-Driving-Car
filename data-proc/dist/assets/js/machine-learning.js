@@ -35,9 +35,18 @@ function addDatasetMachineLearningRows() {
                         'name': 'training dataset',
                         'detail': datasetText,
                         'is_on': this.checked
-                    })
+                    });
                     writeToggle(input);
                 }
+                const trainingToggleReadInput = JSON.stringify({
+                    'web_page': 'machine learning',
+                    'name': 'training dataset',
+                    'detail': datasetText
+                });
+                readToggle(trainingToggleReadInput).then(function(is_on) {
+                    trainSelectInput.checked = is_on;
+                });
+
 
                 // Make sure validation select buttons are functional
                 const validationSelectInput = tr.querySelector('input[name="validationSelect"]');
@@ -52,9 +61,18 @@ function addDatasetMachineLearningRows() {
                         'name': 'validation dataset',
                         'detail': datasetText,
                         'is_on': this.checked
-                    })
+                    });
                     writeToggle(input);
                 }
+                const validationToggleReadInput = JSON.stringify({
+                    'web_page': 'machine learning',
+                    'name': 'validation dataset',
+                    'detail': datasetText
+                });
+                readToggle(validationToggleReadInput).then(function(is_on) {
+                    validationSelectInput.checked = is_on;
+                });
+
                 tbody.appendChild(tr);
             });
         }
