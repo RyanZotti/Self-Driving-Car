@@ -248,6 +248,20 @@ async function fillEpochsTable(modelId){
     }
 }
 
+function getMLCheckedDatasets(datasetType){
+    const rows = document.querySelectorAll("tbody#datasetsTbody > tr");
+    const checkedDatasets = [];
+    const inputName = datasetType.toLowerCase() + 'Select';
+    for (const row of rows){
+        const checkBox = row.querySelector('input[name="'+inputName+'"]');
+        const dataset = checkBox.getAttribute('dataset');
+        if (checkBox.checked == true){
+            checkedDatasets.push(dataset)
+        }
+    }
+    return checkedDatasets;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     selectAllMachineLearningDatasetsTrigger();
     addDatasetMachineLearningRows();
