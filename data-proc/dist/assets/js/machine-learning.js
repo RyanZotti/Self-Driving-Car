@@ -28,6 +28,16 @@ function addDatasetMachineLearningRows() {
                 trainSelectInput.setAttribute('dataset',datasetText);
                 const trainSelectLabel = tr.querySelector('label[name="trainSelect"]');
                 trainSelectLabel.setAttribute('for','train-dataset-id-'+dataset.id);
+                trainSelectInput.onclick = function(){
+                    console.log('train '+datasetText+' '+this.checked);
+                    const input = JSON.stringify({
+                        'web_page': 'machine learning',
+                        'name': 'training dataset',
+                        'detail': datasetText,
+                        'is_on': this.checked
+                    })
+                    writeToggle(input);
+                }
 
                 // Make sure validation select buttons are functional
                 const validationSelectInput = tr.querySelector('input[name="validationSelect"]');
@@ -35,10 +45,27 @@ function addDatasetMachineLearningRows() {
                 validationSelectInput.setAttribute('dataset',datasetText);
                 const validationSelectLabel = tr.querySelector('label[name="validationSelect"]');
                 validationSelectLabel.setAttribute('for','validation-dataset-id-'+dataset.id);
-
+                validationSelectInput.onclick = function(){
+                    console.log('validation '+datasetText+' '+this.checked);
+                    const input = JSON.stringify({
+                        'web_page': 'machine learning',
+                        'name': 'validation dataset',
+                        'detail': datasetText,
+                        'is_on': this.checked
+                    })
+                    writeToggle(input);
+                }
                 tbody.appendChild(tr);
             });
         }
+    });
+}
+
+function writeToggle(input) {
+    return new Promise(function(resolve, reject) {
+        $.post('/write-toggle', input, function(){
+            resolve();
+        });
     });
 }
 
@@ -129,7 +156,6 @@ function isTraining() {
 
 function setTrainButtonState() {
     if (isAttemptingTrainingStop == false){
-        console.log('isAttemptingTrainingStop: '+isAttemptingTrainingStop);
         const trainModelButton = document.querySelector("button#train-model-button");
         isTraining().then(function(processExists){
             isTrainingLastState = processExists;

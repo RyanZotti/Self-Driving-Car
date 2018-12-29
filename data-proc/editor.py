@@ -62,6 +62,48 @@ class LaptopModelDeploymentHealth(tornado.web.RequestHandler):
         self.write(result)
 
 
+class WriteToggle(tornado.web.RequestHandler):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def write_toggle(self, json_input):
+        web_page = json_input['web_page']
+        name = json_input['name']
+        detail = json_input['detail']
+        is_on = json_input['is_on']
+        sql_query = '''
+            BEGIN;
+            INSERT INTO toggles (
+                event_ts,
+                web_page,
+                name,
+                detail,
+                is_on
+            )
+            VALUES (
+                NOW(),
+               '{web_page}',
+               '{name}',
+               '{detail}',
+                {is_on}
+            );
+            COMMIT;
+        '''.format(
+            web_page=web_page,
+            name=name,
+            detail=detail,
+            is_on=is_on
+        )
+        execute_sql(sql_query)
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.write_toggle(json_input=json_input)
+        self.write(result)
+
+
 # Makes a copy of record for model to focus on this record
 class Keep(tornado.web.RequestHandler):
 
@@ -1002,6 +1044,7 @@ def make_app():
         (r"/dataset-prediction-sync-percent", DatasetPredictionSyncPercent),
         (r"/get-dataset-error-metrics", GetDatasetErrorMetrics),
         (r"/get-new-epochs", NewEpochs),
+        (r"/write-toggle", WriteToggle),
     ]
     return tornado.web.Application(handlers)
 

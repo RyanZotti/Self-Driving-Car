@@ -43,3 +43,13 @@ CREATE TABLE IF NOT EXISTS records(
     throttle float8,
 PRIMARY KEY(dataset, record_id));
 COMMIT;
+
+BEGIN;
+CREATE TABLE IF NOT EXISTS toggles(
+    event_ts TIMESTAMP,
+    web_page character(100),
+    name character(100),
+    detail character(100),
+    is_on BOOLEAN,
+PRIMARY KEY(event_ts, web_page, name, detail));
+COMMIT;
