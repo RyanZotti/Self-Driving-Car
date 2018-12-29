@@ -315,6 +315,12 @@ python "${REPO_PATH}"/ai/qa/validate_deployment.py \
 
 	hostname -I
 
+**Q:** How can I start Postgres?
+
+**A:** Run the following command:
+
+    pg_ctl -D /Users/ryanzotti/Documents/Data/Postgres/10-5 -l logfile start
+
 
 ## Useful Links
 
