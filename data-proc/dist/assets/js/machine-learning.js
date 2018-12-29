@@ -69,6 +69,14 @@ function writeToggle(input) {
     });
 }
 
+function readToggle(input) {
+    return new Promise(function(resolve, reject) {
+        $.post('/read-toggle', input, function(output){
+            resolve(output['is_on']);
+        });
+    });
+}
+
 function selectAllMachineLearningDatasetsTrigger(){
     const datasetTypes = [
         'train',

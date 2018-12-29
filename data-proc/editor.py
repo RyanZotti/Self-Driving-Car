@@ -62,6 +62,42 @@ class LaptopModelDeploymentHealth(tornado.web.RequestHandler):
         self.write(result)
 
 
+class ReadToggle(tornado.web.RequestHandler):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def read_toggle(self, json_input):
+        web_page = json_input['web_page']
+        name = json_input['name']
+        detail = json_input['detail']
+        sql_query = '''
+            SELECT
+              is_on
+            FROM toggles
+            WHERE LOWER(web_page) LIKE '%{web_page}%'
+              AND LOWER(name) LIKE '%{name}%'
+              AND LOWER(detail) LIKE '%{detail}%'
+            ORDER BY event_ts DESC
+            LIMIT 1;
+        '''.format(
+            web_page=web_page,
+            name=name,
+            detail=detail
+        )
+        first_row = get_sql_rows(sql_query)[0]
+        is_on = first_row['is_on']
+        result = {
+            'is_on': is_on
+        }
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.read_toggle(json_input=json_input)
+        self.write(result)
+
+
 class WriteToggle(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
@@ -1045,6 +1081,7 @@ def make_app():
         (r"/get-dataset-error-metrics", GetDatasetErrorMetrics),
         (r"/get-new-epochs", NewEpochs),
         (r"/write-toggle", WriteToggle),
+        (r"/read-toggle", ReadToggle),
     ]
     return tornado.web.Application(handlers)
 
