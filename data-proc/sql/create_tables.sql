@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS records(
     image_path character(300),
     angle float8,
     throttle float8,
+    is_flagged BOOLEAN DEFAULT FALSE,
 PRIMARY KEY(dataset, record_id));
 COMMIT;
 
