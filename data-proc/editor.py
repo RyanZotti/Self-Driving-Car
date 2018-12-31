@@ -152,32 +152,12 @@ class Keep(tornado.web.RequestHandler):
     def keep(self,json_input):
         dataset_name = json_input['dataset']
         record_id = json_input['record_id']
-        label_file_name = 'record_{id}.json'.format(id=record_id)
-        image_file_name = '{id}_cam-image_array_.png'.format(id=record_id)
-        source_directory = os.path.join(
-            self.application.data_path,
-            dataset_name
+        self.application.record_reader.write_flag(
+            dataset=dataset_name,
+            record_id=record_id,
+            is_flagged=True
         )
-        target_directory = os.path.join(
-            self.application.data_path_emphasis,
-            dataset_name
-        )
-        if not os.path.exists(target_directory):
-            os.makedirs(target_directory)
-        source_label_path = os.path.join(source_directory, label_file_name)
-        source_image_path = os.path.join(source_directory, image_file_name)
-        target_label_path = os.path.join(target_directory, label_file_name)
-        target_image_path = os.path.join(target_directory, image_file_name)
-        with open(source_label_path, 'r') as f:
-            contents = json.load(f)
-            contents["cam/image_array"] = image_file_name
-        with open(target_label_path, 'w') as fp:
-            json.dump(contents, fp)
-        copy_image_record = 'cp {source} {destination}'.format(
-            source=source_image_path,
-            destination=target_image_path
-        )
-        shell_command(copy_image_record)
+        return {}
 
     @tornado.gen.coroutine
     def post(self):
@@ -200,7 +180,7 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
             elif dataset_type.lower() == 'review':
                 path_id_pairs = self.application.record_reader.get_dataset_record_ids(dataset_name)
             elif dataset_type.lower() == 'flagged':
-                path_id_pairs = self.application.record_reader_mistakes.get_dataset_record_ids(dataset_name)
+                path_id_pairs = self.application.record_reader.get_flagged_record_ids(dataset_name)
             else:
                 print('Unknown dataset_type: ' + dataset_type)
                 # Comes in list of tuples: (/path/to/record, record_id), but
@@ -370,15 +350,12 @@ class IsRecordAlreadyFlagged(tornado.web.RequestHandler):
     def is_record_already_flagged(self,json_input):
         dataset_name = json_input['dataset']
         record_id = json_input['record_id']
-        path_id_pairs = self.application.record_reader_mistakes.get_dataset_record_ids(dataset_name)
-        # Comes in list of tuples: (/path/to/record, record_id), but
-        # we don't want to show paths to the user b/e it's ugly
-        record_ids = []
-        for pair in path_id_pairs:
-            path, id = pair
-            record_ids.append(id)
+        is_flagged = self.application.record_reader.read_flag(
+            dataset=dataset_name,
+            record_id=record_id
+        )
         result = {
-            'is_already_flagged': record_id in record_ids
+            'is_already_flagged': is_flagged
         }
         return result
 
@@ -569,16 +546,11 @@ class DeleteFlaggedRecord(tornado.web.RequestHandler):
     def delete_flagged_record(self,json_input):
         dataset_name = json_input['dataset']
         record_id = json_input['record_id']
-        label_path = self.application.record_reader_mistakes.get_label_path(
-            dataset_name=dataset_name,
-            record_id=record_id
+        self.application.record_reader.write_flag(
+            dataset=dataset_name,
+            record_id=record_id,
+            is_flagged=False
         )
-        image_path = self.application.record_reader_mistakes.get_image_path(
-            dataset_name=dataset_name,
-            record_id=record_id
-        )
-        os.remove(label_path)
-        os.remove(image_path)
         return {}
 
     @tornado.gen.coroutine
@@ -594,9 +566,10 @@ class DeleteFlaggedDataset(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def delete_flagged_dataset(self,json_input):
         dataset_name = json_input['dataset']
-        self.application.record_reader_mistakes.delete_dataset(
-            dataset_name=dataset_name,
+        self.application.record_reader.unflag_dataset(
+            dataset=dataset_name,
         )
+        return {}
 
     @tornado.gen.coroutine
     def post(self):
@@ -622,7 +595,7 @@ class ImageCountFromDataset(tornado.web.RequestHandler):
                 dataset_name=dataset_name
             )
         elif dataset_type.lower() == 'mistake':
-            image_count = self.application.record_reader_mistakes.get_image_count_from_dataset(
+            image_count = self.application.record_reader.get_flagged_record_count(
                 dataset_name=dataset_name
             )
         else:
@@ -698,23 +671,6 @@ class ListReviewDatasets(tornado.web.RequestHandler):
         results = yield self.get_review_datasets()
         self.write(results)
 
-class ListMistakeDatasets(tornado.web.RequestHandler):
-
-    executor = ThreadPoolExecutor(5)
-
-    @tornado.concurrent.run_on_executor
-    def get_mistake_datasets(self):
-        folder_file_paths = self.application.record_reader_mistakes.folders
-        dataset_names = self.application.record_reader_mistakes.get_dataset_names(folder_file_paths)
-        results = {
-            'datasets': dataset_names
-        }
-        return results
-
-    @tornado.gen.coroutine
-    def get(self):
-        results = yield self.get_mistake_datasets()
-        self.write(results)
 
 class ImageAPI(tornado.web.RequestHandler):
     '''
@@ -1064,7 +1020,6 @@ def make_app():
         (r"/add-flagged-record", Keep),
         (r"/list-import-datasets", ListReviewDatasets),
         (r"/list-review-datasets", ListReviewDatasets),
-        (r"/list-mistake-datasets", ListMistakeDatasets),
         (r"/image-count-from-dataset", ImageCountFromDataset),
         (r"/is-record-already-flagged", IsRecordAlreadyFlagged),
         (r"/dataset-id-from-dataset-name", DatasetIdFromDataName),
@@ -1124,12 +1079,7 @@ if __name__ == "__main__":
     # TODO: Remove this hard-coded path
     app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
     app.model_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data/tf_visual_data/runs/1'
-    app.data_path_emphasis = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet-flagged/data'
     app.record_reader = RecordReader(base_directory=app.data_path,overfit=False)
-    app.record_reader_mistakes = RecordReader(
-        base_directory=app.data_path_emphasis,
-        overfit=True
-    )
     app.angle_only = args['angle_only']
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()

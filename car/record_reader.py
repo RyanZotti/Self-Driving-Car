@@ -7,7 +7,7 @@ from os.path import dirname, join, basename
 import numpy as np
 from random import shuffle
 import re
-from util import get_sql_rows
+from util import get_sql_rows, execute_sql
 from shutil import rmtree
 
 
@@ -135,9 +135,112 @@ class RecordReader(object):
                 datasets.append(dataset)
         return datasets
 
+    def get_critical_error_record_ids(self,dataset_name):
+        record_ids = []
+        sql_query = '''
+            DROP TABLE IF EXISTS latest_deployment;
+            CREATE TEMP TABLE latest_deployment AS (
+              SELECT
+                model_id,
+                epoch
+              FROM deploy
+              ORDER BY TIMESTAMP DESC
+              LIMIT 1
+            );
+
+            SELECT
+              records.record_id
+            FROM records
+            LEFT JOIN predictions
+              ON records.dataset = predictions.dataset
+                AND records.record_id = predictions.record_id
+            LEFT JOIN latest_deployment AS deploy
+              ON predictions.model_id = deploy.model_id
+                AND predictions.epoch = deploy.epoch
+            WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%')
+              AND ABS(records.angle - predictions.angle) >= 0.8
+            ORDER BY record_id ASC
+            '''.format(dataset=dataset_name)
+        rows = get_sql_rows(sql_query)
+        for row in rows:
+            record_id = row['record_id']
+            record_ids.append(record_id)
+        return record_ids
+
+    def get_flagged_record_ids(self,dataset_name):
+        record_ids = []
+        sql_query = '''
+            SELECT
+              record_id
+            FROM records
+            WHERE LOWER(dataset) LIKE LOWER('%{dataset}%')
+              AND is_flagged = TRUE
+        '''.format(dataset=dataset_name)
+        rows = get_sql_rows(sql_query)
+        for row in rows:
+            record_id = row['record_id']
+            record_ids.append(record_id)
+        return record_ids
+
+    def get_flagged_record_count(self, dataset_name):
+        count = 0
+        sql_query = '''
+            SELECT
+              COUNT(*) AS count
+            FROM records
+            WHERE LOWER(dataset) LIKE LOWER('%{dataset}%')
+              AND is_flagged = TRUE
+        '''.format(dataset=dataset_name)
+        rows = get_sql_rows(sql_query)
+        if len(rows) > 0:
+            first_row = rows[0]
+            count = first_row['count']
+        return count
+
     def get_dataset_absolute_path(self, dataset_name):
         full_path = join(self.base_directory, dataset_name)
         return full_path
+
+    def write_flag(self, dataset, record_id, is_flagged):
+        sql_query = '''
+            UPDATE records
+            SET is_flagged = {is_flagged}
+            WHERE LOWER(dataset) LIKE LOWER('%{dataset}%')
+              AND record_id = {record_id};
+        '''.format(
+            dataset=dataset,
+            record_id=record_id,
+            is_flagged=is_flagged
+        )
+        execute_sql(sql_query)
+
+    def read_flag(self, dataset, record_id):
+        sql_query = '''
+            SELECT
+              is_flagged
+            FROM records
+            WHERE LOWER(dataset) LIKE LOWER('%{dataset}%')
+              AND record_id = {record_id}
+        '''.format(
+            dataset=dataset,
+            record_id=record_id
+        )
+        rows = get_sql_rows(sql=sql_query)
+        is_flagged = False
+        if len(rows) > 0:
+            first_row = rows[0]
+            is_flagged = first_row['is_flagged']
+        return is_flagged
+
+    def unflag_dataset(self,dataset):
+        sql_query = '''
+            UPDATE records
+            SET is_flagged = FALSE
+            WHERE LOWER(dataset) LIKE LOWER('%{dataset}%');
+        '''.format(
+            dataset=dataset
+        )
+        execute_sql(sql_query)
 
     def delete_dataset(self, dataset_name):
         full_path = self.get_dataset_absolute_path(dataset_name)
