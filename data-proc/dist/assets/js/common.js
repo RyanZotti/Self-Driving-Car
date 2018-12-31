@@ -69,3 +69,42 @@ function updateProgressCircle(svg,rawPercent){
         progressText.textContent = percent;
     }
 }
+
+function writeToggle(input) {
+    return new Promise(function(resolve, reject) {
+        $.post('/write-toggle', input, function(){
+            resolve();
+        });
+    });
+}
+
+function readToggle(input) {
+    return new Promise(function(resolve, reject) {
+        $.post('/read-toggle', input, function(output){
+            resolve(output['is_on']);
+        });
+    });
+}
+
+function configureToggle(checkbox){
+    const webPage = checkbox.getAttribute('toggle-web-page');
+    const name = checkbox.getAttribute('toggle-name');
+    const detail = checkbox.getAttribute('toggle-detail');
+    checkbox.onclick = function(){
+        const writeInput = JSON.stringify({
+            'web_page': webPage,
+            'name': name,
+            'detail': detail,
+            'is_on': checkbox.checked
+        });
+        writeToggle(writeInput);
+    }
+    const readInput = JSON.stringify({
+        'web_page': webPage,
+        'name': name,
+        'detail': detail
+    });
+    readToggle(readInput).then(function(is_on) {
+        checkbox.checked = is_on;
+    });
+}

@@ -623,12 +623,12 @@
 
                     <!-- Label -->
                     <label class="mb-1">
-                      Flagged Records
+                      Critical Errors
                     </label>
 
                     <!-- Form text -->
                     <small class="form-text text-muted">
-                      Incorporate records that you flagged in the datasets section. This gives you the ability to focus on the images where the car struggles the most.
+                      Emphasize records where the car struggles the most (error > 80%).
                     </small>
 
                     <div class="row" style="text-align:center !important">
@@ -638,8 +638,8 @@
                           Train
                         </small>
                         <div class="custom-control custom-checkbox-toggle" style="margin:auto">
-                          <input type="checkbox" class="custom-control-input" id="toggleOne">
-                          <label class="custom-control-label" for="toggleOne"></label>
+                          <input type="checkbox" class="custom-control-input tracked-toggle" id="train-critical-errors" toggle-web-page="machine learning" toggle-name="critical errors" toggle-detail="train">
+                          <label class="custom-control-label" for="train-critical-errors"></label>
                         </div>
                       </div>
                         <div class="col">
@@ -648,8 +648,8 @@
                           Test
                         </small>
                         <div class="custom-control custom-checkbox-toggle" style="margin:auto">
-                          <input type="checkbox" class="custom-control-input" id="toggleZero">
-                          <label class="custom-control-label" for="toggleZero"></label>
+                          <input type="checkbox" class="custom-control-input tracked-toggle" id="validation-critical-errors" toggle-web-page="machine learning" toggle-name="critical errors" toggle-detail="validation">
+                          <label class="custom-control-label" for="validation-critical-errors"></label>
                         </div>
                       </div>
                     </div>
@@ -663,12 +663,12 @@
 
                     <!-- Label -->
                     <label class="mb-1">
-                      Real-Time Records
+                      Flagged Records
                     </label>
 
                     <!-- Form text -->
                     <small class="form-text text-muted">
-                      Allows you to train on images that are streamed real-time from the car as you drive around. This creates a rapid feedback loop.
+                      Incorporate records that you flagged in the datasets section.
                     </small>
 
                     <div class="row" style="text-align:center !important">
@@ -678,8 +678,8 @@
                           Train
                         </small>
                         <div class="custom-control custom-checkbox-toggle" style="margin:auto">
-                          <input type="checkbox" class="custom-control-input" id="toggleOne2">
-                          <label class="custom-control-label" for="toggleOne2"></label>
+                          <input type="checkbox" class="custom-control-input tracked-toggle" id="train-flags" toggle-web-page="machine learning" toggle-name="flagged records" toggle-detail="train">
+                          <label class="custom-control-label" for="train-flags"></label>
                         </div>
                       </div>
                         <div class="col">
@@ -688,8 +688,8 @@
                           Test
                         </small>
                         <div class="custom-control custom-checkbox-toggle" style="margin:auto">
-                          <input type="checkbox" class="custom-control-input" id="toggleZero2">
-                          <label class="custom-control-label" for="toggleZero2"></label>
+                          <input type="checkbox" class="custom-control-input tracked-toggle" id="validation-flags" toggle-web-page="machine learning" toggle-name="flagged records" toggle-detail="validation">
+                          <label class="custom-control-label" for="validation-flags"></label>
                         </div>
                       </div>
                     </div>

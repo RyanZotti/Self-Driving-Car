@@ -79,22 +79,6 @@ function addDatasetMachineLearningRows() {
     });
 }
 
-function writeToggle(input) {
-    return new Promise(function(resolve, reject) {
-        $.post('/write-toggle', input, function(){
-            resolve();
-        });
-    });
-}
-
-function readToggle(input) {
-    return new Promise(function(resolve, reject) {
-        $.post('/read-toggle', input, function(output){
-            resolve(output['is_on']);
-        });
-    });
-}
-
 function selectAllMachineLearningDatasetsTrigger(){
     const datasetTypes = [
         'train',
@@ -301,6 +285,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const deployModelButton = document.querySelector("button#deploy-model-button");
     deployModelButton.onclick = function(){
         deployModelLaptop();
+    }
+
+    const trackedToggles = document.querySelectorAll('input.tracked-toggle');
+    for (const toggle of trackedToggles){
+        configureToggle(toggle);
     }
 
 }, false);
