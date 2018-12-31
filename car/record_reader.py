@@ -72,23 +72,152 @@ class RecordReader(object):
             self.train_folders = [folder for folder in self.folders[:train_folder_size]]
             self.test_folders = list(set(self.folders) - set(self.train_folders))
 
+        self.train_paths = []
+        self.validation_paths = []
         if self.is_for_model == True:
+            self.use_train_critical_errors = self.get_toggle_status(
+                web_page='machine learning',
+                name='critical errors',
+                detail='train'
+            )
+            self.use_train_flag_records = self.get_toggle_status(
+                web_page='machine learning',
+                name='flagged records',
+                detail='train'
+            )
+            self.train_datasets = self.get_dataset_selections('train')
             self.train_folders = []
-            for dataset in self.get_dataset_selections('train'):
+            for dataset in self.train_datasets:
                 absolute_path = self.get_dataset_absolute_path(dataset)
                 self.train_folders.append(absolute_path)
-            self.test_folders = []
-            for dataset in self.get_dataset_selections('validation'):
+                if self.use_train_critical_errors == True:
+                    record_ids = self.get_critical_error_record_ids(
+                        dataset_name=dataset
+                    )
+                    for record_id in record_ids:
+                        record_path = self.get_label_path(
+                            dataset_name=dataset,
+                            record_id = record_id
+                        )
+                        self.train_paths.append(record_path)
+                if self.use_train_flag_records == True:
+                    record_ids = self.get_flagged_record_ids(
+                        dataset_name=dataset
+                    )
+                    for record_id in record_ids:
+                        record_path = self.get_label_path(
+                            dataset_name=dataset,
+                            record_id=record_id
+                        )
+                        self.train_paths.append(record_path)
+            self.train_paths = list(set(self.train_paths))
+
+            self.use_validation_critical_errors = self.get_toggle_status(
+                web_page='machine learning',
+                name='critical errors',
+                detail='validation'
+            )
+            self.use_validation_flag_records = self.get_toggle_status(
+                web_page='machine learning',
+                name='flagged records',
+                detail='validation'
+            )
+            self.validation_datasets = self.get_dataset_selections('validation')
+            for dataset in self.validation_datasets:
                 absolute_path = self.get_dataset_absolute_path(dataset)
                 self.test_folders.append(absolute_path)
+                if self.use_validation_critical_errors == True:
+                    record_ids = self.get_critical_error_record_ids(
+                        dataset_name=dataset
+                    )
+                    for record_id in record_ids:
+                        record_path = self.get_label_path(
+                            dataset_name=dataset,
+                            record_id=record_id
+                        )
+                        self.validation_paths.append(record_path)
+                if self.use_validation_flag_records == True:
+                    record_ids = self.get_critical_error_record_ids(
+                        dataset_name=dataset
+                    )
+                    for record_id in record_ids:
+                        record_path = self.get_label_path(
+                            dataset_name=dataset,
+                            record_id=record_id
+                        )
+                        self.validation_paths.append(record_path)
 
+        '''
+        If either flagged records or critical errors are selected,
+        then I should not use read all records. Otherwise if I
+        select everything, there is no emphasis and all records
+        have equal probability of being selected
+        '''
         # Combine all train folder file paths into single list
-        self.train_paths = self.merge_paths(self.train_folders)
+        if len(self.train_paths) == 0:
+            self.train_paths = self.merge_paths(self.train_folders)
 
         # Combine all test folder file paths into single list
-        self.test_paths = self.merge_paths(self.test_folders)
+        if len(self.validation_paths) == 0:
+            self.validation_paths = self.merge_paths(self.test_folders)
+
         self.batch_size = batch_size
         self.batches_per_epoch = int(len(self.train_paths) / self.batch_size)
+
+    def get_toggle_status(self, web_page, name, detail):
+        """
+        Checks if a user has turned on a given toggle
+
+        Parameters
+        ----------
+        web_page : string
+            The page web where the user would have set the toggle
+        name : string
+            The type of toggle
+        name : string
+            Any other details about the toggle
+
+        Returns
+        ----------
+        is_on : boolean
+            Whether the toggle is turned on or not
+        """
+        sql_query = '''
+            DROP TABLE IF EXISTS latest;
+            CREATE TEMP TABLE latest AS (
+              SELECT
+                detail,
+                is_on,
+                ROW_NUMBER() OVER(
+                  PARTITION BY
+                    web_page,
+                    name,
+                    detail
+                  ORDER BY
+                    event_ts DESC
+                ) AS temporal_rank
+              FROM toggles
+              WHERE LOWER(web_page) LIKE LOWER('%{web_page}%')
+                AND LOWER(name) LIKE LOWER('%{name}%')
+                AND LOWER(detail) LIKE LOWER('%{detail}%')
+            );
+
+            SELECT
+              is_on
+            FROM latest
+            WHERE temporal_rank = 1
+              AND is_on = TRUE
+        '''.format(
+            web_page=web_page,
+            name=name,
+            detail=detail
+        )
+        rows = get_sql_rows(sql=sql_query)
+        is_on = False
+        if len(rows) > 0:
+            first_row = rows[0]
+            is_on = first_row['is_on']
+        return is_on
 
     def get_dataset_selections(self, dataset_type):
         """
@@ -420,7 +549,7 @@ class RecordReader(object):
 
     # Get test batch
     def get_test_batch(self):
-        images, labels = self.get_batch(self.test_paths)
+        images, labels = self.get_batch(self.validation_paths)
         return  (images, labels)
 
     # Used in Trainer class to know when epoch is reached
