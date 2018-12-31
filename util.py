@@ -341,7 +341,7 @@ def resume_training(
         s3_bucket='self-driving-car',
         show_speed='False',
         s3_sync='n',
-        epochs=10,
+        epochs=1000,
         save_to_disk='y',
         overfit='n',
         image_scale='0.125',
