@@ -5,6 +5,7 @@ import numpy as np
 import os
 import psycopg2
 import psycopg2.extras
+import paramiko
 import boto3
 from pathlib import Path
 import re
@@ -408,3 +409,17 @@ def is_training():
         return False
     else:
         return True
+
+# Connects to the Pi and runs a command
+def execute_pi_command(command):
+
+    # TODO: Read these from Postgres
+    server = 'ryanzotti.local'
+    username = 'pi'
+    password = 'raspberry'
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(server, username=username, password=password)
+    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(command)
+    ssh.close()

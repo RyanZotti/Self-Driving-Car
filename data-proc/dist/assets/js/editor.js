@@ -199,6 +199,14 @@ function batchPredict(dataset){
     });
 }
 
+function startCar(){
+    return new Promise(resolve => {
+        $.post('/start-car', (response) => {
+            resolve(response);
+        });
+    });
+}
+
 function isDatasetPredictionSyncing(dataset){
     const data = JSON.stringify({
         'dataset': dataset

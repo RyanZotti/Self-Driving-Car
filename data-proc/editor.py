@@ -720,6 +720,25 @@ class ImageAPI(tornado.web.RequestHandler):
         yield tornado.gen.Task(self.flush)
 
 
+class StartCar(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def start_car(self):
+        # TODO: Remove this hardcoded path
+        command = 'export PYTHONPATH=$PYTHONPATH:/home/pi/Self-Driving-Car && cd ~/Self-Driving-Car && python3 /home/pi/Self-Driving-Car/car/start.py > /home/pi/Self-Driving-Car/start-logs.txt 2>&1 &'
+        execute_pi_command(
+            command=command
+        )
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.start_car()
+        self.write(result)
+
+
 class ResumeTraining(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -1040,6 +1059,7 @@ def make_app():
         (r"/get-new-epochs", NewEpochs),
         (r"/write-toggle", WriteToggle),
         (r"/read-toggle", ReadToggle),
+        (r"/start-car", StartCar),
     ]
     return tornado.web.Application(handlers)
 
