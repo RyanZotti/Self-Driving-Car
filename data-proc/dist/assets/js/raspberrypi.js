@@ -16,10 +16,21 @@ function readPiField(fieldName) {
           'column_name': fieldName
         });
         $.post('/read-pi-field', input, function(output){
-            console.log(output['column_value']);
             resolve(output['column_value']);
         });
     });
+}
+
+async function setEndpointText(){
+    const promises = [
+        readPiField("username"),
+        readPiField("hostname")
+    ];
+    endpointComponents = await Promise.all(promises);
+    const userName = endpointComponents[0];
+    const hostName = endpointComponents[1];
+    const endpointText = document.querySelector('output[name="endpoint"]');
+    endpointText.textContent = userName + '@' + hostName;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -27,12 +38,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const raspberryPiFields = document.querySelectorAll('input.raspberry-pi-field');
     for (const field of raspberryPiFields){
         const columnName = field.getAttribute("column-name");
-        field.onchange = function(){
+        field.onchange = async function(){
             const columnValue = field.value;
-            writePiField(
+            await writePiField(
                 columnName,
                 columnValue
             );
+            setEndpointText();
         }
         const fieldType = field.getAttribute('type');
         if (fieldType.toLowerCase() != 'password'){
@@ -41,5 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+    setEndpointText();
 
 }, false);
