@@ -100,7 +100,6 @@ class ReadToggle(tornado.web.RequestHandler):
         result = yield self.read_toggle(json_input=json_input)
         self.write(result)
 
-
 class WriteToggle(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
@@ -142,6 +141,57 @@ class WriteToggle(tornado.web.RequestHandler):
         result = yield self.write_toggle(json_input=json_input)
         self.write(result)
 
+class WritePiField(tornado.web.RequestHandler):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def write_pi_field(self, json_input):
+        column_name = json_input['column_name']
+        column_value = json_input['column_value']
+        sql_query = '''
+            UPDATE raspberry_pi
+            SET {column_name} = '{column_value}';
+        '''.format(
+            column_name=column_name,
+            column_value=column_value
+        )
+        execute_sql(sql_query)
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.write_pi_field(json_input=json_input)
+        self.write(result)
+
+class ReadPiField(tornado.web.RequestHandler):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def read_pi_field(self, json_input):
+        column_name = json_input['column_name']
+        sql_query = '''
+            SELECT
+              {column_name} AS column_value
+            FROM raspberry_pi;
+        '''.format(
+            column_name=column_name
+        )
+        rows = get_sql_rows(sql=sql_query)
+        column_value = None
+        if len(rows) > 0:
+            first_row = rows[0]
+            column_value = first_row['column_value']
+        result = {
+            'column_value':column_value
+        }
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.read_pi_field(json_input=json_input)
+        self.write(result)
 
 # Makes a copy of record for model to focus on this record
 class Keep(tornado.web.RequestHandler):
@@ -1060,6 +1110,8 @@ def make_app():
         (r"/write-toggle", WriteToggle),
         (r"/read-toggle", ReadToggle),
         (r"/start-car", StartCar),
+        (r"/write-pi-field", WritePiField),
+        (r"/read-pi-field", ReadPiField),
     ]
     return tornado.web.Application(handlers)
 
