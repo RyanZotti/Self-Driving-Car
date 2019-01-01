@@ -789,6 +789,31 @@ class StartCar(tornado.web.RequestHandler):
         self.write(result)
 
 
+class PiHealthCheck(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def health_check(self):
+        is_able_to_connect = False
+        try:
+            command = 'ls -ltr'
+            execute_pi_command(
+                command=command
+            )
+            is_able_to_connect = True
+        except:
+            pass
+        return {
+            'is_able_to_connect':is_able_to_connect
+        }
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.health_check()
+        self.write(result)
+
+
 class ResumeTraining(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -1112,6 +1137,7 @@ def make_app():
         (r"/start-car", StartCar),
         (r"/write-pi-field", WritePiField),
         (r"/read-pi-field", ReadPiField),
+        (r"/raspberry-pi-healthcheck", PiHealthCheck),
     ]
     return tornado.web.Application(handlers)
 

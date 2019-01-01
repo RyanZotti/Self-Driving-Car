@@ -86,6 +86,14 @@ function readToggle(input) {
     });
 }
 
+function raspberryPiConnectionTest() {
+    return new Promise(function(resolve, reject) {
+        $.post('/raspberry-pi-healthcheck', function(output){
+            resolve(output['is_able_to_connect']);
+        });
+    });
+}
+
 function configureToggle(checkbox){
     const webPage = checkbox.getAttribute('toggle-web-page');
     const name = checkbox.getAttribute('toggle-name');
