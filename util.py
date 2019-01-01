@@ -410,17 +410,31 @@ def is_training():
     else:
         return True
 
+def get_pi_connection_details():
+    username = None
+    hostname = None
+    password = None
+    sql_query = '''
+        SELECT
+          username,
+          hostname,
+          password
+        FROM raspberry_pi;
+    '''
+    rows = get_sql_rows(sql_query)
+    if len(rows) > 0:
+        first_row = rows[0]
+        username = first_row['username']
+        hostname = first_row['hostname']
+        password = first_row['password']
+    return username, hostname, password
+
 # Connects to the Pi and runs a command
 def execute_pi_command(command):
-
-    # TODO: Read these from Postgres
-    server = 'ryanzotti.local'
-    username = 'pi'
-    password = 'raspberry'
-
+    username, hostname, password = get_pi_connection_details()
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(server, username=username, password=password)
+    ssh.connect(hostname, username=username, password=password)
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(command)
     ssh.close()
 
@@ -453,15 +467,9 @@ class RecursiveSFTPClient(paramiko.SFTPClient):
 
 
 def sftp_from_laptop_to_pi(source_path,destination_path):
-
-    # TODO: Read these from Postgres
-    server = 'ryanzotti.local'
-    username = 'pi'
-    password = 'raspberry'
-
-    transport = paramiko.Transport((server, 22))
+    username, hostname, password = get_pi_connection_details()
+    transport = paramiko.Transport((hostname, 22))
     transport.connect(username=username, password=password)
-
     sftp = RecursiveSFTPClient.from_transport(transport)
     sftp.mkdir(destination_path, ignore_existing=True)
     sftp.put_dir(source_path, destination_path)
