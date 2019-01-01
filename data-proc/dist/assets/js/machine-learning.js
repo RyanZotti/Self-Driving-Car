@@ -264,6 +264,11 @@ document.addEventListener('DOMContentLoaded', function() {
       fillEpochsTable(modelId);
     }, 1000);
 
+    // Update Raspberry Pi statues
+    const piHealthCheckTime = setInterval(function(){
+        updatePiConnectionStatuses()
+    }, 1000);
+
     const trainModelButton = document.querySelector("button#train-model-button");
     trainModelButton.onclick = function(){
         if(isTrainingLastState == true){

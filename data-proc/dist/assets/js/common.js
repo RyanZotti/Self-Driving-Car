@@ -88,8 +88,16 @@ function readToggle(input) {
 
 function raspberryPiConnectionTest() {
     return new Promise(function(resolve, reject) {
-        $.post('/raspberry-pi-healthcheck', function(output){
-            resolve(output['is_able_to_connect']);
+        $.ajax({
+            method: 'POST',
+            url: '/raspberry-pi-healthcheck',
+            timeout: 1000,
+            success: function(response) {
+                resolve(response['is_able_to_connect']);
+            },
+            error: function(){
+                resolve(false);
+            }
         });
     });
 }
@@ -115,4 +123,23 @@ function configureToggle(checkbox){
     readToggle(readInput).then(function(is_on) {
         checkbox.checked = is_on;
     });
+}
+
+async function updatePiConnectionStatuses(){
+    const statuses = document.querySelectorAll('span.raspberry-pi-connection-status');
+    const isHealthy = await raspberryPiConnectionTest();
+    console.log(isHealthy);
+    if(isHealthy == true){
+        for (const status of statuses){
+            status.classList.remove('text-danger');
+            status.classList.add('text-success');
+            status.style.display = 'inline';
+        }
+    } else {
+        for (const status of statuses){
+            status.classList.remove('text-success');
+            status.classList,add('text-danger');
+            status.style.display = 'inline';
+        }
+    }
 }

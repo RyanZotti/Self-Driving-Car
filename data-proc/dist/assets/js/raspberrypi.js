@@ -55,4 +55,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     setEndpointText();
 
+    // Update Raspberry Pi statues
+    const piHealthCheckTime = setInterval(function(){
+        updatePiConnectionStatuses()
+    }, 1000);
+
 }, false);

@@ -768,6 +768,11 @@ document.addEventListener('DOMContentLoaded', function() {
       checkPredictionUpdateStatuses()
     }, 1000);
 
+    // Update Raspberry Pi statues
+    const piHealthCheckTime = setInterval(function(){
+        updatePiConnectionStatuses()
+    }, 1000);
+
 }, false);
 
 // Global variables
