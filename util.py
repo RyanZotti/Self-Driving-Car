@@ -423,3 +423,46 @@ def execute_pi_command(command):
     ssh.connect(server, username=username, password=password)
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(command)
     ssh.close()
+
+
+# Paramiko doesn't support this out of the box, which is crazy, so I have to
+# create my own class
+# https://stackoverflow.com/questions/4409502/directory-transfers-on-paramiko
+class RecursiveSFTPClient(paramiko.SFTPClient):
+    def put_dir(self, source, target):
+        ''' Uploads the contents of the source directory to the target path. The
+            target directory needs to exists. All subdirectories in source are
+            created under target.
+        '''
+        for item in os.listdir(source):
+            if os.path.isfile(os.path.join(source, item)):
+                self.put(os.path.join(source, item), '%s/%s' % (target, item))
+            else:
+                self.mkdir('%s/%s' % (target, item), ignore_existing=True)
+                self.put_dir(os.path.join(source, item), '%s/%s' % (target, item))
+
+    def mkdir(self, path, mode=511, ignore_existing=False):
+        ''' Augments mkdir by adding an option to not fail if the folder exists  '''
+        try:
+            super(RecursiveSFTPClient, self).mkdir(path, mode)
+        except IOError:
+            if ignore_existing:
+                pass
+            else:
+                raise
+
+
+def sftp_from_laptop_to_pi(source_path,destination_path):
+
+    # TODO: Read these from Postgres
+    server = 'ryanzotti.local'
+    username = 'pi'
+    password = 'raspberry'
+
+    transport = paramiko.Transport((server, 22))
+    transport.connect(username=username, password=password)
+
+    sftp = RecursiveSFTPClient.from_transport(transport)
+    sftp.mkdir(destination_path, ignore_existing=True)
+    sftp.put_dir(source_path, destination_path)
+    sftp.close()
