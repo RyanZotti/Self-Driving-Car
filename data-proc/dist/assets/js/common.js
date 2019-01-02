@@ -128,7 +128,6 @@ function configureToggle(checkbox){
 async function updatePiConnectionStatuses(){
     const statuses = document.querySelectorAll('span.raspberry-pi-connection-status');
     const isHealthy = await raspberryPiConnectionTest();
-    console.log(isHealthy);
     if(isHealthy == true){
         for (const status of statuses){
             status.classList.remove('text-danger');
@@ -138,7 +137,7 @@ async function updatePiConnectionStatuses(){
     } else {
         for (const status of statuses){
             status.classList.remove('text-success');
-            status.classList,add('text-danger');
+            status.classList.add('text-danger');
             status.style.display = 'inline';
         }
     }

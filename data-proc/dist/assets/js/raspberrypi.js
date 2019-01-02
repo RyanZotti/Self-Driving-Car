@@ -33,6 +33,15 @@ async function setEndpointText(){
     endpointText.textContent = userName + '@' + hostName;
 }
 
+function resetCheckStatusButton(){
+    const testPiConnectionButton = document.querySelector('button#test-pi-connection-button');
+    testPiConnectionButton.classList.remove('btn-warning');
+    testPiConnectionButton.classList.remove('btn-danger');
+    testPiConnectionButton.classList.remove('btn-success');
+    testPiConnectionButton.classList.add('btn-primary');
+    testPiConnectionButton.textContent = 'Test Connection';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
 
     const raspberryPiFields = document.querySelectorAll('input.raspberry-pi-field');
@@ -59,5 +68,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const piHealthCheckTime = setInterval(function(){
         updatePiConnectionStatuses()
     }, 1000);
+
+    const testPiConnectionButton = document.querySelector('button#test-pi-connection-button');
+    testPiConnectionButton.onclick = async function(){
+        this.textContent = 'Checking...';
+        this.classList.remove('btn-primary');
+        this.classList.remove('btn-danger');
+        this.classList.remove('btn-success');
+        this.classList.add('btn-warning');
+        const isHealthy = await raspberryPiConnectionTest();
+        if (isHealthy){
+            this.classList.remove('btn-warning');
+            this.classList.add('btn-success');
+            this.textContent = 'Connection Succeeded!';
+        } else {
+            this.classList.remove('btn-warning');
+            this.classList.add('btn-danger');
+            this.textContent = 'Connection Failed!';
+        }
+        const resetTimer = setTimeout(resetCheckStatusButton, 3000);
+    }
+
 
 }, false);
