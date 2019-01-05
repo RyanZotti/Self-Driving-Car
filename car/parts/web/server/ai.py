@@ -12,14 +12,14 @@ class HealthCheck(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
     @tornado.concurrent.run_on_executor
-    def get_prediction(self):
+    def get_procces_id(self):
         process_id = os.getpid()
         result = {'process_id':process_id}
         return result
 
     @tornado.gen.coroutine
     def post(self):
-        result = yield self.get_prediction()
+        result = yield self.get_procces_id()
         self.write(result)
 
 class PredictionHandler(tornado.web.RequestHandler):
