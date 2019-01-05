@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // TODO: Figure out how to differentiate from Pi model deployment
-    const deployModelButton = document.querySelector("button#deploy-model-button");
+    const deployModelButton = document.querySelector("button#deploy-model-laptop-button");
     deployModelButton.onclick = function(){
         deployModelLaptop();
     }
