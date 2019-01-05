@@ -22,6 +22,28 @@ class HealthCheck(tornado.web.RequestHandler):
         result = yield self.get_procces_id()
         self.write(result)
 
+
+class ModelMetadata(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_metadata(self):
+        result = {
+            'model_id': self.application.model_id,
+            'epoch': self.application.epoch,
+            'angle_only': self.application.angle_only,
+            'image_scale': self.application.image_scale,
+            'crop_factor': self.application.crop_factor
+        }
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.get_metadata()
+        self.write(result)
+
+
 class PredictionHandler(tornado.web.RequestHandler):
 
     # Prevents awful blocking
@@ -139,7 +161,8 @@ def make_app(sess, x, prediction, image_scale, crop_factor, angle_only):
            'image_scale':image_scale,
            'crop_factor':crop_factor,
            'angle_only':angle_only}),
-         (r"/health-check", HealthCheck),])
+         (r"/health-check", HealthCheck),
+         (r"/model-meta-data", ModelMetadata),])
 
 
 if __name__ == "__main__":
@@ -213,5 +236,10 @@ if __name__ == "__main__":
     sess, x, prediction = load_model(path)
 
     app = make_app(sess, x, prediction,image_scale, crop_factor, angle_only)
+    app.model_id = model_id
+    app.epoch = epoch
+    app.angle_only = angle_only
+    app.image_scale = image_scale
+    app.crop_factor = crop_factor
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()
