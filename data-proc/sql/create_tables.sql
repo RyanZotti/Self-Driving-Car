@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS epochs(
   epoch INT,
   train float8,
   validation float8,
-PRIMARY KEY(epoch));
+PRIMARY KEY(model_id, epoch));
 COMMIT;
 
 BEGIN;
