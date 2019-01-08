@@ -829,6 +829,46 @@ class StartCar(tornado.web.RequestHandler):
         result = yield self.start_car()
         self.write(result)
 
+class StartCarVideo(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def start_car_video(self):
+
+        # Make sure ffmpeg isn't already running, then start a new ffmpeg process
+        command = "cd /usr/src/ffmpeg & sudo ffserver -f /etc/ff.conf_original & ffmpeg -v quiet -r 10 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost/webcam.ffm"
+        execute_pi_command(
+            command=command
+        )
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.start_car_video()
+        self.write(result)
+
+class StopCarVideo(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def stop_ffmpeg(self):
+        # First grep finds ffmpeg processes, and the
+        # second grep excludes the process related to
+        # the ffmpeg grep itself. Then the PIDs are
+        # sent to kill. The kill command does not run
+        # if there are no PIDs
+        command = "ps aux | grep 'ffm' | grep -v 'grep'| awk '{print $2}' | xargs --no-run-if-empty kill"
+        execute_pi_command(
+            command=command
+        )
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.stop_ffmpeg()
+        self.write(result)
 
 class PiHealthCheck(tornado.web.RequestHandler):
 
@@ -1146,6 +1186,8 @@ def make_app():
         (r"/user-labels", UserLabelsAPI),
         (r"/image", ImageAPI),
         (r"/video", VideoAPI),
+        (r"/start-car-video", StartCarVideo),
+        (r"/stop-car-video", StopCarVideo),
         (r"/ui-state", StateAPI),
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
         (r"/laptop-model-api-health", LaptopModelDeploymentHealth),

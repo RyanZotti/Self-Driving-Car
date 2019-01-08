@@ -66,6 +66,22 @@ function unflagDataset(dataset) {
     });
 }
 
+function startCarVideo() {
+    return new Promise(function(resolve, reject) {
+        $.post('/start-car-video', function(){
+            resolve();
+        });
+    });
+}
+
+function stopCarVideo() {
+    return new Promise(function(resolve, reject) {
+        $.post('/stop-car-video', function(){
+            resolve();
+        });
+    });
+}
+
 function addDatasetReviewRows() {
     const bulkActionRemoveFlagsButton = document.querySelector('button#remove-flags-bulk-action');
     bulkActionRemoveFlagsButton.onclick = async function(){
@@ -766,10 +782,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const driveVehicleButton = document.getElementById("drive-vehicle-button");
     driveVehicleButton.onclick = function(){
-        startCar();
+        startCarVideo();
         const videoFrame = document.querySelector("#drive-mpeg-image");
         const imageUrl = '/video';
         videoFrame.setAttribute('src',imageUrl);
+    }
+
+    const driveVehicleCloseButton = document.getElementById("closeDriveVehicleModal");
+    driveVehicleCloseButton.onclick = function(){
+        stopCarVideo();
     }
 
     const trainingStateTimer = setInterval(function(){
