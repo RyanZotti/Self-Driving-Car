@@ -193,6 +193,100 @@
       </div>
     </div>
 
+
+    <div class="modal fade" id="modalDriveVehcile" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-card card" id="drive-vehicle-modal">
+            <div class="card-header">
+              <div class="row align-items-center">
+                <div class="col">
+
+                  <!-- Title -->
+                  <p class="card-header-title" >
+                    <b>Dataset ID:</b>
+                    <span id="driveVehicleHeaderDatasetId"></span>
+                  </p>
+                </div>
+                <div class="col-auto">
+
+                  <!-- Close -->
+                  <button type="button" class="close" data-dismiss="modal" id="closeDriveVehicleModal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+
+                </div>
+              </div> <!-- / .row -->
+            </div>
+            <div class="card-body" style="padding-top: 1.5rem; padding-bottom: 0rem;">
+              <div class="row">
+                <div class="col-3 text-center">
+                  Speed
+                </div>
+                <div class="col-3 text-center">
+                  Human
+                </div>
+              </div>
+
+              <div class="row align-items-center" style="padding: 0.5rem">
+                <div class="col-3">
+                  <div class="progress progress-bar-vertical">
+                    <div id="driveSpeedBar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+                </div>
+                <div class="chart-container col-3" style="position: relative; height:5vh; width:10vw">
+                  <canvas id="driveHumanAngleDonut" class="chart-canvas"></canvas>
+                </div>
+
+              </div>
+              <div class="row">
+                <div id="driveSpeedText" class="col-3 text-center">
+                </div>
+                <div id="driveHumanSteeringText" class="col-3 text-center">
+                </div>
+
+
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="row justify-content-md-center">
+                <div class="col-md-auto">
+                  <img id="drive-mpeg-image" style="display: block; margin-left: auto; margin-right: auto;">
+                </div>
+              </div>
+
+              <div class="row mt-3">
+
+                <div class="col-1">
+                  <span style="width:1em">
+                    <object type="image/svg+xml" data="image.svg">
+                      <img id="driveModalPlayPauseButton" src="assets/img/icons/play.svg" />
+                    </object>
+                  </span>
+                </div>
+
+
+
+                <div class="col text-right">
+                    <span class="text-muted">
+                      Show Cut Image:
+                    </span>
+                </div>
+                <div>
+                  <!-- Toggle -->
+                  <div class="custom-control custom-checkbox-toggle">
+                    <input type="checkbox" class="custom-control-input" id="drive-show-cut-image">
+                    <label class="custom-control-label" for="show-cut-image"></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal: Search -->
     <div class="modal fade" id="sidebarModalSearch" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-dialog-vertical" role="document">
@@ -1257,7 +1351,7 @@
 
                   </div>
                   <div class="col-auto">
-                    <button type="submit" id="drive-vehicle-button" class="btn btn-primary btn-md">
+                    <button type="submit" id="drive-vehicle-button" class="btn btn-primary btn-md" data-target="#modalDriveVehcile" data-toggle="modal">
                       Drive Vehicle
                     </button>
 

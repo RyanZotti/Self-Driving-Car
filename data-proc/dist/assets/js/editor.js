@@ -764,6 +764,14 @@ document.addEventListener('DOMContentLoaded', function() {
         updateImage(datasetPlaying, recordId, cropFactor);
     }
 
+    const driveVehicleButton = document.getElementById("drive-vehicle-button");
+    driveVehicleButton.onclick = function(){
+        startCar();
+        const videoFrame = document.querySelector("#drive-mpeg-image");
+        const imageUrl = '/video';
+        videoFrame.setAttribute('src',imageUrl);
+    }
+
     const trainingStateTimer = setInterval(function(){
       checkPredictionUpdateStatuses()
     }, 1000);

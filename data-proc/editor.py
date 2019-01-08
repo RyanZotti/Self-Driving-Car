@@ -770,6 +770,47 @@ class ImageAPI(tornado.web.RequestHandler):
         yield tornado.gen.Task(self.flush)
 
 
+class VideoAPI(tornado.web.RequestHandler):
+    '''
+    Serves a MJPEG of the images posted from the vehicle.
+    '''
+
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
+    def get(self):
+
+        ioloop = tornado.ioloop.IOLoop.current()
+        self.set_header("Content-type", "multipart/x-mixed-replace;boundary=--boundarydonotcross")
+
+        self.served_image_timestamp = time.time()
+        my_boundary = "--boundarydonotcross"
+
+        # TODO: Remove this hardcoded URL
+        for frame in live_video_stream('ryanzotti.local'):
+
+            interval = .1
+            if self.served_image_timestamp + interval < time.time():
+
+                # Can't serve the OpenCV numpy array
+                # Tornando: "... only accepts bytes, unicode, and dict objects" (from Tornado error Traceback)
+                # The result of cv2.imencode is a tuple like: (True, some_image), but I have no idea what True refers to
+                img = cv2.imencode('.jpg', frame)[1].tostring()
+
+                # I have no idea what these lines do, but other people seem to use them, they
+                # came with this copied code and I don't want to break something by removing
+                self.write(my_boundary)
+                self.write("Content-type: image/jpeg\r\n")
+                self.write("Content-length: %s\r\n\r\n" % len(img))
+
+                # Serve the image
+                self.write(img)
+
+                self.served_image_timestamp = time.time()
+                yield tornado.gen.Task(self.flush)
+            else:
+                yield tornado.gen.Task(ioloop.add_timeout, ioloop.time() + interval)
+
+
 class StartCar(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -1104,6 +1145,7 @@ def make_app():
         (r"/ai-angle", AIAngleAPI),
         (r"/user-labels", UserLabelsAPI),
         (r"/image", ImageAPI),
+        (r"/video", VideoAPI),
         (r"/ui-state", StateAPI),
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
         (r"/laptop-model-api-health", LaptopModelDeploymentHealth),
