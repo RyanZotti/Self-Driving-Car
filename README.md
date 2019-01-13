@@ -12,7 +12,9 @@ You're going to end up with a lot of software and data on your Pi. If you're rea
 
 I have a Mac and followed the steps here: [https://stackoverflow.com/a/44205432/554481](https://stackoverflow.com/a/44205432/554481). If your SD card has more than 32 GB, you'll have to do a few additional steps, as noted here: [https://www.raspberrypi.org/documentation/installation/sdxc_formatting.md](https://www.raspberrypi.org/documentation/installation/sdxc_formatting.md). Basically the extra steps involve preformatting the SD card with Apple's built-in Disk Utility tool.
 
-## Hostname Configuration
+## Hostname and SSH Configuration
+
+Follow the steps [here](https://stackoverflow.com/a/41318615/554481) to turn on SSH.
 
 If your Pi and laptop are on the same wifi network you can test a connection to the Pi from your laptop with the command below:
 
