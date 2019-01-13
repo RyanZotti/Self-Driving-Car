@@ -6,6 +6,12 @@
 
 ![img_1022](https://cloud.githubusercontent.com/assets/8901244/16572477/fd3dac1c-4236-11e6-86ea-93503f5cbb94.JPG)
 
+## SD Card Setup
+
+You're going to end up with a lot of software and data on your Pi. If you're really frugal with storage, it's possible you might be able to get by with the SD card (8 GB?) that was shipped with your Pi. I choose to buy a 64 GB SD card to be safe, but that meant that I had to format it. There are lots of tutorials available elsewhere that explain how to do this.
+
+I have a Mac and followed the steps here: [https://stackoverflow.com/a/44205432/554481](https://stackoverflow.com/a/44205432/554481). If your SD card has more than 32 GB, you'll have to do a few additional steps, as noted here: [https://www.raspberrypi.org/documentation/installation/sdxc_formatting.md](https://www.raspberrypi.org/documentation/installation/sdxc_formatting.md). Basically the extra steps involve preformatting the SD card with Apple's built-in Disk Utility tool.
+
 ## Hostname Configuration
 
 If your Pi and laptop are on the same wifi network you can test a connection to the Pi from your laptop with the command below:
