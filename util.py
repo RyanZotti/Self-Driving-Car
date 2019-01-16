@@ -228,7 +228,7 @@ def overlay_command_on_image(frame, command,left_arrow, up_arrow,right_arrow):
 # This is where I got this code from here, which comes with an explanation:
 # https://stackoverflow.com/questions/21702477/how-to-parse-mjpeg-http-stream-from-ip-camera
 def live_video_stream(ip):
-    stream = urllib.request.urlopen('http://{ip}/webcam.mjpeg'.format(ip=ip))
+    stream = urllib.request.urlopen('http://{ip}:8090/test.mjpg'.format(ip=ip))
     opencv_bytes = bytes()
     while True:
         opencv_bytes += stream.read(1024)
