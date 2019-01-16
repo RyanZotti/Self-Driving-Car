@@ -430,12 +430,15 @@ def get_pi_connection_details():
     return username, hostname, password
 
 # Connects to the Pi and runs a command
-def execute_pi_command(command):
+def execute_pi_command(command, is_printable=False):
     username, hostname, password = get_pi_connection_details()
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(hostname, username=username, password=password)
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(command)
+    if is_printable:
+        for line in ssh_stderr:
+            print(line)
     ssh.close()
 
 
