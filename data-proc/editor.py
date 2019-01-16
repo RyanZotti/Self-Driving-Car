@@ -836,11 +836,32 @@ class StartCarVideo(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def start_car_video(self):
 
-        # Make sure ffmpeg isn't already running, then start a new ffmpeg process
-        command = "cd /usr/src/ffmpeg & sudo ffserver -f /etc/ff.conf_original & ffmpeg -v quiet -r 10 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost/webcam.ffm"
-        execute_pi_command(
-            command=command
-        )
+        # Got the ffmpeg and ffmserver setup instructions from here:
+        # https://www.hackster.io/whitebank/rasbperry-pi-ffmpeg-install-and-stream-to-web-389c34
+        # Start ffmserver and ffmpeg
+        # nohup keeps PID from getting killed after logout
+        """
+        Regarding errors ffmpeg errors like: "/dev/video0: Device or resource busy":
+        There doesn't seem to be a solution, so I'll just tell code to keep trying
+        until it succeeds. The loop code exists in a shell script I created called
+        start_ffmpeg.sh
+        - https://github.com/moritzmhmk/homebridge-camera-rpi/issues/30
+        - https://github.com/KhaosT/homebridge-camera-ffmpeg/issues/163
+        - https://stackoverflow.com/questions/5274294/how-can-you-run-a-command-in-bash-over-until-success
+        """
+        commands = [
+            'rm -f ffserver-logs.txt',
+            'rm -f ffmpeg-logs.txt',
+            'nohup ffserver -f ~/ffserver.conf >/home/pi/ffserver-logs.txt 2>&1 &',
+            'nohup sh ~/start_ffmpeg.sh >/home/pi/ffmpeg-logs.txt 2>&1 &'
+        ]
+        for command in commands:
+            execute_pi_command(
+                command=command, is_printable=True
+            )
+
+
+
         return {}
 
     @tornado.gen.coroutine
@@ -859,9 +880,13 @@ class StopCarVideo(tornado.web.RequestHandler):
         # the ffmpeg grep itself. Then the PIDs are
         # sent to kill. The kill command does not run
         # if there are no PIDs
-        command = "ps aux | grep 'ffm' | grep -v 'grep'| awk '{print $2}' | xargs --no-run-if-empty kill"
+        command_ffmpeg = "ps aux | grep 'ffmpeg' | grep -v 'grep'| awk '{print $2}' | xargs --no-run-if-empty kill -9"
         execute_pi_command(
-            command=command
+            command=command_ffmpeg
+        )
+        command_ffmserver = "ps aux | grep 'ffserver' | grep -v 'grep'| awk '{print $2}' | xargs --no-run-if-empty kill -9"
+        execute_pi_command(
+            command=command_ffmserver
         )
         return {}
 
