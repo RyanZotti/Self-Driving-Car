@@ -853,7 +853,7 @@ class StartCarVideo(tornado.web.RequestHandler):
             'rm -f ffserver-logs.txt',
             'rm -f ffmpeg-logs.txt',
             'nohup ffserver -f ~/ffserver.conf >/home/pi/ffserver-logs.txt 2>&1 &',
-            'nohup sh ~/start_ffmpeg.sh >/home/pi/ffmpeg-logs.txt 2>&1 &'
+            'nohup bash ~/start_ffmpeg.sh >/home/pi/ffmpeg-logs.txt 2>&1 &'
         ]
         for command in commands:
             execute_pi_command(
