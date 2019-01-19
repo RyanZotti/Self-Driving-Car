@@ -645,6 +645,21 @@ function batchMatchRecordIdsToIndices(sample, population){
     return sampleIndices;
 }
 
+function removeVideoSafely(){
+    if (document.contains(document.getElementById("drive-mpeg-image"))) {
+        document.querySelector("#drive-mpeg-image").remove();
+    }
+}
+
+function showVideo(){
+    removeVideoSafely();
+    const videoImageContainer = document.querySelector('div#video-image-container');
+    const videoImage = new Image();
+    videoImage.src = "/video";
+    videoImage.setAttribute("id","drive-mpeg-image");
+    videoImageContainer.appendChild(videoImage);
+}
+
 function rewindFrameIndex(){
     recordIdIndexPlaying = recordIdIndexPlaying - 15;
     recordIdIndexPlaying = Math.max(0,recordIdIndexPlaying);
@@ -791,14 +806,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const driveVehicleButton = document.getElementById("drive-vehicle-button");
     driveVehicleButton.onclick = function(){
         startCarVideo();
-        const videoFrame = document.querySelector("#drive-mpeg-image");
-        const imageUrl = '/video';
-        videoFrame.setAttribute('src',imageUrl);
+        const videoHeathCheckLoop = setInterval(async function(){
+            const isHealthy = await videoHealthCheck();
+            if(isHealthy == true){
+                clearInterval(videoHeathCheckLoop);
+                showVideo();
+            }
+        }, 1000);
     }
 
     const driveVehicleCloseButton = document.getElementById("closeDriveVehicleModal");
     driveVehicleCloseButton.onclick = function(){
         stopCarVideo();
+        removeVideoSafely();
     }
 
     const trainingStateTimer = setInterval(function(){
