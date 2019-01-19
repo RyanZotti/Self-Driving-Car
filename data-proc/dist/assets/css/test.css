@@ -27,3 +27,9 @@
 .centered {
     margin: 0 auto;
 }
+
+img#drive-mpeg-image {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
