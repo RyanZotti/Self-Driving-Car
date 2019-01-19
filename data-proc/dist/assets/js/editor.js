@@ -82,6 +82,14 @@ function stopCarVideo() {
     });
 }
 
+function videoHealthCheck() {
+    return new Promise(function(resolve, reject) {
+        $.post('/video-health-check', function(response){
+            resolve(response['is_running']);
+        });
+    });
+}
+
 function addDatasetReviewRows() {
     const bulkActionRemoveFlagsButton = document.querySelector('button#remove-flags-bulk-action');
     bulkActionRemoveFlagsButton.onclick = async function(){

@@ -895,6 +895,37 @@ class StopCarVideo(tornado.web.RequestHandler):
         result = yield self.stop_ffmpeg()
         self.write(result)
 
+
+# Checks if ffserver and ffmpeg are running. Assumes
+# ffmpeg can't run w/o ffserver, so only bothers to
+# check ffmpeg
+class VideoHealthCheck(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def is_video_available(self):
+        is_running = False
+        try:
+            command = "ps aux | grep 'ffmpeg' | grep -v 'grep'| awk '{print $2}' | wc -l"
+            process_count = execute_pi_command(
+                command=command,
+                return_first_line=True
+            )
+            if int(process_count) > 0:
+                is_running = True
+        except:
+            pass
+        return {
+            'is_running':is_running
+        }
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.is_video_available()
+        self.write(result)
+
+
 class PiHealthCheck(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -1213,6 +1244,7 @@ def make_app():
         (r"/video", VideoAPI),
         (r"/start-car-video", StartCarVideo),
         (r"/stop-car-video", StopCarVideo),
+        (r"/video-health-check", VideoHealthCheck),
         (r"/ui-state", StateAPI),
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
         (r"/laptop-model-api-health", LaptopModelDeploymentHealth),
