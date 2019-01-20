@@ -230,6 +230,18 @@ def overlay_command_on_image(frame, command,left_arrow, up_arrow,right_arrow):
 def live_video_stream(ip):
     stream = urllib.request.urlopen('http://{ip}:8090/test.mjpg'.format(ip=ip))
     opencv_bytes = bytes()
+    """
+    When the video is streaming well, about 1 of every 15
+    iterations of this loop produces an image. When the
+    video is killed and there is nothing to show, the else
+    part of the loop gets called consecutively indefinitely.
+    I can avoid the zombie threads that take over my entire
+    Tornado server (99% of CPU) if I check a consecutive
+    failure count exceeding some arbitrarily high threshold
+    """
+    count_threshold = 50
+    consecutive_no_image_count = 0
+    was_available = False
     while True:
         opencv_bytes += stream.read(1024)
         a = opencv_bytes.find(b'\xff\xd8')
@@ -240,7 +252,17 @@ def live_video_stream(ip):
             frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
             if cv2.waitKey(1) == 27:
                 exit(0)
+            consecutive_no_image_count = 0
+            was_available = True
             yield frame
+        else:
+            if was_available:
+                consecutive_no_image_count = 1
+            else:
+                consecutive_no_image_count += 1
+            if consecutive_no_image_count > count_threshold:
+                break
+            was_available = False
 
 
 # A single place for all connection related details
