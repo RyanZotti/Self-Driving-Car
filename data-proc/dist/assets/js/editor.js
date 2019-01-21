@@ -403,6 +403,12 @@ function adjustAngleDonut(donutId, angle){
     });
 }
 
+function adjustSpeedBar(barId, speed){
+    const speedBar = document.querySelector("div#"+barId);
+    const speedPercent = (speed * 100).toFixed(2) + '%';
+    speedBar.style.height = speedPercent;
+}
+
 function setModalFlagColor(color){
 
 }
@@ -506,7 +512,6 @@ async function playVideo(args) {
     datasetIdPlaying = datasetNameToId(dataset);
     recordIdsPlaying = recordIds;
 }
-
 
 function getDatasetReviewTableHtml() {
     return new Promise(function(resolve, reject) {
@@ -817,8 +822,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const driveVehicleCloseButton = document.getElementById("closeDriveVehicleModal");
     driveVehicleCloseButton.onclick = function(){
-        stopCarVideo();
         removeVideoSafely();
+        stopCarVideo();
+        initialBeta = null;
     }
 
     const trainingStateTimer = setInterval(function(){
