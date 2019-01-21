@@ -68,8 +68,6 @@ function captureDeviceOrientation(event) {
         const steeringText = document.querySelector("div#driveHumanSteeringText");
         steeringText.textContent = (steering * 100).toFixed(0) + '%';
     }
-
-
 }
 
 // Check if device supports orientation (ie is a phone vs laptop)

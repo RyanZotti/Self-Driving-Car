@@ -18,7 +18,7 @@ RETURN_CODE=$?
 
 # Test a finite number of times in case
 # something really is wrong
-for i in {1..5};
+for i in {1..30};
   do
   if [ $RETURN_CODE -ne 0 ]
   then
