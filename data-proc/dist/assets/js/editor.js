@@ -632,6 +632,7 @@ function showVideo(){
     videoImage.src = "/video";
     videoImage.setAttribute("id","drive-mpeg-image");
     videoImageContainer.appendChild(videoImage);
+    return videoImage
 }
 
 function rewindFrameIndex(){
@@ -784,13 +785,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const isHealthy = await videoHealthCheck();
             if(isHealthy == true){
                 clearInterval(videoHeathCheckLoop);
-                showVideo();
-                const metricsHeader = document.querySelector('div#drive-metrics-header');
-                const metricsGraphics = document.querySelector('div#drive-metrics-graphics');
-                const metricsText = document.querySelector('div#drive-metrics-text');
-                metricsHeader.style.display = 'flex';
-                metricsGraphics.style.display = 'flex';
-                metricsText.style.display = 'flex';
+                const videoImage = showVideo();
+                videoImage.onload = function(){
+                    const metricsHeader = document.querySelector('div#drive-metrics-header');
+                    const metricsGraphics = document.querySelector('div#drive-metrics-graphics');
+                    const metricsText = document.querySelector('div#drive-metrics-text');
+                    metricsHeader.style.display = 'flex';
+                    metricsGraphics.style.display = 'flex';
+                    metricsText.style.display = 'flex';
+                }
             }
         }, 1000);
         // Check if device supports orientation (ie is a phone vs laptop)
