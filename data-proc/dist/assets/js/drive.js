@@ -39,7 +39,6 @@ function captureDeviceOrientation(event) {
     // Get device orientation values
     const beta = event.beta;
     const gamma = event.gamma;
-
     /*
     The initialBeta variable saves users from having to hold
     their devices perfectly vertical. Uses the starting
@@ -64,16 +63,12 @@ function captureDeviceOrientation(event) {
         speedText.textContent = (speed * 100).toFixed(0) + '%';
         // Set steering
         const steering = gammaToSteering(gamma);
-        adjustAngleDonut('driveHumanAngleDonut',steering);
+        updateDonut(donuts.drive,steering);
         const steeringText = document.querySelector("div#driveHumanSteeringText");
         steeringText.textContent = (steering * 100).toFixed(0) + '%';
     }
 }
 
-// Check if device supports orientation (ie is a phone vs laptop)
-if (window.DeviceOrientationEvent) {
-    window.addEventListener("deviceorientation", captureDeviceOrientation);
-}
 
 var initialBeta;
 

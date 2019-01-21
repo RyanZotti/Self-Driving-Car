@@ -376,41 +376,10 @@ function updateAiAndHumanLabelValues(dataset, recordId){
     });
 }
 
-function adjustAngleDonut(donutId, angle){
-    /*
-    Angle is between -1 and 1 so need to scale
-    to rotate donut appropriately. Full left is
-    -0.5, middle is 0.0, and full right is 0.5
-    */
-    const scaledAngle = angle / 2;
-    const options = {
-        'cutoutPercentage':50,
-        'rotation':scaledAngle * Math.PI,
-        'animation': {
-            'animateRotate':false
-        }
-    }
-    new Chart(donutId, {
-      type: 'doughnut',
-      data: {
-        datasets: [{
-          data: [50, 50],
-          'borderWidth':[1,1],
-          'backgroundColor':['#E3EBF6','#2C7BE5']
-        }]
-      },
-      options: options
-    });
-}
-
 function adjustSpeedBar(barId, speed){
     const speedBar = document.querySelector("div#"+barId);
     const speedPercent = (speed * 100).toFixed(2) + '%';
     speedBar.style.height = speedPercent;
-}
-
-function setModalFlagColor(color){
-
 }
 
 async function playVideo(args) {
@@ -451,8 +420,8 @@ async function playVideo(args) {
             isFlaggedButton.checked = false;
         }
         updateImage(dataset, recordId, cropFactor);
-        await adjustAngleDonut('aiAngleDonut',state.ai.angle);
-        await adjustAngleDonut('humanAngleDonut',state.human.angle);
+        await updateDonut(donuts.ai,state.ai.angle);
+        await updateDonut(donuts.human,state.human.angle);
         /*
         Technically the error could go to 200%, but it rarely
         does, so I cap at 100% to get better visual feedback
@@ -818,6 +787,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 showVideo();
             }
         }, 1000);
+        // Check if device supports orientation (ie is a phone vs laptop)
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener("deviceorientation", captureDeviceOrientation);
+        }
     }
 
     const driveVehicleCloseButton = document.getElementById("closeDriveVehicleModal");
@@ -825,6 +798,9 @@ document.addEventListener('DOMContentLoaded', function() {
         removeVideoSafely();
         stopCarVideo();
         initialBeta = null;
+        if (window.DeviceOrientationEvent) {
+            window.removeEventListener("deviceorientation", captureDeviceOrientation);
+        }
     }
 
     const trainingStateTimer = setInterval(function(){
@@ -851,6 +827,14 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('set to null');
     }
 
+    /*
+    These are global variables but need to be defined here
+    or else you'll get undefined errors for makeDonut
+    */
+    donuts.ai = makeDonut('aiAngleDonut');
+    donuts.human = makeDonut('humanAngleDonut');
+    donuts.drive = makeDonut('driveHumanAngleDonut');
+
 }, false);
 
 // Global variables
@@ -861,7 +845,7 @@ var datasetPlaying = '';
 var dadtasetIdPlaying = '';
 var recordIdIndexPlaying = -1;
 var recordIdsPlaying = [];
-var pauseOnBadMistakeThreshold = 0.8
+var pauseOnBadMistakeThreshold = 0.8;
 var state = {
     "human": {
         'angle': 0,
@@ -873,4 +857,14 @@ var state = {
         'angleAbsError':0,
         'throttleAbsError':0
     }
+}
+
+/*
+Need these donuts to be set in the DOMContentLoaded
+but available outside of that scope
+*/
+var donuts = {
+    "ai":null,
+    'human':null,
+    'drive':null
 }

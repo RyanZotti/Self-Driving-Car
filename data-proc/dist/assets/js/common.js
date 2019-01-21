@@ -142,3 +142,48 @@ async function updatePiConnectionStatuses(){
         }
     }
 }
+
+/*
+Prior to writing this function I would recreate the
+steering / angle donut everytime I changed rotation.
+While this didn't have any noticeable impact on the
+laptop it caused massive CPU utilization on iOS and
+made the iPhone experience awful -- the entire UI
+would go unresponive, the app would crash and you
+would have to do a hard refresh just to re-open the
+modal. The fix is to create the donuts once and
+simply update the values of existing objects
+*/
+function makeDonut(donutId){
+    const options = {
+        'cutoutPercentage':50,
+        'rotation':0,
+        'animation': {
+            'animateRotate':false
+        }
+    }
+    const donut = new Chart(donutId, {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [50, 50],
+            'borderWidth':[1,1],
+            'backgroundColor':['#E3EBF6','#2C7BE5']
+          }]
+        },
+        options: options
+    });
+    return donut;
+}
+
+function updateDonut(donut, angle){
+    /*
+    Angle is between -1 and 1 so need to scale
+    to rotate donut appropriately. Full left is
+    -0.5, middle is 0.0, and full right is 0.5
+    */
+    const scaledAngle = angle / 2;
+    const rotation = scaledAngle * Math.PI;
+    donut.options.rotation = rotation;
+    donut.update();
+}
