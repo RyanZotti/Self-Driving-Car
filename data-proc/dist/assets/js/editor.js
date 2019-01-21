@@ -785,6 +785,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if(isHealthy == true){
                 clearInterval(videoHeathCheckLoop);
                 showVideo();
+                const metricsHeader = document.querySelector('div#drive-metrics-header');
+                const metricsGraphics = document.querySelector('div#drive-metrics-graphics');
+                const metricsText = document.querySelector('div#drive-metrics-text');
+                metricsHeader.style.display = 'flex';
+                metricsGraphics.style.display = 'flex';
+                metricsText.style.display = 'flex';
             }
         }, 1000);
         // Check if device supports orientation (ie is a phone vs laptop)
@@ -801,6 +807,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.DeviceOrientationEvent) {
             window.removeEventListener("deviceorientation", captureDeviceOrientation);
         }
+        const metricsHeader = document.querySelector('div#drive-metrics-header');
+        const metricsGraphics = document.querySelector('div#drive-metrics-graphics');
+        const metricsText = document.querySelector('div#drive-metrics-text');
+        metricsHeader.style.display = 'none';
+        metricsGraphics.style.display = 'none';
+        metricsText.style.display = 'none';
     }
 
     const trainingStateTimer = setInterval(function(){
