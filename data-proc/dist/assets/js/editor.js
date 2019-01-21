@@ -836,6 +836,21 @@ document.addEventListener('DOMContentLoaded', function() {
         updatePiConnectionStatuses()
     }, 1000);
 
+    /*
+    I think I can only get device orientation from an orientation
+    change event, which means that I can't directly check it from
+    this onclick event. That means the onclick can only indirectly
+    reset the initialBeta. The captureDeviceOrientation() function
+    in drive.js assigns a new value if it sees that initialBeta is
+    null, so here I just set initialBeta to null so that it gets
+    reset elsewhere
+    */
+    const resetDeviceOrientationButton = document.querySelector('span#resetDeviceOrientation');
+    resetDeviceOrientationButton.onclick = function(){
+        initialBeta = null;
+        console.log('set to null');
+    }
+
 }, false);
 
 // Global variables

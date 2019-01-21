@@ -17,15 +17,6 @@ function gammaToSteering(gamma){
 }
 
 function betaToSpeed(beta){
-    /*
-    The initialBeta variable saves users from having to hold
-    their devices perfectly vertical. Uses the starting
-    vertical orientation at start. The initialBeta variable is
-    reset to null when the user clicks the close modal window button
-    */
-    if(initialBeta == null){
-        initialBeta = beta;
-    }
     // Lower scale is more sensitive, higher scale is less sensitive
     const scale = 30;
     /*
@@ -48,16 +39,37 @@ function captureDeviceOrientation(event) {
     // Get device orientation values
     const beta = event.beta;
     const gamma = event.gamma;
-    // Set speed
-    const speed = betaToSpeed(beta);
-    adjustSpeedBar('driveSpeedBar',speed);
-    const speedText = document.querySelector("div#driveSpeedText");
-    speedText.textContent = (speed * 100).toFixed(0) + '%';
-    // Set steering
-    const steering = gammaToSteering(gamma);
-    adjustAngleDonut('driveHumanAngleDonut',steering);
-    const steeringText = document.querySelector("div#driveHumanSteeringText");
-    steeringText.textContent = (steering * 100).toFixed(0) + '%';
+
+    /*
+    The initialBeta variable saves users from having to hold
+    their devices perfectly vertical. Uses the starting
+    vertical orientation at start. The initialBeta variable is
+    reset to null when the user clicks the close modal window button
+    */
+    if(initialBeta == null){
+        console.log('is null')
+        initialBeta = beta;
+        const test = document.querySelector('span#driveVehicleHeaderDatasetId')
+        test.textContent = initialBeta;
+        /*
+        If initialBeta is not set, then there is no meaningful
+        speed measurement for this iteration, so you should
+        skip the settings
+        */
+    } else {
+        // Set speed
+        const speed = betaToSpeed(beta);
+        adjustSpeedBar('driveSpeedBar',speed);
+        const speedText = document.querySelector("div#driveSpeedText");
+        speedText.textContent = (speed * 100).toFixed(0) + '%';
+        // Set steering
+        const steering = gammaToSteering(gamma);
+        adjustAngleDonut('driveHumanAngleDonut',steering);
+        const steeringText = document.querySelector("div#driveHumanSteeringText");
+        steeringText.textContent = (steering * 100).toFixed(0) + '%';
+    }
+
+
 }
 
 // Check if device supports orientation (ie is a phone vs laptop)
