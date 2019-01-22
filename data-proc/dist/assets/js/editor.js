@@ -787,6 +787,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearInterval(videoHeathCheckLoop);
                 const videoImage = showVideo();
                 videoImage.onload = function(){
+                    const videoSpinner = document.querySelector("div#video-loader");
+                    videoSpinner.style.display = 'none';
                     const metricsHeader = document.querySelector('div#drive-metrics-header');
                     const metricsGraphics = document.querySelector('div#drive-metrics-graphics');
                     const metricsText = document.querySelector('div#drive-metrics-text');
@@ -807,6 +809,8 @@ document.addEventListener('DOMContentLoaded', function() {
         removeVideoSafely();
         stopCarVideo();
         initialBeta = null;
+        const videoSpinner = document.querySelector("div#video-loader");
+        videoSpinner.style.display = 'block';
         if (window.DeviceOrientationEvent) {
             window.removeEventListener("deviceorientation", captureDeviceOrientation);
         }
