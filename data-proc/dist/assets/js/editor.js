@@ -660,6 +660,32 @@ function fastForwardFrameIndex(recordType){
     });
 }
 
+function applyBrake(){
+    isBrakeOn = true;
+    const applyBrakeColumn = document.querySelector('div#applyBrakeColumn');
+    applyBrakeColumn.style.display = 'none';
+    console.log('Is brake applied: '+isBrakeOn);
+}
+
+function releaseBrake(){
+    isBrakeOn = false;
+    const applyBrakeColumn = document.querySelector('div#applyBrakeColumn');
+    applyBrakeColumn.style.display = 'inline';
+    console.log('Is brake applied: '+isBrakeOn);
+}
+
+function startRecording(){
+    driveRecordOnColumn.style.display = 'none';
+    driveRecordOffColumn.style.display = 'inline';
+    isRecording = true;
+}
+
+function stopRecording(){
+    driveRecordOnColumn.style.display = 'inline';
+    driveRecordOffColumn.style.display = 'none';
+    isRecording = false;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadReviewDatasetsTable();
     // TODO: Replace with plain javascript instead of jquery
@@ -823,7 +849,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Assume user wants to stop recording when drive modal is closed
         driveRecordOnColumn.style.display = 'inline';
         driveRecordOffColumn.style.display = 'none';
-        isRecordingDrive = false;
+        isRecording = false;
+        // Reset brake to off for when the modal opens next time
+        releaseBrake();
     }
 
     const trainingStateTimer = setInterval(function(){
@@ -847,7 +875,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const resetDeviceOrientationButton = document.querySelector('span#resetDeviceOrientation');
     resetDeviceOrientationButton.onclick = function(){
         initialBeta = null;
-        console.log('set to null');
     }
 
     /*
@@ -863,16 +890,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const driveRecordOffColumn = document.querySelector('div#driveRecordOffColumn');
     const driveRecordOffButton = document.querySelector('span#driveRecordOffButton');
     driveRecordOnButton.onclick = function(){
-        driveRecordOnColumn.style.display = 'none';
-        driveRecordOffColumn.style.display = 'inline';
-        isRecordingDrive = true;
-        console.log('is recording: '+isRecordingDrive);
+        startRecording();
+        /*
+        Assume that the user wants to drive when they're
+        recording
+        */
+        releaseBrake();
     }
     driveRecordOffButton.onclick = function(){
-        driveRecordOnColumn.style.display = 'inline';
-        driveRecordOffColumn.style.display = 'none';
-        isRecordingDrive = false;
-        console.log('is recording: '+isRecordingDrive);
+        stopRecording();
+        /*
+        Assume that the user generally stops recording
+        when stop has gone wrong and the car needs
+        to stop
+        */
+        applyBrake();
+    }
+
+    const applyBrakeButton = document.querySelector("span#applyBrakeButton");
+    applyBrakeButton.onclick = function(){
+        applyBrake();
+        /*
+        Assume that the user generally stops recording
+        when stop has gone wrong and the car needs
+        to stop
+        */
+        stopRecording();
     }
 
 }, false);
@@ -886,7 +929,8 @@ var dadtasetIdPlaying = '';
 var recordIdIndexPlaying = -1;
 var recordIdsPlaying = [];
 var pauseOnBadMistakeThreshold = 0.8;
-var isRecordingDrive = false
+var isRecording = false
+var isBrakeOn = false
 var state = {
     "human": {
         'angle': 0,
