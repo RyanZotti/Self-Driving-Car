@@ -690,6 +690,17 @@ function stopRecording(){
     isRecording = false;
 }
 
+function hideDriveButtonsRow(){
+    const driveButtonsRow = document.querySelector('div#driveButtonsRow');
+    driveButtonsRow.style.display = 'none';
+}
+
+function showDriveButtonsRow(){
+    const driveButtonsRow = document.querySelector('div#driveButtonsRow');
+    driveButtonsRow.style.display = 'flex';
+}
+
+
 document.addEventListener('DOMContentLoaded', function() {
     loadReviewDatasetsTable();
     // TODO: Replace with plain javascript instead of jquery
@@ -825,6 +836,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     metricsHeader.style.display = 'flex';
                     metricsGraphics.style.display = 'flex';
                     metricsText.style.display = 'flex';
+                    showDriveButtonsRow();
                 }
             }
         }, 1000);
@@ -855,7 +867,8 @@ document.addEventListener('DOMContentLoaded', function() {
         driveRecordOffColumn.style.display = 'none';
         isRecording = false;
         // Reset brake to off for when the modal opens next time
-        releaseBrake();
+        applyBrake();
+        hideDriveButtonsRow();
     }
 
     const trainingStateTimer = setInterval(function(){
