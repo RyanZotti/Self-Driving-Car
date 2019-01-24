@@ -820,6 +820,10 @@ document.addEventListener('DOMContentLoaded', function() {
         metricsHeader.style.display = 'none';
         metricsGraphics.style.display = 'none';
         metricsText.style.display = 'none';
+        // Assume user wants to stop recording when drive modal is closed
+        driveRecordOnColumn.style.display = 'inline';
+        driveRecordOffColumn.style.display = 'none';
+        isRecordingDrive = false;
     }
 
     const trainingStateTimer = setInterval(function(){
@@ -854,6 +858,23 @@ document.addEventListener('DOMContentLoaded', function() {
     donuts.human = makeDonut('humanAngleDonut');
     donuts.drive = makeDonut('driveHumanAngleDonut');
 
+    const driveRecordOnColumn = document.querySelector('div#driveRecordOnColumn');
+    const driveRecordOnButton = document.querySelector('span#driveRecordOnButton');
+    const driveRecordOffColumn = document.querySelector('div#driveRecordOffColumn');
+    const driveRecordOffButton = document.querySelector('span#driveRecordOffButton');
+    driveRecordOnButton.onclick = function(){
+        driveRecordOnColumn.style.display = 'none';
+        driveRecordOffColumn.style.display = 'inline';
+        isRecordingDrive = true;
+        console.log('is recording: '+isRecordingDrive);
+    }
+    driveRecordOffButton.onclick = function(){
+        driveRecordOnColumn.style.display = 'inline';
+        driveRecordOffColumn.style.display = 'none';
+        isRecordingDrive = false;
+        console.log('is recording: '+isRecordingDrive);
+    }
+
 }, false);
 
 // Global variables
@@ -865,6 +886,7 @@ var dadtasetIdPlaying = '';
 var recordIdIndexPlaying = -1;
 var recordIdsPlaying = [];
 var pauseOnBadMistakeThreshold = 0.8;
+var isRecordingDrive = false
 var state = {
     "human": {
         'angle': 0,
