@@ -664,6 +664,8 @@ function applyBrake(){
     isBrakeOn = true;
     const applyBrakeColumn = document.querySelector('div#applyBrakeColumn');
     applyBrakeColumn.style.display = 'none';
+    const releaseBrakeColumn = document.querySelector('div#releaseBrakeColumn');
+    releaseBrakeColumn.style.display = 'inline';
     console.log('Is brake applied: '+isBrakeOn);
 }
 
@@ -671,6 +673,8 @@ function releaseBrake(){
     isBrakeOn = false;
     const applyBrakeColumn = document.querySelector('div#applyBrakeColumn');
     applyBrakeColumn.style.display = 'inline';
+    const releaseBrakeColumn = document.querySelector('div#releaseBrakeColumn');
+    releaseBrakeColumn.style.display = 'none';
     console.log('Is brake applied: '+isBrakeOn);
 }
 
@@ -918,6 +922,11 @@ document.addEventListener('DOMContentLoaded', function() {
         stopRecording();
     }
 
+    const releaseBrakeButton = document.querySelector("span#releaseBrakeButton");
+    releaseBrakeButton.onclick = function(){
+        releaseBrake();
+    }
+
 }, false);
 
 // Global variables
@@ -930,7 +939,7 @@ var recordIdIndexPlaying = -1;
 var recordIdsPlaying = [];
 var pauseOnBadMistakeThreshold = 0.8;
 var isRecording = false
-var isBrakeOn = false
+var isBrakeOn = true
 var state = {
     "human": {
         'angle': 0,
