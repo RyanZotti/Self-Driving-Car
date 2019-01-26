@@ -682,12 +682,16 @@ function startRecording(){
     driveRecordOnColumn.style.display = 'none';
     driveRecordOffColumn.style.display = 'inline';
     isRecording = true;
+    const recordingIndicatorLight = document.querySelector('span#recordingDotAndText');
+    recordingIndicatorLight.style.display = 'inline';
 }
 
 function stopRecording(){
     driveRecordOnColumn.style.display = 'inline';
     driveRecordOffColumn.style.display = 'none';
     isRecording = false;
+    const recordingIndicatorLight = document.querySelector('span#recordingDotAndText');
+    recordingIndicatorLight.style.display = 'none';
 }
 
 function hideDriveButtonsRow(){
