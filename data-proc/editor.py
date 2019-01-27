@@ -896,7 +896,18 @@ class VideoHealthCheck(tornado.web.RequestHandler):
     def is_video_available(self):
         is_running = False
         try:
-            command = "docker ps | grep -i 'ffmpeg' | grep -v 'grep'| awk '{print $2}' | wc -l"
+            '''
+            Need to be careful not to pass stderr into wc -l, so first
+            I check if the ffmpeg Docker container is running at all.
+            If it's not, I return 0, meaning no ffmpeg processes are
+            running. If the Docker container is running, then I run the
+            Docker top command to check for Docker processes. I also take
+            care to ignore the ffmpeg.sh processes, since that's a loop
+            that tries to repeatedly start ffmpeg until it succeeds, and
+            just because the loop is running doesn't mean that ffmpeg
+            itself has started successfully.
+            '''
+            command = "if [ $(docker ps | grep -i ffmpeg | wc -l) -gt 0 ]; then echo docker top ffmpeg | grep 'ffmpeg' | grep -v 'grep'| grep -v 'ffmpeg.sh' | awk '{print $2}' | wc -l; else echo 0; fi"
             process_count = execute_pi_command(
                 command=command,
                 return_first_line=True
