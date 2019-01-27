@@ -35,6 +35,18 @@ function betaToSpeed(beta){
     return speed;
 }
 
+function updateDriveState(userSteering, userSpeed, driveMode, isRecording, isBrakeOn, speedMultiplier){
+    data = JSON.stringify({
+        'angle': userSteering,
+        'throttle':userSpeed,
+        'drive_mode':driveMode,
+        'recording': isRecording,
+        'brake':isBrakeOn,
+        'max_throttle':speedMultiplier
+    });
+    $.post('/update-drive-state', data);
+}
+
 function captureDeviceOrientation(event) {
     // Get device orientation values
     const beta = event.beta;
@@ -66,6 +78,14 @@ function captureDeviceOrientation(event) {
         updateDonut(donuts.drive,steering);
         const steeringText = document.querySelector("div#driveHumanSteeringText");
         steeringText.textContent = (steering * 100).toFixed(0) + '%';
+        updateDriveState(
+            steering,
+            speed,
+            driveMode,
+            isRecording,
+            isBrakeOn,
+            speedMultiplier
+        );
     }
 }
 

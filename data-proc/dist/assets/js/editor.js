@@ -957,6 +957,8 @@ var recordIdsPlaying = [];
 var pauseOnBadMistakeThreshold = 0.8;
 var isRecording = false
 var isBrakeOn = true
+var speedMultiplier = 1.0
+var driveMode = 'user'
 var state = {
     "human": {
         'angle': 0,

@@ -26,18 +26,24 @@ class Home(tornado.web.RequestHandler):
         self.render("dist/index.html")
 
 
-class StateAPI(tornado.web.RequestHandler):
+class UpdateDriveState(tornado.web.RequestHandler):
+    executor = ThreadPoolExecutor(5)
 
-    def get(self):
-        state = {
-            'angle': self.application.angle,
-            'throttle': self.application.throttle,
-            'drive_mode': self.application.mode,
-            'recording': self.application.recording,
-            'brake': self.application.brake,
-            'max_throttle': self.application.max_throttle
-        }
-        self.write(state)
+    @tornado.concurrent.run_on_executor
+    def send_drive_state(self, json_input):
+        print(json_input)
+        #requests.post(
+        #    # TODO: Get the Pi's AI port from Postgres
+        #    'http://ryanzotti.local:8884/drive',
+        #    json=json.dumps(json_input)
+        #)
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.send_drive_state(json_input=json_input)
+        self.write(result)
 
 
 class LaptopModelDeploymentHealth(tornado.web.RequestHandler):
@@ -1245,7 +1251,7 @@ def make_app():
         (r"/start-car-video", StartCarVideo),
         (r"/stop-car-video", StopCarVideo),
         (r"/video-health-check", VideoHealthCheck),
-        (r"/ui-state", StateAPI),
+        (r"/update-drive-state", UpdateDriveState),
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
         (r"/laptop-model-api-health", LaptopModelDeploymentHealth),
         (r"/delete",DeleteRecord),
