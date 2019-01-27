@@ -859,7 +859,6 @@ class StartCarVideo(tornado.web.RequestHandler):
         execute_pi_command(
             command=command, is_printable=True
         )
-        print(command)
         return {}
 
     @tornado.gen.coroutine
@@ -894,31 +893,14 @@ class VideoHealthCheck(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def is_video_available(self):
-        is_running = False
         try:
-            '''
-            Need to be careful not to pass stderr into wc -l, so first
-            I check if the ffmpeg Docker container is running at all.
-            If it's not, I return 0, meaning no ffmpeg processes are
-            running. If the Docker container is running, then I run the
-            Docker top command to check for Docker processes. I also take
-            care to ignore the ffmpeg.sh processes, since that's a loop
-            that tries to repeatedly start ffmpeg until it succeeds, and
-            just because the loop is running doesn't mean that ffmpeg
-            itself has started successfully.
-            '''
-            command = "if [ $(docker ps | grep -i ffmpeg | wc -l) -gt 0 ]; then echo docker top ffmpeg | grep 'ffmpeg' | grep -v 'grep'| grep -v 'ffmpeg.sh' | awk '{print $2}' | wc -l; else echo 0; fi"
-            process_count = execute_pi_command(
-                command=command,
-                return_first_line=True
-            )
-            if int(process_count) > 0:
-                is_running = True
+            # Check if ffmpeg is accepting connections
+            # TODO: Remove hard-coded IP
+            ip = 'ryanzotti.local'
+            stream = urllib.request.urlopen('http://{ip}:8090/test.mjpg'.format(ip=ip))
+            return {'is_running': True}
         except:
-            pass
-        return {
-            'is_running':is_running
-        }
+            return {'is_running': False}
 
     @tornado.gen.coroutine
     def post(self):
