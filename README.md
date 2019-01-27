@@ -309,6 +309,14 @@ python "${REPO_PATH}"/ai/qa/validate_deployment.py \
 
 ```
 
+## Docker
+
+Basic steps to push a Docker image. These instructions are for my own benefit.
+
+	docker login
+	docker tag ryanzotti/ffmpeg:latest ryanzotti/ffmpeg
+	docker push ryanzotti/ffmpeg:latest
+
 ## FAQ
 
 **Q:** How do I log into the Pi?
