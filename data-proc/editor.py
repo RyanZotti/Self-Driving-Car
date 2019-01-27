@@ -855,19 +855,11 @@ class StartCarVideo(tornado.web.RequestHandler):
         - https://github.com/KhaosT/homebridge-camera-ffmpeg/issues/163
         - https://stackoverflow.com/questions/5274294/how-can-you-run-a-command-in-bash-over-until-success
         """
-        commands = [
-            'rm -f ffserver-logs.txt',
-            'rm -f ffmpeg-logs.txt',
-            'nohup ffserver -f ~/ffserver.conf >/home/pi/ffserver-logs.txt 2>&1 &',
-            'nohup bash ~/start_ffmpeg.sh >/home/pi/ffmpeg-logs.txt 2>&1 &'
-        ]
-        for command in commands:
-            execute_pi_command(
-                command=command, is_printable=True
-            )
-
-
-
+        command = 'docker run -t -d -i --device=/dev/video0 --network host --name ffmpeg ryanzotti/ffmpeg:latest'
+        execute_pi_command(
+            command=command, is_printable=True
+        )
+        print(command)
         return {}
 
     @tornado.gen.coroutine
@@ -881,18 +873,9 @@ class StopCarVideo(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def stop_ffmpeg(self):
-        # First grep finds ffmpeg processes, and the
-        # second grep excludes the process related to
-        # the ffmpeg grep itself. Then the PIDs are
-        # sent to kill. The kill command does not run
-        # if there are no PIDs
-        command_ffmpeg = "ps aux | grep 'ffmpeg' | grep -v 'grep'| awk '{print $2}' | xargs --no-run-if-empty kill -9"
+        command_ffmpeg = "docker rm -f ffmpeg"
         execute_pi_command(
             command=command_ffmpeg
-        )
-        command_ffmserver = "ps aux | grep 'ffserver' | grep -v 'grep'| awk '{print $2}' | xargs --no-run-if-empty kill -9"
-        execute_pi_command(
-            command=command_ffmserver
         )
         return {}
 
@@ -913,7 +896,7 @@ class VideoHealthCheck(tornado.web.RequestHandler):
     def is_video_available(self):
         is_running = False
         try:
-            command = "ps aux | grep 'ffmpeg' | grep -v 'grep'| awk '{print $2}' | wc -l"
+            command = "docker ps | grep -i 'ffmpeg' | grep -v 'grep'| awk '{print $2}' | wc -l"
             process_count = execute_pi_command(
                 command=command,
                 return_first_line=True
