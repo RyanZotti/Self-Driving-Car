@@ -952,6 +952,12 @@ document.addEventListener('DOMContentLoaded', function() {
         releaseBrake();
     }
 
+    const makeNewDatasetButton = document.querySelector('span#makeNewDatasetButton');
+    makeNewDatasetButton.onclick = async function(){
+        recordingDataset = await getNewDatasetName();
+        console.log(recordingDataset);
+    }
+
 }, false);
 
 // Global variables
@@ -963,6 +969,7 @@ var dadtasetIdPlaying = '';
 var recordIdIndexPlaying = -1;
 var recordIdsPlaying = [];
 var pauseOnBadMistakeThreshold = 0.8;
+var recordingDataset = '';
 var isRecording = false
 var isBrakeOn = true
 var speedMultiplier = 1.0
