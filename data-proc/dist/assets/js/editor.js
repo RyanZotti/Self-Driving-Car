@@ -712,6 +712,10 @@ function showDriveButtonsRow(){
     driveButtonsRow.style.display = 'flex';
 }
 
+async function makeNewDataset(){
+    recordingDataset = await getNewDatasetName();
+    recordingRecordId = 0;
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     loadReviewDatasetsTable();
@@ -833,6 +837,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const driveVehicleButton = document.getElementById("drive-vehicle-button");
     driveVehicleButton.onclick = function(){
+        makeNewDataset();
         startCarVideo();
         const videoHeathCheckLoop = setInterval(async function(){
             const isHealthy = await videoHealthCheck();
@@ -954,7 +959,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const makeNewDatasetButton = document.querySelector('span#makeNewDatasetButton');
     makeNewDatasetButton.onclick = async function(){
-        recordingDataset = await getNewDatasetName();
+        makeNewDataset();
         console.log(recordingDataset);
     }
 
@@ -970,6 +975,7 @@ var recordIdIndexPlaying = -1;
 var recordIdsPlaying = [];
 var pauseOnBadMistakeThreshold = 0.8;
 var recordingDataset = '';
+var recordingRecordId = 0;
 var isRecording = false
 var isBrakeOn = true
 var speedMultiplier = 1.0

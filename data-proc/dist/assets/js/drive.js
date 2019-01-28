@@ -36,13 +36,18 @@ function betaToSpeed(beta){
 }
 
 function updateDriveState(userSteering, userSpeed, driveMode, isRecording, isBrakeOn, speedMultiplier){
+    if (isRecording == True){
+        recordingRecordId = recordingRecordId + 1;
+    }
     data = JSON.stringify({
         'angle': userSteering,
         'throttle':userSpeed,
         'drive_mode':driveMode,
         'recording': isRecording,
         'brake':isBrakeOn,
-        'max_throttle':speedMultiplier
+        'max_throttle':speedMultiplier,
+        'dataset':recordingDataset,
+        'record_id':recordingRecordId
     });
     $.post('/update-drive-state', data);
 }
