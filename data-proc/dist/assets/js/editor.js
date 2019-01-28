@@ -565,6 +565,14 @@ function datasetNameToId(datasetName){
     return datasetId
 }
 
+function getNewDatasetName(){
+    return new Promise(function(resolve, reject) {
+        $.post('/new-dataset-name', function(result){
+           resolve(result['name']);
+        });
+    });
+}
+
 function updateDatasetsCountBadge(datasetType){
     $.get( "/list-"+datasetType+"-datasets").then(function(response){
         return response.datasets;

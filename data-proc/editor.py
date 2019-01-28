@@ -1,6 +1,7 @@
 from tornado import gen
 import argparse
 import cv2
+from datetime import datetime
 import time
 import urllib.request
 from car.record_reader import RecordReader
@@ -24,6 +25,56 @@ from data_augmentation import pseduo_crop
 class Home(tornado.web.RequestHandler):
     def get(self):
         self.render("dist/index.html")
+
+
+class NewDatasetName(tornado.web.RequestHandler):
+    executor = ThreadPoolExecutor(5)
+
+    def get_next_id(self):
+        sql_query = '''
+            SELECT DISTINCT
+              dataset
+            FROM records
+        '''
+        rows = get_sql_rows(sql_query)
+        if len(rows) > 0:
+            ids = []
+            for row in rows:
+                id = row['dataset'].split('_')[1]
+                id = int(id)
+                ids.append(id)
+            return max(ids) + 1
+        else:
+            return 1
+
+    def make_dataset_name(self, id):
+        now = datetime.now()
+        year = str(now.year)[2:]
+        month = str(now.month)
+        if len(month) == 1:
+            month = '0' + month
+        day = str(now.day)
+        if len(day) == 1:
+            day = '0' + day
+        name = 'dataset_{id}_{year}_{month}_{day}'.format(
+            id=id,
+            year=year,
+            month=month,
+            day=day
+        )
+        return name
+
+    @tornado.concurrent.run_on_executor
+    def new_dataset_name(self):
+
+        id = self.get_next_id()
+        dataset_name = self.make_dataset_name(id)
+        return {'name':dataset_name}
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.new_dataset_name()
+        self.write(result)
 
 
 class UpdateDriveState(tornado.web.RequestHandler):
@@ -1224,6 +1275,7 @@ def make_app():
         (r"/user-labels", UserLabelsAPI),
         (r"/image", ImageAPI),
         (r"/video", VideoAPI),
+        (r"/new-dataset-name", NewDatasetName),
         (r"/start-car-video", StartCarVideo),
         (r"/stop-car-video", StopCarVideo),
         (r"/video-health-check", VideoHealthCheck),
