@@ -712,8 +712,8 @@ function showDriveButtonsRow(){
     driveButtonsRow.style.display = 'flex';
 }
 
-async function makeNewDataset(){
-    recordingDataset = await getNewDatasetName();
+function makeNewDataset(){
+    recordingDataset = getNewDatasetName();
     recordingRecordId = 0;
 }
 
@@ -836,8 +836,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const driveVehicleButton = document.getElementById("drive-vehicle-button");
-    driveVehicleButton.onclick = function(){
-        makeNewDataset();
+    driveVehicleButton.onclick = async function(){
+        await makeNewDataset();
         startCarVideo();
         const videoHeathCheckLoop = setInterval(async function(){
             const isHealthy = await videoHealthCheck();
@@ -959,7 +959,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const makeNewDatasetButton = document.querySelector('span#makeNewDatasetButton');
     makeNewDatasetButton.onclick = async function(){
-        makeNewDataset();
+        await makeNewDataset();
         console.log(recordingDataset);
     }
 
