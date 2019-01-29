@@ -65,8 +65,6 @@ function captureDeviceOrientation(event) {
     if(initialBeta == null){
         console.log('is null')
         initialBeta = beta;
-        const test = document.querySelector('span#driveVehicleHeaderDatasetId')
-        test.textContent = initialBeta;
         /*
         If initialBeta is not set, then there is no meaningful
         speed measurement for this iteration, so you should
