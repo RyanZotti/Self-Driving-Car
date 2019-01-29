@@ -56,7 +56,7 @@ class NewDatasetName(tornado.web.RequestHandler):
         day = str(now.day)
         if len(day) == 1:
             day = '0' + day
-        name = 'dataset_{id}_{year}_{month}_{day}'.format(
+        name = 'dataset_{id}_{year}-{month}-{day}'.format(
             id=id,
             year=year,
             month=month,
