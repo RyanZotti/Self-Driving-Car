@@ -7,7 +7,7 @@ from os.path import dirname, join, basename
 import numpy as np
 from random import shuffle
 import re
-from util import get_sql_rows, execute_sql
+from util import get_sql_rows, execute_sql, mkdir
 from shutil import rmtree
 
 
@@ -28,9 +28,9 @@ class RecordReader(object):
         ----------
         base_directory : string
             The absolute path to the directory immediately above the
-            dataset folders. For example /root/data. RecordReader expects
-            to find folders like dataset_1_18-04-15, dataset_1_18-04-15,
-            etc. in the base directory that you specify
+            dataset folders. If you have datasets like /root/data/dataset_1_18-04-15
+            and /root/data/dataset_1_18-04-15, then your base_directory
+            should be /root/data
         batch_size : int
             Number of records per batch. Defaults to 50 records
         overfit : boolean
@@ -218,6 +218,55 @@ class RecordReader(object):
             first_row = rows[0]
             is_on = first_row['is_on']
         return is_on
+
+    def write_new_record(self,dataset_name, record_id, angle, throttle, image):
+        dataset_path = join(self.base_directory, dataset_name)
+        mkdir(dataset_path)  # Does not make dir if already exists
+        image_file = '{record_id}_cam-image_array_.png'.format(
+            record_id=record_id
+        )
+        image_path = join(dataset_path, image_file)
+        cv2.imwrite(image_path, image)
+        label_file = 'record_{id}.json'.format(
+            id=record_id
+        )
+        label_path = join(dataset_path, label_file)
+        # TODO: Stop writing label files once everything reads from DB
+        label_content = {
+            "cam/image_array":image_path,
+            "user/throttle": throttle,
+            "user/angle": angle
+        }
+        with open(label_path, 'w') as label_writer:
+            json.dump(label_content, label_writer)
+        sql_query = '''
+            BEGIN;
+            INSERT INTO records (
+                dataset,
+                record_id,
+                label_path,
+                image_path,
+                angle,
+                throttle
+            )
+            VALUES (
+               '{dataset}',
+                {record_id},
+               '{label_path}',
+               '{image_path}',
+                {angle},
+                {throttle}
+            );
+            COMMIT;
+        '''.format(
+            dataset=dataset_name,
+            record_id=record_id,
+            label_path=label_path,
+            image_path=image_path,
+            angle=angle,
+            throttle=throttle
+        )
+        execute_sql(sql_query)
 
     def get_dataset_selections(self, dataset_type):
         """
