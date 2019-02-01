@@ -1,0 +1,19 @@
+FROM ubuntu:18.04
+
+RUN apt-get update -y
+RUN apt-get install -y wget vim
+
+RUN wget https://repo.continuum.io/archive/Anaconda3-2018.12-Linux-x86_64.sh -P /root
+RUN bash /root/Anaconda3-2018.12-Linux-x86_64.sh -b
+ENV PATH=/root/anaconda3/bin:$PATH
+
+COPY ./ /root/ai/
+
+RUN conda env create -f /root/ai/conda.yml
+RUN echo "source activate ai" > ~/.bashrc
+
+ENV PATH /root/anaconda3/envs/ai/bin:$PATH
+
+# For access to the repo's functions
+ENV PYTHONPATH=$PYTHONPATH:/root
+

@@ -5,7 +5,7 @@ from pprint import pprint
 
 
 # Successfully reads an image
-path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/dataset_1_18-04-15/4287_cam-image_array_.jpg'
+path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper-backup/old-data/dataset_2_18-04-15/845_cam-image_array_.jpg'
 image = cv2.imread(path,1)
 #cv2.imshow('a', image)
 #cv2.waitKey(0)
@@ -15,7 +15,7 @@ image = cv2.imread(path,1)
 # This fixes error: AttributeError: 'numpy.ndarray' object has no attribute 'read'
 img = cv2.imencode('.jpg', image)[1].tostring()
 
-url = 'http://localhost:8888/predict'
+url = 'http://Ryans-MacBook-Pro.local:8885/predict'
 files = {'image': img}
 request = requests.post(url, files=files)
 
