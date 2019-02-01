@@ -1,5 +1,6 @@
 import os
 import psycopg2
+import psycopg2.extras
 import re
 import subprocess
 import tensorflow as tf
