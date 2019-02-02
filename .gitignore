@@ -7,3 +7,4 @@ video_timestamps.txt
 data-proc/dist/assets/libs
 data-proc/src/.tmp/
 node_modules
+*.DS_Store
