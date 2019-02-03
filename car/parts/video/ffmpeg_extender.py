@@ -17,7 +17,7 @@ from threading import Thread
 def live_video_stream(ip):
     # The `with` closes the stream
     # https://stackoverflow.com/questions/1522636/should-i-call-close-after-urllib-urlopen
-    with contextlib.closing(urllib.request.urlopen('http://{ip}:8090/video'.format(ip=ip))) as stream:
+    with contextlib.closing(urllib.request.urlopen('http://{ip}:8090/test.mjpg'.format(ip=ip))) as stream:
 
         opencv_bytes = bytes()
         """
