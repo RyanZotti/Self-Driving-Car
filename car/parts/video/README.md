@@ -7,9 +7,12 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	# Pull the image
 	docker pull ryanzotti/ffmpeg:latest
 	
+	# Remove any legacy version of the containers
+	docker rm -f ffmpeg
+
 	# Run the image
 	docker run -t -d -i --device=/dev/video0 --network host --name ffmpeg ryanzotti/ffmpeg:latest
-	
+
 	# Stop the image
 	docker rm -f ffmpeg
 
@@ -20,5 +23,6 @@ Over time this build will inevitably fail as dependencies are deprecated and no 
 	# Build the image
 	docker build -t ryanzotti/ffmpeg:latest .
 	
-	# Run the image
-	docker run -t -i --device=/dev/video0 --network host ryanzotti/ffmpeg:latest
+	# Push the image
+	docker login
+	docker push ryanzotti/ffmpeg:latest
