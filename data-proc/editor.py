@@ -82,16 +82,30 @@ class UpdateDriveState(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def send_drive_state(self, json_input):
-        print(json_input)
-        #requests.post(
-        #    # TODO: Get the Pi's AI port from Postgres
-        #    'http://ryanzotti.local:8884/drive',
-        #    json=json.dumps(json_input)
-        #)
+        is_recording = json_input['recording']
+        if is_recording == True:
+            image = one_frame_from_stream(
+                ip=self.application.pi_host,
+                port=8091
+            )
+            record_id = json_input['record_id']
+            angle = json_input['angle']
+            throttle = json_input['throttle']
+            dataset = json_input['dataset']
+            self.application.record_reader.write_new_record(
+                dataset_name=dataset,
+                record_id=record_id,
+                angle=angle,
+                throttle=throttle,
+                image=image
+            )
+            print('saved!'+str(json_input))
+        # TODO: Send brake, drive-mode details to Pi even if not recording
         return {}
 
     @tornado.gen.coroutine
     def post(self):
+        print('event!')
         json_input = tornado.escape.json_decode(self.request.body)
         result = yield self.send_drive_state(json_input=json_input)
         self.write(result)
@@ -843,7 +857,7 @@ class VideoAPI(tornado.web.RequestHandler):
         my_boundary = "--boundarydonotcross"
 
         # TODO: Remove this hardcoded URL
-        for frame in live_video_stream('ryanzotti.local'):
+        for frame in live_video_stream('ryanzotti.local',port=8091):
 
             interval = .1
             if self.served_image_timestamp + interval < time.time():
@@ -948,7 +962,7 @@ class VideoHealthCheck(tornado.web.RequestHandler):
             # Check if ffmpeg is accepting connections
             # TODO: Remove hard-coded IP
             ip = 'ryanzotti.local'
-            stream = urllib.request.urlopen('http://{ip}:8090/test.mjpg'.format(ip=ip))
+            stream = urllib.request.urlopen('http://{ip}:8091/video'.format(ip=self.application.pi_host))
             return {'is_running': True}
         except:
             return {'is_running': False}
@@ -1354,5 +1368,7 @@ if __name__ == "__main__":
     app.model_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data/tf_visual_data/runs/1'
     app.record_reader = RecordReader(base_directory=app.data_path,overfit=False)
     app.angle_only = args['angle_only']
+    # TODO: Remove hard-coded Pi host
+    app.pi_host = 'ryanzotti.local'
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()
