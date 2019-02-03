@@ -36,7 +36,7 @@ function betaToSpeed(beta){
 }
 
 function updateDriveState(userSteering, userSpeed, driveMode, isRecording, isBrakeOn, speedMultiplier){
-    if (isRecording == True){
+    if (isRecording == true){
         recordingRecordId = recordingRecordId + 1;
     }
     data = JSON.stringify({
@@ -63,7 +63,6 @@ function captureDeviceOrientation(event) {
     reset to null when the user clicks the close modal window button
     */
     if(initialBeta == null){
-        console.log('is null')
         initialBeta = beta;
         /*
         If initialBeta is not set, then there is no meaningful
