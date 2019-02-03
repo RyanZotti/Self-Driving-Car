@@ -4,7 +4,7 @@
 # producing errors if the does not exist
 rm -f home/pi/ffmpeg-logs.txt
 
-COMMAND="ffmpeg -v verbose -r 5 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost:8090/feed1.ffm"
+COMMAND="ffmpeg -v verbose -r 10 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost:8090/feed1.ffm"
 
 # In order for the check on $? to be meaningful
 # you have to first run the command before
