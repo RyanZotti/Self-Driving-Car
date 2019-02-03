@@ -10,8 +10,10 @@ from util import *
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--ip_address", required=True, help="Raspberry Pi ip address")
+ap.add_argument("--port", required=True, help="ffmpeg port")
 args = vars(ap.parse_args())
 ip = args['ip_address']
+port = args['port']
 
-for frame in live_video_stream(ip):
+for frame in live_video_stream(ip=ip,port=port):
     cv2.imshow('frame', frame)
