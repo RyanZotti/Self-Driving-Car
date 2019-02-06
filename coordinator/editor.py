@@ -566,28 +566,13 @@ class DeployModel(tornado.web.RequestHandler):
         crop_factor = 2
 
         # Kill any currently running model API
-
-        process_id = -1
         try:
-            endpoint = 'http://localhost:{port}/laptop-model-api-health'.format(
-                port=port
+            process = subprocess.Popen(
+                'docker rm -f laptop-predict',
+                shell=True
             )
-            request = requests.post(endpoint)
-            response = json.loads(request.text)
-            process_id = response['process_id']
         except:
             pass # Most likely means API is not up
-        if process_id > -1:
-            process = subprocess.Popen(
-                args=[
-                    'docker',
-                    'rm',
-                    '-f',
-                    'laptop-predict'
-                ],
-                shell=False
-            )
-
 
         # TODO: Remove hard-coded model ID
         model_id = 1
@@ -606,8 +591,8 @@ class DeployModel(tornado.web.RequestHandler):
             '-i',
             '-d',
             '-t',
-            '--network',
-            'host',
+            '-p',
+            str(port)+':8885',
             '--volume',
             checkpoint_directory+':/root/ai/model-archives/model/checkpoints',
             '--name',
