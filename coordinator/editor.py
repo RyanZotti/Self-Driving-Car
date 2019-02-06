@@ -15,7 +15,7 @@ import tornado.websocket
 import requests
 import json
 import signal
-from util import *
+from coordinator.utilities import *
 import json
 import traceback
 from concurrent.futures import ThreadPoolExecutor

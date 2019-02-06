@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 import os
 import psycopg2
 import psycopg2.extras
-from util import get_sql_rows
+from coordinator.utilities import *
 
 
 # A single place for all connection related details
