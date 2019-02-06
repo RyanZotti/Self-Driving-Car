@@ -557,15 +557,37 @@ class DeployModel(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def deploy_model(self):
 
+        # TODO: Don't hardcode checkpoint_directory. Get from DB
+        checkpoint_directory = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data/tf_visual_data/runs/1/checkpoints'
+        # TODO: Don't hardcode any of these things
+        port = 8885
+        image_scale = 0.125
+        angle_only = 'y'
+        crop_factor = 2
+
         # Kill any currently running model API
-        endpoint = 'http://localhost:{port}/laptop-model-api-health'.format(
-            port=self.application.port
-        )
-        request = requests.post(endpoint)
-        response = json.loads(request.text)
-        process_id = response['process_id']
+
+        process_id = -1
+        try:
+            endpoint = 'http://localhost:{port}/laptop-model-api-health'.format(
+                port=port
+            )
+            request = requests.post(endpoint)
+            response = json.loads(request.text)
+            process_id = response['process_id']
+        except:
+            pass # Most likely means API is not up
         if process_id > -1:
-            os.kill(process_id, signal.SIGTERM)
+            process = subprocess.Popen(
+                args=[
+                    'docker',
+                    'rm',
+                    '-f',
+                    'laptop-predict'
+                ],
+                shell=False
+            )
+
 
         # TODO: Remove hard-coded model ID
         model_id = 1
@@ -578,19 +600,29 @@ class DeployModel(tornado.web.RequestHandler):
             model_id=model_id
         )
         epoch = get_sql_rows(sql_query)[0]['epoch']
-        # The & is required or Tornado will get stuck
-        # TODO: Remove the hardcoded script path
-        # If you use subprocess.Open(..., shell=True) then the
-        # subprocess you get back is not useful, it's the process
-        # of a short-termed parent, and the PID you care about is
-        # not always +1 greater than the parent, so it's not reliable
-        # https://stackoverflow.com/questions/7989922/opening-a-process-with-popen-and-getting-the-pid#comment32785237_7989922
-        # Using shell=False and passing the arg list works though
-        # Need to export python path from Terminal or CLI will die
-        # export PYTHONPATH=${PYTHONPATH}:/Users/ryanzotti/Documents/repos/Self-Driving-Car/
         command_list = [
+            'docker',
+            'run',
+            '-i',
+            '-d',
+            '-t',
+            '--network',
+            'host',
+            '--volume',
+            checkpoint_directory+':/root/ai/model-archives/model/checkpoints',
+            '--name',
+            'laptop-predict',
+            'ryanzotti/ai-laptop:latest',
             'python',
-            '/Users/ryanzotti/Documents/repos/Self-Driving-Car/car/parts/web/server/ai.py',
+            '/root/ai/microservices/predict.py',
+            '--port',
+            str(port),
+            '--image_scale',
+            str(image_scale),
+            '--angle_only',
+            angle_only,
+            '--crop_factor',
+            str(crop_factor),
             '--model_id',
             str(model_id),
             '--epoch',

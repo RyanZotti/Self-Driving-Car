@@ -7,26 +7,30 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	# Pull the image
 	docker pull ryanzotti/ai:latest
 	
-	# Train a model
-	docker run -t --network host ryanzotti/ai:latest \
-	  python /root/ai/microservices/tiny_cropped_angle_model.py \
-        --datapath /root/data \
-        --epochs 100 \
-        --show_speed 'N' \
-        --save_to_disk 'N' \
-        --image_scale 0.125 \
-        --s3_bucket self-driving-car \
-        --crop_factor 2
+	# Deploy a model to your laptop for predictions
+	CHECKPOINT_DIRECTORY='/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data/tf_visual_data/runs/1/checkpoints'
+	docker run -i -d -t \
+	  --network host \
+	  --volume $CHECKPOINT_DIRECTORY:/root/ai/model-archives/model/checkpoints \
+	  --name laptop-predict \
+	  ryanzotti/ai-laptop:latest \
+	  python /root/ai/microservices/predict.py \
+	    --port 8885 \
+	    --image_scale 0.125 \
+	    --angle_only 'y' \
+	    --crop_factor 2 \
+	    --model_id 1 \
+	    --epoch 151
 	
 	# Stop the image
-	docker rm -f ffmpeg
+	docker rm -f laptop-predict
 
 ### Build
 
-Over time this build will inevitably fail as dependencies are deprecated and no longer hosted. Therefore Ryan plans to build once and only once. All subsequent uses should pull from the one successful build of the image that is stored on Docker Hub. Nonetheless, if you still would like to proceed with your own build, then navigate to the directory that contains this `README.md` file and follow the steps below.
+There are two separate images: one for the laptop and another for the Pi. Unfortunately I can't unify them into the same image because the software runs on separate architectures (x86-64 vs ARM).
 
-	# Build the image
-	docker build -t ryanzotti/ai:latest . -f Dockerfile.laptop
-	
-	# Run the image
-	docker run -t -i --device=/dev/video0 --network host ryanzotti/ffmpeg:latest
+	# Build the laptop image (for training or predicting)
+	docker build -t ryanzotti/ai-laptop:latest . -f Dockerfile.laptop
+
+	# Build the pi image (only for predicting)
+	docker build -t ryanzotti/ai-pi:latest . -f Dockerfile.pi
