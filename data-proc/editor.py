@@ -780,8 +780,7 @@ class ListReviewDatasets(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def get_review_datasets(self):
-        folder_file_paths = self.application.record_reader.folders
-        dataset_names = self.application.record_reader.get_dataset_names(folder_file_paths)
+        dataset_names = self.application.record_reader.get_dataset_names()
         results = {
             'datasets': dataset_names
         }

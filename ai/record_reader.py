@@ -619,11 +619,18 @@ class RecordReader(object):
 
     # Used by editor API to show editable datasets
     # This also returns the datasets in order
-    def get_dataset_names(self,file_paths):
+    def get_dataset_names(self):
         ordered_datasets = []
         id_to_dataset = {}
-        for file_path in file_paths:
-            dataset = basename(file_path)
+        sql_query = '''
+            SELECT DISTINCT
+              dataset
+            FROM records
+            ORDER BY dataset ASC
+        '''
+        rows = get_sql_rows(sql=sql_query)
+        for row in rows:
+            dataset = row['dataset']
             number = int(re.search(r'(?<=dataset_)([0-9]*)(?=_)', dataset).group(1))
             id_to_dataset[number] = dataset
         sorted_tuples = sorted(id_to_dataset.items(), key=operator.itemgetter(0))
