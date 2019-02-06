@@ -460,8 +460,8 @@ class SaveRecordToDB(tornado.web.RequestHandler):
     @tornado.gen.coroutine
     def post(self):
         json_input = tornado.escape.json_decode(self.request.body)
-        result = self.save_record_to_db(json_input=json_input)
-        self.write(result)
+        _ = self.save_record_to_db(json_input=json_input)
+        self.write({})
 
 class IsRecordAlreadyFlagged(tornado.web.RequestHandler):
 
