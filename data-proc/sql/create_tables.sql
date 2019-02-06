@@ -1,6 +1,6 @@
 BEGIN;
 CREATE TABLE IF NOT EXISTS live_prediction_sync(
-  dataset character(100),
+  dataset varchar(100),
   pid int,
   start_time TIMESTAMP,
 PRIMARY KEY(dataset));
@@ -8,7 +8,7 @@ COMMIT;
 
 BEGIN;
 CREATE TABLE IF NOT EXISTS predictions(
-  dataset character(100),
+  dataset varchar(100),
   record_id INT,
   model_id INT,
   epoch INT,
@@ -35,10 +35,10 @@ COMMIT;
 
 BEGIN;
 CREATE TABLE IF NOT EXISTS records(
-    dataset character(100),
+    dataset varchar(100),
     record_id INT,
-    label_path character(300),
-    image_path character(300),
+    label_path varchar(300),
+    image_path varchar(300),
     angle float8,
     throttle float8,
     is_flagged BOOLEAN DEFAULT FALSE,
