@@ -1,7 +1,7 @@
 FROM ubuntu:18.04
 
 RUN apt-get update -y
-RUN apt-get install -y wget vim
+RUN apt-get install -y wget vim netcat net-tools
 
 RUN wget https://repo.continuum.io/archive/Anaconda3-2018.12-Linux-x86_64.sh -P /root
 RUN bash /root/Anaconda3-2018.12-Linux-x86_64.sh -b
