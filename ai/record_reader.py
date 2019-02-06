@@ -615,7 +615,9 @@ class RecordReader(object):
             FROM records
             WHERE UPPER(dataset) LIKE UPPER('{dataset_name}')
             ORDER BY record_id ASC
-        '''
+        '''.format(
+            dataset_name=dataset_name
+        )
         rows = get_sql_rows(sql=sql_query)
         for row in rows:
             record_id = row['record_id']
