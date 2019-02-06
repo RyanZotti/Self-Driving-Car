@@ -608,7 +608,6 @@ class RecordReader(object):
 
     # Used by editor API to keep track of records via DB
     def get_dataset_record_ids(self,dataset_name):
-        print('get_dataset_record_ids')
         record_ids = []
         sql_query = '''
             SELECT
@@ -625,7 +624,6 @@ class RecordReader(object):
 
     # Used by editor API to keep track of records via filesystem
     def get_dataset_record_ids_filesystem(self, dataset_name):
-        print('get_dataset_record_ids_filesystem')
         dataset_path = join(self.base_directory, dataset_name)
         files = glob.glob(join(dataset_path, 'record*.json'))
         file_numbers = {}
