@@ -11,7 +11,7 @@ from coordinator.utilities import *
 # A single place for all connection related details
 # Storing a password in plain text is bad, but this is for a temp db with default credentials
 def connect_to_postgres(host='localhost'):
-    connection_string = "host='localhost' dbname='cars' user='ryanzotti' password='' port=5432"
+    connection_string = "host='localhost' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
     connection = psycopg2.connect(connection_string)
     cursor = connection.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
     return connection, cursor
