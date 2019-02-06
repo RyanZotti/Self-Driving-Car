@@ -4,7 +4,7 @@ import cv2
 from datetime import datetime
 import time
 import urllib.request
-from car.record_reader import RecordReader
+from ai.record_reader import RecordReader
 import os
 from os.path import dirname
 import numpy as np
