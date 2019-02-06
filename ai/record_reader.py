@@ -606,8 +606,26 @@ class RecordReader(object):
     def get_batches_per_epoch(self):
         return self.batches_per_epoch
 
-    # Used by editor API to keep track of records
+    # Used by editor API to keep track of records via DB
     def get_dataset_record_ids(self,dataset_name):
+        print('get_dataset_record_ids')
+        record_ids = []
+        sql_query = '''
+            SELECT
+              record_id
+            FROM records
+            WHERE UPPER(dataset) LIKE UPPER('{dataset_name}')
+            ORDER BY record_id ASC
+        '''
+        rows = get_sql_rows(sql=sql_query)
+        for row in rows:
+            record_id = row['record_id']
+            record_ids.append(record_id)
+        return record_ids
+
+    # Used by editor API to keep track of records via filesystem
+    def get_dataset_record_ids_filesystem(self, dataset_name):
+        print('get_dataset_record_ids_filesystem')
         dataset_path = join(self.base_directory, dataset_name)
         files = glob.glob(join(dataset_path, 'record*.json'))
         file_numbers = {}
@@ -631,6 +649,18 @@ class RecordReader(object):
         rows = get_sql_rows(sql=sql_query)
         for row in rows:
             dataset = row['dataset']
+            number = int(re.search(r'(?<=dataset_)([0-9]*)(?=_)', dataset).group(1))
+            id_to_dataset[number] = dataset
+        sorted_tuples = sorted(id_to_dataset.items(), key=operator.itemgetter(0))
+        for number, dataset in sorted_tuples:
+            ordered_datasets.append(dataset)
+        return ordered_datasets
+
+    def get_dataset_names_filesystem(self, file_paths):
+        ordered_datasets = []
+        id_to_dataset = {}
+        for file_path in file_paths:
+            dataset = basename(file_path)
             number = int(re.search(r'(?<=dataset_)([0-9]*)(?=_)', dataset).group(1))
             id_to_dataset[number] = dataset
         sorted_tuples = sorted(id_to_dataset.items(), key=operator.itemgetter(0))

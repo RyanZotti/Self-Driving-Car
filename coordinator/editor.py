@@ -99,13 +99,11 @@ class UpdateDriveState(tornado.web.RequestHandler):
                 throttle=throttle,
                 image=image
             )
-            print('saved!'+str(json_input))
         # TODO: Send brake, drive-mode details to Pi even if not recording
         return {}
 
     @tornado.gen.coroutine
     def post(self):
-        print('event!')
         json_input = tornado.escape.json_decode(self.request.body)
         result = yield self.send_drive_state(json_input=json_input)
         self.write(result)
@@ -286,6 +284,75 @@ class Keep(tornado.web.RequestHandler):
         yield self.keep(json_input=json_input)
 
 
+class DatasetRecordIdsAPIFileSystem(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_record_ids(self,json_input):
+        dataset_name = json_input['dataset']
+        dataset_type = json_input['dataset_type']
+        if dataset_type.lower() in ['import', 'review', 'flagged']:
+            if dataset_type.lower() == 'import':
+                # TODO: Change to point to real import datasets
+                path_id_pairs = self.application.record_reader.get_dataset_record_ids_filesystem(dataset_name)
+            elif dataset_type.lower() == 'review':
+                path_id_pairs = self.application.record_reader.get_dataset_record_ids_filesystem(dataset_name)
+            elif dataset_type.lower() == 'flagged':
+                path_id_pairs = self.application.record_reader.get_dataset_record_ids_filesystem(dataset_name)
+            else:
+                print('Unknown dataset_type: ' + dataset_type)
+            record_ids = []
+            for pair in path_id_pairs:
+                path, record_id = pair
+                record_ids.append(record_id)
+            result = {
+                'record_ids': record_ids
+            }
+            return result
+        elif dataset_type.lower() == 'critical-errors':
+            record_ids = []
+            sql_query = '''
+                DROP TABLE IF EXISTS latest_deployment;
+                CREATE TEMP TABLE latest_deployment AS (
+                  SELECT
+                    model_id,
+                    epoch
+                  FROM deploy
+                  ORDER BY TIMESTAMP DESC
+                  LIMIT 1
+                );
+
+                SELECT
+                  records.record_id
+                FROM records
+                LEFT JOIN predictions
+                  ON records.dataset = predictions.dataset
+                    AND records.record_id = predictions.record_id
+                LEFT JOIN latest_deployment AS deploy
+                  ON predictions.model_id = deploy.model_id
+                    AND predictions.epoch = deploy.epoch
+                WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%')
+                  AND ABS(records.angle - predictions.angle) >= 0.8
+                ORDER BY record_id ASC
+                '''.format(dataset=dataset_name)
+            rows = get_sql_rows(sql_query)
+            for row in rows:
+                record_id = row['record_id']
+                record_ids.append(record_id)
+            result = {
+                'record_ids': record_ids
+            }
+            return result
+        else:
+            print('Unknown dataset_type: ' + dataset_type)
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.get_record_ids(json_input=json_input)
+        self.write(result)
+
 class DatasetRecordIdsAPI(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -297,18 +364,15 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
         if dataset_type.lower() in ['import', 'review', 'flagged']:
             if dataset_type.lower() == 'import':
                 # TODO: Change to point to real import datasets
-                path_id_pairs = self.application.record_reader.get_dataset_record_ids(dataset_name)
+                ids = self.application.record_reader.get_dataset_record_ids(dataset_name)
             elif dataset_type.lower() == 'review':
-                path_id_pairs = self.application.record_reader.get_dataset_record_ids(dataset_name)
+                ids = self.application.record_reader.get_dataset_record_ids(dataset_name)
             elif dataset_type.lower() == 'flagged':
-                path_id_pairs = self.application.record_reader.get_flagged_record_ids(dataset_name)
+                ids = self.application.record_reader.get_dataset_record_ids(dataset_name)
             else:
                 print('Unknown dataset_type: ' + dataset_type)
-                # Comes in list of tuples: (/path/to/record, record_id), but
-            # we don't want to show paths to the user b/e it's ugly
             record_ids = []
-            for pair in path_id_pairs:
-                path, record_id = pair
+            for record_id in ids:
                 record_ids.append(record_id)
             result = {
                 'record_ids': record_ids
@@ -412,7 +476,6 @@ class SaveRecordToDB(tornado.web.RequestHandler):
         try:
             dataset_name = json_input['dataset']
             record_id = json_input['record_id']
-
             label_path = self.application.record_reader.get_label_path(
                 dataset_name=dataset_name,
                 record_id=record_id
@@ -790,6 +853,28 @@ class ListReviewDatasets(tornado.web.RequestHandler):
     def get(self):
         results = yield self.get_review_datasets()
         self.write(results)
+
+
+class ListReviewDatasetsFileSystem(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_review_datasets(self):
+        folder_file_paths = self.application.record_reader.folders
+        dataset_names = self.application.record_reader.get_dataset_names_filesystem(
+            file_paths=folder_file_paths
+        )
+        results = {
+            'datasets': dataset_names
+        }
+        return results
+
+    @tornado.gen.coroutine
+    def get(self):
+        results = yield self.get_review_datasets()
+        self.write(results)
+
 
 
 class ImageAPI(tornado.web.RequestHandler):
@@ -1294,6 +1379,7 @@ def make_app():
         (r"/video-health-check", VideoHealthCheck),
         (r"/update-drive-state", UpdateDriveState),
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
+        (r"/dataset-record-ids-filesystem", DatasetRecordIdsAPIFileSystem),
         (r"/laptop-model-api-health", LaptopModelDeploymentHealth),
         (r"/delete",DeleteRecord),
         (r"/save-reocord-to-db", SaveRecordToDB),
@@ -1302,6 +1388,7 @@ def make_app():
         (r"/add-flagged-record", Keep),
         (r"/list-import-datasets", ListReviewDatasets),
         (r"/list-review-datasets", ListReviewDatasets),
+        (r"/list-datasets-filesystem", ListReviewDatasetsFileSystem),
         (r"/image-count-from-dataset", ImageCountFromDataset),
         (r"/is-record-already-flagged", IsRecordAlreadyFlagged),
         (r"/dataset-id-from-dataset-name", DatasetIdFromDataName),

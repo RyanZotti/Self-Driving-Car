@@ -204,9 +204,29 @@ function getDatasetRecordIds(datasetType, dataset) {
     });
 }
 
+function getDatasetRecordIdsFileSystem(datasetType, dataset) {
+    return new Promise(function(resolve, reject){
+        data = JSON.stringify({
+            'dataset': dataset,
+            'dataset_type':datasetType
+        })
+        $.post('/dataset-record-ids-filesystem', data, function(result){
+            resolve(result.record_ids);
+        });
+    });
+}
+
 function listDatasets(){
     return new Promise(resolve => {
         $.get("/list-review-datasets",(response) => {
+            resolve(response.datasets);
+        });
+    });
+}
+
+function listDatasetsFileSystem(){
+    return new Promise(resolve => {
+        $.get("/list-datasets-filesystem",(response) => {
             resolve(response.datasets);
         });
     });
@@ -259,9 +279,9 @@ function datasetPredictionSyncPercent(dataset){
 // everything in parallel causes some records to be
 // dropped in Chrome
 async function saveAllRecordsToDB(){
-    const datasets = await listDatasets();
+    const datasets = await listDatasetsFileSystem();
     for (const dataset of datasets){
-        const recordIds = await getDatasetRecordIds(
+        const recordIds = await getDatasetRecordIdsFileSystem(
             'review',
             dataset
         );

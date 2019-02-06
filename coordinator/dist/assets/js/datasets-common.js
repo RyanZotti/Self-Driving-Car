@@ -77,3 +77,20 @@ function loadDatasetMetadata() {
         });
     });
 }
+
+function loadDatasetMetadataFileSystem() {
+    return new Promise(function(resolveLoad, reject) {
+        $.get( "/list-datasets-filesystem").then(function(response){
+            return response.datasets;
+        }).then(function(datasets){
+            let allMetadata = datasets.map(function (dataset) {
+                return new Promise(function (resolve) {
+                  resolve(getDatasetMetadata("review",dataset));
+                });
+            });
+            Promise.all(allMetadata).then(function() {
+                resolveLoad(allMetadata);
+            });
+        });
+    });
+}
