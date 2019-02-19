@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    @@include("partials/head.html", {
+      "title": "Dashkit"
+    })
+  </head>
+  <body>
+
+    <!-- MODALS
+    ================================================== -->
+    <div class="modal fade" id="modalMembers" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-card card">
+            <div class="card-header">
+              <div class="row align-items-center">
+                <div class="col">
+
+                  <!-- Title -->
+                  <p class="card-header-title" >
+                    <b>Dataset ID:</b>
+                    <span id="playModalHeaderDatasetId"></span>
+                    <b>Record ID:</b>
+                    <span id="playModalHeaderRecordId"></span>
+                  </p>
+
+                </div>
+                <div class="col-auto">
+
+                  <!-- Close -->
+                  <button type="button" class="close" data-dismiss="modal" id="closeModal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+
+                </div>
+              </div> <!-- / .row -->
+            </div>
+            <div class="card-body" style="padding-top: 1.5rem; padding-bottom: 0rem;">
+              <div class="row">
+                <div class="col-3 text-center">
+                  Speed
+                </div>
+                <div class="col-3 text-center">
+                  Human
+                </div>
+                <div class="col-3 text-center">
+                  AI
+                </div>
+                <div class="col-3 text-center">
+                  Error
+                </div>
+              </div>
+              <div class="row align-items-center" style="padding: 0.5rem">
+                <div class="col-3">
+                  <div class="progress progress-bar-vertical">
+                    <div id="speedBar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+                </div>
+                <div class="chart-container col-3" style="position: relative; height:5vh; width:10vw">
+                  <canvas id="humanAngleDonut" class="chart-canvas"></canvas>
+                </div>
+                <div class="chart-container col-3" style="position: relative; height:5vh; width:10vw">
+                  <canvas id="aiAngleDonut" class="chart-canvas"></canvas>
+                </div>
+                <div class="col-3">
+                  <div class="progress progress-bar-vertical">
+                    <div id="errorBar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div id="speedText" class="col-3 text-center">
+                </div>
+                <div id="humanSteeringText" class="col-3 text-center">
+                </div>
+                <div id="aiSteeringText" class="col-3 text-center">
+                </div>
+                <div id="errorText" class="col-3 text-center">
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="row justify-content-md-center">
+                <div class="col-md-auto">
+                  <img id="mpeg-image" style="display: block; margin-left: auto; margin-right: auto;">
+                </div>
+              </div>
+              <div class="row mt-3">
+                <div class="col">
+                    <div class="progress progress-sm">
+                        <div class="progress-bar" id="videoModalProgressBar" role="progressbar" style="width: 0%" aria-valuenow="29" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+              </div>
+              <div class="row mt-3">
+                <div class="col-1">
+                  <span style="width:1em">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rotate-ccw">
+                        <polyline points="1 4 1 10 7 10">
+                        </polyline>
+                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10">
+                        </path>
+                        <text x="0.0em" dx="0.75em" y="1.15em" dy="0.5em" stroke-width="0.75" fill="black" style="font-size:0.6em; font-family:Arial">15</text>
+                    </svg>
+                  </span>
+                </div>
+                <div class="col-1">
+                  <span style="width:1em">
+                    <object type="image/svg+xml" data="image.svg">
+                      <img id="modalPlayPauseButton" src="assets/img/icons/play.svg" />
+                    </object>
+                  </span>
+                </div>
+                <div class="col-1">
+                  <input type="checkbox" class="iconCheckBox" id="isFlaggedCheckBox" >
+                  <label for="isFlaggedCheckBox">
+                    <!--
+                    Javascript can't update style of an SVG if it's an object:
+                    https://stackoverflow.com/questions/4906148/how-to-apply-a-style-to-an-embedded-svg
+                    https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Adding_vector_graphics_to_the_Web
+                    -->
+                    <span style="width:1em">
+                      <svg id="isFlagged" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="None" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-flag" style="width: 2em;">
+                          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z">
+                          </path>
+                          <line x1="4" y1="22" x2="4" y2="15">
+                          </line>
+                      </svg>
+                    </span>
+                  </label>
+                </div>
+                <div class="col-1">
+                  <span style="width:1em" id="fastForwardFlag">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rotate-cw"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#E53757" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="feather feather-flag" style="width: 2em;" x="6" y="6">
+                          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                          <line x1="4" y1="22" x2="4" y2="15"></line>
+                      </svg>
+                    </svg>
+                  </span>
+                </div>
+                <div class="col-1">
+                  <span style="width:1em">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rotate-cw"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                      <svg xmlns="http://www.w3.org/2000/svg" style="width:0.5em" width="12" height="12" viewBox="0 0 24 24" fill="#F6EA00" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-triangle" x="6" y="5">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12" y2="17"></line>
+                      </svg>
+                    </svg>
+                  </span>
+                </div>
+                <div class="col-1">
+                  <span style="width:1em">
+                    <object type="image/svg+xml" data="image.svg">
+                      <img id="modalTrashButton" src="assets/img/icons/trash-2.svg" />
+                    </object>
+                  </span>
+                </div>
+                <div class="col text-right">
+                    <span class="text-muted">
+                      Pause Mistakes:
+                    </span>
+                </div>
+                <div>
+                  <!-- Toggle -->
+                  <div class="custom-control custom-checkbox-toggle">
+                    <input type="checkbox" class="custom-control-input" id="pauseOnMistakeToggle">
+                    <label class="custom-control-label" for="pauseOnMistakeToggle"></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR
+    ================================================== -->
+    @@include("partials/sidebar.html", {
+      "category": "pages",
+      "subcategory": "",
+      "page": "orders.html",
+      "user": true
+    })
+
+    <!-- MAIN CONTENT
+    ================================================== -->
+    <div class="main-content">
+      <div class="container-fluid">
+        <div class="row justify-content-center">
+          <div class="col-12 col-lg-10 col-xl-8">
+
+            <!-- Header -->
+            <div class="header mt-md-5">
+              <div class="header-body">
+                <div class="row align-items-center">
+                  <div class="col">
+
+                    <!-- Title -->
+                    <h1 class="header-title">
+                      Raspberry Pi
+                      <span class="raspberry-pi-connection-status text-danger" style="display:none">&nbsp; ●</span>
+                    </h1>
+
+                  </div>
+                </div> <!-- / .row -->
+
+              </div>
+            </div>
+
+            <!-- Form -->
+            <form oninput="endpoint.value = user.value +'@'+ host.value">
+
+              <div class="row">
+                <div class="col-3 col-md-3">
+                  <div class="form-group">
+                    <label>
+                      Login Name
+                    </label>
+                    <input name="user" type="text" class="form-control raspberry-pi-field" placeholder="pi" column-name="username">
+                  </div>
+                </div>
+                <div class="col-4 col-md-4">
+                  <div class="form-group">
+                    <label>
+                      Host Name
+                    </label>
+                    <input name="host" type="text" class="form-control raspberry-pi-field" placeholder="raspberrypi.local" column-name="hostname">
+                  </div>
+                </div>
+                  <div class="col-3 col-md-3">
+                  <div class="form-group">
+                    <label>
+                      Endpoint
+                    </label>
+                      <output name="endpoint" class="form-text text-muted" style="margin-top:0.5rem">
+                      pi@raspberrypi.local
+                    </output>
+                  </div>
+                </div>
+              </div> <!-- / .row -->
+            </form>
+            <form class="mb-5">
+              <div class="row">
+                <div class="col-12 col-md-6">
+                  <div class="form-group">
+                    <label>
+                      Password
+                    </label>
+                    <input type="password" class="form-control raspberry-pi-field" column-name="password">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12 col-md-12">
+                  <div class="form-group">
+                    <label>
+                      Git Repo Location
+                    </label>
+                    <input type="text" class="form-control raspberry-pi-field" placeholder="~/" column-name="git_repo_parent_path">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12 col-md-12">
+                  <div class="form-group">
+                    <label>
+                      Deployed Model Location
+                    </label>
+                    <input type="text" class="form-control raspberry-pi-field" placeholder="~/Self-Driving-Car/car/parts/model/" column-name="deploy_model_parent_path">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12 col-md-12">
+                  <div class="form-group">
+                    <label>
+                      Datasets Location
+                    </label>
+                    <input type="text" class="form-control raspberry-pi-field" placeholder="~/Self-Driving-Car/car/templates/data/" column-name="datasets_parent_path">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12 col-md-6">
+                  <button id="test-pi-connection-button" type="button" class="btn btn-primary">
+                    Test Connection
+                  </button>
+                </div>
+              </div>
+            </form>
+
+          </div>
+        </div> <!-- / .row -->
+      </div> <!-- / .container-fluid -->
+    </div> <!-- / .main-content -->
+
+    <!-- JAVASCRIPT
+    ================================================== -->
+    @@include("partials/scripts.html")
+
+    <script src="assets/js/raspberrypi.js"></script>
+    <script src="assets/js/common.js"></script>>
+
+  </body>
+</html>
