@@ -12,7 +12,7 @@
     <div class="modal fade" id="modalMembers" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-          <div class="modal-card card">
+          <div class="modal-card card" id="play-modal">
             <div class="card-header">
               <div class="row align-items-center">
                 <div class="col">
@@ -24,7 +24,6 @@
                     <b>Record ID:</b>
                     <span id="playModalHeaderRecordId"></span>
                   </p>
-
                 </div>
                 <div class="col-auto">
 
@@ -51,6 +50,7 @@
                   Error
                 </div>
               </div>
+
               <div class="row align-items-center" style="padding: 0.5rem">
                 <div class="col-3">
                   <div class="progress progress-bar-vertical">
@@ -97,7 +97,7 @@
               </div>
               <div class="row mt-3">
                 <div class="col-1">
-                  <span style="width:1em">
+                  <span style="width:1em" id="rewind">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rotate-ccw">
                         <polyline points="1 4 1 10 7 10">
                         </polyline>
@@ -143,7 +143,7 @@
                   </span>
                 </div>
                 <div class="col-1">
-                  <span style="width:1em">
+                  <button id="fastForwardCriticalError" class="pretty-button" style="width:1em">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rotate-cw"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                       <svg xmlns="http://www.w3.org/2000/svg" style="width:0.5em" width="12" height="12" viewBox="0 0 24 24" fill="#F6EA00" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-triangle" x="6" y="5">
                         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
@@ -151,7 +151,7 @@
                         <line x1="12" y1="17" x2="12" y2="17"></line>
                       </svg>
                     </svg>
-                  </span>
+                  </button>
                 </div>
                 <div class="col-1">
                   <span style="width:1em">
@@ -162,18 +162,634 @@
                 </div>
                 <div class="col text-right">
                     <span class="text-muted">
-                      Pause Mistakes:
+                      Show Cut Image:
                     </span>
                 </div>
                 <div>
                   <!-- Toggle -->
                   <div class="custom-control custom-checkbox-toggle">
-                    <input type="checkbox" class="custom-control-input" id="pauseOnMistakeToggle">
-                    <label class="custom-control-label" for="pauseOnMistakeToggle"></label>
+                    <input type="checkbox" class="custom-control-input" id="show-cut-image">
+                    <label class="custom-control-label" for="show-cut-image"></label>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="modal fade" id="modalDriveVehcile" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-card card" id="drive-vehicle-modal">
+            <div class="card-header">
+              <div class="row align-items-center">
+                <div class="col">
+
+                  <!-- Title -->
+                  <p class="card-header-title" >
+                    <b>Dataset ID:</b>
+                    <span id="driveVehicleHeaderDatasetId"></span>
+                  </p>
+                </div>
+                <div class="col-auto">
+
+                  <!-- Close -->
+                  <button type="button" class="close" data-dismiss="modal" id="closeDriveVehicleModal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+
+                </div>
+              </div> <!-- / .row -->
+            </div>
+            <div class="card-body" style="padding-top: 1.5rem; padding-bottom: 0rem;">
+              <div class="row">
+                <div class="col">
+                  <div id="video-loader">
+                  </div>
+                </div>
+              </div>
+              <div id='drive-metrics-header' class="row" style="display:none;">
+                <div class="col-3"></div>
+                <div class="col-3 text-center">
+                  Speed
+                </div>
+                <div class="col-3 text-center">
+                  Human
+                </div>
+                <div class="col-3"></div>
+              </div>
+
+              <div id='drive-metrics-graphics' class="row align-items-center" style="display:none; padding: 0.5rem">
+                <div class="col-3"></div>
+                <div class="col-3">
+                  <div class="progress progress-bar-vertical">
+                    <div id="driveSpeedBar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+                </div>
+                <div class="chart-container col-3" style="position: relative; height:5vh; width:10vw">
+                  <canvas id="driveHumanAngleDonut" class="chart-canvas"></canvas>
+                </div>
+                <div class="col-3"></div>
+
+              </div>
+              <div id="drive-metrics-text" class="row" style="display:none;">
+                <div class="col-3"></div>
+                <div id="driveSpeedText" class="col-3 text-center">
+                </div>
+                <div id="driveHumanSteeringText" class="col-3 text-center">
+                </div>
+                <div class="col-3"></div>
+
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="row justify-content-md-center">
+                <div id="video-image-container" class="col-md-auto">
+                  <span id='recordingDotAndText' class="text-success" style="position: absolute;margin-right: 1em;margin-top: 1em;right: 1em;display: none;">● Recording</span>
+                </div>
+              </div>
+
+              <div id="driveButtonsRow" style="display:none" class="row mt-3">
+
+                <div id='driveRecordOnColumn' class="col-1">
+                  <span style="width:1em;" id="driveRecordOnButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-video">
+                      <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                      <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                    </svg>
+                  </span>
+                </div>
+
+                <div id="driveRecordOffColumn" style="display:none;" class="col-1">
+                  <span style="width:1em" id="driveRecordOffButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-video-off">
+                      <path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  </span>
+                </div>
+
+                <div class="col-1">
+                  <span style="width:1em" id="makeNewDatasetButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  </span>
+                </div>
+                <div class="col-1">
+                  <span style="width:1em" id="resetDeviceOrientation">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-compass"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                  </span>
+                </div>
+                <div id="applyBrakeColumn" style="display:none;" class="col-1">
+                  <span style="width:1em;" id="applyBrakeButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#E53757" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather feather-octagon">
+                      <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                      <text x="0.7em" dx="0.0em" stroke="#ffffff" y="1.8em" dy="0.5em" stroke-width="0.2" fill="#ffffff" style="font-size:0.4em; font-family:Arial" viewBox="0 0 24 24">
+                        STOP
+                      </text>
+                    </svg>
+                      <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                    </svg>
+                  </span>
+                </div>
+                <div id="releaseBrakeColumn" style="display:inline;" class="col-1">
+                  <span style="width:1em;" id="releaseBrakeButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-power"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                  </span>
+                </div>
+                <div class="col text-right">
+                    <span class="text-muted">
+                      Show Cut Image:
+                    </span>
+                </div>
+                <div>
+                  <!-- Toggle -->
+                  <div class="custom-control custom-checkbox-toggle">
+                    <input type="checkbox" class="custom-control-input" id="drive-show-cut-image">
+                    <label class="custom-control-label" for="show-cut-image"></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Search -->
+    <div class="modal fade" id="sidebarModalSearch" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-vertical" role="document">
+        <div class="modal-content">
+          <div class="modal-body" data-toggle="lists" data-lists-values='["name"]'>
+
+            <!-- Form -->
+            <form class="mb-4">
+              <div class="input-group input-group-merge">
+                <input type="search" class="form-control form-control-prepended search" placeholder="Search">
+                <div class="input-group-prepend">
+                  <div class="input-group-text">
+                    <span class="fe fe-search"></span>
+                  </div>
+                </div>
+              </div>
+            </form>
+
+            <!-- List group -->
+            <div class="my--3">
+              <div class="list-group list-group-flush list">
+                <a href="team-overview.html" class="list-group-item px-0">
+                  <div class="row align-items-center">
+                    <div class="col-auto">
+
+                      <!-- Avatar -->
+                      <div class="avatar">
+                        <img src="assets/img/avatars/teams/team-logo-1.jpg" alt="..." class="avatar-img rounded">
+                      </div>
+
+                    </div>
+                    <div class="col ml--2">
+
+                      <!-- Title -->
+                      <h4 class="text-body mb-1 name">
+                        Airbnb
+                      </h4>
+
+                      <!-- Time -->
+                      <p class="small text-muted mb-0">
+                        <span class="fe fe-clock"></span> <time datetime="2018-05-24">Updated 2hr ago</time>
+                      </p>
+
+                    </div>
+                  </div> <!-- / .row -->
+                </a>
+                <a href="team-overview.html" class="list-group-item px-0">
+                  <div class="row align-items-center">
+                    <div class="col-auto">
+
+                      <!-- Avatar -->
+                      <div class="avatar">
+                        <img src="assets/img/avatars/teams/team-logo-2.jpg" alt="..." class="avatar-img rounded">
+                      </div>
+
+                    </div>
+                    <div class="col ml--2">
+
+                      <!-- Title -->
+                      <h4 class="text-body mb-1 name">
+                        Medium Corporation
+                      </h4>
+
+                      <!-- Time -->
+                      <p class="small text-muted mb-0">
+                        <span class="fe fe-clock"></span> <time datetime="2018-05-24">Updated 2hr ago</time>
+                      </p>
+
+                    </div>
+                  </div> <!-- / .row -->
+                </a>
+                <a href="project-overview.html" class="list-group-item px-0">
+
+                  <div class="row align-items-center">
+                    <div class="col-auto">
+
+                      <!-- Avatar -->
+                      <div class="avatar avatar-4by3">
+                        <img src="assets/img/avatars/projects/project-1.jpg" alt="..." class="avatar-img rounded">
+                      </div>
+
+                    </div>
+                    <div class="col ml--2">
+
+                      <!-- Title -->
+                      <h4 class="text-body mb-1 name">
+                        Homepage Redesign
+                      </h4>
+
+                      <!-- Time -->
+                      <p class="small text-muted mb-0">
+                        <span class="fe fe-clock"></span> <time datetime="2018-05-24">Updated 4hr ago</time>
+                      </p>
+
+                    </div>
+                  </div> <!-- / .row -->
+
+                </a>
+                <a href="project-overview.html" class="list-group-item px-0">
+
+                  <div class="row align-items-center">
+                    <div class="col-auto">
+
+                      <!-- Avatar -->
+                      <div class="avatar avatar-4by3">
+                        <img src="assets/img/avatars/projects/project-2.jpg" alt="..." class="avatar-img rounded">
+                      </div>
+
+                    </div>
+                    <div class="col ml--2">
+
+                      <!-- Title -->
+                      <h4 class="text-body mb-1 name">
+                        Travels & Time
+                      </h4>
+
+                      <!-- Time -->
+                      <p class="small text-muted mb-0">
+                        <span class="fe fe-clock"></span> <time datetime="2018-05-24">Updated 4hr ago</time>
+                      </p>
+
+                    </div>
+                  </div> <!-- / .row -->
+
+                </a>
+                <a href="project-overview.html" class="list-group-item px-0">
+
+                  <div class="row align-items-center">
+                    <div class="col-auto">
+
+                      <!-- Avatar -->
+                      <div class="avatar avatar-4by3">
+                        <img src="assets/img/avatars/projects/project-3.jpg" alt="..." class="avatar-img rounded">
+                      </div>
+
+                    </div>
+                    <div class="col ml--2">
+
+                      <!-- Title -->
+                      <h4 class="text-body mb-1 name">
+                        Safari Exploration
+                      </h4>
+
+                      <!-- Time -->
+                      <p class="small text-muted mb-0">
+                        <span class="fe fe-clock"></span> <time datetime="2018-05-24">Updated 4hr ago</time>
+                      </p>
+
+                    </div>
+                  </div> <!-- / .row -->
+
+                </a>
+                <a href="profile-posts.html" class="list-group-item px-0">
+
+                  <div class="row align-items-center">
+                    <div class="col-auto">
+
+                      <!-- Avatar -->
+                      <div class="avatar">
+                        <img src="assets/img/avatars/profiles/avatar-1.jpg" alt="..." class="avatar-img rounded-circle">
+                      </div>
+
+                    </div>
+                    <div class="col ml--2">
+
+                      <!-- Title -->
+                      <h4 class="text-body mb-1 name">
+                        Dianna Smiley
+                      </h4>
+
+                      <!-- Status -->
+                      <p class="text-body small mb-0">
+                        <span class="text-success">●</span> Online
+                      </p>
+
+                    </div>
+                  </div> <!-- / .row -->
+
+                </a>
+                <a href="profile-posts.html" class="list-group-item px-0">
+
+                  <div class="row align-items-center">
+                    <div class="col-auto">
+
+                      <!-- Avatar -->
+                      <div class="avatar">
+                        <img src="assets/img/avatars/profiles/avatar-2.jpg" alt="..." class="avatar-img rounded-circle">
+                      </div>
+
+                    </div>
+                    <div class="col ml--2">
+
+                      <!-- Title -->
+                      <h4 class="text-body mb-1 name">
+                        Ab Hadley
+                      </h4>
+
+                      <!-- Status -->
+                      <p class="text-body small mb-0">
+                        <span class="text-danger">●</span> Offline
+                      </p>
+
+                    </div>
+                  </div> <!-- / .row -->
+
+                </a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Activity -->
+    <div class="modal fade" id="sidebarModalActivity" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-vertical" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+
+            <!-- Title -->
+            <h4 class="modal-title">
+              Notifications
+            </h4>
+
+            <!-- Close -->
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">
+                &times;
+              </span>
+            </button>
+
+          </div>
+          <div class="modal-body">
+
+            <!-- List group -->
+            <div class="list-group list-group-flush my--3">
+              <a class="list-group-item px-0" href="#!">
+
+                <div class="row">
+                  <div class="col-auto">
+
+                    <!-- Avatar -->
+                    <div class="avatar avatar-sm">
+                      <img src="assets/img/avatars/profiles/avatar-1.jpg" alt="..." class="avatar-img rounded-circle">
+                    </div>
+
+                  </div>
+                  <div class="col ml--2">
+
+                    <!-- Content -->
+                    <div class="small text-muted">
+                      <strong class="text-body">Dianna Smiley</strong> shared your post with <strong class="text-body">Ab Hadley</strong>, <strong class="text-body">Adolfo Hess</strong>, and <strong class="text-body">3 others</strong>.
+                    </div>
+
+                  </div>
+                  <div class="col-auto">
+
+                    <small class="text-muted">
+                      2m
+                    </small>
+
+                  </div>
+                </div> <!-- / .row -->
+
+              </a>
+              <a class="list-group-item px-0" href="#!">
+
+                <div class="row">
+                  <div class="col-auto">
+
+                    <!-- Avatar -->
+                    <div class="avatar avatar-sm">
+                      <img src="assets/img/avatars/profiles/avatar-2.jpg" alt="..." class="avatar-img rounded-circle">
+                    </div>
+
+                  </div>
+                  <div class="col ml--2">
+
+                    <!-- Content -->
+                    <div class="small text-muted">
+                      <strong class="text-body">Ab Hadley</strong> reacted to your post with a 😍
+                    </div>
+
+                  </div>
+                  <div class="col-auto">
+
+                    <small class="text-muted">
+                      2m
+                    </small>
+
+                  </div>
+                </div> <!-- / .row -->
+
+              </a>
+              <a class="list-group-item px-0" href="#!">
+
+                <div class="row">
+                  <div class="col-auto">
+
+                    <!-- Avatar -->
+                    <div class="avatar avatar-sm">
+                      <img src="assets/img/avatars/profiles/avatar-3.jpg" alt="..." class="avatar-img rounded-circle">
+                    </div>
+
+                  </div>
+                  <div class="col ml--2">
+
+                    <!-- Content -->
+                    <div class="small text-muted">
+                      <strong class="text-body">Adolfo Hess</strong> commented <blockquote class="text-body">“I don’t think this really makes sense to do without approval from Johnathan since he’s the one...” </blockquote>
+                    </div>
+
+                  </div>
+                  <div class="col-auto">
+
+                    <small class="text-muted">
+                      2m
+                    </small>
+
+                  </div>
+                </div> <!-- / .row -->
+
+              </a>
+              <a class="list-group-item px-0" href="#!">
+
+                <div class="row">
+                  <div class="col-auto">
+
+                    <!-- Avatar -->
+                    <div class="avatar avatar-sm">
+                      <img src="assets/img/avatars/profiles/avatar-4.jpg" alt="..." class="avatar-img rounded-circle">
+                    </div>
+
+                  </div>
+                  <div class="col ml--2">
+
+                    <!-- Content -->
+                    <div class="small text-muted">
+                      <strong class="text-body">Daniela Dewitt</strong> subscribed to you.
+                    </div>
+
+                  </div>
+                  <div class="col-auto">
+
+                    <small class="text-muted">
+                      2m
+                    </small>
+
+                  </div>
+                </div> <!-- / .row -->
+
+              </a>
+              <a class="list-group-item px-0" href="#!">
+
+                <div class="row">
+                  <div class="col-auto">
+
+                    <!-- Avatar -->
+                    <div class="avatar avatar-sm">
+                      <img src="assets/img/avatars/profiles/avatar-5.jpg" alt="..." class="avatar-img rounded-circle">
+                    </div>
+
+                  </div>
+                  <div class="col ml--2">
+
+                    <!-- Content -->
+                    <div class="small text-muted">
+                      <strong class="text-body">Miyah Myles</strong> shared your post with <strong class="text-body">Ryu Duke</strong>, <strong class="text-body">Glen Rouse</strong>, and <strong class="text-body">3 others</strong>.
+                    </div>
+
+                  </div>
+                  <div class="col-auto">
+
+                    <small class="text-muted">
+                      2m
+                    </small>
+
+                  </div>
+                </div> <!-- / .row -->
+
+              </a>
+              <a class="list-group-item px-0" href="#!">
+
+                <div class="row">
+                  <div class="col-auto">
+
+                    <!-- Avatar -->
+                    <div class="avatar avatar-sm">
+                      <img src="assets/img/avatars/profiles/avatar-6.jpg" alt="..." class="avatar-img rounded-circle">
+                    </div>
+
+                  </div>
+                  <div class="col ml--2">
+
+                    <!-- Content -->
+                    <div class="small text-muted">
+                      <strong class="text-body">Ryu Duke</strong> reacted to your post with a 😍
+                    </div>
+
+                  </div>
+                  <div class="col-auto">
+
+                    <small class="text-muted">
+                      2m
+                    </small>
+
+                  </div>
+                </div> <!-- / .row -->
+
+              </a>
+              <a class="list-group-item px-0" href="#!">
+
+                <div class="row">
+                  <div class="col-auto">
+
+                    <!-- Avatar -->
+                    <div class="avatar avatar-sm">
+                      <img src="assets/img/avatars/profiles/avatar-7.jpg" alt="..." class="avatar-img rounded-circle">
+                    </div>
+
+                  </div>
+                  <div class="col ml--2">
+
+                    <!-- Content -->
+                    <div class="small text-muted">
+                      <strong class="text-body">Glen Rouse</strong> commented <blockquote class="text-body">“I don’t think this really makes sense to do without approval from Johnathan since he’s the one...” </blockquote>
+                    </div>
+
+                  </div>
+                  <div class="col-auto">
+
+                    <small class="text-muted">
+                      2m
+                    </small>
+
+                  </div>
+                </div> <!-- / .row -->
+
+              </a>
+              <a class="list-group-item px-0" href="#!">
+
+                <div class="row">
+                  <div class="col-auto">
+
+                    <!-- Avatar -->
+                    <div class="avatar avatar-sm">
+                      <img src="assets/img/avatars/profiles/avatar-8.jpg" alt="..." class="avatar-img rounded-circle">
+                    </div>
+
+                  </div>
+                  <div class="col ml--2">
+
+                    <!-- Content -->
+                    <div class="small text-muted">
+                      <strong class="text-body">Grace Gross</strong> subscribed to you.
+                    </div>
+
+                  </div>
+                  <div class="col-auto">
+
+                    <small class="text-muted">
+                      2m
+                    </small>
+
+                  </div>
+                </div> <!-- / .row -->
+
+              </a>
+            </div>
+
           </div>
         </div>
       </div>
@@ -187,6 +803,8 @@
       "page": "orders.html",
       "user": true
     })
+
+
 
     <!-- MAIN CONTENT
     ================================================== -->
