@@ -318,8 +318,8 @@ class DatasetRecordIdsAPIFileSystem(tornado.web.RequestHandler):
                   SELECT
                     model_id,
                     epoch
-                  FROM deploy
-                  ORDER BY TIMESTAMP DESC
+                  FROM predictions
+                  ORDER BY created_timestamp DESC
                   LIMIT 1
                 );
 
@@ -386,8 +386,8 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
                   SELECT
                     model_id,
                     epoch
-                  FROM deploy
-                  ORDER BY TIMESTAMP DESC
+                  FROM predictions
+                  ORDER BY created_timestamp DESC
                   LIMIT 1
                 );
 
@@ -434,8 +434,8 @@ class IsDatasetPredictionFromLatestDeployedModel(tornado.web.RequestHandler):
               SELECT
                 model_id,
                 epoch
-              FROM deploy
-              ORDER BY TIMESTAMP DESC
+              FROM predictions
+              ORDER BY created_timestamp DESC
               LIMIT 1
             );
 
@@ -1255,26 +1255,21 @@ class NewEpochs(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def get_epochs(self,json_inputs):
         model_id = json_inputs['model_id']
+        # TODO: Remove hardcoded port
+        request = requests.post(
+            'http://localhost:8885/model-meta-data'
+        )
+        response = json.loads(request.text)
+        model_id = response['model_id']
+        epoch = response['epoch']
         sql_query = '''
-            DROP TABLE IF EXISTS unique_deploy;
-
-            CREATE TEMP TABLE unique_deploy AS (
-              SELECT
-                model_id,
-                MAX(epoch) AS epoch
-              FROM deploy
-              WHERE model_id = {model_id}
-              GROUP BY model_id
-            );
-
             SELECT
               epochs.epoch,
               epochs.train,
               epochs.validation
-            FROM unique_deploy
-            LEFT JOIN epochs
-              ON epochs.epoch > COALESCE(unique_deploy.epoch,0)
-            WHERE epochs.epoch > COALESCE(unique_deploy.epoch,0)
+            FROM epochs
+            WHERE epochs.epoch > COALESCE(epoch,0)
+              AND epochs.model_id = {model_id}
             ORDER BY epochs.epoch ASC;
         '''.format(
             model_id=model_id
@@ -1305,8 +1300,8 @@ class DatasetPredictionSyncPercent(tornado.web.RequestHandler):
               SELECT
                 model_id,
                 epoch
-              FROM deploy
-              ORDER BY TIMESTAMP DESC
+              FROM predictions
+              ORDER BY created_timestamp DESC
               LIMIT 1
             );
 
@@ -1344,52 +1339,80 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
 
+    def get_latest_deployment(self,dataset):
+        sql_query = '''
+            SELECT
+              model_id,
+              epoch
+            FROM predictions
+            WHERE LOWER(dataset) LIKE LOWER('%{dataset}%')
+            ORDER BY created_timestamp DESC
+            LIMIT 1
+            '''.format(
+            dataset=dataset
+        )
+        rows = get_sql_rows(sql=sql_query)
+        if len(rows) > 0:
+            first_row = rows[0]
+            return first_row
+        else:
+            return None
+
+
     @tornado.concurrent.run_on_executor
     def get_error_metrics(self,json_inputs):
         dataset_name = json_inputs['dataset']
-        sql_query = '''
-            DROP TABLE IF EXISTS latest_deployment;
-            CREATE TEMP TABLE latest_deployment AS (
-              SELECT
-                model_id,
-                epoch
-              FROM deploy
-              ORDER BY TIMESTAMP DESC
-              LIMIT 1
-            );
+        latest_deployment = self.get_latest_deployment(dataset=dataset_name)
+        if latest_deployment is not None:
+            model_id = latest_deployment['model_id']
+            epoch = latest_deployment['epoch']
+            sql_query = '''
+                DROP TABLE IF EXISTS latest_deployment;
+                CREATE TEMP TABLE latest_deployment AS (
+                  SELECT
+                    model_id,
+                    epoch
+                  FROM predictions
+                  ORDER BY created_timestamp DESC
+                  LIMIT 1
+                );
 
-            SELECT
-              SUM(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
-                THEN 1 ELSE 0 END) AS critical_count,
-              AVG(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
-                THEN 100.0 ELSE 0.0 END)::FLOAT AS critical_percent,
-              AVG(ABS(records.angle - predictions.angle)) AS avg_abs_error
-            FROM records
-            LEFT JOIN predictions
-              ON records.dataset = predictions.dataset
-                AND records.record_id = predictions.record_id
-            LEFT JOIN latest_deployment AS deploy
-              ON predictions.model_id = deploy.model_id
-                AND predictions.epoch = deploy.epoch
-            WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%');
-        '''.format(
-            dataset=dataset_name
-        )
-        rows = get_sql_rows(sql=sql_query)
-        first_row = rows[0]
-        if first_row['avg_abs_error'] is None:
-            return {
-                'critical_count': 'N/A',
-                'critical_percent': 'N/A',
-                'avg_abs_error': 'N/A'
-            }
-        else:
+                SELECT
+                  SUM(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
+                    THEN 1 ELSE 0 END) AS critical_count,
+                  AVG(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
+                    THEN 100.0 ELSE 0.0 END)::FLOAT AS critical_percent,
+                  AVG(ABS(records.angle - predictions.angle)) AS avg_abs_error
+                FROM records
+                LEFT JOIN predictions
+                  ON records.dataset = predictions.dataset
+                    AND records.record_id = predictions.record_id
+                LEFT JOIN latest_deployment AS deploy
+                  ON predictions.model_id = deploy.model_id
+                    AND predictions.epoch = deploy.epoch
+                WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%')
+                  AND model_id = {model_id}
+                  AND epoch = {epoch};
+            '''.format(
+                dataset=dataset_name,
+                model_id=model_id,
+                epoch=epoch
+            )
+            rows = get_sql_rows(sql=sql_query)
+            first_row = rows[0]
+            print(first_row)
             result = {
                 'critical_count': float(first_row['critical_count']),
                 'critical_percent': str(round(float(first_row['critical_percent']), 1)) + '%',
                 'avg_abs_error': round(float(first_row['avg_abs_error']), 2)
             }
             return result
+        else:
+            return {
+                'critical_count': 'N/A',
+                'critical_percent': 'N/A',
+                'avg_abs_error': 'N/A'
+            }
 
     @tornado.gen.coroutine
     def post(self):

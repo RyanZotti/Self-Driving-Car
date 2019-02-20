@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS predictions(
   model_id INT,
   epoch INT,
   angle float8,
+  created_timestamp TIMESTAMP,
 PRIMARY KEY(dataset, record_id, model_id, epoch));
 COMMIT;
 
@@ -23,14 +24,6 @@ CREATE TABLE IF NOT EXISTS epochs(
   train float8,
   validation float8,
 PRIMARY KEY(model_id, epoch));
-COMMIT;
-
-BEGIN;
-CREATE TABLE IF NOT EXISTS deploy(
-  model_id INT,
-  epoch INT,
-  timestamp TIMESTAMP
-);
 COMMIT;
 
 BEGIN;
