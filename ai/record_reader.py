@@ -423,6 +423,15 @@ class RecordReader(object):
 
     def delete_dataset(self, dataset_name):
         full_path = self.get_dataset_absolute_path(dataset_name)
+        sql_query = '''
+            DELETE FROM records
+            WHERE LOWER(dataset) LIKE LOWER('%{dataset}%');
+            DELETE FROM predictions
+            WHERE LOWER(dataset) LIKE LOWER('%{dataset}%');
+        '''.format(
+            dataset=dataset_name
+        )
+        execute_sql(sql_query)
         rmtree(full_path)
 
     # Merge paths into single numpy array for fast random selection

@@ -778,6 +778,24 @@ class DeleteFlaggedDataset(tornado.web.RequestHandler):
         result = yield self.delete_flagged_dataset(json_input=json_input)
         self.write(result)
 
+class DeleteDataset(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def delete_dataset(self,json_input):
+        dataset_name = json_input['dataset']
+        self.application.record_reader.delete_dataset(
+            dataset_name=dataset_name,
+        )
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.delete_dataset(json_input=json_input)
+        self.write(result)
+
 class ImageCountFromDataset(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -1399,6 +1417,7 @@ def make_app():
         (r"/dataset-record-ids-filesystem", DatasetRecordIdsAPIFileSystem),
         (r"/laptop-model-api-health", LaptopModelDeploymentHealth),
         (r"/delete",DeleteRecord),
+        (r"/delete-dataset", DeleteDataset),
         (r"/save-reocord-to-db", SaveRecordToDB),
         (r"/delete-flagged-record", DeleteFlaggedRecord),
         (r"/delete-flagged-dataset", DeleteFlaggedDataset),

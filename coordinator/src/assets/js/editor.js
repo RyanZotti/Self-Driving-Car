@@ -66,6 +66,17 @@ function unflagDataset(dataset) {
     });
 }
 
+function deleteDataset(dataset) {
+    return new Promise(function(resolve, reject) {
+        deleteDatasetPayload = JSON.stringify({
+            'dataset': dataset
+        })
+        $.post('/delete-dataset', deleteDatasetPayload, function(){
+            resolve();
+        });
+    });
+}
+
 function startCarVideo() {
     return new Promise(function(resolve, reject) {
         $.post('/start-car-video', function(){
@@ -155,6 +166,11 @@ function addDatasetReviewRows() {
                     batchPredict(dataset);
                 }
                 const deleteDatasetButton = tr.querySelector('button.delete-dataset-action');
+                deleteDatasetButton.onclick = function(){
+                    const dataset = this.getAttribute("dataset");
+                    deleteDataset(dataset);
+                    addDatasetReviewRows(); // Refresh page
+                }
                 deleteDatasetButton.setAttribute("dataset",datasetText);
                 const input = tr.querySelector('input[name="datasetsSelect"]');
                 input.setAttribute('id','dataset-id-'+dataset.id);
