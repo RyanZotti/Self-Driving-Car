@@ -107,21 +107,12 @@ record_ids = get_record_ids(
     port=datasets_port
 )
 
-sql_deployed = '''
-    SELECT
-      model_id,
-      epoch
-    FROM deploy
-    ORDER BY
-      timestamp DESC
-    LIMIT 1
-'''
-rows = get_sql_rows(
-    sql_deployed
+request = requests.post(
+    'http://localhost:8885/model-meta-data'
 )
-first_row = rows[0]
-model_id = first_row['model_id']
-epoch = first_row['epoch']
+response = json.loads(request.text)
+model_id = response['model_id']
+epoch = response['epoch']
 
 process_id = os.getpid()
 start_sql = '''
