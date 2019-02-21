@@ -1367,16 +1367,6 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
             model_id = latest_deployment['model_id']
             epoch = latest_deployment['epoch']
             sql_query = '''
-                DROP TABLE IF EXISTS latest_deployment;
-                CREATE TEMP TABLE latest_deployment AS (
-                  SELECT
-                    model_id,
-                    epoch
-                  FROM predictions
-                  ORDER BY created_timestamp DESC
-                  LIMIT 1
-                );
-
                 SELECT
                   SUM(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
                     THEN 1 ELSE 0 END) AS critical_count,
@@ -1387,9 +1377,6 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
                 LEFT JOIN predictions
                   ON records.dataset = predictions.dataset
                     AND records.record_id = predictions.record_id
-                LEFT JOIN latest_deployment AS deploy
-                  ON predictions.model_id = deploy.model_id
-                    AND predictions.epoch = deploy.epoch
                 WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%')
                   AND model_id = {model_id}
                   AND epoch = {epoch};
@@ -1400,7 +1387,6 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
             )
             rows = get_sql_rows(sql=sql_query)
             first_row = rows[0]
-            print(first_row)
             result = {
                 'critical_count': float(first_row['critical_count']),
                 'critical_percent': str(round(float(first_row['critical_percent']), 1)) + '%',
