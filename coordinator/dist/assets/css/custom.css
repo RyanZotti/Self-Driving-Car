@@ -1,0 +1,112 @@
+.progress-bar-vertical {
+  width: 10px;
+  min-height: 28px;
+  display: flex;
+  align-items: flex-end;
+  margin: 0 auto;
+  border: 1px solid #95A9C9;
+  background-color: #fff;
+  border-radius: 0px;
+}
+
+.progress-bar-vertical .progress-bar {
+  width: 100%;
+  height: 0;
+  -webkit-transition: height 0.6s ease;
+  -o-transition: height 0.6s ease;
+  transition: height 0.6s ease;
+  border-radius: 0px;
+    background-color: #2c7be5;
+}
+
+.pretty-button {
+    background-color:transparent;
+    border: 0px;
+}
+
+.centered {
+    margin: 0 auto;
+}
+
+img#drive-mpeg-image {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#video-loader {
+  border: 1em solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 1em solid #2C7BE5;
+  width: 8em;
+  height: 8em;
+  -webkit-animation: spin 2s linear infinite; /* Safari */
+  animation: spin 2s linear infinite;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Begin slider styling */
+
+/*------------------------------------------------------------------
+  [Slider]
+*/
+/*Slider*/
+.slider.slider-vertical {
+  margin-right: 13px;
+}
+
+.slider.slider-vertical .slider-handle {
+  margin-left: -1px;
+}
+
+.slider.slider-horizontal {
+  height: 24px;
+  max-width: 100%;
+}
+
+.slider.slider-horizontal .slider-track {
+  height: 8px;
+}
+
+.slider-selection {
+  background: #4285f4;
+  border: 1px solid #4285f4;
+  -webkit-box-shadow: none;
+          box-shadow: none;
+}
+
+.slider-track {
+  background: #f2f2f2;
+  -webkit-box-shadow: none;
+          box-shadow: none;
+}
+
+.slider-handle {
+  opacity: 1;
+  background: #FFFFFF;
+  border: 1px solid #f0f0f0;
+  -webkit-box-shadow: 0 0 3px rgba(0, 0, 0, 0.12);
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.12);
+  height: 22px;
+  width: 22px;
+  -webkit-transition: -webkit-box-shadow 200ms ease-in-out;
+  transition: -webkit-box-shadow 200ms ease-in-out;
+  transition: box-shadow 200ms ease-in-out;
+  transition: box-shadow 200ms ease-in-out, -webkit-box-shadow 200ms ease-in-out;
+}
+
+/*------------------------------------------------------------------
+End slider CSS
+*/
