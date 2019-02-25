@@ -187,3 +187,34 @@ function updateDonut(donut, angle){
     donut.options.rotation = rotation;
     donut.update();
 }
+
+function configureSlider(config){
+    const sliderId = config['sliderId'];
+    const slider = $("#"+sliderId);
+    slider.attr("data-slider-value",config['start']);
+    slider.attr("data-slider-step",config['step']);
+    slider.attr("data-slider-max",config['max']);
+    slider.attr("data-slider-min",config['min']);
+    slider.slider();
+    const sliderTextId = sliderId + "-text";
+    const sliderText = $("#"+sliderTextId);
+    // Initialize
+    if (config['type']=='percent'){
+        sliderText.text(config['start']+"%");
+    } else if (config['type']=='reduceFactor') {
+        sliderText.text('1/'+config['start']);
+    } else {
+        sliderText.text(config['start']);
+    }
+    // Change on slide
+    slider.on("slide", function(slideEvent) {
+        if (config['type']=='percent'){
+            sliderText.text(slideEvent.value+"%");
+        } else if (config['type']=='reduceFactor') {
+            console.log('1/'+config['start']);
+            sliderText.text('1/'+slideEvent.value);
+        } else {
+            sliderText.text(slideEvent.value);
+        }
+    });
+}

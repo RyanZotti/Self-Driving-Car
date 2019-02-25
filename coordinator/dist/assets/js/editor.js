@@ -1002,6 +1002,51 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(recordingDataset);
     }
 
+    configureSlider({
+        'sliderId':'speed-threshold-cleanup-slider',
+        'type':'percent',
+        'start':15,
+        'min':0,
+        'max':95,
+        'step':5
+    });
+
+    configureSlider({
+        'sliderId':'image-top-cut-slider',
+        'type':'percent',
+        'start':50,
+        'min':0,
+        'max':90,
+        'step':10
+    });
+
+    configureSlider({
+        'sliderId':'image-scale-slider',
+        'type':'reduceFactor',
+        'start':8,
+        'min':1,
+        'max':16,
+        'step':1
+    });
+
+    configureSlider({
+        'sliderId':'image-scale-slider',
+        'type':'reduceFactor',
+        'start':8,
+        'min':1,
+        'max':16,
+        'step':1
+    });
+
+    configureSlider({
+        'sliderId':'critical-error-threshold-slider',
+        'type':'percent',
+        'start':80,
+        'min':0,
+        'max':200,
+        'step':5
+    });
+
 }, false);
 
 // Global variables
