@@ -86,6 +86,22 @@ function readToggle(input) {
     });
 }
 
+function writeSlider(input) {
+    return new Promise(function(resolve, reject) {
+        $.post('/write-slider', input, function(){
+            resolve();
+        });
+    });
+}
+
+function readSlider(input) {
+    return new Promise(function(resolve, reject) {
+        $.post('/read-slider', input, function(output){
+            resolve(output['amount']);
+        });
+    });
+}
+
 function raspberryPiConnectionTest() {
     return new Promise(function(resolve, reject) {
         $.ajax({
@@ -188,10 +204,16 @@ function updateDonut(donut, angle){
     donut.update();
 }
 
-function configureSlider(config){
+async function configureSlider(config){
+    const inputQuery = JSON.stringify({
+        'web_page': config['web_page'],
+        'name': config['name']
+    });
+    const startAmount = await readSlider(inputQuery);
+    console.log(config['name']+' '+startAmount);
     const sliderId = config['sliderId'];
     const slider = $("#"+sliderId);
-    slider.attr("data-slider-value",config['start']);
+    slider.attr("data-slider-value",startAmount);
     slider.attr("data-slider-step",config['step']);
     slider.attr("data-slider-max",config['max']);
     slider.attr("data-slider-min",config['min']);
@@ -200,21 +222,26 @@ function configureSlider(config){
     const sliderText = $("#"+sliderTextId);
     // Initialize
     if (config['type']=='percent'){
-        sliderText.text(config['start']+"%");
+        sliderText.text(startAmount+"%");
     } else if (config['type']=='reduceFactor') {
-        sliderText.text('1/'+config['start']);
+        sliderText.text('1/'+startAmount);
     } else {
-        sliderText.text(config['start']);
+        sliderText.text(startAmount);
     }
     // Change on slide
     slider.on("slide", function(slideEvent) {
         if (config['type']=='percent'){
             sliderText.text(slideEvent.value+"%");
         } else if (config['type']=='reduceFactor') {
-            console.log('1/'+config['start']);
             sliderText.text('1/'+slideEvent.value);
         } else {
             sliderText.text(slideEvent.value);
         }
+        const input = JSON.stringify({
+            'web_page': config['web_page'],
+            'name': config['name'],
+            'amount': slideEvent.value
+        });
+        writeSlider(input);
     });
 }

@@ -131,6 +131,80 @@ class LaptopModelDeploymentHealth(tornado.web.RequestHandler):
         self.write(result)
 
 
+class ReadSlider(tornado.web.RequestHandler):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def read_slider(self, json_input):
+        web_page = json_input['web_page']
+        name = json_input['name']
+        result = {}
+        sql_query = '''
+            SELECT
+              amount
+            FROM sliders
+            WHERE LOWER(web_page) LIKE '%{web_page}%'
+              AND LOWER(name) LIKE '%{name}%'
+            ORDER BY event_ts DESC
+            LIMIT 1;
+        '''.format(
+            web_page=web_page,
+            name=name
+        )
+        rows = get_sql_rows(sql_query)
+        if len(rows) > 0:
+            first_row = rows[0]
+            amount = first_row['amount']
+            result['amount'] = amount
+        else:
+            result['amount'] = None
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.read_slider(json_input=json_input)
+        self.write(result)
+
+
+class WriteSlider(tornado.web.RequestHandler):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def write_slider(self, json_input):
+        web_page = json_input['web_page']
+        name = json_input['name']
+        amount = json_input['amount']
+        sql_query = '''
+            BEGIN;
+            INSERT INTO sliders (
+                event_ts,
+                web_page,
+                name,
+                amount
+            )
+            VALUES (
+                NOW(),
+               '{web_page}',
+               '{name}',
+                {amount}
+            );
+            COMMIT;
+        '''.format(
+            web_page=web_page,
+            name=name,
+            amount=amount
+        )
+        execute_sql(sql_query)
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.write_slider(json_input=json_input)
+        self.write(result)
+
+
 class ReadToggle(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
@@ -1454,6 +1528,8 @@ def make_app():
         (r"/get-new-epochs", NewEpochs),
         (r"/write-toggle", WriteToggle),
         (r"/read-toggle", ReadToggle),
+        (r"/write-slider", WriteSlider),
+        (r"/read-slider", ReadSlider),
         (r"/start-car", StartCar),
         (r"/write-pi-field", WritePiField),
         (r"/read-pi-field", ReadPiField),

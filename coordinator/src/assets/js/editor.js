@@ -1004,8 +1004,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     configureSlider({
         'sliderId':'speed-threshold-cleanup-slider',
+        'web_page':'datasets',
+        'name':'auto clean speed',
         'type':'percent',
-        'start':15,
         'min':0,
         'max':95,
         'step':5
@@ -1013,8 +1014,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     configureSlider({
         'sliderId':'image-top-cut-slider',
+        'web_page':'datasets',
+        'name':'image top cut',
         'type':'percent',
-        'start':50,
         'min':0,
         'max':90,
         'step':10
@@ -1022,17 +1024,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     configureSlider({
         'sliderId':'image-scale-slider',
+        'web_page':'datasets',
+        'name':'image scale',
         'type':'reduceFactor',
-        'start':8,
-        'min':1,
-        'max':16,
-        'step':1
-    });
-
-    configureSlider({
-        'sliderId':'image-scale-slider',
-        'type':'reduceFactor',
-        'start':8,
         'min':1,
         'max':16,
         'step':1
@@ -1040,8 +1034,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     configureSlider({
         'sliderId':'critical-error-threshold-slider',
+        'web_page':'datasets',
+        'name':'critical error',
         'type':'percent',
-        'start':80,
         'min':0,
         'max':200,
         'step':5
