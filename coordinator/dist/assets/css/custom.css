@@ -109,3 +109,7 @@ img#drive-mpeg-image {
 /*------------------------------------------------------------------
 End slider CSS
 */
+
+.slider.slider-horizontal {
+    width: 100%;
+}
