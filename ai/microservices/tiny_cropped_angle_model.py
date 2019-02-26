@@ -9,13 +9,10 @@ data_path = args["datapath"]
 epochs = args["epochs"]
 s3_bucket = args['s3_bucket']
 show_speed = args['show_speed']
-show_speed = False
 s3_sync = args['s3_sync']
-s3_sync = False
 save_to_disk = args['save_to_disk']
-save_to_disk = True
-image_scale = 0.125
-crop_factor = 2
+image_scale = args['image_scale']
+crop_factor = args['crop_factor']
 
 sess = tf.InteractiveSession(config=tf.ConfigProto())
 

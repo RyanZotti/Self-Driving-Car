@@ -351,18 +351,24 @@ def stop_training():
         )
 
 
-def train_new_model(data_path,epochs=10,show_speed='Y', save_to_disk='N',image_scale=0.125,crop_factor=2, s3_bucket='self-driving-car'):
+def train_new_model(data_path,epochs=10,show_speed='n', save_to_disk='y',image_scale=0.125,crop_factor=2, s3_bucket='self-driving-car'):
     stop_training()
     # The & is required or Tornado will get stuck
-    # TODO: Remove the hardcoded script path
-    command = '''python /Users/ryanzotti/Documents/repos/Self-Driving-Car/tiny_cropped_angle_model.py \
-    --datapath {data_path} \
-    --epochs {epochs} \
-    --show_speed {show_speed} \
-    --save_to_disk {save_to_disk} \
-    --image_scale {image_scale} \
-    --s3_bucket {s3_bucket} \
-    --crop_factor {crop_factor} &
+    # TODO: Remove the hardcoded CHECKPOINT_DIRECTORY
+    command = '''
+        CHECKPOINT_DIRECTORY='/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data' && \
+        docker run -i -t -d \
+          --network host \
+          --volume $CHECKPOINT_DIRECTORY:/root/ai/data \
+          --name model-training \
+          ryanzotti/ai-laptop:latest \
+          python /root/ai/microservices/tiny_cropped_angle_model.py \
+            --image_scale {image_scale} \
+            --angle_only y \
+            --crop_factor {crop_factor} \
+            --show_speed {show_speed} \
+            --s3_sync n \
+            --save_to_disk {save_to_disk}
     '''.format(
         data_path=data_path,
         epochs=epochs,

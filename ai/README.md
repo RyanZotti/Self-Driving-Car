@@ -1,12 +1,39 @@
 ## Instructions
 
-### Pull and Run
+
+
+### Train a Model
 
 Navigate to the directory that contains this `README.md` file, then follow the steps below.
 
 	# Pull the image
 	docker pull ryanzotti/ai:latest
+
+	# Deploy a model to your laptop for predictions
+	CHECKPOINT_DIRECTORY='/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
+	docker run -i -t \
+	  --network host \
+	  --volume $CHECKPOINT_DIRECTORY:/root/ai/data \
+	  --name model-training \
+	  ryanzotti/ai-laptop:latest \
+	  python /root/ai/microservices/tiny_cropped_angle_model.py \
+	    --image_scale 0.125 \
+	    --angle_only y \
+	    --crop_factor 2 \
+	    --show_speed n \
+	    --s3_sync n \
+	    --save_to_disk y
+
+	# Stop the image
+	docker rm -f model-training
 	
+### Deploy a Model for Predicting
+
+Navigate to the directory that contains this `README.md` file, then follow the steps below.
+
+	# Pull the image
+	docker pull ryanzotti/ai:latest
+
 	# Deploy a model to your laptop for predictions
 	CHECKPOINT_DIRECTORY='/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data/tf_visual_data/runs/1/checkpoints'
 	docker run -i -d -t \
@@ -21,7 +48,7 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	    --crop_factor 2 \
 	    --model_id 1 \
 	    --epoch 151
-	
+
 	# Stop the image
 	docker rm -f laptop-predict
 

@@ -288,7 +288,7 @@ def parse_args():
     ap = argparse.ArgumentParser()
     ap.add_argument("-d", "--datapath", required=False,
                     help="path to all of the data",
-                    default='/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data')
+                    default='/root/ai/data')
     ap.add_argument("-e", "--epochs", required=False,
                     help="quantity of batch iterations to run",
                     default='500')
