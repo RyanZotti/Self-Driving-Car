@@ -322,9 +322,9 @@ function updateRecordId(recordIds, recordIdIndex){
 }
 
 function updateImage(dataset, recordId, cropFactor, scaleFactor) {
-    const showCutImageButton = document.getElementById("show-cut-image");
+    const showEffectsButton = document.getElementById("show-effects");
     const videoFrame = document.querySelector("#mpeg-image")
-    if (showCutImageButton.checked){
+    if (showEffectsButton.checked){
         const imageUrl = '/image?dataset='+dataset+'&record-id='+recordId+'&crop-factor='+cropFactor+'&scale-factor='+scaleFactor;
         videoFrame.setAttribute('src',imageUrl);
     } else {
@@ -488,7 +488,7 @@ async function playVideo(args) {
         // Use `rawErrorPercent` if you don't want values above 100%
         errorText.textContent = (state.ai.angleAbsError * 100).toFixed(0) + '%';
 
-        const showCutImage = document.getElementById("show-cut-image").checked;
+        const showEffects = document.getElementById("show-effects").checked;
         const isMistakeBad = state.ai.angleAbsError > pauseOnBadMistakeThreshold;
         if (isVideoPlaying == true){
             if (oldVideoSessionId != videoSessionId){
@@ -866,8 +866,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    const showCutImageButton = document.getElementById("show-cut-image");
-    showCutImageButton.onclick = function(){
+    const showEffectsButton = document.getElementById("show-effects");
+    showEffectsButton.onclick = function(){
         const recordId = updateRecordId(recordIdsPlaying, recordIdIndexPlaying);
         const scaleFactor = document.querySelector("input#image-scale-slider").getAttribute("data-value");
         updateImage(datasetPlaying, recordId, cropFactor, scaleFactor);
