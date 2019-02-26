@@ -19,7 +19,7 @@ from coordinator.utilities import *
 import json
 import traceback
 from concurrent.futures import ThreadPoolExecutor
-from data_augmentation import pseduo_crop
+from data_augmentation import pseduo_crop, show_resize_effect
 
 
 class Home(tornado.web.RequestHandler):
@@ -1006,7 +1006,13 @@ class ImageAPI(tornado.web.RequestHandler):
             dataset_name=dataset,
             record_id=record_id
         )
-
+        image_scale_args = self.get_arguments(name="scale-factor")
+        if len(image_scale_args) > 0:
+            scale = int(image_scale_args[0])
+            frame = show_resize_effect(
+                original_image=frame,
+                scale=scale
+            )
         crop_factor_args = self.get_arguments(name="crop-factor")
         if len(crop_factor_args) > 0:
             crop_factor = int(crop_factor_args[0])

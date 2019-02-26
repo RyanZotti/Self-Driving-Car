@@ -321,11 +321,11 @@ function updateRecordId(recordIds, recordIdIndex){
     return recordId;
 }
 
-function updateImage(dataset, recordId, cropFactor) {
+function updateImage(dataset, recordId, cropFactor, scaleFactor) {
     const showCutImageButton = document.getElementById("show-cut-image");
     const videoFrame = document.querySelector("#mpeg-image")
     if (showCutImageButton.checked){
-        const imageUrl = '/image?dataset='+dataset+'&record-id='+recordId+'&crop-factor='+cropFactor;
+        const imageUrl = '/image?dataset='+dataset+'&record-id='+recordId+'&crop-factor='+cropFactor+'&scale-factor='+scaleFactor;
         videoFrame.setAttribute('src',imageUrl);
     } else {
         const imageUrl = '/image?dataset='+dataset+'&record-id='+recordId;
@@ -455,7 +455,8 @@ async function playVideo(args) {
             isFlaggedIcon.style.fill='None';
             isFlaggedButton.checked = false;
         }
-        updateImage(dataset, recordId, cropFactor);
+        const scaleFactor = document.querySelector("input#image-scale-slider").getAttribute("data-value");
+        updateImage(dataset, recordId, cropFactor, scaleFactor);
         await updateDonut(donuts.ai,state.ai.angle);
         await updateDonut(donuts.human,state.human.angle);
         /*
@@ -868,7 +869,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const showCutImageButton = document.getElementById("show-cut-image");
     showCutImageButton.onclick = function(){
         const recordId = updateRecordId(recordIdsPlaying, recordIdIndexPlaying);
-        updateImage(datasetPlaying, recordId, cropFactor);
+        const scaleFactor = document.querySelector("input#image-scale-slider").getAttribute("data-value");
+        updateImage(datasetPlaying, recordId, cropFactor, scaleFactor);
     }
 
     const driveVehicleButton = document.getElementById("drive-vehicle-button");

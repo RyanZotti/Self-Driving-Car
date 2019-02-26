@@ -124,6 +124,12 @@ def crop_images(images, crop_factor):
     return cropped_images
 
 
+def show_resize_effect(original_image, scale):
+    smaller_scale = 1/scale
+    shrunken_image = cv2.resize(original_image, None, fx=smaller_scale, fy=smaller_scale, interpolation=cv2.INTER_CUBIC)
+    enlarged_image = cv2.resize(shrunken_image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+    return enlarged_image
+
 # https://www.pyimagesearch.com/2016/03/07/transparent-overlays-with-opencv/
 def pseduo_crop(image, crop_factor, alpha):
     shape = image.shape
