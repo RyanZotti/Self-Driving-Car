@@ -49,6 +49,15 @@ PRIMARY KEY(event_ts, web_page, name, detail));
 COMMIT;
 
 BEGIN;
+CREATE TABLE IF NOT EXISTS sliders(
+    event_ts TIMESTAMP,
+    web_page VARCHAR(100),
+    name VARCHAR(100),
+    amount INT,
+PRIMARY KEY(event_ts, web_page, name));
+COMMIT;
+
+BEGIN;
 CREATE TABLE IF NOT EXISTS raspberry_pi(
     username VARCHAR(100),
     hostname VARCHAR(100),
@@ -77,4 +86,12 @@ VALUES (
   '~/Self-Driving-Car/car/parts/model/',
   '~/Self-Driving-Car/car/templates/data/'
 );
+COMMIT;
+
+BEGIN;
+INSERT INTO sliders (event_ts, web_page, name, amount) VALUES
+    (now(), 'datasets', 'auto clean speed', 15),
+    (now(), 'datasets', 'image top cut', 50),
+    (now(), 'datasets', 'image scale', 8),
+    (now(), 'datasets', 'critical error', 80);
 COMMIT;
