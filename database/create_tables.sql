@@ -18,6 +18,15 @@ PRIMARY KEY(dataset, record_id, model_id, epoch));
 COMMIT;
 
 BEGIN;
+CREATE TABLE IF NOT EXISTS models(
+  model_id INT,
+  created_timestamp TIMESTAMP,
+  crop INT,
+  scale INT,
+PRIMARY KEY(model_id));
+COMMIT;
+
+BEGIN;
 CREATE TABLE IF NOT EXISTS epochs(
   model_id INT,
   epoch INT,

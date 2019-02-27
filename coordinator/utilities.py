@@ -351,7 +351,7 @@ def stop_training():
         )
 
 
-def train_new_model(data_path,epochs=10,show_speed='n', save_to_disk='y',image_scale=0.125,crop_factor=2, s3_bucket='self-driving-car'):
+def train_new_model(data_path,epochs=10,show_speed='n', save_to_disk='y',image_scale=8,crop_factor=2, s3_bucket='self-driving-car'):
     stop_training()
     # The & is required or Tornado will get stuck
     # TODO: Remove the hardcoded CHECKPOINT_DIRECTORY
@@ -420,7 +420,7 @@ def resume_training(
         epochs=1000,
         save_to_disk='y',
         overfit='n',
-        image_scale='0.125',
+        image_scale='8',
         crop_factor='2',
         batch_size='50',
         angle_only='y'):

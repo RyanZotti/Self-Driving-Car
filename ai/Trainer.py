@@ -75,6 +75,28 @@ class Trainer:
 
         self.start_epoch = start_epoch
 
+        if is_restored_model is False:
+            models_sql = '''
+            INSERT INTO models(
+              model_id,
+              created_timestamp,
+              crop,
+              scale
+            ) VALUES (
+              {model_id},
+              NOW(),
+              {crop},
+              {scale}
+            )
+            '''.format(
+                model_id=self.model_id,
+                crop=self.crop_factor,
+                scale=int(self.image_scale)
+            )
+            execute_sql(
+                sql=models_sql
+            )
+
         # Prints batch processing speed, among other things
         self.show_speed = show_speed
 

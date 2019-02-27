@@ -17,7 +17,7 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	  --name model-training \
 	  ryanzotti/ai-laptop:latest \
 	  python /root/ai/microservices/tiny_cropped_angle_model.py \
-	    --image_scale 0.125 \
+	    --image_scale 8 \
 	    --angle_only y \
 	    --crop_factor 2 \
 	    --show_speed n \
@@ -43,7 +43,7 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	  ryanzotti/ai-laptop:latest \
 	  python /root/ai/microservices/predict.py \
 	    --port 8885 \
-	    --image_scale 0.125 \
+	    --image_scale 8 \
 	    --angle_only 'y' \
 	    --crop_factor 2 \
 	    --model_id 1 \

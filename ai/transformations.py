@@ -97,9 +97,16 @@ def process_data(data):
     return images, labels
 
 def resize_images(images,scale):
+    inverted_decimal_scale = 1 / scale
     resized_images = []
     for original_image in images:
-        resized_image = cv2.resize(original_image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+        resized_image = cv2.resize(
+            original_image,
+            None,
+            fx=inverted_decimal_scale,
+            fy=inverted_decimal_scale,
+            interpolation=cv2.INTER_CUBIC
+        )
         resized_images.append(resized_image)
     return resized_images
 
