@@ -1,6 +1,6 @@
 import tensorflow as tf
-from Trainer import Trainer, parse_args, format_s3_bucket
-from util import get_prev_epoch, file_is_stored_locally, sync_from_aws
+from ai.Trainer import Trainer, parse_args, format_s3_bucket
+from ai.utilities import get_prev_epoch, file_is_stored_locally, sync_from_aws
 import os
 
 

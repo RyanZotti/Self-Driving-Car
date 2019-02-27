@@ -9,14 +9,32 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	# Pull the image
 	docker pull ryanzotti/ai:latest
 
-	# Deploy a model to your laptop for predictions
-	CHECKPOINT_DIRECTORY='/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
+	# Train a new model
+	DATA_DIRECTORY='/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
 	docker run -i -t \
 	  --network host \
-	  --volume $CHECKPOINT_DIRECTORY:/root/ai/data \
+	  --volume $DATA_DIRECTORY:/root/ai/data \
 	  --name model-training \
 	  ryanzotti/ai-laptop:latest \
 	  python /root/ai/microservices/tiny_cropped_angle_model.py \
+	    --image_scale 8 \
+	    --angle_only y \
+	    --crop_factor 2 \
+	    --show_speed n \
+	    --s3_sync n \
+	    --save_to_disk y
+
+	# Resume training an existing model
+	DATA_DIRECTORY='/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
+	MODEL_ID='5'
+	docker run -i -t \
+	  --network host \
+	  --volume $DATA_DIRECTORY:/root/ai/data \
+	  --name resume-training \
+	  ryanzotti/ai-laptop:latest \
+	  python /root/ai/microservices/resume_training.py \
+	    --model_dir /root/ai/data/tf_visual_data/runs/${MODEL_ID} \
+	    --datapath /root/ai/data \
 	    --image_scale 8 \
 	    --angle_only y \
 	    --crop_factor 2 \

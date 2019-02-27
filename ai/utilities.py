@@ -23,6 +23,13 @@ def dir_count(dir):
     return newest_dir
 
 
+def file_is_stored_locally(full_path_to_file):
+    file_exists = False
+    if os.path.exists(full_path_to_file):
+        file_exists = True
+    return file_exists
+
+
 def mkdir_tfboard_run_dir(tf_basedir,):
     newest_dir = dir_count(tf_basedir)
     new_dir = str(newest_dir + 1)
