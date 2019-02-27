@@ -9,7 +9,7 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 		
 	# Run the image
 	HOST_PGDATA=/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/postgres-db
-	docker run -t -d -i -p 5432:5432 --volume HOST_PGDATA:/var/lib/postgresql/data --name postgres-11-1 postgres:11.1
+	docker run -t -d -i -p 5432:5432 --volume HOST_PGDATA:/var/lib/postgresql/data --rm --name postgres-11-1 postgres:11.1
 
 	# Stop the image
 	docker rm -f postgres-11-1
