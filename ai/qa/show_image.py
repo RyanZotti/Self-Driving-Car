@@ -1,6 +1,6 @@
 import argparse
 import cv2
-from data_augmentation import crop_images, resize_images
+from ai.transformations import crop_images, resize_images
 
 ap = argparse.ArgumentParser()
 ap.add_argument(

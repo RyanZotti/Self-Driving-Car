@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 import glob
 import subprocess
-from util import live_video_stream
+from car.util import live_video_stream
 import urllib.request
 
 

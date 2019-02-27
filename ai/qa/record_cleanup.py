@@ -1,5 +1,5 @@
 import os
-from car.record_reader import RecordReader
+from ai.record_reader import RecordReader
 
 
 data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'

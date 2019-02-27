@@ -340,11 +340,10 @@ def get_sql_rows(sql):
 
 def stop_training():
     scripts = [
-        'tiny_cropped_angle_model.py',
-        'resume_training.py'
+        'docker rm -f resume-training',
+        'docker rm -f model-training'
     ]
-    for script in scripts:
-        command = "ps -ef | grep "+script+" | grep -iv grep | awk '{print $2}' | xargs kill -9"
+    for command in scripts:
         process = subprocess.Popen(
             command,
             shell=True
@@ -413,7 +412,7 @@ def batch_predict(dataset, predictions_port, datasets_port):
 
 def resume_training(
         data_path,
-        model_dir,
+        model_dir=5, # TODO: Remove hardcoding and change to model_id
         s3_bucket='self-driving-car',
         show_speed='False',
         s3_sync='n',
@@ -428,22 +427,27 @@ def resume_training(
     stop_training()
     # The & is required or Tornado will get stuck
     # TODO: Remove the hardcoded script path
-    command = 'python /Users/ryanzotti/Documents/repos/Self-Driving-Car/resume_training.py \
-    --datapath {data_path} \
-    --epochs {epochs} \
-    --model_dir {model_dir} \
-    --s3_bucket {s3_bucket} \
-    --show_speed {show_speed} \
-    --s3_sync {s3_sync} \
-    --save_to_disk {save_to_disk} \
-    --overfit {overfit} \
-    --image_scale {image_scale} \
-    --crop_factor {crop_factor} \
-    --batch_size {batch_size} \
-    --angle_only {angle_only} &'.format(
+    command = 'docker run -i -t -d \
+    --network host \
+    --volume {data_path}:/root/ai/data \
+    --name resume-training \
+    ryanzotti/ai-laptop:latest \
+    python /root/ai/microservices/resume_training.py \
+        --datapath {data_path} \
+        --epochs {epochs} \
+        --model_dir /root/ai/data/tf_visual_data/runs/{model_id} \
+        --s3_bucket {s3_bucket} \
+        --show_speed {show_speed} \
+        --s3_sync {s3_sync} \
+        --save_to_disk {save_to_disk} \
+        --overfit {overfit} \
+        --image_scale {image_scale} \
+        --crop_factor {crop_factor} \
+        --batch_size {batch_size} \
+        --angle_only {angle_only} &'.format(
         data_path=data_path,
         epochs=epochs,
-        model_dir=model_dir,
+        model_id=model_dir,
         s3_bucket=s3_bucket,
         show_speed=show_speed,
         s3_sync=s3_sync,
@@ -462,8 +466,8 @@ def resume_training(
 def is_training():
     number_of_running_processes = 0
     commands = [
-        "ps -ef | grep tiny_cropped_angle_model.py | grep -iv grep | wc -l | awk '{print $1}'",
-        "ps -ef | grep resume_training.py | grep -iv grep | wc -l | awk '{print $1}'"
+        "docker ps | grep -i model-training | wc -l",
+        "docker ps | grep -i resume-training | wc -l"
     ]
     for command in commands:
         process = subprocess.Popen(

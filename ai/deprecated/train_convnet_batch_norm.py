@@ -1,7 +1,7 @@
-import tensorflow as tf
-from Trainer import Trainer, parse_args
 import os
-from model import *
+
+from ai.Trainer import Trainer, parse_args
+from ai.model import *
 
 # I think I got my batch norm code from here: https://github.com/RuiShu/micro-projects/blob/master/tf-batchnorm-guide/batchnorm_guide.ipynb
 

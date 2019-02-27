@@ -1,6 +1,6 @@
 import cv2
 import sys
-from util import shell_command
+from ai.utilities import shell_command
 import numpy as np
 from random import randint
 

@@ -1,8 +1,7 @@
-import tensorflow as tf
-from Trainer import Trainer, parse_args
 import os
-from model import *
 
+from ai.Trainer import Trainer, parse_args
+from ai.model import *
 
 args = parse_args()
 data_path = args["datapath"]

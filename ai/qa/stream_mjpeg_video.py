@@ -1,6 +1,6 @@
 import cv2
 import argparse
-from util import *
+from ai.utilities import *
 
 
 # This is a script that is helpful for debugging. You can stream video from the Pi without saving it

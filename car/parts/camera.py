@@ -6,8 +6,8 @@ import numpy as np
 from PIL import Image
 import glob
 import subprocess
-from util import live_video_stream
 import urllib.request
+from car.utils import *
 
 
 class Webcam(object):
@@ -30,10 +30,7 @@ class Webcam(object):
         self.on = True
 
         if not self.unit_test:
-            # Run ffmpeg as a subprocess
-            cmd = 'cd /usr/src/ffmpeg & sudo ffserver -f /etc/ff.conf_original & ffmpeg -v quiet -r 10 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost/webcam.ffm'
-            self.ffmpeg_process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-            stream_url = 'http://{pi_host}/webcam.mjpeg'.format(pi_host=self.pi_host)
+            stream_url = 'http://{pi_host}:8090/test.mjpg'.format(pi_host=self.pi_host)
             self.stream = urllib.request.urlopen(stream_url)
             self.opencv_bytes = bytes()
 

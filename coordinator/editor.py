@@ -19,7 +19,7 @@ from coordinator.utilities import *
 import json
 import traceback
 from concurrent.futures import ThreadPoolExecutor
-from data_augmentation import pseduo_crop, show_resize_effect
+from ai.transformations import pseduo_crop, show_resize_effect
 
 
 class Home(tornado.web.RequestHandler):

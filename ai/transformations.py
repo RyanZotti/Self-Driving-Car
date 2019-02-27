@@ -194,3 +194,9 @@ def apply_transformations(images, image_scale, crop_factor):
             scale=image_scale
         )
     return images
+
+def show_resize_effect(original_image, scale):
+    smaller_scale = 1/scale
+    shrunken_image = cv2.resize(original_image, None, fx=smaller_scale, fy=smaller_scale, interpolation=cv2.INTER_CUBIC)
+    enlarged_image = cv2.resize(shrunken_image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+    return enlarged_image

@@ -1,9 +1,9 @@
 import argparse
-from data_augmentation import apply_transformations
+from ai.transformations import apply_transformations
 import os
 import tornado.ioloop
 import tornado.web
-from util import *
+from car.utils import *
 from concurrent.futures import ThreadPoolExecutor
 
 

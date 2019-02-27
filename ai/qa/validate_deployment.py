@@ -5,9 +5,9 @@ import traceback
 
 import requests
 
-from car.record_reader import RecordReader
-from data_augmentation import apply_transformations
-from util import *
+from ai.record_reader import RecordReader
+from ai.transformations import apply_transformations
+from ai.utilities import *
 
 ap = argparse.ArgumentParser()
 ap.add_argument(
