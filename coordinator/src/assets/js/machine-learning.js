@@ -6,6 +6,27 @@ function getDatasetMachineLearningRowString() {
     });
 }
 
+function listModels() {
+    return new Promise(function(resolve, reject) {
+        $.post( "/list-models", function(result) {
+            resolve(result.models);
+        });
+    });
+}
+
+async function loadMachineLearningModels() {
+    const table = document.querySelector("tbody#modelsTbody");
+    const models = await listModels();
+    for (const model of models){
+        const row = await getHtml('/model.html');
+        row.querySelector('td.model-id').textContent = model['model_id'];
+        row.querySelector('td.model-created-ts').textContent = model['created_timestamp'];
+        row.querySelector('td.model-top-crop-percent').textContent = model['crop'];
+        row.querySelector('td.model-image-scale').textContent = model['scale'];
+        table.appendChild(row);
+    }
+}
+
 function addDatasetMachineLearningRows() {
     const promises = [
         getDatasetMachineLearningRowString(),
@@ -296,6 +317,8 @@ document.addEventListener('DOMContentLoaded', function() {
     for (const toggle of trackedToggles){
         configureToggle(toggle);
     }
+
+    loadMachineLearningModels();
 
 }, false);
 

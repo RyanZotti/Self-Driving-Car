@@ -189,6 +189,63 @@
               </div>
 
 
+              <!-- Divider -->
+            <hr class="mt-4 mb-5">
+
+            <div class="row">
+              <div class="col">
+                 <h2>
+                     Models
+                 </h2>
+              </div>
+            </div>
+            <div class="card" id="models-table-div" data-toggle="lists" data-lists-values='["dataset-id", "images"]'>
+                <div class="card-header">
+                  <div class="row align-items-center">
+                    <div class="col">
+                      <!-- Search -->
+                      <form class="row align-items-center">
+                        <div class="col-auto pr-0">
+                          <span class="fe fe-search text-muted"></span>
+                        </div>
+                        <div class="col">
+                            <input type="search" class="form-control form-control-flush search" placeholder="Search">
+                        </div>
+                      </form>
+                    </div>
+                  </div> <!-- / .row -->
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-sm table-nowrap card-table">
+                    <thead>
+                      <tr>
+                        <th>
+                          <a href="#" class="text-muted sort" data-sort="model-id">
+                            Model ID
+                          </a>
+                        </th>
+                        <th>
+                          <a href="#" class="text-muted sort" data-sort="model-created-ts">
+                            Created
+                          </a>
+                        </th>
+                        <th>
+                          <a href="#" class="text-muted sort" data-sort="model-top-crop-percent">
+                            Top Crop %
+                          </a>
+                        </th>
+                        <th>
+                          <a href="#" class="text-muted sort" data-sort="model-image-scale">
+                            Image Scale
+                          </a>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="list" id="modelsTbody">
+                    </tbody>
+                  </table>
+                </div>
+            </div>
 
               <!-- Divider -->
               <hr class="mt-4 mb-5">

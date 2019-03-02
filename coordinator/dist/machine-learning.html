@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="assets/libs/quill/dist/quill.core.css">
     <link rel="stylesheet" href="assets/libs/select2/dist/css/select2.min.css">
     <link rel="stylesheet" href="assets/libs/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="assets/libs/bootstrap-slider/dist/css/bootstrap-slider.min.css"/>
     <link rel="stylesheet" href="assets/css/custom.css">
 
     <!-- Theme CSS -->
@@ -687,7 +688,63 @@
                 </div>
               </div>
 
+            <!-- Divider -->
+            <hr class="mt-4 mb-5">
 
+            <div class="row">
+              <div class="col">
+                 <h2>
+                     Models
+                 </h2>
+              </div>
+            </div>
+            <div class="card" id="models-table-div" data-toggle="lists" data-lists-values='["dataset-id", "images"]'>
+                <div class="card-header">
+                  <div class="row align-items-center">
+                    <div class="col">
+                      <!-- Search -->
+                      <form class="row align-items-center">
+                        <div class="col-auto pr-0">
+                          <span class="fe fe-search text-muted"></span>
+                        </div>
+                        <div class="col">
+                            <input type="search" class="form-control form-control-flush search" placeholder="Search">
+                        </div>
+                      </form>
+                    </div>
+                  </div> <!-- / .row -->
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-sm table-nowrap card-table">
+                    <thead>
+                      <tr>
+                        <th>
+                          <a href="#" class="text-muted sort" data-sort="model-id">
+                            Model ID
+                          </a>
+                        </th>
+                        <th>
+                          <a href="#" class="text-muted sort" data-sort="model-created-ts">
+                            Created
+                          </a>
+                        </th>
+                        <th>
+                          <a href="#" class="text-muted sort" data-sort="model-top-crop-percent">
+                            Top Crop %
+                          </a>
+                        </th>
+                        <th>
+                          <a href="#" class="text-muted sort" data-sort="model-image-scale">
+                            Image Scale
+                          </a>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="list" id="modelsTbody">
+                    </tbody>
+                  </table>
+                </div>
+            </div>
 
               <!-- Divider -->
               <hr class="mt-4 mb-5">
@@ -798,10 +855,11 @@
 
     <!-- JAVASCRIPT
     ================================================== -->
-
+    
     <!-- Libs JS -->
     <script src="assets/libs/jquery/dist/jquery.min.js"></script>
     <script src="assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/libs/bootstrap-slider/dist/bootstrap-slider.min.js"></script>
     <script src="assets/libs/chart.js/dist/Chart.min.js"></script>
     <script src="assets/libs/chart.js/Chart.extension.min.js"></script>
     <script src="assets/libs/highlight/highlight.pack.min.js"></script>

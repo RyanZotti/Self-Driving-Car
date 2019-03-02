@@ -131,6 +131,31 @@ class LaptopModelDeploymentHealth(tornado.web.RequestHandler):
         self.write(result)
 
 
+class ListModels(tornado.web.RequestHandler):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def list_models(self):
+        sql_query = '''
+            SELECT
+              model_id,
+              to_char(created_timestamp, 'YYYY-MM-DD HH24:MI:SS') AS created_timestamp,
+              crop,
+              '1/' || scale AS scale
+            FROM models
+            ORDER BY created_timestamp ASC
+        '''
+        rows = get_sql_rows(sql_query)
+        result = {'models':rows}
+        print(rows)
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.list_models()
+        self.write(result)
+
+
 class ReadSlider(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
@@ -1511,6 +1536,7 @@ def make_app():
         (r"/delete-flagged-record", DeleteFlaggedRecord),
         (r"/delete-flagged-dataset", DeleteFlaggedDataset),
         (r"/add-flagged-record", Keep),
+        (r"/list-models", ListModels),
         (r"/list-import-datasets", ListReviewDatasets),
         (r"/list-review-datasets", ListReviewDatasets),
         (r"/list-datasets-filesystem", ListReviewDatasetsFileSystem),
