@@ -124,21 +124,20 @@ function stopTraining() {
     });
 }
 
-// TODO: Allow transfer learning
-function startTraining() {
+function trainNewModel(config){
     return new Promise(async function(resolve, reject){
-        const trainDatasets = getMLCheckedDatasets('train');
-        const validationDatasets = getMLCheckedDatasets('validation');
-        const exists = await doesModelExist();
-        if (exists == true){
-            $.post('/resume-training', function(result){
-                resolve(result);
-            });
-        } else {
-            $.post('/train-new-model', function(result){
-                resolve(result);
-            });
-        }
+        data = JSON.stringify(config)
+        $.post('/train-new-model', data, function(result){
+           resolve(result)
+        });
+    });
+}
+
+function trainExistingModel(config){
+    return new Promise(async function(resolve, reject){
+        $.post('/resume-training', function(result){
+            resolve(result);
+        });
     });
 }
 
@@ -307,19 +306,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 1000);
 
     const trainModelButton = document.querySelector("button#train-model-button");
-    trainModelButton.onclick = function(){
+    trainModelButton.onclick = async function(){
         if(isTrainingLastState == true){
             const trainModelButton = document.querySelector("button#train-model-button");
             isAttemptingTrainingStop = true;
             trainModelButton.textContent = 'Stopping Training ...'
-            stopTraining().then(function(){
-                setTrainButtonState();
-                isAttemptingTrainingStop = false;
-            });
+            await stopTraining();
+            setTrainButtonState();
+            isAttemptingTrainingStop = false;
         } else {
-            startTraining().then(function(){
+            const isExistingModel = document.querySelector('option#existing-model-option').selected;
+            if(isExistingModel == true){
+                const select = document.querySelector('select#resumeTrainingExistingModelId');
+                const modelId = select.options[select.selectedIndex].text
+                const config = {
+                    'model_id':modelId
+                };
+                await trainExistingModel(config);
                 setTrainButtonState();
-            });
+            } else {
+                const config = {
+                    'scale':document.querySelector('input#image-scale-slider').value,
+                    'crop_percent':document.querySelector('input#image-top-cut-slider').value
+                };
+                await trainNewModel(config);
+                setTrainButtonState();
+            }
         }
     };
 
@@ -337,16 +349,38 @@ document.addEventListener('DOMContentLoaded', function() {
     const newOrExistingModelTrainSelect = document.querySelector('select#newOrExistingModel');
     const existingModelOption = document.querySelector('option#existing-model-option');
     const trainExistingModelIdSelectDiv = document.querySelector('div#train-existing-model-id-option-div');
+    const trainSliders = document.querySelector('div#train-sliders');
     newOrExistingModelTrainSelect.onchange = function(){
         console.log(newOrExistingModelTrainSelect.options[newOrExistingModelTrainSelect.selectedIndex].text)
         if (existingModelOption.selected == true){
             populateModelIdOptions();
             trainExistingModelIdSelectDiv.style.display = 'block';
+            trainSliders.style.display = 'none';
         } else{
             trainExistingModelIdSelectDiv.style.display = 'none';
+            trainSliders.style.display = 'block';
         }
     }
 
+    configureSlider({
+        'sliderId':'image-top-cut-slider',
+        'web_page':'machine learning',
+        'name':'image top cut',
+        'type':'percent',
+        'min':0,
+        'max':90,
+        'step':10
+    });
+
+    configureSlider({
+        'sliderId':'image-scale-slider',
+        'web_page':'machine learning',
+        'name':'image scale',
+        'type':'reduceFactor',
+        'min':1,
+        'max':16,
+        'step':1
+    });
 
     loadMachineLearningModels();
 

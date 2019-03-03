@@ -147,7 +147,6 @@ class ListModels(tornado.web.RequestHandler):
         '''
         rows = get_sql_rows(sql_query)
         result = {'models':rows}
-        print(rows)
         return result
 
     @tornado.gen.coroutine
@@ -1260,15 +1259,20 @@ class TrainNewModel(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
     @tornado.concurrent.run_on_executor
-    def train_new_model(self):
+    def train_new_model(self, json_input):
+
         train_new_model(
-            data_path=self.application.data_path
+            data_path=self.application.data_path,
+            epochs=100,
+            image_scale=json_input['scale'],
+            crop_percent=json_input['crop_percent']
         )
         return {}
 
     @tornado.gen.coroutine
     def post(self):
-        result = yield self.train_new_model()
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.train_new_model(json_input=json_input)
         self.write(result)
 
 

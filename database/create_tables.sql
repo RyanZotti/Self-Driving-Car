@@ -104,3 +104,9 @@ INSERT INTO sliders (event_ts, web_page, name, amount) VALUES
     (now(), 'datasets', 'image scale', 8),
     (now(), 'datasets', 'critical error', 80);
 COMMIT;
+
+BEGIN;
+INSERT INTO sliders (event_ts, web_page, name, amount) VALUES
+    (now(), 'machine learning', 'image top cut', 50),
+    (now(), 'machine learning', 'image scale', 8);
+COMMIT;

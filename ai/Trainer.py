@@ -27,7 +27,7 @@ class Trainer:
                  s3_sync=False,
                  save_to_disk=False,
                  image_scale=1.0,
-                 crop_factor=1,
+                 crop_percent=1,
                  overfit=False,
                  angle_only=False):
 
@@ -51,7 +51,7 @@ class Trainer:
         self.tf_timeline = tf_timeline
         self.s3_sync = s3_sync
         self.image_scale = image_scale
-        self.crop_factor = crop_factor
+        self.crop_percent = crop_percent
 
         # Always sync before training in case I ever train multiple models in parallel
         if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
@@ -90,7 +90,7 @@ class Trainer:
             )
             '''.format(
                 model_id=self.model_id,
-                crop=self.crop_factor,
+                crop=self.crop_percent,
                 scale=int(self.image_scale)
             )
             execute_sql(
@@ -112,7 +112,7 @@ class Trainer:
                 images, labels = process_data_continuous(
                     data=batch,
                     image_scale=self.image_scale,
-                    crop_factor=self.crop_factor)
+                    crop_percent=self.crop_percent)
                 self.train_batches.put((images, labels))
         else:
             while True:
@@ -120,7 +120,7 @@ class Trainer:
                 images, labels = process_data_continuous(
                     data=batch,
                     image_scale=self.image_scale,
-                    crop_factor=self.crop_factor)
+                    crop_percent=self.crop_percent)
                 self.test_batches.put((images, labels))
 
     # This function is agnostic to the model
@@ -148,7 +148,7 @@ class Trainer:
         train_images, train_labels = process_data_continuous(
             data=train_batch,
             image_scale=self.image_scale,
-            crop_factor=self.crop_factor)
+            crop_percent=self.crop_percent)
         train_feed_dict[x] = train_images
         train_feed_dict[y_] = train_labels
 
@@ -158,7 +158,7 @@ class Trainer:
         test_images, test_labels = process_data_continuous(
             data=test_batch,
             image_scale=self.image_scale,
-            crop_factor=self.crop_factor)
+            crop_percent=self.crop_percent)
         test_feed_dict[x] = test_images
         test_feed_dict[y_] = test_labels
         test_summary, test_accuracy = sess.run([merged, optimization], feed_dict=test_feed_dict,
@@ -332,8 +332,8 @@ def parse_args():
     ap.add_argument("--overfit", required=False,
                     help="Use same data for train and test (y/n)?",
                     default=False)
-    ap.add_argument("--crop_factor", required=False,
-                    help="Chop top 1/crop_factor off of image",
+    ap.add_argument("--crop_percent", required=False,
+                    help="Chop top crop_percent off of image",
                     default=1.0)
     ap.add_argument("--angle_only", required=False,
                     help="Use angle only model (Y/N)?",
@@ -349,7 +349,7 @@ def parse_args():
         default=50)
     args = vars(ap.parse_args())
     args['image_scale'] = float(args['image_scale'])
-    args['crop_factor'] = float(args['crop_factor'])
+    args['crop_percent'] = float(args['crop_percent'])
     args['show_speed'] = parse_boolean_cli_args(args['show_speed'])
     args['overfit'] = parse_boolean_cli_args(args['overfit'])
     args['angle_only'] = parse_boolean_cli_args(args['angle_only'])
