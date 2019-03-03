@@ -212,6 +212,22 @@ function setTrainButtonState() {
     };
 }
 
+
+async function populateModelIdOptions(modelId) {
+    const selection = document.querySelector('select#resumeTrainingExistingModelId');
+    while (selection.firstChild) {
+        selection.removeChild(selection.firstChild);
+    }
+    const models = await listModels();
+    for (const model of models){
+        const option = document.createElement('option');
+        option.setAttribute("id",model['model_id']);
+        option.textContent = model['model_id'];
+        selection.appendChild(option);
+    }
+}
+
+
 function getNewEpochs(modelId) {
     return new Promise(function(resolve, reject) {
         data = JSON.stringify({'model_id': modelId})
@@ -317,6 +333,20 @@ document.addEventListener('DOMContentLoaded', function() {
     for (const toggle of trackedToggles){
         configureToggle(toggle);
     }
+
+    const newOrExistingModelTrainSelect = document.querySelector('select#newOrExistingModel');
+    const existingModelOption = document.querySelector('option#existing-model-option');
+    const trainExistingModelIdSelectDiv = document.querySelector('div#train-existing-model-id-option-div');
+    newOrExistingModelTrainSelect.onchange = function(){
+        console.log(newOrExistingModelTrainSelect.options[newOrExistingModelTrainSelect.selectedIndex].text)
+        if (existingModelOption.selected == true){
+            populateModelIdOptions();
+            trainExistingModelIdSelectDiv.style.display = 'block';
+        } else{
+            trainExistingModelIdSelectDiv.style.display = 'none';
+        }
+    }
+
 
     loadMachineLearningModels();
 

@@ -262,6 +262,22 @@
                   </div>
               </div>
 
+            <form>
+                <div class="form-group">
+                    <label for="newOrExistingModel">Train A New or Existing Model</label>
+                    <select class="form-control" id="newOrExistingModel">
+                        <option value="" selected disabled hidden>Choose here</option>
+                        <option id="new-model-option">New</option>
+                        <option id="existing-model-option">Existing</option>
+                    </select>
+                </div>
+                <div id="train-existing-model-id-option-div" class="form-group" style="display:none">
+                    <label for="resumeTrainingExistingModelId">Model ID</label>
+                    <select class="form-control" id="resumeTrainingExistingModelId">
+                    </select>
+                </div>
+            </form>
+
               <div class="card" id="epochs-table-div" data-toggle="lists" data-lists-values='["dataset-id", "created-date", "images"]'>
                 <div class="card-header">
                   <div class="row align-items-center">
