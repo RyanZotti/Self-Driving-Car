@@ -905,6 +905,116 @@
                       </button>
                   </div>
               </div>
+
+              <!-- Divider -->
+            <hr class="mt-4 mb-5">
+
+            <div class="row">
+              <div class="col">
+                 <h2>
+                     Deployments
+                 </h2>
+              </div>
+            </div>
+
+              <form>
+                  <div class="form-group">
+                      <label for="select-deployments-target-device">Device</label>
+                      <select class="form-control" id="select-deployments-target-device">
+                          <option value="" selected disabled hidden>Choose here</option>
+                          <option id="deployments-laptop">Laptop</option>
+                          <option id="deployments-pi">Pi</option>
+                      </select>
+                  </div>
+                  <div class="form-group" style="display:block">
+                      <label for="select-deployments-model-id">Model ID</label>
+                      <select class="form-control" id="select-deployments-model-id">
+                      </select>
+                  </div>
+              </form>
+
+              <div class="row mb-5">
+                  <div class="col">
+                      <button type="submit" id="deploy-button" class="btn btn-primary btn-md">
+                          Deploy Model
+                      </button>
+                  </div>
+              </div>
+
+            <div class="card" id="deployments-table-div" data-toggle="lists" data-lists-values='["dataset-id", "images"]'>
+                <div class="card-header">
+                  <div class="row align-items-center">
+                    <div class="col">
+                      <!-- Search -->
+                      <form class="row align-items-center">
+                        <div class="col-auto pr-0">
+                          <span class="fe fe-search text-muted"></span>
+                        </div>
+                        <div class="col">
+                            <input type="search" class="form-control form-control-flush search" placeholder="Search">
+                        </div>
+                      </form>
+                    </div>
+                  </div> <!-- / .row -->
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-sm table-nowrap card-table">
+                    <thead>
+                      <tr>
+                          <th>
+                              <a href="#" class="text-muted sort" data-sort="deployments-device">
+                                Device
+                              </a>
+                          </th>
+                          <th>
+                              <a href="#" class="text-muted sort" data-sort="deployments-model-id">
+                                Model ID
+                              </a>
+                          </th>
+                          <th>
+                              <a href="#" class="text-muted sort" data-sort="deployments-epoch-id">
+                                Epoch ID
+                              </a>
+                          </th>
+                          <th>
+                              <a href="#" class="text-muted sort" data-sort="deployments-latency">
+                                Latency (ms)
+                              </a>
+                          </th>
+                          <th>
+                              <a href="#" class="text-muted sort" data-sort="deployments-health">
+                                Health (%)
+                              </a>
+                          </th>
+                      </tr>
+                    </thead>
+                    <tbody class="list" id="deploymentsTbody">
+                        <tr id="deployments-laptop-row">
+                            <td class="deployments-device">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-airplay"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"></path><polygon points="12 15 17 21 7 21 12 15"></polygon></svg>
+                                &nbsp; Laptop
+                            </td>
+                            <td class="deployments-model-id"></td>
+                            <td class="deployments-epoch-id"></td>
+                            <td class="deployments-latency"></td>
+                            <td class="deployments-health"></td>
+                        </tr>
+                        <tr id="deployments-pi-row">
+                            <td class="deployments-device">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-hard-drive"><line x1="22" y1="12" x2="2" y2="12"></line><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path><line x1="6" y1="16" x2="6" y2="16"></line><line x1="10" y1="16" x2="10" y2="16"></line></svg>
+                                &nbsp; Pi
+                            </td>
+                            <td class="deployments-model-id"></td>
+                            <td class="deployments-epoch-id"></td>
+                            <td class="deployments-latency"></td>
+                            <td class="deployments-health"></td>
+                        </tr>
+                    </tbody>
+                  </table>
+                </div>
+            </div>
+
+
             </form>
 
           </div>

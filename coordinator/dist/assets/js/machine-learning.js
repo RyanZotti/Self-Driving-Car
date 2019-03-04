@@ -170,6 +170,16 @@ function deployModelLaptop() {
     });
 }
 
+function updateDeploymentsTable(data) {
+    return new Promise(function(resolve, reject){
+        const jsonData = JSON.stringify(data);
+        $.post('/update-deployments-table', jsonData, function(result){
+           resolve(result)
+        });
+
+    });
+}
+
 /*
 The list of processes should be the source of
 truth regarding the current state of training.
@@ -214,6 +224,20 @@ function setTrainButtonState() {
 
 async function populateModelIdOptions(modelId) {
     const selection = document.querySelector('select#resumeTrainingExistingModelId');
+    while (selection.firstChild) {
+        selection.removeChild(selection.firstChild);
+    }
+    const models = await listModels();
+    for (const model of models){
+        const option = document.createElement('option');
+        option.setAttribute("id",model['model_id']);
+        option.textContent = model['model_id'];
+        selection.appendChild(option);
+    }
+}
+
+async function populateModelIdDeploymentOptions(modelId) {
+    const selection = document.querySelector('select#select-deployments-model-id');
     while (selection.firstChild) {
         selection.removeChild(selection.firstChild);
     }
@@ -361,6 +385,21 @@ document.addEventListener('DOMContentLoaded', function() {
             trainSliders.style.display = 'block';
         }
     }
+
+    const deployButton = document.querySelector('button#deploy-button');
+    const deployDeviceSelect = document.querySelector('select#select-deployments-target-device');
+    const deployModelSelect = document.querySelector('select#select-deployments-model-id');
+    deployButton.onclick = function(){
+        const device = deployDeviceSelect.options[deployDeviceSelect.selectedIndex].text;
+        const modelId = deployModelSelect.options[deployModelSelect.selectedIndex].text;
+        const inputs = {
+            'device':device,
+            'model_id':modelId
+        };
+        updateDeploymentsTable(inputs);
+    }
+
+    populateModelIdDeploymentOptions();
 
     configureSlider({
         'sliderId':'image-top-cut-slider',

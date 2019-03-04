@@ -794,6 +794,50 @@ class AIAngleAPI(tornado.web.RequestHandler):
         result = yield self.get_prediction(json_input)
         self.write(result)
 
+
+class UpdateDeploymentsTable(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def update_deployments_table(self,json_input):
+        device = json_input['device']
+        model_id = json_input['model_id']
+
+        sql_epoch_query = '''
+            SELECT
+              max(epoch) AS epoch_id
+            FROM epochs WHERE model_id = {model_id}
+        '''.format(
+            model_id=model_id
+        )
+        epoch_id = get_sql_rows(sql_epoch_query)[0]['epoch_id']
+
+        insert_deployment_record_sql = """
+            INSERT INTO deployments (
+                device,
+                model_id,
+                epoch_id,
+                event_ts
+            ) VALUES (
+                '{device}',
+                 {model_id},
+                 {epoch_id},
+                 NOW()
+            );
+        """.format(
+            device=device,
+            model_id=model_id,
+            epoch_id=epoch_id
+        )
+        execute_sql(insert_deployment_record_sql)
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        yield self.update_deployments_table(json_input=json_input)
+
+
 class DeleteRecord(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -1553,6 +1597,7 @@ def make_app():
         (r"/resume-training", ResumeTraining),
         (r"/stop-training", StopTraining),
         (r"/train-new-model", TrainNewModel),
+        (r"/update-deployments-table", UpdateDeploymentsTable),
         (r"/deploy-laptop-model", DeployModel),
         (r"/are-dataset-predictions-updated", IsDatasetPredictionFromLatestDeployedModel),
         (r"/is-training", IsTraining),

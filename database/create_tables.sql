@@ -67,6 +67,15 @@ PRIMARY KEY(event_ts, web_page, name));
 COMMIT;
 
 BEGIN;
+CREATE TABLE IF NOT EXISTS deployments(
+    device VARCHAR(100),
+    model_id INT,
+    epoch_id INT,
+    event_ts TIMESTAMP,
+PRIMARY KEY(device, model_id, epoch_id));
+COMMIT;
+
+BEGIN;
 CREATE TABLE IF NOT EXISTS raspberry_pi(
     username VARCHAR(100),
     hostname VARCHAR(100),
