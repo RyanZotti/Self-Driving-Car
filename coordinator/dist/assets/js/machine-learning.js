@@ -14,15 +14,42 @@ function listModels() {
     });
 }
 
+function deleteModel(modelId){
+    return new Promise(function(resolve, reject) {
+        const data = JSON.stringify({
+            'model_id': modelId
+        });
+        $.post( "/delete-model", data, function(result) {
+            resolve(result);
+        });
+    });
+}
+
 async function loadMachineLearningModels() {
     const table = document.querySelector("tbody#modelsTbody");
     const models = await listModels();
+
+    /*
+    I call this function recursively, which means that
+    I need to empty the table before I add rows to it
+    so that I don't wind up with duplicates
+    */
+    while (table.firstChild) {
+        table.removeChild(table.firstChild);
+    }
+    // Add a new row for each model
     for (const model of models){
         const row = await getHtml('/model.html');
         row.querySelector('td.model-id').textContent = model['model_id'];
         row.querySelector('td.model-created-ts').textContent = model['created_timestamp'];
         row.querySelector('td.model-top-crop-percent').textContent = model['crop'];
         row.querySelector('td.model-image-scale').textContent = model['scale'];
+        const deleteButton = row.querySelector('button.delete-model-action');
+        deleteButton.onclick = async function(){
+            await deleteModel(model['model_id']);
+            // Update the models UI table once the delete has gone through
+            loadMachineLearningModels()
+        }
         table.appendChild(row);
     }
 }

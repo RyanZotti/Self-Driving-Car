@@ -6,7 +6,7 @@ import time
 import urllib.request
 from ai.record_reader import RecordReader
 import os
-from os.path import dirname
+from os.path import dirname, join
 import numpy as np
 import tornado.gen
 import tornado.ioloop
@@ -17,6 +17,7 @@ import json
 import signal
 from coordinator.utilities import *
 import json
+from shutil import rmtree
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from ai.transformations import pseduo_crop, show_resize_effect
@@ -838,6 +839,38 @@ class UpdateDeploymentsTable(tornado.web.RequestHandler):
         yield self.update_deployments_table(json_input=json_input)
 
 
+class DeleteModel(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def delete_model(self,json_input):
+        model_id = json_input['model_id']
+        # Delete the model folder and files
+        sql_query = '''
+            SELECT
+              deploy_model_parent_path AS parent_directory
+            FROM raspberry_pi;
+        '''
+        rows = get_sql_rows(sql=sql_query)
+        parent_directory = rows[0]['parent_directory']
+        full_path = os.path.join(parent_directory,str(model_id))
+        rmtree(full_path)
+        # Delete the model from the table
+        delete_records_sql = """
+            DELETE FROM models
+            WHERE model_id = {model_id};
+        """.format(
+            model_id=model_id
+        )
+        execute_sql(delete_records_sql)
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        yield self.delete_model(json_input=json_input)
+
+
 class DeleteRecord(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -1578,6 +1611,7 @@ def make_app():
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
         (r"/dataset-record-ids-filesystem", DatasetRecordIdsAPIFileSystem),
         (r"/laptop-model-api-health", LaptopModelDeploymentHealth),
+        (r"/delete-model", DeleteModel),
         (r"/delete",DeleteRecord),
         (r"/delete-dataset", DeleteDataset),
         (r"/save-reocord-to-db", SaveRecordToDB),
