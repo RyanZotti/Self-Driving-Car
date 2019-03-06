@@ -207,6 +207,24 @@ function updateDeploymentsTable(data) {
     });
 }
 
+function getModelDeployments(){
+    return new Promise(function(resolve, reject){
+        $.post('/list-model-deployments', function(result){
+           resolve(result)
+        });
+    });
+}
+
+async function loadDeploymentsTable(){
+    const deployments = await getModelDeployments();
+    const pi = document.querySelector('tr#deployments-pi-row');
+    pi.querySelector('td.deployments-model-id').textContent = deployments['pi']['model_id'];
+    pi.querySelector('td.deployments-epoch-id').textContent = deployments['pi']['epoch_id'];
+    const laptop = document.querySelector('tr#deployments-laptop-row');
+    laptop.querySelector('td.deployments-model-id').textContent = deployments['laptop']['model_id'];
+    laptop.querySelector('td.deployments-epoch-id').textContent = deployments['laptop']['epoch_id'];
+}
+
 /*
 The list of processes should be the source of
 truth regarding the current state of training.
@@ -449,6 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     loadMachineLearningModels();
+    loadDeploymentsTable();
 
 }, false);
 

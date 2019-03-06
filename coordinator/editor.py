@@ -230,6 +230,53 @@ class WriteSlider(tornado.web.RequestHandler):
         self.write(result)
 
 
+class ListModelDeployments(tornado.web.RequestHandler):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_deployments(self):
+        result = {}
+        devices = ['laptop','pi']
+        for device in devices:
+            sql_query = '''
+                WITH latest AS (
+                  SELECT
+                    model_id,
+                    epoch_id,
+                    ROW_NUMBER() OVER(PARTITION BY model_id ORDER BY event_ts DESC) AS latest_rank
+                  FROM deployments
+                  WHERE LOWER(device) LIKE LOWER('%{device}%')
+                )
+                SELECT
+                  model_id,
+                  epoch_id
+                FROM latest
+                WHERE latest_rank = 1
+            '''.format(
+                device=device
+            )
+            rows = get_sql_rows(sql_query)
+            if len(rows) > 0:
+                first_row = rows[0]
+                metadata = {
+                    'model_id':first_row['model_id'],
+                    'epoch_id':first_row['epoch_id']
+                }
+                result[device] = metadata
+            else:
+                metadata = {
+                    'model_id': 'N/A',
+                    'epoch_id': 'N/A'
+                }
+                result[device] = metadata
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.get_deployments()
+        self.write(result)
+
+
 class ReadToggle(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
@@ -1631,6 +1678,7 @@ def make_app():
         (r"/resume-training", ResumeTraining),
         (r"/stop-training", StopTraining),
         (r"/train-new-model", TrainNewModel),
+        (r"/list-model-deployments", ListModelDeployments),
         (r"/update-deployments-table", UpdateDeploymentsTable),
         (r"/deploy-laptop-model", DeployModel),
         (r"/are-dataset-predictions-updated", IsDatasetPredictionFromLatestDeployedModel),
