@@ -28,6 +28,15 @@ function deleteModel(modelId){
 async function loadMachineLearningModels() {
     const table = document.querySelector("tbody#modelsTbody");
     const models = await listModels();
+    const deploymentForm = document.querySelector('form#deployments-form');
+    const deployButton = document.querySelector('button#deploy-button');
+    if (models.length > 0){
+        deploymentForm.style.display = 'block';
+        deployButton.style.display = 'block';
+    } else {
+        deploymentForm.style.display = 'none';
+        deployButton.style.display = 'none';
+    }
 
     /*
     I call this function recursively, which means that
