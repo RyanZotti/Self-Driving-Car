@@ -204,9 +204,10 @@ function laptoModelApiHealth() {
     });
 }
 
-function deployModelLaptop() {
+function deployModelLaptop(data) {
     return new Promise(function(resolve, reject){
-        $.post('/deploy-laptop-model', function(result){
+        const jsonData = JSON.stringify(data);
+        $.post('/deploy-laptop-model', jsonData, function(result){
             resolve(result);
         });
     });
@@ -449,14 +450,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const deployButton = document.querySelector('button#deploy-button');
     const deployDeviceSelect = document.querySelector('select#select-deployments-target-device');
     const deployModelSelect = document.querySelector('select#select-deployments-model-id');
-    deployButton.onclick = function(){
+    deployButton.onclick = async function(){
         const device = deployDeviceSelect.options[deployDeviceSelect.selectedIndex].text;
         const modelId = deployModelSelect.options[deployModelSelect.selectedIndex].text;
         const inputs = {
             'device':device,
             'model_id':modelId
         };
-        updateDeploymentsTable(inputs);
+        await updateDeploymentsTable(inputs);
+        deployModelLaptop({
+            'device':device
+        });
     }
 
     populateModelIdDeploymentOptions();

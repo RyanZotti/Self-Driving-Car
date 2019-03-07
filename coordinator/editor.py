@@ -701,15 +701,20 @@ class DeployModel(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
     @tornado.concurrent.run_on_executor
-    def deploy_model(self):
+    def deploy_model(self, json_input):
+        device = json_input['device']
+        checkpoint_directory_sql = """
+            SELECT
+              deploy_model_parent_path
+            FROM raspberry_pi
+        """.format(
+            device=device
+        )
+        checkpoint_directory = get_sql_rows(checkpoint_directory_sql)[0]['deploy_model_parent_path']
 
-        # TODO: Don't hardcode checkpoint_directory. Get from DB
-        checkpoint_directory = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data/tf_visual_data/runs/1/checkpoints'
         # TODO: Don't hardcode any of these things
         port = 8885
-        image_scale = 0.125
         angle_only = 'y'
-        crop_factor = 2
 
         # Kill any currently running model API
         try:
@@ -720,17 +725,26 @@ class DeployModel(tornado.web.RequestHandler):
         except:
             pass # Most likely means API is not up
 
-        # TODO: Remove hard-coded model ID
-        model_id = 1
         sql_query = """
             SELECT
-              max(epoch) AS epoch
-            FROM epochs
-            WHERE model_id = {model_id}
+              deployments.model_id,
+              deployments.epoch_id,
+              models.scale,
+              models.crop
+            FROM deployments
+            JOIN models
+              ON deployments.model_id = models.model_id
+            WHERE LOWER(device) LIKE LOWER('%{device}%')
+            ORDER BY event_ts DESC
+            LIMIT 1;
         """.format(
-            model_id=model_id
+            device=device
         )
-        epoch = get_sql_rows(sql_query)[0]['epoch']
+        first_row = get_sql_rows(sql_query)[0]
+        model_id = first_row['model_id']
+        epoch = first_row['epoch_id']
+        scale = first_row['scale']
+        crop = first_row['crop']
         command_list = [
             'docker',
             'run',
@@ -749,11 +763,11 @@ class DeployModel(tornado.web.RequestHandler):
             '--port',
             str(port),
             '--image_scale',
-            str(image_scale),
+            str(scale),
             '--angle_only',
             angle_only,
             '--crop_factor',
-            str(crop_factor),
+            str(crop),
             '--model_id',
             str(model_id),
             '--epoch',
@@ -768,7 +782,8 @@ class DeployModel(tornado.web.RequestHandler):
 
     @tornado.gen.coroutine
     def post(self):
-        result = yield self.deploy_model()
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.deploy_model(json_input=json_input)
         self.write(result)
 
 
