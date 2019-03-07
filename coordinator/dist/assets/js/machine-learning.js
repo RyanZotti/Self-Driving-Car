@@ -50,6 +50,12 @@ async function loadMachineLearningModels() {
             // Update the models UI table once the delete has gone through
             loadMachineLearningModels()
         }
+        // Make sure model select buttons are functional
+        const modelSelectInput = row.querySelector('input[name="modelSelect"]');
+        modelSelectInput.setAttribute('id','model-id-'+model['model_id']);
+        modelSelectInput.setAttribute('model-id',model['model_id']);
+        const modelSelectLabel = row.querySelector('label[name="modelSelect"]');
+        modelSelectLabel.setAttribute('for','model-id-'+model['model_id']);
         table.appendChild(row);
     }
 }
@@ -468,6 +474,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loadMachineLearningModels();
     loadDeploymentsTable();
+
+    const selectAllModelsButton = document.querySelector("input#modelSelectAll");
+    selectAllModelsButton.onchange = function() {
+        var buttons = document.querySelectorAll('input[name="modelSelect"]');
+        for (const button of buttons){
+            button.checked = selectAllModelsButton.checked;
+        }
+    };
+
+    const deleteModelBulkAction = document.querySelector("button#delete-model-bulk-action");
+    deleteModelBulkAction.onclick = async function(){
+        const buttons = document.querySelectorAll('input[name="modelSelect"]');
+        const promises = []
+        for (const button of buttons){
+            console.log(button.checked);
+            if (button.checked == true){
+                console.log(button.getAttribute("model-id"));
+                promises.push(deleteModel(button.getAttribute("model-id")));
+            }
+        };
+        await Promise.all(promises);
+        loadMachineLearningModels();
+    };
 
 }, false);
 
