@@ -9,17 +9,21 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	# Pull the image
 	docker pull ryanzotti/ai:latest
 
+	# Make sure the docker network exists, else create it
+	docker network ls
+	docker network create app_network
+
 	# Train a new model
 	DATA_DIRECTORY='/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
-	docker run -i -t \
-	  --network host \
+	docker run -i -t -p 8091:8091 \
+	  --network app_network \
 	  --volume $DATA_DIRECTORY:/root/ai/data \
 	  --name model-training \
 	  ryanzotti/ai-laptop:latest \
 	  python /root/ai/microservices/tiny_cropped_angle_model.py \
 	    --image_scale 8 \
 	    --angle_only y \
-	    --crop_factor 2 \
+	    --crop_percent 50 \
 	    --show_speed n \
 	    --s3_sync n \
 	    --save_to_disk y
@@ -27,8 +31,8 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	# Resume training an existing model
 	DATA_DIRECTORY='/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
 	MODEL_ID='5'
-	docker run -i -t \
-	  --network host \
+	docker run -i -t -p 8091:8091 \
+	  --network app_network \
 	  --volume $DATA_DIRECTORY:/root/ai/data \
 	  --name resume-training \
 	  ryanzotti/ai-laptop:latest \
@@ -37,7 +41,7 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	    --datapath /root/ai/data \
 	    --image_scale 8 \
 	    --angle_only y \
-	    --crop_factor 2 \
+	    --crop_percent 50 \
 	    --show_speed n \
 	    --s3_sync n \
 	    --save_to_disk y
@@ -54,7 +58,7 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 
 	# Deploy a model to your laptop for predictions
 	CHECKPOINT_DIRECTORY='/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data/tf_visual_data/runs/1/checkpoints'
-	docker run -i -d -t \
+	docker run -i -d -t -rm \
 	  -p 8885:8885 \
 	  --volume $CHECKPOINT_DIRECTORY:/root/ai/model-archives/model/checkpoints \
 	  --name laptop-predict \
@@ -63,7 +67,7 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	    --port 8885 \
 	    --image_scale 8 \
 	    --angle_only 'y' \
-	    --crop_factor 2 \
+	    --crop_percent 50 \
 	    --model_id 1 \
 	    --epoch 151
 

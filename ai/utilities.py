@@ -70,7 +70,7 @@ def shell_command(cmd,print_to_stdout=False):
             print(line.rstrip())
 
 def connect_to_postgres(host='localhost'):
-    connection_string = "host='localhost' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
+    connection_string = "host='postgres-11-1' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
     connection = psycopg2.connect(connection_string)
     cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     return connection, cursor

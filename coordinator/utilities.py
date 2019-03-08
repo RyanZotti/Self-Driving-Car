@@ -356,8 +356,8 @@ def train_new_model(data_path,epochs=10,show_speed='n', save_to_disk='y',image_s
     # TODO: Remove the hardcoded CHECKPOINT_DIRECTORY
     command = '''
         CHECKPOINT_DIRECTORY='/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data' && \
-        docker run -i -t -d --rm \
-          --network host \
+        docker run -i -t -d -p 8091:8091 --rm \
+          --network app_network \
           --volume $CHECKPOINT_DIRECTORY:/root/ai/data \
           --name model-training \
           ryanzotti/ai-laptop:latest \
@@ -427,8 +427,8 @@ def resume_training(
     stop_training()
     # The & is required or Tornado will get stuck
     # TODO: Remove the hardcoded script path
-    command = 'docker run -i -t -d \
-    --network host \
+    command = 'docker run -i -t -d -p 8091:8091 \
+    --network app_network \
     --volume {data_path}:/root/ai/data \
     --name resume-training \
     ryanzotti/ai-laptop:latest \

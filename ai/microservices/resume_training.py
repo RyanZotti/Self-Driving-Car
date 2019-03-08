@@ -15,7 +15,7 @@ save_to_disk = args['save_to_disk']
 batch_size = int(args['batch_size'])
 overfit = args['overfit']
 image_scale = args['image_scale']
-crop_factor = args['crop_factor']
+crop_percent = args['crop_percent']
 angle_only = args['angle_only']
 
 checkpoint_dir_path = os.path.join(model_dir,'checkpoints')
@@ -64,7 +64,7 @@ trainer = Trainer(data_path=data_path,
                   batch_size=batch_size,
                   overfit=overfit,
                   image_scale=image_scale,
-                  crop_factor=crop_factor,
+                  crop_percent=crop_percent,
                   angle_only=angle_only)
 
 trainer.train(sess=sess, x=x, y_=y_,

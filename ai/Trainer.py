@@ -1,9 +1,13 @@
 import argparse
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import queue
 from datetime import datetime
 from functools import partial
 from threading import Thread
 from tensorflow.python.client import timeline
+import tornado.ioloop
+import tornado.web
 
 from ai.record_reader import RecordReader
 from ai.transformations import process_data_continuous
@@ -99,6 +103,22 @@ class Trainer:
 
         # Prints batch processing speed, among other things
         self.show_speed = show_speed
+        # TODO: Remove hardcoded port
+        self.microservice_thread = Thread(target=self.start_microservice,kwargs={'port':8091})
+        self.microservice_thread.daemon = True
+        self.microservice_thread.start()
+
+    # The asyncio library is required to start Tornado as a separate thread
+    # https://github.com/tornadoweb/tornado/issues/2308
+    def start_microservice(self, port):
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        self.microservice = tornado.web.Application([(r'/training-state', TrainingState)])
+        self.microservice.listen(port)
+        self.microservice.model_id = self.model_id
+        self.microservice.batch_count = self.record_reader.get_batches_per_epoch()
+        self.microservice.batch_id = -1
+        self.microservice.epoch_id = self.start_epoch
+        tornado.ioloop.IOLoop.current().start()
 
     def get_model_id_from_model_dir(self):
         path_parts = os.path.normpath(self.model_dir)
@@ -211,10 +231,11 @@ class Trainer:
             test_batch_threads.append(test_batch_thread)
 
         for epoch in range(self.start_epoch+1, self.start_epoch + self.n_epochs):
+            self.microservice.epoch_id = epoch
             prev_time = datetime.now()
             batch_count = self.record_reader.get_batches_per_epoch()
             for batch_id in range(batch_count):
-
+                self.microservice.batch_id = batch_id
                 images, labels = self.train_batches.get()
                 self.train_batches.task_done()
 
@@ -358,3 +379,27 @@ def parse_args():
     if args['save_to_disk']:
         args['save_to_disk'] = parse_boolean_cli_args(args['save_to_disk'])
     return args
+
+class TrainingState(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_metadata(self):
+        result = {
+            'model_id' : self.application.model_id,
+            'batch_count' : self.application.batch_count,
+            'batch_id' : self.application.batch_id,
+            'epoch_id': self.application.epoch_id
+        }
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.get_metadata()
+        self.write(result)
+
+def make_app():
+    return tornado.web.Application(
+        [(r"/training-state", TrainingState),]
+    )
