@@ -343,11 +343,22 @@ def stop_training():
         'docker rm -f resume-training',
         'docker rm -f model-training'
     ]
+    '''
+    The .wait() is at the end is required so
+    that the Popen commands are required to
+    block the function from pregressing until
+    the commands have finished. This fixed a
+    bug where I would I would run stop_training()
+    before running `Docker run ...` that would
+    fail because the `Docker run` would execute
+    before Docker was able to drop the old
+    container
+    '''
     for command in scripts:
         process = subprocess.Popen(
             command,
-            shell=True
-        )
+            shell=True,
+        ).wait()
 
 
 def train_new_model(data_path,epochs=10,show_speed='n', save_to_disk='y',image_scale=8,crop_percent=50, s3_bucket='self-driving-car'):
@@ -377,7 +388,6 @@ def train_new_model(data_path,epochs=10,show_speed='n', save_to_disk='y',image_s
         crop_percent=crop_percent,
         s3_bucket=s3_bucket
     )
-    print(command)
     process = subprocess.Popen(
         command,
         shell=True
@@ -421,6 +431,7 @@ def get_datasets_path():
 
 def resume_training(
         model_id,
+        host_data_path,
         s3_bucket='self-driving-car',
         show_speed='False',
         s3_sync='n',
@@ -439,19 +450,15 @@ def resume_training(
         WHERE models.model_id = {model_id}
     '''.format(model_id=model_id)
     model_metadata = get_sql_rows(sql_query)[0]
-
-    # This will always be the same in the Docker container
-    data_path = '/root/ai/data'
-
     # The & is required or Tornado will get stuck
     # TODO: Remove the hardcoded script path
     command = 'docker run -i -t -d -p 8091:8091 \
     --network app_network \
-    --volume {data_path}:/root/ai/data \
+    --volume {host_data_path}:/root/ai/data \
     --name resume-training \
     ryanzotti/ai-laptop:latest \
     python /root/ai/microservices/resume_training.py \
-        --datapath {data_path} \
+        --datapath /root/ai/data \
         --epochs {epochs} \
         --model_dir /root/ai/data/tf_visual_data/runs/{model_id} \
         --s3_bucket {s3_bucket} \
@@ -462,8 +469,8 @@ def resume_training(
         --image_scale {image_scale} \
         --crop_percent {crop_percent} \
         --batch_size {batch_size} \
-        --angle_only {angle_only} &'.format(
-        data_path=data_path,
+        --angle_only {angle_only}'.format(
+        host_data_path=host_data_path,
         epochs=epochs,
         model_id=model_id,
         s3_bucket=s3_bucket,

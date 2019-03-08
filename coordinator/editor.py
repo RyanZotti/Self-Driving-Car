@@ -1368,7 +1368,8 @@ class ResumeTraining(tornado.web.RequestHandler):
     def resume_training(self, json_input):
         model_id = json_input['model_id']
         resume_training(
-            model_id=model_id
+            model_id=model_id,
+            host_data_path=get_datasets_path()
         )
         return {}
 
