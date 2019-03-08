@@ -1416,17 +1416,28 @@ class TrainNewModel(tornado.web.RequestHandler):
 
 
 class IsTraining(tornado.web.RequestHandler):
-
     executor = ThreadPoolExecutor(5)
 
     @tornado.concurrent.run_on_executor
-    def is_training(self):
-        return {'is_running':is_training()}
+    def health_check(self):
+        seconds = 0.5
+        try:
+            # TODO: Remove hardcoded port
+            request = requests.post(
+                'http://localhost:8091/training-state',
+                timeout=seconds
+            )
+            response = json.loads(request.text)
+            response['is_alive'] = True
+            return response
+        except:
+            return {'is_alive': False}
 
     @tornado.gen.coroutine
     def post(self):
-        result = yield self.is_training()
+        result = yield self.health_check()
         self.write(result)
+
 
 
 class DoesModelAlreadyExist(tornado.web.RequestHandler):

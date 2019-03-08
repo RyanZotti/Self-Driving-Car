@@ -251,34 +251,33 @@ if users are going to switch screens frequently
 function isTraining() {
     return new Promise(function(resolve, reject){
         $.post('/is-training', function(result){
-            resolve(result.is_running);
+            resolve(result);
         });
     });
 }
 
-function setTrainButtonState() {
+async function setTrainButtonState() {
     if (isAttemptingTrainingStop == false){
         const trainModelButton = document.querySelector("button#train-model-button");
-        isTraining().then(function(processExists){
-            isTrainingLastState = processExists;
-            if(processExists == true){
-                trainModelButton.textContent = 'Stop Training'
-                if(trainModelButton.classList.contains("btn-primary")){
-                     trainModelButton.classList.remove("btn-primary");
-                }
-                if(!trainModelButton.classList.contains("btn-danger")){
-                    trainModelButton.classList.add("btn-danger");
-                }
-            } else {
-                trainModelButton.textContent = 'Start Training'
-                if(trainModelButton.classList.contains("btn-danger")){
-                    trainModelButton.classList.remove("btn-danger");
-                }
-                if(!trainModelButton.classList.contains("btn-primary")){
-                    trainModelButton.classList.add("btn-primary");
-                }
+        const metadata = isTraining();
+        isTrainingLastState = metadata['is_alive'];
+        if(isTrainingLastState == true){
+            trainModelButton.textContent = 'Stop Training'
+            if(trainModelButton.classList.contains("btn-primary")){
+                 trainModelButton.classList.remove("btn-primary");
             }
-        });
+            if(!trainModelButton.classList.contains("btn-danger")){
+                trainModelButton.classList.add("btn-danger");
+            }
+        } else {
+            trainModelButton.textContent = 'Start Training'
+            if(trainModelButton.classList.contains("btn-danger")){
+                trainModelButton.classList.remove("btn-danger");
+            }
+            if(!trainModelButton.classList.contains("btn-primary")){
+                trainModelButton.classList.add("btn-primary");
+            }
+        };
     };
 }
 
@@ -371,18 +370,21 @@ function getMLCheckedDatasets(datasetType){
 document.addEventListener('DOMContentLoaded', function() {
     selectAllMachineLearningDatasetsTrigger();
     addDatasetMachineLearningRows();
-    var modelId = 1;
-    fillEpochsTable(modelId)
     /*
     The training could complete successfully or fail at any
     time, so make sure to check it every 5 seconds. The time
     loop can be quit with a call to clearInterval(<timevar>);
     */
-    const trainingStateTimer = setInterval(function(){
-      setTrainButtonState();
-      // TODO: Remove hardcoded modelId
-      var modelId = 1;
-      fillEpochsTable(modelId);
+    const trainingStateTimer = setInterval(async function(){
+        setTrainButtonState();
+        const epochsTable = document.querySelector('div#epochs-table-div');
+        const metadata = await isTraining()
+        if (metadata['is_alive']==true){
+            fillEpochsTable(metadata['model_id']);
+            epochsTable.style.display = 'block';
+        } else {
+            epochsTable.style.display = 'none';
+        }
     }, 1000);
 
     // Update Raspberry Pi statues

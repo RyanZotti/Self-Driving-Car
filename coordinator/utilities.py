@@ -463,31 +463,6 @@ def resume_training(
         shell=True
     )
 
-def is_training():
-    number_of_running_processes = 0
-    commands = [
-        "docker ps | grep -i model-training | wc -l",
-        "docker ps | grep -i resume-training | wc -l"
-    ]
-    for command in commands:
-        process = subprocess.Popen(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            shell=True
-        )
-        for line in iter(process.stdout.readline, b''):
-            # TODO:
-            count = str(line)\
-                .replace("b","")\
-                .replace("\\","")\
-                .replace("n","")\
-                .replace("\'","")
-            number_of_running_processes += int(count)
-    if number_of_running_processes == 0:
-        return False
-    else:
-        return True
 
 def get_pi_connection_details():
     username = None
