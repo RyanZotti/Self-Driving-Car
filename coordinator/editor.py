@@ -1516,22 +1516,21 @@ class NewEpochs(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def get_epochs(self,json_inputs):
         model_id = json_inputs['model_id']
-        # TODO: Remove hardcoded port
-        request = requests.post(
-            'http://localhost:8885/model-meta-data'
-        )
-        response = json.loads(request.text)
-        model_id = response['model_id']
-        epoch = response['epoch']
         sql_query = '''
+            CREATE TEMP TABLE recent_epochs AS (
+                SELECT
+                  epochs.epoch,
+                  epochs.train,
+                  epochs.validation
+                FROM epochs
+                WHERE epochs.model_id = {model_id}
+                ORDER BY epochs.epoch DESC
+                LIMIT 10
+            );
             SELECT
-              epochs.epoch,
-              epochs.train,
-              epochs.validation
-            FROM epochs
-            WHERE epochs.epoch > COALESCE(epoch,0)
-              AND epochs.model_id = {model_id}
-            ORDER BY epochs.epoch ASC;
+              *
+            FROM recent_epochs
+            ORDER BY epoch ASC
         '''.format(
             model_id=model_id
         )
