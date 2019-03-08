@@ -1365,16 +1365,17 @@ class ResumeTraining(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
     @tornado.concurrent.run_on_executor
-    def resume_training(self):
+    def resume_training(self, json_input):
+        model_id = json_input['model_id']
         resume_training(
-            data_path=self.application.data_path,
-            model_dir=self.application.model_path
+            model_id=model_id
         )
         return {}
 
     @tornado.gen.coroutine
     def post(self):
-        result = yield self.resume_training()
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.resume_training(json_input=json_input)
         self.write(result)
 
 
@@ -1401,7 +1402,7 @@ class TrainNewModel(tornado.web.RequestHandler):
     def train_new_model(self, json_input):
 
         train_new_model(
-            data_path=self.application.data_path,
+            data_path=get_datasets_path(),
             epochs=100,
             image_scale=json_input['scale'],
             crop_percent=json_input['crop_percent']

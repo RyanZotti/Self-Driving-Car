@@ -410,21 +410,39 @@ def batch_predict(dataset, predictions_port, datasets_port):
     return process
 
 
+def get_datasets_path():
+    sql_query = '''
+        SELECT
+          datasets_parent_path
+        FROM raspberry_pi
+    '''
+    datasets_parent_path = get_sql_rows(sql_query)[0]['datasets_parent_path']
+    return datasets_parent_path
+
 def resume_training(
-        data_path,
-        model_dir=5, # TODO: Remove hardcoding and change to model_id
+        model_id,
         s3_bucket='self-driving-car',
         show_speed='False',
         s3_sync='n',
         epochs=1000,
         save_to_disk='y',
         overfit='n',
-        image_scale='8',
-        crop_factor='2',
         batch_size='50',
         angle_only='y'):
 
     stop_training()
+    sql_query = '''
+        SELECT
+          models.crop,
+          models.scale
+        FROM models
+        WHERE models.model_id = {model_id}
+    '''.format(model_id=model_id)
+    model_metadata = get_sql_rows(sql_query)[0]
+
+    # This will always be the same in the Docker container
+    data_path = '/root/ai/data'
+
     # The & is required or Tornado will get stuck
     # TODO: Remove the hardcoded script path
     command = 'docker run -i -t -d -p 8091:8091 \
@@ -442,19 +460,19 @@ def resume_training(
         --save_to_disk {save_to_disk} \
         --overfit {overfit} \
         --image_scale {image_scale} \
-        --crop_factor {crop_factor} \
+        --crop_percent {crop_percent} \
         --batch_size {batch_size} \
         --angle_only {angle_only} &'.format(
         data_path=data_path,
         epochs=epochs,
-        model_id=model_dir,
+        model_id=model_id,
         s3_bucket=s3_bucket,
         show_speed=show_speed,
         s3_sync=s3_sync,
         save_to_disk=save_to_disk,
         overfit=overfit,
-        image_scale=image_scale,
-        crop_factor=crop_factor,
+        image_scale=model_metadata['scale'],
+        crop_percent=model_metadata['crop'],
         batch_size=batch_size,
         angle_only=angle_only
     )

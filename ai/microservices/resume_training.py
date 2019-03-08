@@ -21,7 +21,7 @@ angle_only = args['angle_only']
 checkpoint_dir_path = os.path.join(model_dir,'checkpoints')
 
 # Sync with S3 if model or data (or both) are not available locally
-if not file_is_stored_locally(checkpoint_dir_path):
+if not file_is_stored_locally(checkpoint_dir_path) and s3_sync:
     sync_from_aws(s3_path=s3_bucket, local_path=data_path)
 
 start_epoch = get_prev_epoch(checkpoint_dir_path)

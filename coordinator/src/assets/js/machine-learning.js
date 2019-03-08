@@ -177,7 +177,8 @@ function trainNewModel(config){
 
 function trainExistingModel(config){
     return new Promise(async function(resolve, reject){
-        $.post('/resume-training', function(result){
+        data = JSON.stringify(config)
+        $.post('/resume-training', data, function(result){
             resolve(result);
         });
     });
