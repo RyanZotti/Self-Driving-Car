@@ -398,8 +398,3 @@ class TrainingState(tornado.web.RequestHandler):
     def post(self):
         result = yield self.get_metadata()
         self.write(result)
-
-def make_app():
-    return tornado.web.Application(
-        [(r"/training-state", TrainingState),]
-    )
