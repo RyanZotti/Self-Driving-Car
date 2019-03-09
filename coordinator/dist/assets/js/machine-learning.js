@@ -260,7 +260,7 @@ function isTraining() {
 async function setTrainButtonState() {
     if (isAttemptingTrainingStop == false){
         const trainModelButton = document.querySelector("button#train-model-button");
-        const metadata = isTraining();
+        const metadata = await isTraining();
         isTrainingLastState = metadata['is_alive'];
         if(isTrainingLastState == true){
             trainModelButton.textContent = 'Stop Training'
