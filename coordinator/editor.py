@@ -1707,7 +1707,7 @@ def make_app():
         (r"/train-new-model", TrainNewModel),
         (r"/list-model-deployments", ListModelDeployments),
         (r"/update-deployments-table", UpdateDeploymentsTable),
-        (r"/deploy-laptop-model", DeployModel),
+        (r"/deploy-model", DeployModel),
         (r"/are-dataset-predictions-updated", IsDatasetPredictionFromLatestDeployedModel),
         (r"/is-training", IsTraining),
         (r"/does-model-already-exist", DoesModelAlreadyExist),

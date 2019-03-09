@@ -205,10 +205,10 @@ function laptoModelApiHealth() {
     });
 }
 
-function deployModelLaptop(data) {
+function deployModel(data) {
     return new Promise(function(resolve, reject){
         const jsonData = JSON.stringify(data);
-        $.post('/deploy-laptop-model', jsonData, function(result){
+        $.post('/deploy-model', jsonData, function(result){
             resolve(result);
         });
     });
@@ -423,12 +423,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // TODO: Figure out how to differentiate from Pi model deployment
-    const deployModelButton = document.querySelector("button#deploy-model-laptop-button");
-    deployModelButton.onclick = function(){
-        deployModelLaptop();
-    }
-
     const trackedToggles = document.querySelectorAll('input.tracked-toggle');
     for (const toggle of trackedToggles){
         configureToggle(toggle);
@@ -461,7 +455,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'model_id':modelId
         };
         await updateDeploymentsTable(inputs);
-        deployModelLaptop({
+        deployModel({
             'device':device
         });
     }
