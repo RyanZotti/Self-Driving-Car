@@ -110,25 +110,43 @@ class UpdateDriveState(tornado.web.RequestHandler):
         self.write(result)
 
 
-class LaptopModelDeploymentHealth(tornado.web.RequestHandler):
+class DeploymentHealth(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
     @tornado.concurrent.run_on_executor
-    def get_laptop_model_deploy_health(self):
+    def get_deployment_health(self,json_input):
+        device = json_input['device']
+        if device.lower() == 'laptop':
+            host = 'localhost'
+        elif device.lower() == 'pi':
+            sql_query = '''
+                SELECT
+                  hostname,
+                  password,
+                  username
+                FROM raspberry_i
+            '''
+            first_row = get_sql_rows(sql_query)[0]
+            host = first_row['hostname']
+        else:
+            pass
         seconds = 1
         try:
             request = requests.post(
-                'http://localhost:8885/health-check',
+                # TODO: Remove hardcoded port
+                'http://{host}:8885/model-metadata'.format(host=host),
                 timeout=seconds
             )
             response = json.loads(request.text)
+            response['is_alive'] = True
             return response
         except:
-            return {'process_id': -1}
+            return {'is_alive': False}
 
     @tornado.gen.coroutine
     def post(self):
-        result = yield self.get_laptop_model_deploy_health()
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.get_deployment_health(json_input)
         self.write(result)
 
 
@@ -723,7 +741,8 @@ class DeployModel(tornado.web.RequestHandler):
                 shell=True
             ).wait()
         except:
-            pass # Most likely means API is not up
+            # Most likely means API is not up
+            print('Failed: docker rm -f laptop-predict')
 
         sql_query = """
             SELECT
@@ -768,7 +787,6 @@ class DeployModel(tornado.web.RequestHandler):
             model_id=model_id,
             epoch_id=epoch
         )
-        print(command)
         process = subprocess.Popen(
             command,
             shell=True
@@ -1681,7 +1699,7 @@ def make_app():
         (r"/update-drive-state", UpdateDriveState),
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
         (r"/dataset-record-ids-filesystem", DatasetRecordIdsAPIFileSystem),
-        (r"/laptop-model-api-health", LaptopModelDeploymentHealth),
+        (r"/deployment-health", DeploymentHealth),
         (r"/delete-model", DeleteModel),
         (r"/delete",DeleteRecord),
         (r"/delete-dataset", DeleteDataset),

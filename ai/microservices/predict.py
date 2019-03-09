@@ -10,22 +10,6 @@ from ai.transformations import apply_transformations
 from ai.utilities import load_model
 
 
-class HealthCheck(tornado.web.RequestHandler):
-
-    executor = ThreadPoolExecutor(5)
-
-    @tornado.concurrent.run_on_executor
-    def get_procces_id(self):
-        process_id = os.getpid()
-        result = {'process_id':process_id}
-        return result
-
-    @tornado.gen.coroutine
-    def post(self):
-        result = yield self.get_procces_id()
-        self.write(result)
-
-
 class ModelMetadata(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -34,7 +18,7 @@ class ModelMetadata(tornado.web.RequestHandler):
     def get_metadata(self):
         result = {
             'model_id': self.application.model_id,
-            'epoch': self.application.epoch,
+            'epoch_id': self.application.epoch_id,
             'angle_only': self.application.angle_only,
             'image_scale': self.application.image_scale,
             'crop_percent': self.application.crop_percent
@@ -164,8 +148,7 @@ def make_app(sess, x, prediction, image_scale, crop_percent, angle_only):
            'image_scale':image_scale,
            'crop_percent':crop_percent,
            'angle_only':angle_only}),
-         (r"/health-check", HealthCheck),
-         (r"/model-meta-data", ModelMetadata),])
+         (r"/model-metadata", ModelMetadata),])
 
 
 if __name__ == "__main__":
@@ -214,16 +197,16 @@ if __name__ == "__main__":
     crop_percent = float(args['crop_percent'])
     port=args['port']
     model_id = args['model_id']
-    epoch = args['epoch']
+    epoch_id = args['epoch']
 
     # Load model just once and store in memory for all future calls
     sess, x, prediction = load_model(path)
 
     app = make_app(sess, x, prediction,image_scale, crop_percent, angle_only)
-    app.model_id = model_id
-    app.epoch = epoch
+    app.model_id = int(model_id)
+    app.epoch_id = int(epoch_id)
     app.angle_only = angle_only
-    app.image_scale = image_scale
-    app.crop_percent = crop_percent
+    app.image_scale = int(image_scale)
+    app.crop_percent = int(crop_percent)
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()

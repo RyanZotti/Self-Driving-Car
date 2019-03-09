@@ -245,3 +245,63 @@ async function configureSlider(config){
         writeSlider(input);
     });
 }
+
+function deployModel(data) {
+    return new Promise(function(resolve, reject){
+        const jsonData = JSON.stringify(data);
+        $.post('/deploy-model', jsonData, function(result){
+            resolve(result);
+        });
+    });
+}
+
+function getModelDeployments(){
+    return new Promise(function(resolve, reject){
+        $.post('/list-model-deployments', function(result){
+           resolve(result)
+        });
+    });
+}
+
+function deploymentHealth(device) {
+    return new Promise(function(resolve, reject){
+        const jsonData = JSON.stringify({
+            'device':device
+        });
+        $.post('/deployment-health', jsonData, function(result){
+            resolve(result);
+        });
+    });
+}
+
+/*
+Checks which model is expected to be deployed, sees if
+that model's prediction microservice is up running, and
+deploys it if not
+*/
+async function pollDeployment(){
+    const deployments = await getModelDeployments();
+    // TODO: Support Pi deployment
+    const device = 'laptop';
+    deployment = deployments[device]
+    // Deploy if you expect a model but it is not running
+    if (deployment['model_id'] != 'N/A'){
+        const healthcheck = await deploymentHealth(device);
+        // Deploy if it's not running
+        if (healthcheck['is_alive']==false) {
+            deployModel({
+               'device':device
+            });
+            console.log('is not alive');
+        } else {
+            console.log('is alive');
+            // If it is running, check that's it up-to-date
+            if (parseInt(deployment['model_id'])!=parseInt(healthcheck['model_id']) ||
+              parseInt(deployment['epoch_id'])!=parseInt(healthcheck['epoch_id'])) {
+                deployModel({
+                   'device':device
+                });
+            }
+        }
+    }
+}

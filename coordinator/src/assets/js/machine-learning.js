@@ -197,22 +197,6 @@ function doesModelExist() {
     });
 }
 
-function laptoModelApiHealth() {
-    return new Promise(function(resolve, reject){
-        $.post('/laptop-model-api-health', function(result){
-            resolve(result['process_id']);
-        });
-    });
-}
-
-function deployModel(data) {
-    return new Promise(function(resolve, reject){
-        const jsonData = JSON.stringify(data);
-        $.post('/deploy-model', jsonData, function(result){
-            resolve(result);
-        });
-    });
-}
 
 function updateDeploymentsTable(data) {
     return new Promise(function(resolve, reject){
@@ -224,13 +208,6 @@ function updateDeploymentsTable(data) {
     });
 }
 
-function getModelDeployments(){
-    return new Promise(function(resolve, reject){
-        $.post('/list-model-deployments', function(result){
-           resolve(result)
-        });
-    });
-}
 
 async function loadDeploymentsTable(){
     const deployments = await getModelDeployments();
@@ -392,6 +369,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const piHealthCheckTime = setInterval(function(){
         updatePiConnectionStatuses()
     }, 1000);
+
+    // Deploy the prediction microservices if they're not running
+    const deploymentTime = setInterval(function(){
+        pollDeployment();
+    }, 5000);
 
     const trainModelButton = document.querySelector("button#train-model-button");
     trainModelButton.onclick = async function(){
