@@ -37,7 +37,7 @@ class ModelMetadata(tornado.web.RequestHandler):
             'epoch': self.application.epoch,
             'angle_only': self.application.angle_only,
             'image_scale': self.application.image_scale,
-            'crop_factor': self.application.crop_factor
+            'crop_percent': self.application.crop_percent
         }
         return result
 
@@ -69,7 +69,7 @@ class PredictionHandler(tornado.web.RequestHandler):
         normalized_images = apply_transformations(
             images=normalized_images,
             image_scale=self.image_scale,
-            crop_factor=self.crop_factor)
+            crop_percent=self.crop_percent)
 
         prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess).astype(float)
 
@@ -91,8 +91,8 @@ class PredictionHandler(tornado.web.RequestHandler):
         return self._image_scale
 
     @property
-    def crop_factor(self):
-        return self._crop_factor
+    def crop_percent(self):
+        return self._crop_percent
 
     @property
     def angle_only(self):
@@ -106,20 +106,20 @@ class PredictionHandler(tornado.web.RequestHandler):
     def image_scale(self, image_scale):
         self._image_scale = image_scale
 
-    @crop_factor.setter
-    def crop_factor(self, crop_factor):
-        self._crop_factor = crop_factor
+    @crop_percent.setter
+    def crop_percent(self, crop_percent):
+        self._crop_percent = crop_percent
 
     @angle_only.setter
     def angle_only(self, angle_only):
         self._angle_only = angle_only
 
-    def initialize(self, sess, x, prediction, image_scale, crop_factor, angle_only):
+    def initialize(self, sess, x, prediction, image_scale, crop_percent, angle_only):
         self.prediction = prediction
         self.sess = sess
         self.x = x
         self.image_scale = image_scale
-        self.crop_factor = crop_factor
+        self.crop_percent = crop_percent
         self.angle_only = angle_only
 
     @property
@@ -155,14 +155,14 @@ class PredictionHandler(tornado.web.RequestHandler):
         self.write(result)
 
 
-def make_app(sess, x, prediction, image_scale, crop_factor, angle_only):
+def make_app(sess, x, prediction, image_scale, crop_percent, angle_only):
     return tornado.web.Application(
         [(r"/predict",PredictionHandler,
           {'sess':sess,
            'x':x,
            'prediction':prediction,
            'image_scale':image_scale,
-           'crop_factor':crop_factor,
+           'crop_percent':crop_percent,
            'angle_only':angle_only}),
          (r"/health-check", HealthCheck),
          (r"/model-meta-data", ModelMetadata),])
@@ -179,9 +179,8 @@ if __name__ == "__main__":
         default='/root/ai/model-archives/model/checkpoints')
     ap.add_argument(
         "--image_scale",
-        required=False,
-        help="Resize image scale",
-        default=0.125)
+        required=True,
+        help="Resize image scale")
     ap.add_argument(
         "--port",
         required=False,
@@ -194,19 +193,16 @@ if __name__ == "__main__":
         default='y')
     ap.add_argument(
         "--model_id",
-        required=False, # TODO: Fix PYTHONPATH and make this required
-        help="Unique identifier for the model",
-        default=1)
+        required=True,
+        help="Unique identifier for the model")
     ap.add_argument(
         "--epoch",
-        required=False,  # TODO: Fix PYTHONPATH and make this required
-        help="The model epoch, which is used as a means to version the model",
-        default=38)
+        required=True,
+        help="The model epoch, which is used as a means to version the model")
     ap.add_argument(
-        "--crop_factor",
+        "--crop_percent",
         required=False,
-        help="Image is cropped to 1/crop_factor",
-        default=2)
+        help="Percent of image top that is cut")
     args = vars(ap.parse_args())
     path = args['checkpoint_dir']
     if 'y' in args['angle_only'].lower():
@@ -215,7 +211,7 @@ if __name__ == "__main__":
         args['angle_only'] = False
     angle_only = args['angle_only']
     image_scale = float(args['image_scale'])
-    crop_factor = float(args['crop_factor'])
+    crop_percent = float(args['crop_percent'])
     port=args['port']
     model_id = args['model_id']
     epoch = args['epoch']
@@ -223,11 +219,11 @@ if __name__ == "__main__":
     # Load model just once and store in memory for all future calls
     sess, x, prediction = load_model(path)
 
-    app = make_app(sess, x, prediction,image_scale, crop_factor, angle_only)
+    app = make_app(sess, x, prediction,image_scale, crop_percent, angle_only)
     app.model_id = model_id
     app.epoch = epoch
     app.angle_only = angle_only
     app.image_scale = image_scale
-    app.crop_factor = crop_factor
+    app.crop_percent = crop_percent
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()

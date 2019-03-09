@@ -721,7 +721,7 @@ class DeployModel(tornado.web.RequestHandler):
             process = subprocess.Popen(
                 'docker rm -f laptop-predict',
                 shell=True
-            )
+            ).wait()
         except:
             pass # Most likely means API is not up
 
@@ -745,38 +745,35 @@ class DeployModel(tornado.web.RequestHandler):
         epoch = first_row['epoch_id']
         scale = first_row['scale']
         crop = first_row['crop']
-        command_list = [
-            'docker',
-            'run',
-            '-i',
-            '-d',
-            '-t',
-            '-p',
-            str(port)+':8885',
-            '--volume',
-            checkpoint_directory+':/root/ai/model-archives/model/checkpoints',
-            '--name',
-            'laptop-predict',
-            'ryanzotti/ai-laptop:latest',
-            'python',
-            '/root/ai/microservices/predict.py',
-            '--port',
-            str(port),
-            '--image_scale',
-            str(scale),
-            '--angle_only',
-            angle_only,
-            '--crop_factor',
-            str(crop),
-            '--model_id',
-            str(model_id),
-            '--epoch',
-            str(epoch)
-        ]
-        process = subprocess.Popen(
-            args=command_list,
-            shell=False
+        checkpoint_directory = checkpoint_directory + '/{0}/checkpoints'.format(model_id)
+        command = '''
+            docker run -i -t -d -p {host_port}:8885 \
+                --volume {checkpoint_directory}:/root/ai/model-archives/model/checkpoints \
+                --name laptop-predict \
+                --network app_network \
+                ryanzotti/ai-laptop:latest \
+                python /root/ai/microservices/predict.py \
+                    --port 8885 \
+                    --image_scale {scale} \
+                    --angle_only {angle_only} \
+                    --crop_percent {crop_percent} \
+                    --model_id {model_id} \
+                    --epoch {epoch_id}
+        '''.format(
+            host_port=port,
+            checkpoint_directory=checkpoint_directory,
+            scale=scale,
+            angle_only=angle_only,
+            crop_percent=crop,
+            model_id=model_id,
+            epoch_id=epoch
         )
+        print(command)
+        process = subprocess.Popen(
+            command,
+            shell=True
+        )
+
         result = {}
         return result
 
