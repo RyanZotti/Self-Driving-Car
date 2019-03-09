@@ -58,7 +58,7 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 
 	# Deploy a model to your laptop for predictions
 	CHECKPOINT_DIRECTORY='/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data/tf_visual_data/runs/1/checkpoints'
-	docker run -i -d -t -rm \
+	docker run -i -d -t \
 	  -p 8885:8885 \
 	  --volume $CHECKPOINT_DIRECTORY:/root/ai/model-archives/model/checkpoints \
 	  --name laptop-predict \
