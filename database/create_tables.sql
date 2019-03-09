@@ -71,8 +71,7 @@ CREATE TABLE IF NOT EXISTS deployments(
     device VARCHAR(100),
     model_id INT,
     epoch_id INT,
-    event_ts TIMESTAMP,
-PRIMARY KEY(device, model_id, epoch_id));
+    event_ts TIMESTAMP);
 COMMIT;
 
 BEGIN;
