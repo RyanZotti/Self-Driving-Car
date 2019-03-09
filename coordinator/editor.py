@@ -1298,6 +1298,7 @@ class StartCarVideo(tornado.web.RequestHandler):
         - https://stackoverflow.com/questions/5274294/how-can-you-run-a-command-in-bash-over-until-success
         """
         command = 'docker run -t -d -i --device=/dev/video0 --network host --name ffmpeg ryanzotti/ffmpeg:latest'
+        asyncio.set_event_loop(asyncio.new_event_loop())
         execute_pi_command(
             command=command, is_printable=True
         )
@@ -1315,6 +1316,7 @@ class StopCarVideo(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def stop_ffmpeg(self):
         command_ffmpeg = "docker rm -f ffmpeg"
+        asyncio.set_event_loop(asyncio.new_event_loop())
         execute_pi_command(
             command=command_ffmpeg
         )
