@@ -1356,17 +1356,9 @@ class PiHealthCheck(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def health_check(self):
-        is_able_to_connect = False
-        try:
-            command = 'ls -ltr'
-            execute_pi_command(
-                command=command
-            )
-            is_able_to_connect = True
-        except:
-            pass
+        asyncio.set_event_loop(asyncio.new_event_loop())
         return {
-            'is_able_to_connect':is_able_to_connect
+            'is_able_to_connect':is_pi_healthy('ls -ltr')
         }
 
     @tornado.gen.coroutine

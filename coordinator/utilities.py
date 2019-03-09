@@ -5,12 +5,12 @@ import numpy as np
 import os
 import psycopg2
 import psycopg2.extras
-import paramiko
 import boto3
 from pathlib import Path
 import re
 import urllib.request
 import tensorflow as tf
+import asyncio, asyncssh, sys
 
 
 # Used to save space. Keeping all model checkpoint epochs can eat up many GB of disk space
@@ -511,53 +511,28 @@ def get_pi_connection_details():
 # Connects to the Pi and runs a command
 def execute_pi_command(command, is_printable=False, return_first_line=False):
     username, hostname, password = get_pi_connection_details()
-    ssh = paramiko.SSHClientAsync()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostname, username=username, password=password)
-    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(command)
-    if is_printable:
-        for line in ssh_stderr:
-            print(line)
-    if return_first_line:
-        for index, line in enumerate(ssh_stdout):
-            if index == 0:
-                ssh.close()
-                return line
-    ssh.close()
+    async def run_client():
+        async with asyncssh.connect(hostname, username=username, password=password) as conn:
+            result = await conn.run(command, check=True)
+            print(result.stdout, end='')
+    try:
+        asyncio.get_event_loop().run_until_complete(run_client())
+    except (OSError, asyncssh.Error) as exc:
+        pass
 
 
-# Paramiko doesn't support this out of the box, which is crazy, so I have to
-# create my own class
-# https://stackoverflow.com/questions/4409502/directory-transfers-on-paramiko
-class RecursiveSFTPClient(paramiko.SFTPClient):
-    def put_dir(self, source, target):
-        ''' Uploads the contents of the source directory to the target path. The
-            target directory needs to exists. All subdirectories in source are
-            created under target.
-        '''
-        for item in os.listdir(source):
-            if os.path.isfile(os.path.join(source, item)):
-                self.put(os.path.join(source, item), '%s/%s' % (target, item))
-            else:
-                self.mkdir('%s/%s' % (target, item), ignore_existing=True)
-                self.put_dir(os.path.join(source, item), '%s/%s' % (target, item))
-
-    def mkdir(self, path, mode=511, ignore_existing=False):
-        ''' Augments mkdir by adding an option to not fail if the folder exists  '''
-        try:
-            super(RecursiveSFTPClient, self).mkdir(path, mode)
-        except IOError:
-            if ignore_existing:
-                pass
-            else:
-                raise
-
+def is_pi_healthy(command, is_printable=False, return_first_line=False):
+    username, hostname, password = get_pi_connection_details()
+    async def run_client():
+        async with asyncssh.connect(hostname, username=username, password=password) as conn:
+            result = await conn.run(command, check=True)
+            if is_printable:
+                print(result.stdout, end='')
+    try:
+        asyncio.get_event_loop().run_until_complete(run_client())
+        return True
+    except (OSError, asyncssh.Error) as exc:
+        return False
 
 def sftp_from_laptop_to_pi(source_path,destination_path):
-    username, hostname, password = get_pi_connection_details()
-    transport = paramiko.Transport((hostname, 22))
-    transport.connect(username=username, password=password)
-    sftp = RecursiveSFTPClient.from_transport(transport)
-    sftp.mkdir(destination_path, ignore_existing=True)
-    sftp.put_dir(source_path, destination_path)
-    sftp.close()
+    pass
