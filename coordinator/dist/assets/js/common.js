@@ -305,3 +305,15 @@ async function pollDeployment(){
         }
     }
 }
+
+/*
+Call like this:
+    measureLatency(getAiAngle('dataset_5_18-10-20',460))
+*/
+async function measureLatency(functionTested){
+    const start = new Date();
+    await functionTested
+    const end = new Date();
+    const seconds = (end.getTime() - start.getTime()) / 1000;
+    return seconds
+}
