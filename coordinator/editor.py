@@ -1556,6 +1556,22 @@ class NewEpochs(tornado.web.RequestHandler):
         self.write(result)
 
 
+class RefreshRecordReader(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def refresh(self):
+        self.application.record_reader.refresh_folders()
+        print(self.application.record_reader.folders)
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.refresh()
+        self.write(result)
+
+
 class DatasetPredictionSyncPercent(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -1732,6 +1748,7 @@ def make_app():
         (r"/start-car", StartCar),
         (r"/write-pi-field", WritePiField),
         (r"/read-pi-field", ReadPiField),
+        (r"/refresh-record-reader", RefreshRecordReader),
         (r"/raspberry-pi-healthcheck", PiHealthCheck),
     ]
     return tornado.web.Application(handlers)

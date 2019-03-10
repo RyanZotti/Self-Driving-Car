@@ -101,7 +101,8 @@ function videoHealthCheck() {
     });
 }
 
-function addDatasetReviewRows() {
+async function addDatasetReviewRows() {
+    await refreshRecordReader();
     const bulkActionRemoveFlagsButton = document.querySelector('button#remove-flags-bulk-action');
     bulkActionRemoveFlagsButton.onclick = async function(){
         const checkedDatasets = getCheckedDatasets();

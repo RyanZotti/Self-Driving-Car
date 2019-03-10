@@ -94,3 +94,11 @@ function loadDatasetMetadataFileSystem() {
         });
     });
 }
+
+function refreshRecordReader() {
+    return new Promise(function(resolve, reject){
+        $.post('/refresh-record-reader', function(result){
+            resolve(result);
+        });
+    });
+}

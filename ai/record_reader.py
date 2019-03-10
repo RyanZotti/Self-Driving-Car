@@ -51,14 +51,10 @@ class RecordReader(object):
         """
 
         self.base_directory = base_directory
-        self.folders = glob.glob(join(self.base_directory,'*'))
+        self.refresh_folders()
         self.overfit = overfit
         self.angle_only = angle_only
         self.is_for_model = is_for_model
-
-        # Filter out any folder (like tf_visual_data/runs) not related
-        # to datasets. Assumes dataset is not elsewhere in the file path
-        self.folders = [folder for folder in self.folders if 'dataset' in folder]
 
         # TODO: Check if this is no longer needed
         # Train and test are the same in overfit mode
@@ -219,6 +215,15 @@ class RecordReader(object):
             first_row = rows[0]
             is_on = first_row['is_on']
         return is_on
+
+    # Used when I add folders while driving. Saves me from
+    # having to restart the server for the folders to get
+    # reflected
+    def refresh_folders(self):
+        self.folders = glob.glob(join(self.base_directory, '*'))
+        # Filter out any folder (like tf_visual_data/runs) not related
+        # to datasets. Assumes dataset is not elsewhere in the file path
+        self.folders = [folder for folder in self.folders if 'dataset' in folder]
 
     def write_new_record(self,dataset_name, record_id, angle, throttle, image):
         dataset_path = join(self.base_directory, dataset_name)
