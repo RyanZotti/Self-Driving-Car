@@ -1191,12 +1191,12 @@ class ImageAPI(tornado.web.RequestHandler):
                 original_image=frame,
                 scale=scale
             )
-        crop_factor_args = self.get_arguments(name="crop-factor")
-        if len(crop_factor_args) > 0:
-            crop_factor = int(crop_factor_args[0])
+        crop_percent_args = self.get_arguments(name="crop-percent")
+        if len(crop_percent_args) > 0:
+            crop_percent = int(crop_percent_args[0])
             frame = pseduo_crop(
                 image=frame,
-                crop_factor=crop_factor,
+                crop_percent=crop_percent,
                 alpha=0.65
             )
 
@@ -1563,7 +1563,6 @@ class RefreshRecordReader(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def refresh(self):
         self.application.record_reader.refresh_folders()
-        print(self.application.record_reader.folders)
         return {}
 
     @tornado.gen.coroutine
