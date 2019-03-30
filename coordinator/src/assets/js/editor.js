@@ -198,7 +198,7 @@ async function addDatasetReviewRows() {
                 getDatasetRecordIds("review", dataset).then(function(recordIds){
                     recordIdIndexPlaying = 0;
                     recordIdIndexPlaying = recordIdIndexPlaying + 1;
-                    playVideo([datasetPlaying, recordIds, recordIdIndexPlaying, videoSessionId, cropFactor]);
+                    playVideo([datasetPlaying, recordIds, recordIdIndexPlaying, videoSessionId, cropPercent]);
                 });
                 const modalHeaderDatasetId = document.getElementById("playModalHeaderDatasetId");
                 modalHeaderDatasetId.innerHTML = datasetIdPlaying;
@@ -322,11 +322,11 @@ function updateRecordId(recordIds, recordIdIndex){
     return recordId;
 }
 
-function updateImage(dataset, recordId, cropFactor, scaleFactor) {
+function updateImage(dataset, recordId, cropPercent, scaleFactor) {
     const showEffectsButton = document.getElementById("show-effects");
     const videoFrame = document.querySelector("#mpeg-image")
     if (showEffectsButton.checked){
-        const imageUrl = '/image?dataset='+dataset+'&record-id='+recordId+'&crop-factor='+cropFactor+'&scale-factor='+scaleFactor;
+        const imageUrl = '/image?dataset='+dataset+'&record-id='+recordId+'&crop-percent='+cropPercent+'&scale-factor='+scaleFactor;
         videoFrame.setAttribute('src',imageUrl);
     } else {
         const imageUrl = '/image?dataset='+dataset+'&record-id='+recordId;
@@ -424,7 +424,7 @@ async function playVideo(args) {
     const recordIds = args[1];
     const recordIdIndex = args[2]
     const oldVideoSessionId = args[3]
-    const cropFactor = args[4];
+    const cropPercent = args[4];
     const recordId = updateRecordId(recordIds, recordIdIndexPlaying);
     const modalHeaderDatasetId = document.getElementById("playModalHeaderDatasetId");
     modalHeaderDatasetId.innerHTML = datasetIdPlaying;
@@ -457,7 +457,7 @@ async function playVideo(args) {
             isFlaggedButton.checked = false;
         }
         const scaleFactor = document.querySelector("input#image-scale-slider").getAttribute("data-value");
-        updateImage(dataset, recordId, cropFactor, scaleFactor);
+        updateImage(dataset, recordId, cropPercent, scaleFactor);
         await updateDonut(donuts.ai,state.ai.angle);
         await updateDonut(donuts.human,state.human.angle);
         /*
@@ -505,7 +505,7 @@ async function playVideo(args) {
                 */
             } else {
                 recordIdIndexPlaying = recordIdIndex + 1;
-                window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, recordIdIndexPlaying, oldVideoSessionId, cropFactor]));
+                window.requestAnimationFrame(playVideo.bind(playVideo,[dataset, recordIds, recordIdIndexPlaying, oldVideoSessionId, cropPercent]));
             }
         }
     } else {
@@ -782,7 +782,7 @@ document.addEventListener('DOMContentLoaded', function() {
         recordIdIndexPlaying = recordIdIndexPlaying + 1;
         videoSessionId = Date.now();
         recordIdIndexPlaying = recordIdIndexPlaying + 1;
-        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropPercent]);
 
     });
 
@@ -814,7 +814,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $.post('/add-flagged-record', data);
         }
         recordIdIndexPlaying = recordIdIndexPlaying + 1;
-        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropPercent]);
 
     };
 
@@ -831,7 +831,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const datasetType = getActiveDatasetType();
             getDatasetRecordIds(datasetType, datasetPlaying).then(function(recordIds){
                 recordIdIndexPlaying = recordIdIndexPlaying + 1;
-                playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
+                playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropPercent]);
             });
         }
     };
@@ -847,7 +847,7 @@ document.addEventListener('DOMContentLoaded', function() {
     rewindButton.onclick = function(){
         rewindFrameIndex();
         videoSessionId = Date.now();
-        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropPercent]);
     }
 
     const fastForwardFlagButton = document.querySelector("span#fastForwardFlag");
@@ -855,7 +855,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const recordType = "flagged";
         await fastForwardFrameIndex(recordType);
         videoSessionId = Date.now();
-        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropPercent]);
     }
 
     const fastForwardCriticalErrorButton = document.querySelector("button#fastForwardCriticalError");
@@ -863,7 +863,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const recordType = "critical-errors";
         await fastForwardFrameIndex(recordType);
         videoSessionId = Date.now();
-        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropFactor]);
+        playVideo([datasetPlaying, recordIdsPlaying, recordIdIndexPlaying, videoSessionId, cropPercent]);
     }
 
 
@@ -871,7 +871,7 @@ document.addEventListener('DOMContentLoaded', function() {
     showEffectsButton.onclick = function(){
         const recordId = updateRecordId(recordIdsPlaying, recordIdIndexPlaying);
         const scaleFactor = document.querySelector("input#image-scale-slider").getAttribute("data-value");
-        updateImage(datasetPlaying, recordId, cropFactor, scaleFactor);
+        updateImage(datasetPlaying, recordId, cropPercent, scaleFactor);
     }
 
     const driveVehicleButton = document.getElementById("drive-vehicle-button");
@@ -1053,7 +1053,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }, false);
 
 // Global variables
-var cropFactor = 2;
+var cropPercent = 50;
 var videoSessionId = -1;
 var isVideoPlaying = false;
 var datasetPlaying = '';
