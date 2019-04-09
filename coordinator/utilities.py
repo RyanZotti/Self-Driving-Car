@@ -363,7 +363,17 @@ def stop_training():
 
 def train_new_model(data_path,epochs=10,show_speed='n', save_to_disk='y',image_scale=8,crop_percent=50, s3_bucket='self-driving-car'):
     stop_training()
-    # The & is required or Tornado will get stuck
+    """
+    If you want to see why a Docker container failed, remove the --rm
+    from the command below and from the command line execute:
+
+        docker logs <container ID>
+
+    The --rm option removes the container once it stops, and probably
+    saves a lot of disk space long-term, so it's best to keep it on
+    except for cases where you need to debug. Nonetheless, you won't
+    see the container ID with `docker ps -a` if the --rm option is used
+    """
     command = '''
         docker run -i -t -d -p 8091:8091 --rm \
           --network app_network \
