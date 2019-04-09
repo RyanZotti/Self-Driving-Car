@@ -364,12 +364,10 @@ def stop_training():
 def train_new_model(data_path,epochs=10,show_speed='n', save_to_disk='y',image_scale=8,crop_percent=50, s3_bucket='self-driving-car'):
     stop_training()
     # The & is required or Tornado will get stuck
-    # TODO: Remove the hardcoded CHECKPOINT_DIRECTORY
     command = '''
-        CHECKPOINT_DIRECTORY='/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data' && \
         docker run -i -t -d -p 8091:8091 --rm \
           --network app_network \
-          --volume $CHECKPOINT_DIRECTORY:/root/ai/data \
+          --volume '{data_path}':/root/ai/data \
           --name model-training \
           ryanzotti/ai-laptop:latest \
           python /root/ai/microservices/tiny_cropped_angle_model.py \
