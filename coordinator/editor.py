@@ -937,6 +937,9 @@ class DeleteModel(tornado.web.RequestHandler):
         delete_records_sql = """
             DELETE FROM models
             WHERE model_id = {model_id};
+
+            DELETE FROm epochs
+            WHERE model_id = {model_id};
         """.format(
             model_id=model_id
         )
