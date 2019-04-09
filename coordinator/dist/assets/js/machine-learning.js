@@ -356,12 +356,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const trainingStateTimer = setInterval(async function(){
         setTrainButtonState();
         const epochsTable = document.querySelector('div#epochs-table-div');
+        const batchProgressCard = document.querySelector('div#batch-progress-card');
         const metadata = await isTraining()
         if (metadata['is_alive']==true){
             fillEpochsTable(metadata['model_id']);
             epochsTable.style.display = 'block';
+            // Adjust batch progress bar
+            const batchProgressBar = document.getElementById("batch-progress-bar");
+            const totalBatches = metadata['batch_count'];
+            const currentBatch = metadata['batch_id'];
+            const percentComplete = ((currentBatch / totalBatches) * 100).toFixed(2) + '%';
+            batchProgressBar.style.setProperty("width", percentComplete);
+            const batchProgressText = document.querySelector("span#batch-progress-text");
+            batchProgressText.textContent = currentBatch + ' of ' + totalBatches;
+            batchProgressCard.style.display = 'block';
         } else {
             epochsTable.style.display = 'none';
+            batchProgressCard.style.display = 'none';
         }
     }, 1000);
 
