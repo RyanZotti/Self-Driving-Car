@@ -1627,22 +1627,17 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
     def get_latest_deployment(self,dataset):
-        sql_query = '''
-            SELECT
-              model_id,
-              epoch
-            FROM predictions
-            WHERE LOWER(dataset) LIKE LOWER('%{dataset}%')
-            ORDER BY created_timestamp DESC
-            LIMIT 1
-            '''.format(
-            dataset=dataset
-        )
-        rows = get_sql_rows(sql=sql_query)
-        if len(rows) > 0:
-            first_row = rows[0]
-            return first_row
-        else:
+
+        seconds = 1
+        try:
+            request = requests.post(
+                # TODO: Remove hardcoded port
+                'http://{host}:8885/model-metadata'.format(host='localhost'),
+                timeout=seconds
+            )
+            response = json.loads(request.text)
+            return response
+        except:
             return None
 
 
@@ -1652,14 +1647,15 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
         latest_deployment = self.get_latest_deployment(dataset=dataset_name)
         if latest_deployment is not None:
             model_id = latest_deployment['model_id']
-            epoch = latest_deployment['epoch']
+            epoch = latest_deployment['epoch_id']
             sql_query = '''
                 SELECT
                   SUM(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
                     THEN 1 ELSE 0 END) AS critical_count,
                   AVG(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
                     THEN 100.0 ELSE 0.0 END)::FLOAT AS critical_percent,
-                  AVG(ABS(records.angle - predictions.angle)) AS avg_abs_error
+                  AVG(ABS(records.angle - predictions.angle)) AS avg_abs_error,
+                  COUNT(*) AS prediction_count
                 FROM records
                 LEFT JOIN predictions
                   ON records.dataset = predictions.dataset
@@ -1674,12 +1670,19 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
             )
             rows = get_sql_rows(sql=sql_query)
             first_row = rows[0]
-            result = {
-                'critical_count': float(first_row['critical_count']),
-                'critical_percent': str(round(float(first_row['critical_percent']), 1)) + '%',
-                'avg_abs_error': round(float(first_row['avg_abs_error']), 2)
-            }
-            return result
+            if first_row['prediction_count'] > 0:
+                result = {
+                    'critical_count': float(first_row['critical_count']),
+                    'critical_percent': str(round(float(first_row['critical_percent']), 1)) + '%',
+                    'avg_abs_error': round(float(first_row['avg_abs_error']), 2)
+                }
+                return result
+            else:
+                return {
+                    'critical_count': 'N/A',
+                    'critical_percent': 'N/A',
+                    'avg_abs_error': 'N/A'
+                }
         else:
             return {
                 'critical_count': 'N/A',
