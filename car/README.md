@@ -8,7 +8,10 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	docker pull ryanzotti/vehicle:latest
 		
 	# Run the image
-	docker run -t -d -i -p 8884:8884 --rm --name vehicle ryanzotti/vehicle:latest
+	docker run -i -t -p 8884:8884 \
+	  --name control-loop \
+	  ryanzotti/vehicle:latest \
+	  python3 /root/car/start.py
 
 	# Stop the image
 	docker rm -f vehicle
