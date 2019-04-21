@@ -1,11 +1,6 @@
 import cv2
 from datetime import datetime
-import os
 import time
-import numpy as np
-from PIL import Image
-import glob
-import subprocess
 import urllib.request
 from car.utils import *
 
