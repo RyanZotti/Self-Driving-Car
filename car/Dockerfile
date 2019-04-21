@@ -18,7 +18,23 @@ RUN apt-get install -y libgtk2.0-dev libgtk-3-dev
 RUN apt-get install -y libatlas-base-dev gfortran
 RUN apt-get install -y python3-dev
 
-RUN python3 -m pip install numpy==1.15.1 tornado==4.5.3 tensorflow==1.8.0
+# virtualenv is necessary in Docker (and in general) because the
+# OS uses Python and can mess up your pip, as seen here
+# https://github.com/kennethreitz/requests/issues/3560#issuecomment-269384576
+RUN pip3 install virtualenv
+
+# Hack for getting virtualenv to work in Docker
+# https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m virtualenv --python=/usr/bin/python3 $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+RUN virtualenv -p python3 control_loop
+
+# Install Tensorflow 1.8 for Python3.5
+RUN wget https://github.com/lhelontra/tensorflow-on-arm/releases/download/v1.8.0/tensorflow-1.8.0-cp35-none-linux_armv7l.whl
+RUN pip3 install tensorflow-1.8.0-cp35-none-linux_armv7l.whl
+RUN pip3 install numpy==1.15.1 tornado==4.5.3
 
 # The `--no-cache-dir` part fixes a sha256 warning about hashes not matching
 # See https://stackoverflow.com/a/40184923/554481 for details
