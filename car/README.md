@@ -18,6 +18,9 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	  ryanzotti/vehicle:latest \
 	  python3 /root/car/start.py
 
+	# Interactively running the container also requires the network
+	docker run -it --network car_network ryanzotti/vehicle:latest /bin/bash
+
 	# Stop the image
 	docker rm -f vehicle
 

@@ -12,7 +12,7 @@ print(cfg.CAMERA_RESOLUTION)
 
 import os
 
-PI_HOSTNAME = 'ryanzotti.local'
+PI_HOSTNAME = 'ffmpeg'
 WEB_UI_PORT = 8887
 WEB_AI_PORT = 8888
 WARM_UP_SECONDS = 3

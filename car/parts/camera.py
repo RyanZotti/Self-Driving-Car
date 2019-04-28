@@ -25,7 +25,8 @@ class Webcam(object):
         self.on = True
 
         if not self.unit_test:
-            stream_url = 'http://{pi_host}:8090/test.mjpg'.format(pi_host=self.pi_host)
+            # TODO: Remove hardcoded port
+            stream_url = 'http://{pi_host}:8091/video'.format(pi_host=self.pi_host)
             self.stream = urllib.request.urlopen(stream_url)
             self.opencv_bytes = bytes()
 
