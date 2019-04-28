@@ -62,6 +62,9 @@ RUN pip3 install \
   RPi.GPIO \
   requests
 
+# Install vi to make debugging eaiser
+RUN apt-get install -y vim
+
 ###############################################################
 ##### Add project files
 ###############################################################
