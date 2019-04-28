@@ -1300,6 +1300,18 @@ class StartCarVideo(tornado.web.RequestHandler):
         - https://github.com/KhaosT/homebridge-camera-ffmpeg/issues/163
         - https://stackoverflow.com/questions/5274294/how-can-you-run-a-command-in-bash-over-until-success
         """
+        """
+        This rm command exists as a fail-safe option in case
+        you didn't clean up the last ffmpeg container. This
+        can occur if you shut down the coordinator server
+        before closing the drive modal window, which calls
+        the /stop-car-video endpoint
+        """
+        rm_command = 'docker rm -f ffmpeg'
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        execute_pi_command(
+            command=rm_command, is_printable=True
+        )
         command = 'docker run -t -d -i --device=/dev/video0 --network host --name ffmpeg ryanzotti/ffmpeg:latest'
         asyncio.set_event_loop(asyncio.new_event_loop())
         execute_pi_command(
