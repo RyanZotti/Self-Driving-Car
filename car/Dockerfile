@@ -63,7 +63,9 @@ RUN pip3 install \
   requests
 
 # Install vi to make debugging eaiser
-RUN apt-get install -y vim
+RUN apt-get install -y \
+  vim \
+  netcat
 
 ###############################################################
 ##### Add project files
