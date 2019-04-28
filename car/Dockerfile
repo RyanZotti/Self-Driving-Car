@@ -55,6 +55,11 @@ RUN apt install \
   libqt4-test \
   -y
 
+# Only reason these are this high up in the Dockerfile
+# is that I don't want to rebuild everything below
+RUN pip3 install pandas
+RUN pip3 install RPi.GPIO
+
 ###############################################################
 ##### Add project files
 ###############################################################
