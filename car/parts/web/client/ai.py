@@ -1,19 +1,9 @@
-import cv2
 from datetime import datetime
-import os
-import time
-import numpy as np
-from PIL import Image
-import glob
 import subprocess
-from car.util import live_video_stream
-import urllib.request
-
 
 import cv2
 import requests
 import json
-from pprint import pprint
 
 
 class AI(object):
