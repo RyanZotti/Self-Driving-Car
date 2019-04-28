@@ -12,7 +12,7 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	docker network create car_network
 
 	# Run the image
-	docker run -i -t -p 8884:8884 \
+	docker run -i -t -p 8887:8887 \
 	  --name control-loop \
 	  --network car_network \
 	  --privileged \
