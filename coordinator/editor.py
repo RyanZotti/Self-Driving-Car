@@ -1312,7 +1312,7 @@ class StartCarVideo(tornado.web.RequestHandler):
         execute_pi_command(
             command=rm_command, is_printable=True
         )
-        command = 'docker run -t -d -i --device=/dev/video0 --network host --name ffmpeg ryanzotti/ffmpeg:latest'
+        command = 'docker run -t -d -i --device=/dev/video0 --network car_network -p 8091:8091 --name ffmpeg ryanzotti/ffmpeg:latest'
         asyncio.set_event_loop(asyncio.new_event_loop())
         execute_pi_command(
             command=command, is_printable=True

@@ -7,9 +7,14 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	# Pull the image
 	docker pull ryanzotti/vehicle:latest
 		
+	# Make sure the docker network exists, otherwise create it
+	docker network ls
+	docker network create car_network
+
 	# Run the image
 	docker run -i -t -p 8884:8884 \
 	  --name control-loop \
+	  --network car_network \
 	  ryanzotti/vehicle:latest \
 	  python3 /root/car/start.py
 
