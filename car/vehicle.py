@@ -187,7 +187,13 @@ class Vehicle():
         for entry in self.parts:
             p = entry['part']
 
-            # don't run if there is a run condition that is False
+            """
+            This only applies to parts that are not threaded
+            and already running continuously. For example, the
+            camera part is threaded and will continuously poll
+            ffpmeg, but the Dataset writer is not threaded, and
+            only runs when you tell it to write a record
+            """
             run = True
             if entry.get('run_condition'):
                 run_condition = entry.get('run_condition')
