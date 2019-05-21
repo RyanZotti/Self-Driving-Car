@@ -22,7 +22,7 @@ class Webcam(object):
         # initialize variable used to indicate
         # if the thread should be stopped
         self.frame = None
-        self.on = True
+        self.is_on = True
 
         if not self.unit_test:
             # TODO: Remove hardcoded port
@@ -41,8 +41,8 @@ class Webcam(object):
             self.frame = cv2.imread(image_path)
 
     def update(self):
-        while self.on:
-            if not self.unit_test:
+        while True:
+            if self.is_on and not self.unit_test:
                 self.opencv_bytes += self.stream.read(1024)
                 a = self.opencv_bytes.find(b'\xff\xd8')
                 b = self.opencv_bytes.find(b'\xff\xd9')
@@ -63,7 +63,7 @@ class Webcam(object):
 
     def shutdown(self):
         # indicate that the thread should be stopped
-        self.on = False
+        self.is_on = False
         if self.ffmpeg_process is not None:
             self.ffmpeg_process.kill()
         print('Stopped camera')
