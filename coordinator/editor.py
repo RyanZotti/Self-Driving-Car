@@ -12,6 +12,7 @@ import tornado.gen
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
+import tornado.httpserver
 import requests
 import json
 import signal
@@ -85,6 +86,7 @@ class UpdateDriveState(tornado.web.RequestHandler):
     def send_drive_state(self, json_input):
         is_recording = json_input['recording']
         if is_recording == True:
+            # TODO: Remove hardcoded port
             image = one_frame_from_stream(
                 ip=self.application.pi_host,
                 port=8091
@@ -101,6 +103,17 @@ class UpdateDriveState(tornado.web.RequestHandler):
                 image=image
             )
         # TODO: Send brake, drive-mode details to Pi even if not recording
+        seconds = 1
+        print('sending request')
+        request = requests.post(
+            # TODO: Remove hardcoded port
+            'http://{host}:{port}/drive'.format(
+                host=self.application.pi_host,
+                port=8887,
+                json=json_input
+            ),
+            timeout=seconds
+        )
         return {}
 
     @tornado.gen.coroutine
@@ -1810,5 +1823,16 @@ if __name__ == "__main__":
     app.angle_only = args['angle_only']
     # TODO: Remove hard-coded Pi host
     app.pi_host = 'ryanzotti.local'
-    app.listen(port)
+    # Create cert with the command below. Note that the localhost part is important
+    """
+    openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
+    -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=localhost" \
+    -keyout ca.key  -out ca.cert
+    """
+    # TODO: Make the cert paths not hardcoded
+    http_server = tornado.httpserver.HTTPServer(app, ssl_options={
+        "certfile": "/Users/ryanzotti/Documents/repos/Self-Driving-Car/coordinator/ca.cert",
+        "keyfile": "/Users/ryanzotti/Documents/repos/Self-Driving-Car/coordinator/ca.key",
+    })
+    http_server.listen(port)
     tornado.ioloop.IOLoop.current().start()
