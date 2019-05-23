@@ -18,8 +18,8 @@ WEB_AI_PORT = 8888
 WARM_UP_SECONDS = 3
 
 # Provide entire endpoint since host, http(s), port, or url could change
-MODEL_API = 'http://Ryans-MacBook-Pro.local:8888/predict'
-UI_API = 'http://ryanzotti.local:{port}/ui-state'
+MODEL_API = 'http://Ryans-MacBook-Pro.local:8885/predict'
+UI_API = 'http://ryanzotti.local:{port}/get-state'
 
 # Model / AI outputs
 ANGLE_ONLY = True

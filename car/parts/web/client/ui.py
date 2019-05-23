@@ -1,13 +1,5 @@
-import cv2
 from datetime import datetime
-import os
-import time
-import numpy as np
-import glob
 import subprocess
-import urllib.request
-
-
 import requests
 import json
 
@@ -26,14 +18,16 @@ class UI(object):
         self.on = True
 
         # Set default values
-        self.angle = 0.0
-        self.throttle = 0.0
+        self.user_angle = 0.0
+        self.user_throttle = 0.0
+        self.remote_model_angle = 0.0
+        self.remote_model_throttle = 0.0
         self.drive_mode = 'user'
         self.recording = False
         self.brake = True
         self.max_throttle = 1.0
 
-        # Run ffmpeg as a subprocess
+        # TODO: Make this a separate Docker container?
         cmd = 'python3 {server} --port {port}'.format(
             server=self.server_path,
             port=self.port)
@@ -45,8 +39,10 @@ class UI(object):
             try:
                 response = requests.get('{api}'.format(api=self.api))
                 state = json.loads(response.text)
-                self.angle = state['angle']
-                self.throttle = state['throttle']
+                self.user_angle = state['user_angle']
+                self.user_throttle = state['user_throttle']
+                self.remote_model_angle = state['remote_model_angle']
+                self.remote_model_throttle = state['remote_model_throttle']
                 self.drive_mode = state['drive_mode']
                 self.recording = state['recording']
                 self.brake = state['brake']
@@ -57,15 +53,24 @@ class UI(object):
                 # is not available, reset to defaults and
                 # effectively stop the car until the state can
                 # be recovered
-                self.angle = 0.0
-                self.throttle = 0.0
+                self.user_angle = 0.0
+                self.user_throttle = 0.0
+                self.remote_model_angle = 0.0
+                self.remote_model_throttle = 0.0
                 self.drive_mode = 'user'
                 self.recording = False
                 self.brake = True
                 self.max_throttle = 1.0
 
     def run_threaded(self):
-        return self.angle, self.throttle, self.drive_mode, self.recording, self.brake, self.max_throttle
+        return self.remote_model_angle, \
+               self.remote_model_throttle, \
+               self.user_angle, \
+               self.user_throttle, \
+               self.drive_mode, \
+               self.recording, \
+               self.brake, \
+               self.max_throttle
 
     def get_last_update_time(self):
         return self.last_update_time

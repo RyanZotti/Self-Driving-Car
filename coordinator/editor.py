@@ -104,14 +104,13 @@ class UpdateDriveState(tornado.web.RequestHandler):
             )
         # TODO: Send brake, drive-mode details to Pi even if not recording
         seconds = 1
-        print('sending request')
         request = requests.post(
             # TODO: Remove hardcoded port
-            'http://{host}:{port}/drive'.format(
+            'http://{host}:{port}/track-human-requests'.format(
                 host=self.application.pi_host,
-                port=8887,
-                json=json_input
+                port=8887
             ),
+            data=json.dumps(json_input),
             timeout=seconds
         )
         return {}

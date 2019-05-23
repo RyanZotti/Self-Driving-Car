@@ -31,7 +31,16 @@ ui = UI(
     port=cfg.WEB_UI_PORT)
 car.add(
     ui,
-    outputs=['user/angle', 'user/throttle', 'mode', 'recording', 'user-brake', 'max_throttle'],
+    outputs=[
+        'remote_model/angle',
+        'remote_model/throttle',
+        'user/angle',
+        'user/throttle',
+        'mode',
+        'recording',
+        'user-brake',
+        'max_throttle'
+    ],
     threaded=True)
 server_message = "You can now go to {host}:{port} to drive your car."
 print(server_message.format(host=cfg.PI_HOSTNAME, port=cfg.WEB_UI_PORT))
@@ -56,8 +65,10 @@ car.add(
 engine_inputs =[
     'user/angle',
     'user/throttle',
-    'ai/angle',
-    'ai/throttle',
+    'remote_model/angle',
+    'remote_model/throttle',
+    'local_model/angle',
+    'local_model/throttle',
     'mode',
     'system-brake',
     'user-brake',

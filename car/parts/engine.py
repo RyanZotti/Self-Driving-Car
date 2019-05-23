@@ -94,9 +94,10 @@ class Engine(object):
         mode = self.inputs['mode']
         assert (mode in ['ai', 'user'])
         if self.inputs['system-brake'] is False and self.inputs['user-brake'] is False:
+            # TODO: Add support for remote vs local models
             if mode == 'ai':
-                self.run_angle(self.inputs['ai/angle'])
-                self.run_throttle(self.inputs['ai/throttle'])
+                self.run_angle(self.inputs['remote_model/angle'])
+                self.run_throttle(self.inputs['remote_model/throttle'])
             else:
                 self.run_angle(self.inputs['user/angle'])
                 self.run_throttle(self.inputs['user/throttle'])
