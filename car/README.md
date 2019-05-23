@@ -23,7 +23,7 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	docker run -it --network car_network --privileged  ryanzotti/vehicle:latest /bin/bash
 
 	# Stop the image
-	docker rm -f vehicle
+	docker rm -f control-loop
 
 
 ### Build
