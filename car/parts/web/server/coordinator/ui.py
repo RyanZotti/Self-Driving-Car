@@ -12,6 +12,7 @@ class TrackHumanRequests(tornado.web.RequestHandler):
         and throttle of the vehicle on a the index webpage
         '''
         data = tornado.escape.json_decode(self.request.body)
+        print(data)
         self.application.user_angle = data['angle']
         self.application.user_throttle = data['throttle']
         self.application.mode = data['drive_mode']
@@ -62,4 +63,5 @@ if __name__ == "__main__":
     app.brake = True
     app.max_throttle = 1.0
     app.listen(port)
+    print('Hello world!!!!')
     tornado.ioloop.IOLoop.current().start()

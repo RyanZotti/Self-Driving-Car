@@ -11,7 +11,7 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	docker rm -f ffmpeg
 
 	# Run the image
-	docker run -t -d -i --device=/dev/video0 --network host --name ffmpeg ryanzotti/ffmpeg:latest
+	docker run -t -d -i --device=/dev/video0 --network car_network -p 8091:8091 --name ffmpeg ryanzotti/ffmpeg:latest
 
 	# Stop the image
 	docker rm -f ffmpeg
