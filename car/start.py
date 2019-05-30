@@ -1,116 +1,124 @@
+import argparse
 from car.config import load_config
-from car.parts.camera import Webcam
-from car.parts.datastore import DatasetHandler
-from car.parts.engine import Engine
-from car.parts.web.client.ai import AI
-from car.parts.web.client.ui import UI
-
 from car.vehicle import Vehicle
+from car.memory import Memory
+from car.parts.video.client import Client as Camera
+from car.parts.user_input.client import Client as UserInput
+from car.parts.engine.client import Client as Engine
+from car.parts.model.client import Client as Model
+from car.parts.record_tracker.client import Client as RecordTracker
+
+
+ap = argparse.ArgumentParser()
+ap.add_argument(
+    "--remote_host",
+    required=False,
+    help="The laptop's hostname",
+    default='ryans-macbook-pro.local'
+)
+args = vars(ap.parse_args())
+remote_host = args['remote_host']
 
 # Load default settings
 cfg = load_config()
 
+# Assign default states
+memory = Memory()
+memory.put(['user_input/brake'], True)
+memory.put(['user_input/driver_type'], 'user')
+memory.put(['vehicle/brake'], True)
+
 # Initialize the car
-car = Vehicle(warm_up_seconds=cfg.WARM_UP_SECONDS)
+car = Vehicle(
+    mem=memory,
+    warm_up_seconds=cfg.WARM_UP_SECONDS
+)
 
-# Add a webcam
-cam = Webcam(
-    pi_host=cfg.PI_HOSTNAME,
+# Consume video from a cheap webcam
+camera = Camera(
     name='camera',
-    unit_test=False)
-car.add(
-    cam,
-    outputs=['cam/image_array'],
-    threaded=True)
+    output_names=[
+        'camera/image_array'
+    ]
+)
+car.add(camera)
 
-# Add a web app / user interface accessible via laptop or phone
-ui = UI(
-    api=cfg.UI_API,
-    name='ui',
-    server_path=cfg.UI_SERVER_PATH,
-    port=cfg.WEB_UI_PORT)
-car.add(
-    ui,
-    outputs=[
+# Listen for user input
+user_input = UserInput(
+    name='user_input',
+    output_names=[
+        'user_input/angle',
+        'user_input/brake',
+        'user_input/driver_type',
+        'user_input/max_throttle'
+        'user_input/recording',
+        'user_input/throttle'
+    ]
+)
+car.add(user_input)
+
+# Communicate with the engine
+engine = Engine(
+    name='engine',
+    input_names=[
+        'local_model/angle',
+        'local_model/throttle',
         'remote_model/angle',
         'remote_model/throttle',
-        'user/angle',
-        'user/throttle',
-        'mode',
-        'recording',
-        'user-brake',
-        'max_throttle'
+        'user_input/angle',
+        'user_input/brake',
+        'user_input/driver_type',
+        'user_input/max_throttle'
+        'user_input/throttle',
+        'vehicle/brake'
+    ]
+)
+car.add(engine)
+
+# Optionally consume driving predictions from a remote model
+remote_model = Model(
+    name='remote_model',
+    host=remote_host,
+    input_names=[
+        'camera/image_array',
+        'user_input/driver_type'
     ],
-    threaded=True)
-server_message = "You can now go to {host}:{port} to drive your car."
-print(server_message.format(host=cfg.PI_HOSTNAME, port=cfg.WEB_UI_PORT))
+    output_names=[
+        'remote_model/angle'
+    ]
+)
+car.add(remote_model)
 
-# Add AI API caller
-ai = AI(
-    model_api=cfg.MODEL_API,
-    name='ai',
-    server_path=cfg.AI_SERVER_PATH,
-    port=cfg.WEB_AI_PORT,
-    image_scale=cfg.IMAGE_SCALE,
-    crop_factor=cfg.CROP_FACTOR,
-    model_directory=cfg.MODEL_PATH,
-    angle_only=cfg.ANGLE_ONLY)
-car.add(
-    ai,
-    inputs=['cam/image_array'],
-    outputs=['ai/angle', 'ai/throttle'],
-    threaded=True)
+# Optionally consume driving predictions from a local model
+local_model = Model(
+    name='local_model',
+    host='local_model',
+    input_names=[
+        'camera/image_array',
+        'user_input/driver_type'
+    ],
+    output_names=[
+        'local_model/angle'
+    ]
+)
+car.add(local_model)
 
-# Add engine
-engine_inputs =[
-    'user/angle',
-    'user/throttle',
-    'remote_model/angle',
-    'remote_model/throttle',
-    'local_model/angle',
-    'local_model/throttle',
-    'mode',
-    'system-brake',
-    'user-brake',
-    'max_throttle']
-engine = Engine(16, 18, 22, 19, 21, 23, name='engine', input_names=engine_inputs)
-car.add(
-    engine,
-    inputs=engine_inputs,
-    threaded=True)
-
-# Add dataset to save data
-recorded_inputs = [
-    'cam/image_array',
-    'user/angle',
-    'user/throttle',
-    'ai/angle',
-    'ai/throttle',
-    'mode',
-    'system-brake',
-    'user-brake',
-    'ai/healthcheck',
-    'max_throttle']
-types = [
-    'image_array',
-    'float',
-    'float',
-    'float',
-    'float',
-    'str',
-    'boolean',
-    'boolean',
-    'str',
-    'float']
-dh = DatasetHandler(path=cfg.DATA_PATH)
-print(cfg.DATA_PATH)
-dataset = dh.new_dataset_writer(inputs=recorded_inputs, types=types)
-dataset.set_name('dataset')
-car.add(
-    dataset,
-    inputs=recorded_inputs,
-    run_condition='recording')
+# Track images and labels
+record_tracker = RecordTracker(
+    name='record_tracker',
+    input_names=[
+        'camera/image_array',
+        'user_input/angle',
+        'user_input/throttle'
+    ],
+    input_types=[
+        'image_array',
+        'float',
+        'float'
+    ]
+)
 
 car.start(
     rate_hz=cfg.DRIVE_LOOP_HZ,
-    max_loop_count=cfg.MAX_LOOPS)
+    max_loop_count=cfg.MAX_LOOPS
+)

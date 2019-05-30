@@ -7,40 +7,34 @@ import tornado.gen
 class TrackHumanRequests(tornado.web.RequestHandler):
 
     def post(self):
-        '''
-        Receive post requests as user changes the angle
-        and throttle of the vehicle on a the index webpage
-        '''
         data = tornado.escape.json_decode(self.request.body)
-        print(data)
         self.application.user_angle = data['angle']
         self.application.user_throttle = data['throttle']
-        self.application.mode = data['drive_mode']
+        self.application.driver_type = data['driver_type']
         self.application.recording = data['recording']
         self.application.brake = data['brake']
         self.application.max_throttle = data['max_throttle']
 
 
-class GetState(tornado.web.RequestHandler):
+class GetInput(tornado.web.RequestHandler):
 
     def get(self):
         state = {
-            'user_angle': self.application.user_angle,
-            'user_throttle': self.application.user_throttle,
-            'remote_model_angle': self.application.remote_model_angle,
-            'remote_model_throttle': self.application.remote_model_throttle,
-            'drive_mode': self.application.mode,
-            'recording': self.application.recording,
-            'brake': self.application.brake,
-            'max_throttle': self.application.max_throttle
+            'user_input/angle': self.application.user_angle,
+            'user_input/throttle': self.application.user_throttle,
+            'user_input/driver_type': self.application.driver_type,
+            'user_input/recording': self.application.recording,
+            'user_input/brake': self.application.brake,
+            'user_input/max_throttle': self.application.max_throttle
         }
+        print(state)
         self.write(state)
 
 
 def make_app():
     handlers = [
         (r"/track-human-requests", TrackHumanRequests),
-        (r"/get-state", GetState)
+        (r"/get-input", GetInput)
     ]
     return tornado.web.Application(handlers)
 
@@ -58,10 +52,9 @@ if __name__ == "__main__":
     app.user_throttle = 0.0
     app.remote_model_angle = 0.0
     app.remote_model_throttle = 0.0
-    app.mode = 'user'
+    app.driver_type = 'user'
     app.recording = False
     app.brake = True
     app.max_throttle = 1.0
     app.listen(port)
-    print('Hello world!!!!')
     tornado.ioloop.IOLoop.current().start()

@@ -22,4 +22,4 @@ RUN pip install opencv-contrib-python tornado==5.1.1 numpy==1.15.1
 
 COPY ./ /root/
 
-CMD ffserver -f /root/ffserver.conf & bash /root/start_ffmpeg.sh & python3 /root/ffmpeg_extender.py
+CMD ffserver -f /root/ffserver.conf & bash /root/start_ffmpeg.sh & python3 /root/server.py

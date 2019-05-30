@@ -1,13 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Jun 25 10:44:24 2017
-@author: wroscoe
-"""
-
+from collections import OrderedDict
 import time
 from threading import Thread
-from .memory import Memory
+from .Memory import Memory
 from datetime import datetime
 
 
@@ -17,63 +11,30 @@ class Vehicle():
         if not mem:
             mem = Memory()
         self.mem = mem
-        self.parts = []
+        self.parts = OrderedDict()
         self.on = True
-        self.threads = []
         self.warm_up_seconds = warm_up_seconds
 
-        self.mem.put(['mode'], 'user')
-
-        # A brake can be applied by a user via the
-        # web UI or because a part has become
-        # unresponsive. The engine will stop if
-        # either brake is applied.
-        self.mem.put(['user-brake'], True)
-        self.mem.put(['system-brake'], True)
-
-    def add(self, part, inputs=[], outputs=[],
-            threaded=False, run_condition=None):
+    def add(self, part):
         """
         Method to add a part to the vehicle drive loop.
         Parameters
         ----------
-            inputs : list
-                Channel names to get from memory.
-            ouputs : list
-                Channel names to save to memory.
-            threaded : boolean
-                If a part should be run in a separate thread.
+            part : Part
+                The part to add
         """
-
-        p = part
-        print('Adding part {}.'.format(p.__class__.__name__))
-        entry = {}
-        entry['part'] = p
-        entry['inputs'] = inputs
-        entry['outputs'] = outputs
-        entry['run_condition'] = run_condition
-
-        # Apply brake when any part takes too long to update.
-        # The most problematic part is often the prediction
-        # caller because it can sometimes take awhile to get a
-        # prediction. About 1-2% of the time the model has a huge
-        # delay, so I stop the car so it doesn't get stuck with a
-        # stale command and drive off the road. I release the brake
-        # as soon as all parts are marked as responsive again
-        entry['is_responsive'] = True
-
-        if threaded:
-            t = Thread(target=part.update, args=())
-            t.daemon = True
-            entry['thread'] = t
-
-        self.parts.append(entry)
+        name = part.name
+        print('{timestamp} -  Adding part: {part}'.format(
+            part=name,
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        ))
+        self.parts[name] = part
 
     def start(self, rate_hz=10, max_loop_count=None):
         """
         Start vehicle's main drive loop.
         This is the main thread of the vehicle. It starts all the new
-        threads for the threaded parts then starts an infinit loop
+        threads for the threaded parts then starts an infinite loop
         that runs each part and updates the memory.
         Parameters
         ----------
@@ -92,27 +53,28 @@ class Vehicle():
 
             self.on = True
 
-            for entry in self.parts:
-                if entry.get('thread'):
-                    # start the update thread
-                    entry.get('thread').start()
+            for name, part in self.parts.items():
+                part.start()
 
             # Wait until the parts warm up. This is needed so that parts
             # don't try to read while other parts' values prematurely.
             # For example, the web server tries to read the camera's
             # frames a second or two before the camera starts producing
             # frames and this leads to a proliferation of Open CV errors
-            print('Starting vehicle...')
+            print('{timestamp} - Starting vehicle...'.format(
+                timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            ))
             # TODO: Check that all inputs/outputs are not None instead
             # TODO: of using a simple time delay
             time.sleep(self.warm_up_seconds)
-            print('Vehicle started!')
+            print('{timestamp} - Vehicle started!'.format(
+                timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            ))
 
             loop_count = 0
             while self.on:
                 start_time = time.time()
                 loop_count += 1
-
 
                 # Make sure all parts are responding quickly
                 # enough. The only exception is the prediction
@@ -122,19 +84,13 @@ class Vehicle():
                 # and show high latency but we can ignore it
                 # assuming the web app says the drive mode is
                 # the user
-                mode = self.mem.get(['mode'])[0]
                 any_slow_parts = False
-                for entry in self.parts:
-                    part = entry['part']
-                    if entry['is_responsive'] == False:
-                        # Ignore slow model if model not being used
-                        if part.name == 'ai' and mode == 'user':
-                            continue
-                        else:
-                            # Immediately stop search if even a
-                            # single slow part is discovered
-                            any_slow_parts = True
-                            break
+                for name, part in self.parts.items():
+                    if part.is_safe() == False:
+                        # Immediately stop search if even a
+                        # single slow part is discovered
+                        any_slow_parts = True
+                        break
 
                 # Turning the brake on is mostly redundant since
                 # I immediately stop the engine as soon as a bad
@@ -143,10 +99,19 @@ class Vehicle():
                 # release the brake
                 if any_slow_parts:
                     self.apply_system_brake()
+                    print('{timestamp} - Applied emergency brake!'.format(
+                        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+                    ))
                 else:
-                    self.mem.put(['system-brake'], False)
+                    self.mem.put(['vehicle/brake'], False)
+                    previous_state = self.mem.get(['vehicle/brake'])[0]
+                    if previous_state == True:
+                        print('{timestamp} - Released emergency brake'.format(
+                            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+                        ))
 
-                self.update_parts()
+                self.mem.print()
+                self.part_loop()
 
                 # stop drive loop if loop_count exceeds max_loopcount
                 if max_loop_count and loop_count > max_loop_count:
@@ -161,12 +126,6 @@ class Vehicle():
         finally:
             self.stop()
 
-    def get_entry(self, part_name):
-        for entry in self.parts:
-            part = entry['part']
-            if part.name == part_name:
-                return entry
-
     # Force the engine to acknowledge the brake by
     # updating the brake state to on and then sending
     # those inputs through the engine. Note that with
@@ -175,68 +134,30 @@ class Vehicle():
     # car with no actual brake, so I accomplish the
     # same thing by just telling the engine to stop
     def apply_system_brake(self):
-        self.mem.put(['system-brake'], True)
-        engine_entry = self.get_entry(part_name='engine')
-        engine = engine_entry['part']
-        engine_inputs = self.mem.get(engine_entry['inputs'])
-        engine.run_threaded(*engine_inputs)
+        self.mem.put(['vehicle/brake'], True)
+        engine = self.parts['engine']
+        engine_inputs = self.mem.get(engine.input_names)
+        engine.call(*engine_inputs)
+        print('{timestamp} - Applied emergency brake!'.format(
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        ))
 
-    def update_parts(self):
-
-        # Loop over all the parts
-        for entry in self.parts:
-            p = entry['part']
-
-            """
-            This only applies to parts that are not threaded
-            and already running continuously. For example, the
-            camera part is threaded and will continuously poll
-            ffpmeg, but the Dataset writer is not threaded, and
-            only runs when you tell it to write a record
-            """
-            run = True
-            if entry.get('run_condition'):
-                run_condition = entry.get('run_condition')
-                run = self.mem.get([run_condition])[0]
-
-            if run:
-                inputs = self.mem.get(entry['inputs'])
-                outputs = None
-                mode = self.mem.get(['mode'])[0]
-                if entry.get('thread'):
-
-                    # Check for issues before using the part
-                    now = datetime.now()
-                    if p.last_update_time is not None:
-                        diff_seconds = (now - p.last_update_time).total_seconds()
-                        if diff_seconds > self.latency_threshold:
-                            entry['is_responsive'] = False
-                            message = '{part} delayed by {seconds} seconds!'
-                            if p.name != 'ai':
-                                print(message.format(part=p.name, seconds=diff_seconds))
-                                self.apply_system_brake()
-                            else:
-                                # Apply brake if AI is supposed to drive but is delayed
-                                if mode == 'ai':
-                                    print(message.format(part=p.name, seconds=diff_seconds))
-                                    self.apply_system_brake()
-                        else:
-                            entry['is_responsive'] = True
-                    if mode == 'ai' and p.name == 'ai' and p.healthcheck == 'fail':
-                        print('ai API call has failed!')
-                        self.apply_system_brake()
-                    outputs = p.run_threaded(*inputs)
+    def part_loop(self):
+        for name, part in self.parts.items():
+            if part.is_safe():
+                if part.input_names is not None:
+                    inputs = self.mem.get(part.input_names)
+                    outputs = part.call(inputs)
                 else:
-                    outputs = p.run(*inputs)
-
-                # Save the output(s) to memory
-                if outputs is not None:
-                    self.mem.put(entry['outputs'], outputs)
+                    outputs = part.call()
+                if part.output_names is not None:
+                    # Save the output(s) to memory
+                    self.mem.put(part.output_names, outputs)
+            else:
+                part.print_latency_warning()
+                self.apply_system_brake()
 
     def stop(self):
-        print('Shutting down vehicle and its parts...')
-        for entry in self.parts:
-            try:
-                entry['part'].shutdown()
-            except Exception as e:
-                print(e)
+        print('{timestamp} - Shutting down vehicle and its parts...'.format(
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        ))

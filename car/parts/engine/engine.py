@@ -1,15 +1,11 @@
-from datetime import datetime
 import RPi.GPIO as GPIO
 
 
 class Engine(object):
-    def __init__(self, pinForward, pinBackward, pinControlStraight, pinLeft, pinRight, pinControlSteering, name, input_names):
-        """ Initialize the motor with its control pins and start pulse-width
-             modulation """
-        self.name = name
-        self.input_names = input_names
-        self.input = None
-        self.last_update_time = None
+
+    def __init__(self, pinForward, pinBackward, pinControlStraight, pinLeft, pinRight, pinControlSteering):
+
+        self.inputs = None
 
         GPIO.setmode(GPIO.BOARD)
 
@@ -39,13 +35,6 @@ class Engine(object):
 
         GPIO.output(self.pinControlStraight, GPIO.HIGH)
         GPIO.output(self.pinControlSteering, GPIO.HIGH)
-
-    def update(self):
-        while True:
-            self.last_update_time = datetime.now()
-
-    def get_last_update_time(self):
-        return self.last_update_time
 
     # PWM only accepts integer values between 0 and 100
     def normalize_input(self,raw_input):
@@ -88,19 +77,19 @@ class Engine(object):
             self.pwm_left.ChangeDutyCycle(0)
             self.pwm_right.ChangeDutyCycle(0)
 
-    def run_threaded(self,*args):
-
-        self.inputs = dict(zip(self.input_names, args))
-        mode = self.inputs['mode']
-        assert (mode in ['ai', 'user'])
-        if self.inputs['system-brake'] is False and self.inputs['user-brake'] is False:
-            # TODO: Add support for remote vs local models
-            if mode == 'ai':
-                self.run_angle(self.inputs['remote_model/angle'])
-                self.run_throttle(self.inputs['remote_model/throttle'])
+    def run(self, inputs):
+        driver_type = inputs['user_input/driver_type']
+        assert (driver_type in ['user', 'remote_model', 'local_model'])
+        if inputs['vehicle/brake'] is False and inputs['user_input/brake'] is False:
+            if driver_type == 'remote_model':
+                self.run_angle(inputs['remote_model/angle'])
+                self.run_throttle(inputs['user/max_throttle'])
+            elif driver_type == 'local_model':
+                self.run_angle(inputs['remote_model/angle'])
+                self.run_throttle(inputs['user/max_throttle'])
             else:
-                self.run_angle(self.inputs['user/angle'])
-                self.run_throttle(self.inputs['user/throttle'])
+                self.run_angle(inputs['user/angle'])
+                self.run_throttle(inputs['user/throttle'])
         else:
             self.stop()
 

@@ -1,9 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Jun 25 11:07:48 2017
-@author: wroscoe
-"""
+import copy
 
 
 class Memory:
@@ -22,6 +17,11 @@ class Memory:
 
         for i, k in enumerate(key):
             self.d[k] = value[i]
+
+    def print(self):
+        simple_contents = copy.deepcopy(self.d)
+        simple_contents['camera/image_array'] = 'Too large too show'
+        print(simple_contents)
 
     def __getitem__(self, key):
         if type(key) is tuple:
