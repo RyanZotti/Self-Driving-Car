@@ -22,6 +22,20 @@ class Client(Part):
         except:
             pass
 
+        """
+        When the video is streaming well, about 1 of every 15
+        iterations of the infinite loop produces an image. When
+        the video is killed and there is nothing to show, the else
+        part of the loop gets called consecutively indefinitely.
+        I can avoid the zombie threads that take over my entire
+        Tornado server (99% of CPU) if I check a consecutive
+        failure count exceeding some arbitrarily high threshold
+        """
+        self.count_threshold = 50
+        self.consecutive_no_image_count = 0
+        self.was_available = False
+        self.is_video_alive = False
+
     # This automatically gets called in an infinite loop by the parent class, Part.py
     def request(self):
         if self.stream is None:
@@ -36,6 +50,18 @@ class Client(Part):
             if cv2.waitKey(1) == 27:
                 exit(0)
             self.frame = frame
+            self.consecutive_no_image_count = 0
+            self.was_available = True
+            self.is_video_alive = True
+        else:
+            if self.was_available:
+                self.consecutive_no_image_count = 1
+            else:
+                self.consecutive_no_image_count += 1
+            if self.consecutive_no_image_count > self.count_threshold:
+                self.is_video_alive = False
+                raise Exception
+            self.was_available = False
 
     # This is how the main control loop interacts with the part
     def call(self):
