@@ -14,13 +14,18 @@ class Client(Part):
             url=url,
             output_names=output_names
         )
-        self.stream = urllib.request.urlopen(self.endpoint)
-        self.opencv_bytes = bytes()
-        # Ensure the frame variable exists
+        # Need to define as None to avoid "does not exist bugs"
         self.frame = None
+        self.stream = None
+        try:
+            self.open_stream()
+        except:
+            pass
 
     # This automatically gets called in an infinite loop by the parent class, Part.py
     def request(self):
+        if self.stream is None:
+            self.open_stream()
         self.opencv_bytes += self.stream.read(1024)
         a = self.opencv_bytes.find(b'\xff\xd8')
         b = self.opencv_bytes.find(b'\xff\xd9')
@@ -35,3 +40,7 @@ class Client(Part):
     # This is how the main control loop interacts with the part
     def call(self):
         return self.frame
+
+    def open_stream(self):
+        self.stream = urllib.request.urlopen(self.endpoint)
+        self.opencv_bytes = bytes()
