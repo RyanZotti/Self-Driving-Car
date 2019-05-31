@@ -64,8 +64,30 @@ class VideoCache():
         It's fine to use a hardcoded path because this stub
         should only ever be run through Docker
         """
-        static_image_path = '/root/tests/static_image.png'
+        #static_image_path = '/root/tests/static_image.png'
+        static_image_path = './static_image.png'
         self.frame = cv2.imread(static_image_path)
+        self.t = Thread(target=self.write_cache, args=())
+        self.t.daemon = True
+        self.t.start()
+
+    def write_cache(self):
+        # Add random noise to image to give appearance of video
+        while True:
+            mean = 0
+            sigma = 1
+            gaussian = np.random.normal(
+                mean,
+                sigma,
+                (
+                    self.frame.shape[0],
+                    self.frame.shape[1],
+                    self.frame.shape[2]
+                )
+            )
+            noisy_image = self.frame + gaussian
+            noisy_image = noisy_image.astype(np.uint8)
+            self.frame = noisy_image
 
     def read_cache(self):
         return self.frame
