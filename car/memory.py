@@ -20,7 +20,8 @@ class Memory:
 
     def print(self):
         simple_contents = copy.deepcopy(self.d)
-        simple_contents['camera/image_array'] = 'Too large too show'
+        if 'camera/image_array' in simple_contents:
+            simple_contents['camera/image_array'] = 'Too large too show'
         print(simple_contents)
 
     def __getitem__(self, key):
