@@ -1,5 +1,6 @@
 import contextlib
 import cv2
+from datetime import datetime
 import time
 import numpy as np
 import urllib.request
@@ -18,6 +19,9 @@ class VideoAPI(tornado.web.RequestHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def get(self):
+        print('{timestamp} - Received request'.format(
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        ))
 
         ioloop = tornado.ioloop.IOLoop.current()
         self.set_header("Content-type", "multipart/x-mixed-replace;boundary=--boundarydonotcross")
