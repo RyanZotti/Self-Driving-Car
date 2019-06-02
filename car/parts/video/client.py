@@ -6,7 +6,7 @@ from car.utils import *
 
 class Client(Part):
 
-    def __init__(self, name, output_names, host='ffmpeg', port=8091, url='/video'):
+    def __init__(self, name, output_names, host='localhost', port=8091, url='/video', consecutive_no_image_count_threshold=150):
         super().__init__(
             name=name,
             host=host,
@@ -31,14 +31,14 @@ class Client(Part):
         Tornado server (99% of CPU) if I check a consecutive
         failure count exceeding some arbitrarily high threshold
         """
-        self.count_threshold = 50
         self.consecutive_no_image_count = 0
+        self.consecutive_no_image_count_threshold = consecutive_no_image_count_threshold
         self.was_available = False
         self.is_video_alive = False
 
     # This automatically gets called in an infinite loop by the parent class, Part.py
     def request(self):
-        if self.stream is None:
+        if self.stream is None or self.is_video_alive == False:
             self.open_stream()
         self.opencv_bytes += self.stream.read(1024)
         a = self.opencv_bytes.find(b'\xff\xd8')
@@ -58,7 +58,7 @@ class Client(Part):
                 self.consecutive_no_image_count = 1
             else:
                 self.consecutive_no_image_count += 1
-            if self.consecutive_no_image_count > self.count_threshold:
+            if self.consecutive_no_image_count > self.consecutive_no_image_count_threshold:
                 self.is_video_alive = False
                 raise Exception
             self.was_available = False
