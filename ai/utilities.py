@@ -169,11 +169,11 @@ def live_video_stream(ip, port):
     was_available = False
     while True:
         opencv_bytes += stream.read(1024)
-        a = opencv_bytes.find(b'\xff\xd8')
-        b = opencv_bytes.find(b'\xff\xd9')
-        if a != -1 and b != -1:
-            jpg = opencv_bytes[a:b + 2]
-            opencv_bytes = opencv_bytes[b + 2:]
+        jpeg_frame_start_marker = opencv_bytes.find(b'\xff\xd8')
+        jpeg_frame_end_market = opencv_bytes.find(b'\xff\xd9')
+        if jpeg_frame_start_marker != -1 and jpeg_frame_end_market != -1:
+            jpg = opencv_bytes[jpeg_frame_start_marker:jpeg_frame_end_market + 2]
+            opencv_bytes = opencv_bytes[jpeg_frame_end_market + 2:]
             frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
             if cv2.waitKey(1) == 27:
                 exit(0)
