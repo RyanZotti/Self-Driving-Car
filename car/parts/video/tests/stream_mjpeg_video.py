@@ -15,5 +15,5 @@ args = vars(ap.parse_args())
 ip = args['ip_address']
 port = args['port']
 
-for frame in live_video_stream(ip=ip,port=port):
+for frame in live_video_stream(ip=ip,port=port,no_change_count_threshold=150):
     cv2.imshow('frame', frame)

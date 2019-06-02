@@ -152,7 +152,7 @@ def get_sql_rows(sql):
 # The syntax is super ugly and I don't understand how it works
 # This is where I got this code from here, which comes with an explanation:
 # https://stackoverflow.com/questions/21702477/how-to-parse-mjpeg-http-stream-from-ip-camera
-def live_video_stream(ip, port):
+def live_video_stream(ip, port, no_change_count_threshold=50):
     stream = urllib.request.urlopen('http://{ip}:{port}/video'.format(ip=ip, port=port))
     opencv_bytes = bytes()
     """
@@ -164,7 +164,6 @@ def live_video_stream(ip, port):
     Tornado server (99% of CPU) if I check a consecutive
     failure count exceeding some arbitrarily high threshold
     """
-    count_threshold = 50
     consecutive_no_image_count = 0
     was_available = False
     while True:
@@ -185,6 +184,7 @@ def live_video_stream(ip, port):
                 consecutive_no_image_count = 1
             else:
                 consecutive_no_image_count += 1
-            if consecutive_no_image_count > count_threshold:
+            if consecutive_no_image_count > no_change_count_threshold:
+                print('Consecutive no-image count threshold exceeded')
                 break
             was_available = False
