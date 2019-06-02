@@ -1,4 +1,5 @@
 import cv2
+from datetime import datetime
 from car.Part import Part
 import urllib.request
 from car.utils import *
@@ -18,9 +19,17 @@ class Client(Part):
         self.frame = None
         self.stream = None
         try:
+            print('{timestamp} - Attempting to open video stream...'.format(
+                timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            ))
             self.open_stream()
+            print('{timestamp} - Successfully opened video stream!'.format(
+                timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            ))
         except:
-            pass
+            print('{timestamp} - Failed to open video stream!'.format(
+                timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            ))
 
         """
         When the video is streaming well, about 1 of every 15
