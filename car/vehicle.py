@@ -142,13 +142,13 @@ class Vehicle():
 
     def part_loop(self):
         for name, part in self.parts.items():
+            if part.input_names is not None:
+                inputs = self.mem.get(part.input_names)
+                outputs = part.call(inputs)
+            else:
+                outputs = part.call()
             if part.is_safe():
-                if part.input_names is not None:
-                    inputs = self.mem.get(part.input_names)
-                    outputs = part.call(inputs)
-                else:
-                    outputs = part.call()
-                if part.output_names is not None:
+                if outputs is not None:
                     # Save the output(s) to memory
                     self.mem.put(part.output_names, outputs)
             else:
