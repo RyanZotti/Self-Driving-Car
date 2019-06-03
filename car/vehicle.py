@@ -103,14 +103,12 @@ class Vehicle():
                         timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                     ))
                 else:
-                    self.mem.put(['vehicle/brake'], False)
                     previous_state = self.mem.get(['vehicle/brake'])[0]
+                    self.mem.put(['vehicle/brake'], False)
                     if previous_state == True:
-                        print('{timestamp} - Released emergency brake'.format(
+                        print('{timestamp} - Released emergency brake!'.format(
                             timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                         ))
-
-                self.mem.print()
                 self.part_loop()
 
                 # stop drive loop if loop_count exceeds max_loopcount
