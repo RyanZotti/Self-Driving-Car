@@ -21,7 +21,8 @@ class Memory:
     def print(self):
         simple_contents = copy.deepcopy(self.d)
         if 'camera/image_array' in simple_contents:
-            simple_contents['camera/image_array'] = 'Too large too show'
+            image_sum = simple_contents['camera/image_array'].sum()
+            simple_contents['camera/image_array'] = 'image.sum(): '+str(image_sum)
         print(simple_contents)
 
     def __getitem__(self, key):
