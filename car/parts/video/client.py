@@ -43,11 +43,10 @@ class Client(Part):
         self.consecutive_no_image_count = 0
         self.consecutive_no_image_count_threshold = consecutive_no_image_count_threshold
         self.was_available = False
-        self.is_video_alive = False
 
     # This automatically gets called in an infinite loop by the parent class, Part.py
     def request(self):
-        if self.stream is None or self.is_video_alive == False:
+        if self.stream is None:
             self.open_stream()
         self.opencv_bytes += self.stream.read(1024)
         a = self.opencv_bytes.find(b'\xff\xd8')
@@ -61,14 +60,13 @@ class Client(Part):
             self.frame = frame
             self.consecutive_no_image_count = 0
             self.was_available = True
-            self.is_video_alive = True
         else:
             if self.was_available:
                 self.consecutive_no_image_count = 1
             else:
                 self.consecutive_no_image_count += 1
             if self.consecutive_no_image_count > self.consecutive_no_image_count_threshold:
-                self.is_video_alive = False
+                self.stream = None  # Tells self.open_stream() to run
                 raise Exception
             self.was_available = False
 
