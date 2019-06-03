@@ -67,6 +67,19 @@ class Client(Part):
                 self.consecutive_no_image_count += 1
             if self.consecutive_no_image_count > self.consecutive_no_image_count_threshold:
                 self.stream = None  # Tells self.open_stream() to run
+                """
+                Resetting the count to 0 fixed a bug where the
+                client could never recover, even after the
+                ffmpeg server was brought up again. I suspect
+                the bug occurred because I set the stream to None
+                which would indicate that the stream needed to be
+                reopened, and presumably it takes a few
+                iterations to return an image. Resuming the count
+                from where I left off would mean that I would
+                have only once (or zero) chance of not exceeding
+                the threshold
+                """
+                self.consecutive_no_image_count = 0
                 raise Exception
             self.was_available = False
 
