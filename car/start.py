@@ -109,6 +109,7 @@ record_tracker = RecordTracker(
     input_names=[
         'camera/image_array',
         'user_input/angle',
+        'user_input/recording'
         'user_input/throttle'
     ],
     input_types=[
