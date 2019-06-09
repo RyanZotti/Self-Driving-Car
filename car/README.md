@@ -28,6 +28,11 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 
 ### Build
 
+Ensure that the base image is available (this is a note for Ryan). Many of the part servers build on top of this base image.
+
+	docker build -t ryanzotti/vehicle-server:latest .
+	docker push ryanzotti/vehicle-server:latest
+
 You only need to follow the steps below once. Note: only Ryan has access to modify the image hosted under his DockerHub namespace, so the `push` command will fail for everyone else. The `pull` command should be allowed, however.
 
 	# Build the laptop image
