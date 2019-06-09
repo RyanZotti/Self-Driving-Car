@@ -1,5 +1,6 @@
 import argparse
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 import tornado.ioloop
 import tornado.web
 import tornado.gen
@@ -19,6 +20,9 @@ class WriteRecord(tornado.web.RequestHandler):
 
     @tornado.gen.coroutine
     def post(self):
+        print('{timestamp} - Writing a record'.format(
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        ))
         json_input = tornado.escape.json_decode(self.request.body)
         result = yield self.run(json_input=json_input)
         self.write(result)
@@ -40,33 +44,20 @@ if __name__ == "__main__":
     args = vars(ap.parse_args())
     port = args['port']
     app = make_app()
-    dataset_handler = DatasetHandler(path='/root/data')
-    recorded_inputs = [
-        'cam/image_array',
-        'user/angle',
-        'user/throttle',
-        'ai/angle',
-        'ai/throttle',
-        'mode',
-        'system-brake',
-        'user-brake',
-        'ai/healthcheck',
-        'max_throttle']
-    types = [
+    dataset_handler = DatasetHandler(path='/datasets')
+    input_names = [
+        'camera/image_array',
+        'user_input/angle',
+        'user_input/throttle'
+    ],
+    input_types = [
         'image_array',
         'float',
-        'float',
-        'float',
-        'float',
-        'str',
-        'boolean',
-        'boolean',
-        'str',
         'float'
     ]
     dataset = dataset_handler.new_dataset_writer(
-        inputs=recorded_inputs,
-        types=types
+        inputs=input_names,
+        types=input_types
     )
     dataset.set_name('dataset')
     app.listen(port)
