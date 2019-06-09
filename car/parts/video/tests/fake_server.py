@@ -69,7 +69,7 @@ class VideoCache():
         should only ever be run through Docker
         """
         #static_image_path = '/root/tests/static_image.png'
-        static_image_path = './static_image.png'
+        static_image_path = '/root/tests/static_image.png'
         self.frame = cv2.imread(static_image_path)
         self.t = Thread(target=self.write_cache, args=())
         self.t.daemon = True
