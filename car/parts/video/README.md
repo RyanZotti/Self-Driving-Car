@@ -41,4 +41,9 @@ You can also run a stub of the service.
 You can try streaming the video locally.
 
 	export PYTHONPATH=$PYTHONPATH:/Users/ryanzotti/Documents/repos/Self-Driving-Car
+
+	# From the fake video service
 	python tests/stream_mjpeg_video.py --ip_address localhost --port 8091
+
+	# From the real video service running on the car
+	python tests/stream_mjpeg_video.py --ip_address ryanzotti.local --port 8091
