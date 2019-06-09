@@ -16,8 +16,9 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 	  --name user_input \
 	  --network car_network \
 	  --privileged \
+	  -d \
 	  ryanzotti/user_input:latest \
-	  python3 /root/ui.py --port 8884
+	  python3 /root/server.py --port 8884
 
 	# Stop the image
 	docker rm -f user_input
