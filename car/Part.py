@@ -1,3 +1,4 @@
+import abc
 from datetime import datetime
 import json
 from threading import Thread
@@ -59,6 +60,7 @@ class Part:
         self.output_names = output_names
         self.outputs = None
         self.url = self.sanitize_url(url)
+        self.is_loopable = is_loopable
         self.endpoint = 'http://{host}:{port}/{url}'.format(
             host=self.host,
             port=self.port,
@@ -100,19 +102,21 @@ class Part:
             sanitized_url = url
         return sanitized_url
 
+    @abc.abstractmethod
     def call(self):
         """
         A placeholder function that Vehicle.py uses to send
         data to the part and receive data from the part
         """
-        pass
+        raise NotImplementedError
 
+    @abc.abstractmethod
     def request(self):
         """
         A placeholder function that the child class uses to
         define how to interact with a part's server
         """
-        pass
+        raise NotImplementedError
 
     def update_outputs(self,response, defaults=None):
         """
