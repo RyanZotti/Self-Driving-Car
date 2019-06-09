@@ -37,3 +37,8 @@ Over time this build will inevitably fail as dependencies are deprecated and no 
 You can also run a stub of the service.
 
 	docker run -t -i --network car_network -p 8091:8091 --name ffmpeg ryanzotti/ffmpeg:latest python3 /root/tests/fake_server.py
+
+You can try streaming the video locally.
+
+	export PYTHONPATH=$PYTHONPATH:/Users/ryanzotti/Documents/repos/Self-Driving-Car
+	python tests/stream_mjpeg_video.py --ip_address localhost --port 8091
