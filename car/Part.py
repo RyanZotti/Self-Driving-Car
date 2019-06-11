@@ -7,7 +7,8 @@ import traceback
 
 class Part:
 
-    def __init__(self, name, host, port, url, input_names=None, output_names=None, latency_threshold_seconds=0.5):
+    def __init__(self, name, host, port, url, input_names=None, output_names=None,
+                 latency_threshold_seconds=0.5, is_loopable=True):
         """
         This function creates a new part. This is used as a
         template for the client portion a part's client-server
@@ -39,6 +40,19 @@ class Part:
             The url associated with server. It doesn't matter if
             you include a leading / or not. I sanitize it either
             way
+        is_loopable: boolean
+            This field is used for parts that shouldn't be executed
+            every iteration of the infinite loop. For example, the
+            record_tracker.py part should run once per part loop,
+            but the camera should update as frequently as it can,
+            sometimes multiple times per part loop. Parts that run
+            continuously will always have a value of True, whereas
+            parts that run infrequently will have their state toggled
+            on/off. When an infrequently run part learns that it should
+            make a call, it will set this variable to True, and then
+            when that part's request method is subsequently called it
+            will set the value to False to prevent unintended future
+            runs
         input_names: list<string>
             An ordered list of the named inputs
         output_names: list<string>
@@ -60,7 +74,22 @@ class Part:
         self.output_names = output_names
         self.outputs = None
         self.url = self.sanitize_url(url)
+
         self.is_loopable = is_loopable
+        self.is_requestable = True
+        if not self.is_loopable:
+            """
+            If a part such as the record writer should only run
+            when called, then initialize the run indicator to
+            False. Otherwise the part will run the first time
+            without user input when the class is instantiated.
+            This variable will get set to True in the self.call()
+            method and then set back to False in the
+            self.request() method, though this logic needs to be
+            defined within each inheriting part class and is not
+            defined in the Part class itself
+            """
+            self.is_requestable = False
         self.endpoint = 'http://{host}:{port}/{url}'.format(
             host=self.host,
             port=self.port,
@@ -149,13 +178,14 @@ class Part:
         critical part has become unresponsive
         """
         while True:
-            try:
-                self.request()
-                self.last_update_time = datetime.now()
-            except:
-                is_debugging = False
-                if is_debugging:
-                    traceback.print_exc()
+            if self.is_requestable:
+                try:
+                    self.request()
+                    self.last_update_time = datetime.now()
+                except:
+                    is_debugging = False
+                    if is_debugging:
+                        traceback.print_exc()
 
     def get_last_update_time(self):
         """

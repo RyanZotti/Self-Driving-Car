@@ -28,8 +28,9 @@ class Client(Part):
 
     # This is how the main control loop interacts with the part
     def call(self, *args):
-        self.inputs = dict(zip(self.input_names, args))
-        self.is_requestable = True
+        self.inputs = dict(zip(self.input_names, *args))
+        if self.inputs['user_input/recording']:
+            self.is_requestable = True
 
     def is_safe(self):
         """
@@ -43,8 +44,7 @@ class Client(Part):
             Boolean indicating if it is safe to continue driving
             the car given the current state of the part
         """
-        is_recording = self.inputs['user_input/recording']
-        if is_recording:
+        if self.is_requestable:
             if self.is_responsive():
                 return True
             else:
