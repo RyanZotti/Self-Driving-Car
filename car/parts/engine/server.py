@@ -1,5 +1,6 @@
 import argparse
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 import tornado.ioloop
 import tornado.web
 import tornado.gen
@@ -18,6 +19,9 @@ class Command(tornado.web.RequestHandler):
 
     @tornado.gen.coroutine
     def post(self):
+        print('{timestamp} - Received request'.format(
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        ))
         json_input = tornado.escape.json_decode(self.request.body)
         result = yield self.run(json_input=json_input)
         self.write(result)
