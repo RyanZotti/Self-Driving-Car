@@ -5,7 +5,7 @@ import tornado.ioloop
 import tornado.web
 import tornado.gen
 
-from car.parts.record_tracker.datastore import *
+from car.parts.record_tracker.datastore import DatasetHandler
 
 
 class WriteRecord(tornado.web.RequestHandler):

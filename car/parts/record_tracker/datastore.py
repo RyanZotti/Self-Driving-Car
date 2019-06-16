@@ -1,15 +1,9 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jul  4 12:32:53 2017
-@author: wroscoe
-"""
 import cv2
 import os
 import sys
 import time
 import json
-import datetime
+from datetime import datetime
 import random
 import glob
 import numpy as np
@@ -363,7 +357,7 @@ class DatasetHandler():
 
     def create_dataset_path(self):
         dataset_num = self.next_dataset_number(self.path)
-        date = datetime.datetime.now().strftime('%y-%m-%d')
+        date = datetime.now().strftime('%y-%m-%d')
         name = '_'.join(['dataset', str(dataset_num), date])
         dataset_path = os.path.join(self.path, name)
         return dataset_path
