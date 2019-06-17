@@ -1,6 +1,6 @@
 import argparse
 from car.config import load_config
-from car.Vehicle import Vehicle
+from car.vehicle import Vehicle
 from car.Memory import Memory
 from car.parts.video.client import Client as Camera
 from car.parts.user_input.client import Client as UserInput
