@@ -104,6 +104,13 @@ local_model = Model(
 car.add(local_model)
 
 # Track images and labels
+"""
+The input names and the input types need to
+be in the same order. If you ever change the
+names or types you'll also have to update the
+client and server parts as well, since the
+names are hard coded there
+"""
 record_tracker = RecordTracker(
     name='record_tracker',
     input_names=[
@@ -115,6 +122,7 @@ record_tracker = RecordTracker(
     input_types=[
         'image_array',
         'float',
+        'boolean',
         'float'
     ]
 )
