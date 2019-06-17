@@ -32,22 +32,14 @@ class Client(Part):
         if self.inputs['user_input/recording']:
             self.is_requestable = True
 
+    # TODO: Apply real logic
     def is_safe(self):
         """
-        This part's responsiveness only matters when trying to
-        write a record. If you're not trying to write a record
-        then the responsiveness doesn't matter
-
-        Returns
-        ----------
-        is_safe : boolean
-            Boolean indicating if it is safe to continue driving
-            the car given the current state of the part
+        It's hard to define what a good health check would
+        be for the record tracker. It runs intermittently
+        so I can't use a "time since last update" type of
+        check like I do for the other parts. I can replace
+        this logic when I think of something. For now I'll
+        hardcode it to True
         """
-        if self.is_requestable:
-            if self.is_responsive():
-                return True
-            else:
-                return False
-        else:
-            return True
+        return True
