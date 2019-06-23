@@ -1,3 +1,3 @@
-FROM ryanzotti/vehicle-server:latest
+FROM ryanzotti/generic_server:latest
 
 COPY ./ /root/

@@ -47,7 +47,6 @@ class Client(Part):
         simpler values like strings and floats.
         """
         json_payload = self.inputs.copy()
-        json_payload['input_types'] = self.input_types
         del json_payload['camera/image_array']
         try:
             response = requests.post(
