@@ -7,7 +7,7 @@ from car.utils import *
 
 class Client(Part):
 
-    def __init__(self, name, output_names, host='localhost', port=8091, url='/video', consecutive_no_image_count_threshold=150):
+    def __init__(self, name, output_names, host='ffmpeg', port=8091, url='/video', consecutive_no_image_count_threshold=150):
         super().__init__(
             name=name,
             host=host,
