@@ -5,7 +5,7 @@ from car.Part import Part
 
 class Client(Part):
 
-    def __init__(self, name, input_names, host='engine', port=8092, url='/command'):
+    def __init__(self, name, input_names, host='vehicle-engine', port=8092, url='/command'):
         super().__init__(
             name=name,
             host=host,
