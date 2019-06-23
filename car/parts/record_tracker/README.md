@@ -6,7 +6,7 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 
 	# Pull the image
 	docker pull ryanzotti/record-tracker:latest
-	
+
 	# Remove any legacy version of the containers
 	docker rm -f record-tracker
 
@@ -44,6 +44,9 @@ You can also run a stub of the service. Note that unlike other servers, the reco
 	# Make sure a dataset directory exists
 	mkdir -p ./datasets
 	
+	# Delete any old containers
+	docker rm -f record-tracker
+
 	# Run the service
 	DATASETS_DIR=${PWD}/datasets
 	docker run -t -i \
