@@ -108,7 +108,7 @@ class UpdateDriveState(tornado.web.RequestHandler):
             # TODO: Remove hardcoded port
             'http://{host}:{port}/track-human-requests'.format(
                 host=self.application.pi_host,
-                port=8887
+                port=8884
             ),
             data=json.dumps(json_input),
             timeout=seconds
