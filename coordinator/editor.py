@@ -1354,6 +1354,50 @@ class StopCarVideo(tornado.web.RequestHandler):
         result = yield self.stop_ffmpeg()
         self.write(result)
 
+class StartCarService(tornado.web.RequestHandler):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def submit_pi_commands(self, commands):
+        for command in commands:
+            asyncio.set_event_loop(asyncio.new_event_loop())
+            execute_pi_command(
+               command=command
+            )
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        # TODO: Remove hardcoded ports
+        result = {}
+        if json_input['service'].lower() == 'record-tracker':
+            result = yield self.submit_pi_commands(commands=[
+                'docker rm -f record-tracker',
+                'docker run -t -d -i --network car_network -p 8093:8093 --name record-tracker --volume /home/pi/datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py'
+            ])
+        elif json_input['service'].lower() == 'ffmpeg':
+            result = yield self.submit_pi_commands(commands=[
+                'docker rm -f ffmpeg',
+                'docker run -t -d -i --device=/dev/video0 --network car_network -p 8091:8091 --name ffmpeg ryanzotti/ffmpeg:latest'
+            ])
+        elif json_input['service'].lower() == 'control_loop':
+            result = yield self.submit_pi_commands(commands=[
+                'docker rm -f control-loop',
+                'docker run -i -t -d -p 8887:8887 --name control-loop --network car_network ryanzotti/control_loop:latest python3 /root/car/start.py'
+            ])
+        elif json_input['service'].lower() == 'user_input':
+            result = yield self.submit_pi_commands(commands=[
+                'docker rm -f user_input',
+                'docker run -i -t -p 8884:8884 --name user_input --network car_network --privileged -d ryanzotti/user_input:latest python3 /root/server.py --port 8884'
+            ])
+        elif json_input['service'].lower() == 'vehicle-engine':
+            result = yield self.submit_pi_commands(commands=[
+                'docker rm -f vehicle-engine',
+                'docker run -t -d -i --privileged --network car_network -p 8092:8092 --name vehicle-engine ryanzotti/vehicle-engine:latest'
+            ])
+        self.write(result)
+
 
 # Checks if ffserver and ffmpeg are running. Assumes
 # ffmpeg can't run w/o ffserver, so only bothers to
@@ -1779,6 +1823,7 @@ def make_app():
         (r"/read-pi-field", ReadPiField),
         (r"/refresh-record-reader", RefreshRecordReader),
         (r"/raspberry-pi-healthcheck", PiHealthCheck),
+        (r"/start-car-service", StartCarService),
     ]
     return tornado.web.Application(handlers)
 
