@@ -42,7 +42,7 @@ function updateDriveState(userSteering, userSpeed, driveMode, isRecording, isBra
     data = JSON.stringify({
         'angle': userSteering,
         'throttle':userSpeed,
-        'drive_mode':driveMode,
+        'driver_type':driveMode,
         'recording': isRecording,
         'brake':isBrakeOn,
         'max_throttle':speedMultiplier,
