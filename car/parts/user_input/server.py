@@ -1,4 +1,5 @@
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import tornado.ioloop
 import tornado.web
 import tornado.gen
@@ -6,28 +7,37 @@ import tornado.gen
 
 class TrackHumanRequests(tornado.web.RequestHandler):
 
-    def post(self):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def update(self,data):
         data = tornado.escape.json_decode(self.request.body)
-        self.application.user_angle = data['angle']
-        self.application.user_throttle = data['throttle']
         self.application.driver_type = data['driver_type']
         self.application.recording = data['recording']
         self.application.brake = data['brake']
         self.application.max_throttle = data['max_throttle']
+        print(data)
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.update(data=json_input)
+        self.write(result)
 
 
 class GetInput(tornado.web.RequestHandler):
 
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.gen.coroutine
     def get(self):
         state = {
-            'user_input/angle': self.application.user_angle,
-            'user_input/throttle': self.application.user_throttle,
             'user_input/driver_type': self.application.driver_type,
             'user_input/recording': self.application.recording,
             'user_input/brake': self.application.brake,
             'user_input/max_throttle': self.application.max_throttle
         }
-        print(state)
         self.write(state)
 
 
@@ -48,8 +58,6 @@ if __name__ == "__main__":
     args = vars(ap.parse_args())
     port = args['port']
     app = make_app()
-    app.user_angle = 0.0
-    app.user_throttle = 0.0
     app.remote_model_angle = 0.0
     app.remote_model_throttle = 0.0
     app.driver_type = 'user'

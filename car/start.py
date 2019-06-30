@@ -5,6 +5,7 @@ from car.Memory import Memory
 from car.parts.video.client import Client as Camera
 from car.parts.user_input.client import Client as UserInput
 from car.parts.engine.client import Client as Engine
+from car.parts.ps3_controller.client import Client as PS3Controller
 from car.parts.model.client import Client as Model
 from car.parts.record_tracker.client import Client as RecordTracker
 
@@ -47,12 +48,10 @@ car.add(camera)
 user_input = UserInput(
     name='user_input',
     output_names=[
-        'user_input/angle',
         'user_input/brake',
         'user_input/driver_type',
         'user_input/max_throttle',
-        'user_input/recording',
-        'user_input/throttle'
+        'user_input/recording'
     ]
 )
 car.add(user_input)
@@ -102,6 +101,16 @@ local_model = Model(
     ]
 )
 car.add(local_model)
+
+ps3_controller = PS3Controller(
+    name='ps3_controller',
+    host='ps3_controller',
+    output_names=[
+        'user_input/angle',
+        'user_input/throttle'
+    ]
+)
+car.add(ps3_controller)
 
 # Track images and labels
 """

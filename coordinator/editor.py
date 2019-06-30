@@ -1396,6 +1396,11 @@ class StartCarService(tornado.web.RequestHandler):
                 'docker rm -f vehicle-engine',
                 'docker run -t -d -i --privileged --network car_network -p 8092:8092 --name vehicle-engine ryanzotti/vehicle-engine:latest'
             ])
+        elif json_input['service'].lower() == 'ps3_controller':
+            result = yield self.submit_pi_commands(commands=[
+                'docker rm -f ps3_controller',
+                'docker run -i -t --name ps3_controller --network car_network --net=host --volume /dev/bus/usb:/dev/bus/usb --volume /run/dbus:/run/dbus --volume /var/run/dbus:/var/run/dbus --volume /dev/input:/dev/input --privileged ryanzotti/ps3_controller:latest python /root/server.py'
+            ])
         self.write(result)
 
 
