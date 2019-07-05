@@ -8,6 +8,7 @@ from car.parts.engine.client import Client as Engine
 from car.parts.ps3_controller.client import Client as PS3Controller
 from car.parts.model.client import Client as Model
 from car.parts.record_tracker.client import Client as RecordTracker
+from car.parts.memory.client import Client as Memory
 
 
 ap = argparse.ArgumentParser()
@@ -73,6 +74,25 @@ engine = Engine(
     ]
 )
 car.add(engine)
+
+# Exposes the car's data to external services
+memory = Memory(
+    name='memory',
+    input_names=[
+        'local_model/angle',
+        'local_model/throttle',
+        'remote_model/angle',
+        'remote_model/throttle',
+        'user_input/angle',
+        'user_input/brake',
+        'user_input/driver_type',
+        'user_input/max_throttle'
+        'user_input/recording'
+        'user_input/throttle',
+        'vehicle/brake'
+    ]
+)
+car.add(memory)
 
 # Optionally consume driving predictions from a remote model
 remote_model = Model(

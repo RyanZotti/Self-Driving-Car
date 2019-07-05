@@ -186,6 +186,29 @@ class ListModels(tornado.web.RequestHandler):
         self.write(result)
 
 
+class Memory(tornado.web.RequestHandler):
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_memory(self):
+        seconds = 1
+        request = requests.get(
+           # TODO: Remove hardcoded port
+           'http://{host}:{port}/output'.format(
+               host=self.application.pi_host,
+               port=8095
+           ),
+           timeout=seconds
+        )
+        response = json.loads(request.text)
+        return response
+
+    @tornado.gen.coroutine
+    def get(self):
+        result = yield self.get_memory()
+        self.write(result)
+
+
 class ReadSlider(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
@@ -1829,6 +1852,7 @@ def make_app():
         (r"/refresh-record-reader", RefreshRecordReader),
         (r"/raspberry-pi-healthcheck", PiHealthCheck),
         (r"/start-car-service", StartCarService),
+        (r"/vehicle-memory", Memory),
     ]
     return tornado.web.Application(handlers)
 
