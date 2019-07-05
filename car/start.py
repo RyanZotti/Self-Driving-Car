@@ -86,8 +86,8 @@ memoryClient = MemoryClient(
         'user_input/angle',
         'user_input/brake',
         'user_input/driver_type',
-        'user_input/max_throttle'
-        'user_input/recording'
+        'user_input/max_throttle',
+        'user_input/recording',
         'user_input/throttle',
         'vehicle/brake'
     ]
