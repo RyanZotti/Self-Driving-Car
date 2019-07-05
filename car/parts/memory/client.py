@@ -23,8 +23,6 @@ class Client(Part):
             data=json.dumps(self.inputs),
             timeout=timeout_seconds
         )
-        if response is not None:
-            self.update_outputs(response=response)
 
     # This is how the main control loop interacts with the part
     def call(self, *args):
