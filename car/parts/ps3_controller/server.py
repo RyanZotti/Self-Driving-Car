@@ -26,8 +26,7 @@ class GetAngleAndThrottle(tornado.web.RequestHandler):
 class PS3Controller():
 
     def __init__(self):
-        self.microservice.angle = 0.0
-        self.microservice.throttle = 0.0
+        pass
 
     # The asyncio library is required to start Tornado as a separate thread
     # https://github.com/tornadoweb/tornado/issues/2308
@@ -36,6 +35,8 @@ class PS3Controller():
             (r'/get-angle-and-throttle', GetAngleAndThrottle)
         ])
         self.microservice.listen(port)
+        self.microservice.angle = 0.0
+        self.microservice.throttle = 0.0
         tornado.ioloop.IOLoop.current().start()
 
     def start_server(self):
