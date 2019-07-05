@@ -876,6 +876,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const driveVehicleButton = document.getElementById("drive-vehicle-button");
     driveVehicleButton.onclick = async function(){
+        isDriveModalOpen = true // Used to start updating modal w/ vehicle state
+        pollVehicleAndUpdateUI();
         await makeNewDataset();
         const datasetId = await getDatasetIdFromDataset(recordingDataset);
         const driveVehicleHeaderDatasetId = document.querySelector('span#driveVehicleHeaderDatasetId')
@@ -907,6 +909,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const driveVehicleCloseButton = document.getElementById("closeDriveVehicleModal");
     driveVehicleCloseButton.onclick = function(){
+        isDriveModalOpen = false // Used to stop updating modal w/ vehicle state
         removeVideoSafely();
         stopCarVideo();
         initialBeta = null;

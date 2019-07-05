@@ -91,6 +91,27 @@ function captureDeviceOrientation(event) {
     }
 }
 
+function pollVehicleAndUpdateUI(){
+    $.get('/vehicle-memory', function(result){
+        // Set speed
+        const speed = result['user_input/throttle'];
+        adjustSpeedBar('driveSpeedBar',speed);
+        const speedText = document.querySelector("div#driveSpeedText");
+        speedText.textContent = (speed * 100).toFixed(0) + '%';
+        // Set steering
+        const steering = result['user_input/angle'];
+        updateDonut(donuts.drive,steering);
+        const steeringText = document.querySelector("div#driveHumanSteeringText");
+        steeringText.textContent = (steering * 100).toFixed(0) + '%';
+        // isDriveModalOpen gets toggled on/off when modal is opened/closed
+        if (isDriveModalOpen == true) {
+            pollVehicleAndUpdateUI();
+        }
+    });
+}
+
+// Used to check if vehicle state should be polled
+var isDriveModalOpen = false;
 
 var initialBeta;
 
