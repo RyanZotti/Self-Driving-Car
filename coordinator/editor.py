@@ -80,10 +80,11 @@ class NewDatasetName(tornado.web.RequestHandler):
 
 
 class UpdateDriveState(tornado.web.RequestHandler):
-    executor = ThreadPoolExecutor(5)
+    executor = ThreadPoolExecutor(200)
 
     @tornado.concurrent.run_on_executor
     def send_drive_state(self, json_input):
+        print(json_input)
         is_recording = json_input['recording']
         if is_recording == True:
             # TODO: Remove hardcoded port
@@ -1378,7 +1379,7 @@ class StopCarVideo(tornado.web.RequestHandler):
         self.write(result)
 
 class StartCarService(tornado.web.RequestHandler):
-    executor = ThreadPoolExecutor(5)
+    executor = ThreadPoolExecutor(20)
 
     @tornado.concurrent.run_on_executor
     def submit_pi_commands(self, commands):
@@ -1389,41 +1390,152 @@ class StartCarService(tornado.web.RequestHandler):
             )
         return {}
 
+    @tornado.concurrent.run_on_executor
+    def submit_local_shell_commands(self, commands):
+        for command in commands:
+            asyncio.set_event_loop(asyncio.new_event_loop())
+            shell_command(
+                cmd=command
+            )
+        return {}
+
     @tornado.gen.coroutine
     def post(self):
+        """
+        The benefit of saving all of the Docker commands as code is that
+        I will no longer need to update a bunch of documentation references
+        when I have to change something. Also, it's a major pain starting
+        up each of these manually.
+
+        The Docker networking settings are not consistent across operating
+        systems. On the Pi, which runs Linux, I need net=host or the
+        bluetooth capability won't work for the PS3 controller. However,
+        the net=host capability leads to container to container issues
+        when I run on the Mac.
+        """
+        operating_system_config = {
+            'mac':{
+                'network':'--network car_network -p {port}:{port}',
+            },
+            'linux':{
+                'network': '--net=host',
+            }
+        }
         json_input = tornado.escape.json_decode(self.request.body)
+        operating_system = json_input['target_host_os'].lower()
+        target_host = json_input['target_host_type'].lower()
+        service = json_input['service'].lower()
         # TODO: Remove hardcoded ports
         result = {}
-        if json_input['service'].lower() == 'record-tracker':
-            result = yield self.submit_pi_commands(commands=[
-                'docker rm -f record-tracker',
-                'docker run -t -d -i --network car_network -p 8093:8093 --name record-tracker --volume /home/pi/datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py'
-            ])
-        elif json_input['service'].lower() == 'ffmpeg':
-            result = yield self.submit_pi_commands(commands=[
-                'docker rm -f ffmpeg',
-                'docker run -t -d -i --device=/dev/video0 --network car_network -p 8091:8091 --name ffmpeg ryanzotti/ffmpeg:latest'
-            ])
-        elif json_input['service'].lower() == 'control_loop':
-            result = yield self.submit_pi_commands(commands=[
-                'docker rm -f control-loop',
-                'docker run -i -t -d -p 8887:8887 --name control-loop --network car_network ryanzotti/control_loop:latest python3 /root/car/start.py'
-            ])
-        elif json_input['service'].lower() == 'user_input':
-            result = yield self.submit_pi_commands(commands=[
-                'docker rm -f user_input',
-                'docker run -i -t -p 8884:8884 --name user_input --network car_network --privileged -d ryanzotti/user_input:latest python3 /root/server.py --port 8884'
-            ])
-        elif json_input['service'].lower() == 'vehicle-engine':
-            result = yield self.submit_pi_commands(commands=[
-                'docker rm -f vehicle-engine',
-                'docker run -t -d -i --privileged --network car_network -p 8092:8092 --name vehicle-engine ryanzotti/vehicle-engine:latest'
-            ])
-        elif json_input['service'].lower() == 'ps3_controller':
-            result = yield self.submit_pi_commands(commands=[
-                'docker rm -f ps3_controller',
-                'docker run -i -t --name ps3_controller --network car_network --net=host --volume /dev/bus/usb:/dev/bus/usb --volume /run/dbus:/run/dbus --volume /var/run/dbus:/var/run/dbus --volume /dev/input:/dev/input --privileged ryanzotti/ps3_controller:latest python /root/server.py'
-            ])
+        if service == 'record-tracker':
+            port = 8093
+            network = operating_system_config[operating_system]['network'].format(port=port)
+            if target_host == 'pi':
+                result = yield self.submit_pi_commands(commands=[
+                    'mkdir -p ~/vehicle-datasets',
+                    'docker rm -f record-tracker',
+                    'docker run -t -d -i {network} --name record-tracker --volume ~/vehicle-datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port}'.format(
+                        network=network,
+                        port=port
+                )])
+            elif target_host == 'laptop':
+                result = yield self.submit_local_shell_commands(commands=[
+                    'mkdir -p ~/vehicle-datasets',
+                    'docker rm -f record-tracker',
+                    'docker run -t -d -i {network} --name record-tracker --volume ~/vehicle-datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port}'.format(
+                        network=network,
+                        port=port
+                )])
+        elif service == 'ffmpeg':
+            port = 8091
+            network = operating_system_config[operating_system]['network'].format(port=port)
+            if target_host == 'pi':
+                result = yield self.submit_pi_commands(commands=[
+                    'docker rm -f ffmpeg',
+                    'docker run -t -d -i --device=/dev/video0 {network} --name ffmpeg ryanzotti/ffmpeg:latest'.format(
+                        network=network
+                    )
+                ])
+            elif target_host == 'laptop':
+                result = yield self.submit_local_shell_commands(commands=[
+                    'docker rm -f ffmpeg',
+                    'docker run -t -d -i {network} --name ffmpeg ryanzotti/ffmpeg:latest python3 /root/tests/fake_server.py --port {port}'.format(
+                        network=network,
+                        port=port
+                )])
+        elif service == 'control_loop':
+            port = 8887
+            network = operating_system_config[operating_system]['network'].format(port=port)
+            if target_host == 'pi':
+                result = yield self.submit_pi_commands(commands=[
+                    'docker rm -f control-loop',
+                    'docker run -i -t -d {network} --name control-loop ryanzotti/control_loop:latest python3 /root/car/start.py --port {port}'.format(
+                        network=network,
+                        port=port
+                    )
+                ])
+            elif target_host == 'laptop':
+                result = yield self.submit_local_shell_commands(commands=[
+                    'docker rm -f control-loop',
+                    'docker run -t -d -i {network} --name control-loop ryanzotti/control_loop:latest python3 /root/car/start.py --port {port}'.format(
+                        network=network,
+                        port=port
+                    )]
+                )
+        elif service == 'user_input':
+            port = 8884
+            network = operating_system_config[operating_system]['network'].format(port=port)
+            if operating_system == 'pi':
+                result = yield self.submit_pi_commands(commands=[
+                    'docker rm -f user_input',
+                    'docker run -i -t {network} --name user_input --privileged -d ryanzotti/user_input:latest python3 /root/server.py --port 8884'.format(
+                        network=network,
+                        port=port
+                    )]
+                )
+            elif target_host == 'laptop':
+                result = yield self.submit_local_shell_commands(commands=[
+                    'docker rm -f user_input',
+                    'docker run -t -d -i {network} --name user_input ryanzotti/user_input:latest python3 /root/server.py --port {port}'.format(
+                        network=network,
+                        port=port
+                    )]
+                )
+        elif service == 'vehicle-engine':
+            port = 8092
+            network = operating_system_config[operating_system]['network'].format(port=port)
+            if target_host == 'pi':
+                result = yield self.submit_pi_commands(commands=[
+                    'docker rm -f vehicle-engine',
+                    'docker run -t -d -i --privileged {network} --name vehicle-engine ryanzotti/vehicle-engine:latest'.format(
+                        network=network
+                    )
+                ])
+            elif target_host == 'laptop':
+                result = yield self.submit_local_shell_commands(commands=[
+                    'docker rm -f vehicle-engine',
+                    'docker run -t -d -i {network} --name vehicle-engine ryanzotti/vehicle-engine:latest python3 /root/tests/fake_server.py --port {port}'.format(
+                        network=network,
+                        port=port
+                    )])
+        elif service == 'ps3_controller':
+            port = 8094
+            network = operating_system_config[operating_system]['network'].format(port=port)
+            if operating_system == 'pi':
+                result = yield self.submit_pi_commands(commands=[
+                    'docker rm -f ps3_controller',
+                    'docker run -i -t --name ps3_controller {network} --volume /dev/bus/usb:/dev/bus/usb --volume /run/dbus:/run/dbus --volume /var/run/dbus:/var/run/dbus --volume /dev/input:/dev/input --privileged ryanzotti/ps3_controller:latest python /root/server.py --port {port}'.format(
+                        network=network,
+                        port=port
+                    )
+                ])
+            elif target_host == 'laptop':
+                result = yield self.submit_local_shell_commands(commands=[
+                    'docker rm -f ps3_controller',
+                    'docker run -t -d -i {network} --name ps3_controller ryanzotti/ps3_controller:latest python /root/tests/fake_server.py --port {port}'.format(
+                        network=network,
+                        port=port
+                    )])
         self.write(result)
 
 
