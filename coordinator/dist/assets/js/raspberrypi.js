@@ -44,6 +44,30 @@ function resetCheckStatusButton(){
 
 document.addEventListener('DOMContentLoaded', function() {
 
+    const settingsWrapper = document.querySelector("#settings-wrapper");
+    const servicesWrapper = document.querySelector("#services-wrapper");
+
+    const settingsNav = document.querySelector("#settings-nav");
+    settingsNav.onclick = function () {
+
+        settingsNav.classList.add("active");
+        settingsWrapper.style.display = 'block';
+
+        servicesWrapper.style.display = 'none';
+        servicesNav.classList.remove('active');
+
+    }
+
+    const servicesNav = document.querySelector("#services-nav");
+    servicesNav.onclick = function () {
+
+        servicesWrapper.style.display = 'block';
+        servicesNav.classList.add('active');
+
+        settingsWrapper.style.display = 'none';
+        settingsNav.classList.remove('active');
+    }
+
     const raspberryPiFields = document.querySelectorAll('input.raspberry-pi-field');
     for (const field of raspberryPiFields){
         const columnName = field.getAttribute("column-name");

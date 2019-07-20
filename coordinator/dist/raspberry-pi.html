@@ -608,12 +608,12 @@
                     <!-- Nav -->
                     <ul class="nav nav-tabs nav-overflow header-tabs">
                       <li class="nav-item">
-                        <a href="#!" class="nav-link active">
+                        <a href="#!" class="nav-link active" id="settings-nav">
                           Settings
                         </a>
                       </li>
                       <li class="nav-item">
-                        <a href="#!" class="nav-link">
+                        <a href="#!" class="nav-link" id="services-nav">
                           Services
                         </a>
                       </li>
@@ -624,7 +624,7 @@
               </div>
             </div>
 
-            <div class="row justify-content-center" id="services-wrapper">
+            <div class="row justify-content-center" id="services-wrapper" style="display:none">
               <div class="col-12">
 
                 <div class="card">
@@ -722,87 +722,89 @@
               </div>
             </div> <!-- / .row -->
 
-            <!-- Form -->
-            <form oninput="endpoint.value = user.value +'@'+ host.value">
+            <div id="settings-wrapper">
+              <!-- Form -->
+              <form oninput="endpoint.value = user.value +'@'+ host.value">
 
-              <div class="row">
-                <div class="col-3 col-md-3">
-                  <div class="form-group">
-                    <label>
-                      Login Name
-                    </label>
-                    <input name="user" type="text" class="form-control raspberry-pi-field" placeholder="pi" column-name="username">
-                  </div>
-                </div>
-                <div class="col-4 col-md-4">
-                  <div class="form-group">
-                    <label>
-                      Host Name
-                    </label>
-                    <input name="host" type="text" class="form-control raspberry-pi-field" placeholder="raspberrypi.local" column-name="hostname">
-                  </div>
-                </div>
+                <div class="row">
                   <div class="col-3 col-md-3">
-                  <div class="form-group">
-                    <label>
-                      Endpoint
-                    </label>
-                      <output name="endpoint" class="form-text text-muted" style="margin-top:0.5rem">
-                      pi@raspberrypi.local
-                    </output>
+                    <div class="form-group">
+                      <label>
+                        Login Name
+                      </label>
+                      <input name="user" type="text" class="form-control raspberry-pi-field" placeholder="pi" column-name="username">
+                    </div>
+                  </div>
+                  <div class="col-4 col-md-4">
+                    <div class="form-group">
+                      <label>
+                        Host Name
+                      </label>
+                      <input name="host" type="text" class="form-control raspberry-pi-field" placeholder="raspberrypi.local" column-name="hostname">
+                    </div>
+                  </div>
+                    <div class="col-3 col-md-3">
+                    <div class="form-group">
+                      <label>
+                        Endpoint
+                      </label>
+                        <output name="endpoint" class="form-text text-muted" style="margin-top:0.5rem">
+                        pi@raspberrypi.local
+                      </output>
+                    </div>
+                  </div>
+                </div> <!-- / .row -->
+              </form>
+              <form class="mb-5">
+                <div class="row">
+                  <div class="col-12 col-md-6">
+                    <div class="form-group">
+                      <label>
+                        Password
+                      </label>
+                      <input type="password" class="form-control raspberry-pi-field" column-name="password">
+                    </div>
                   </div>
                 </div>
-              </div> <!-- / .row -->
-            </form>
-            <form class="mb-5">
-              <div class="row">
-                <div class="col-12 col-md-6">
-                  <div class="form-group">
-                    <label>
-                      Password
-                    </label>
-                    <input type="password" class="form-control raspberry-pi-field" column-name="password">
+                <div class="row">
+                  <div class="col-12 col-md-12">
+                    <div class="form-group">
+                      <label>
+                        Git Repo Location
+                      </label>
+                      <input type="text" class="form-control raspberry-pi-field" placeholder="~/" column-name="git_repo_parent_path">
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="row">
-                <div class="col-12 col-md-12">
-                  <div class="form-group">
-                    <label>
-                      Git Repo Location
-                    </label>
-                    <input type="text" class="form-control raspberry-pi-field" placeholder="~/" column-name="git_repo_parent_path">
+                <div class="row">
+                  <div class="col-12 col-md-12">
+                    <div class="form-group">
+                      <label>
+                        Deployed Model Location
+                      </label>
+                      <input type="text" class="form-control raspberry-pi-field" placeholder="~/Self-Driving-Car/car/parts/model/" column-name="deploy_model_parent_path">
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="row">
-                <div class="col-12 col-md-12">
-                  <div class="form-group">
-                    <label>
-                      Deployed Model Location
-                    </label>
-                    <input type="text" class="form-control raspberry-pi-field" placeholder="~/Self-Driving-Car/car/parts/model/" column-name="deploy_model_parent_path">
+                <div class="row">
+                  <div class="col-12 col-md-12">
+                    <div class="form-group">
+                      <label>
+                        Datasets Location
+                      </label>
+                      <input type="text" class="form-control raspberry-pi-field" placeholder="~/Self-Driving-Car/car/templates/data/" column-name="datasets_parent_path">
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="row">
-                <div class="col-12 col-md-12">
-                  <div class="form-group">
-                    <label>
-                      Datasets Location
-                    </label>
-                    <input type="text" class="form-control raspberry-pi-field" placeholder="~/Self-Driving-Car/car/templates/data/" column-name="datasets_parent_path">
+                <div class="row">
+                  <div class="col-12 col-md-6">
+                    <button id="test-pi-connection-button" type="button" class="btn btn-primary">
+                      Test Connection
+                    </button>
                   </div>
                 </div>
-              </div>
-              <div class="row">
-                <div class="col-12 col-md-6">
-                  <button id="test-pi-connection-button" type="button" class="btn btn-primary">
-                    Test Connection
-                  </button>
-                </div>
-              </div>
-            </form>
+              </form>
+            </div>
 
           </div>
         </div> <!-- / .row -->
