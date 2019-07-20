@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const settingsWrapper = document.querySelector("#settings-wrapper");
     const servicesWrapper = document.querySelector("#services-wrapper");
+    const testLocallyToggleWrapper = document.querySelector("#toggle-test-services-locally-wrapper")
 
     const settingsNav = document.querySelector("#settings-nav");
     settingsNav.onclick = function () {
@@ -55,6 +56,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         servicesWrapper.style.display = 'none';
         servicesNav.classList.remove('active');
+
+        testLocallyToggleWrapper.style.display = 'none';
 
     }
 
@@ -66,6 +69,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         settingsWrapper.style.display = 'none';
         settingsNav.classList.remove('active');
+
+        testLocallyToggleWrapper.style.display = 'block';
     }
 
     const raspberryPiFields = document.querySelectorAll('input.raspberry-pi-field');
