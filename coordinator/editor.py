@@ -1437,7 +1437,7 @@ class StartCarService(tornado.web.RequestHandler):
                         port=port
                     )
                 )
-        elif service == 'ffmpeg':
+        elif service == 'video':
             port = 8091
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
@@ -1451,7 +1451,7 @@ class StartCarService(tornado.web.RequestHandler):
                         port=port
                     )
                 )
-        elif service == 'control_loop':
+        elif service == 'control-loop':
             port = 8887
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
@@ -1466,7 +1466,7 @@ class StartCarService(tornado.web.RequestHandler):
                         port=port
                     )
                 )
-        elif service == 'user_input':
+        elif service == 'user-input':
             port = 8884
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
@@ -1481,7 +1481,7 @@ class StartCarService(tornado.web.RequestHandler):
                         port=port
                     )
                 )
-        elif service == 'vehicle-engine':
+        elif service == 'engine':
             port = 8092
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
@@ -1495,7 +1495,7 @@ class StartCarService(tornado.web.RequestHandler):
                         port=port
                     )
                 )
-        elif service == 'ps3_controller':
+        elif service == 'ps3-controller':
             port = 8094
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
@@ -1566,11 +1566,11 @@ class PiServiceHealth(tornado.web.RequestHandler):
         # TODO: Remove these hardcoded ports and accept as arg in json_input
         ports = {
             'record-tracker':8093,
-            'ffmpeg':8091,
-            'control_loop':8887,
-            'user_input':8884,
-            'vehicle-engine':8092,
-            'ps3_controller':8094
+            'video':8091,
+            'control-loop':8887,
+            'user-input':8884,
+            'engine':8092,
+            'ps3-controller':8094
         }
         port = ports[service]
         try:

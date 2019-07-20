@@ -118,6 +118,24 @@ function raspberryPiConnectionTest() {
     });
 }
 
+function piServiceHealth(json_input){
+    return new Promise(function(resolve, reject) {
+        console.log(json_input)
+        $.ajax({
+            method: 'POST',
+            url: '/pi-service-health',
+            timeout: 1000,
+            data: JSON.stringify(json_input),
+            success: function(response) {
+                resolve(response['is_healthy']);
+            },
+            error: function(){
+                resolve(false);
+            }
+        });
+    });
+}
+
 function configureToggle(checkbox){
     const webPage = checkbox.getAttribute('toggle-web-page');
     const name = checkbox.getAttribute('toggle-name');

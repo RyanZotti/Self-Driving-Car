@@ -42,6 +42,50 @@ function resetCheckStatusButton(){
     testPiConnectionButton.textContent = 'Test Connection';
 }
 
+function updateServiceStatusIcon(args){
+    const status = document.querySelector('span.' + args['service'] + '-status');
+    if(args['is_healthy'] == true){
+        status.classList.remove('text-danger');
+        status.classList.add('text-success');
+        status.style.display = 'inline';
+    } else {
+        status.classList.remove('text-success');
+        status.classList.add('text-danger');
+        status.style.display = 'inline';
+    }
+}
+
+async function updateServiceHealth(service){
+    const testLocally = document.getElementById("toggle-test-services-locally");
+    if (testLocally.checked == true){
+        const isHealthy = await piServiceHealth({
+            'host':'localhost',
+            'service':service
+        });
+        updateServiceStatusIcon({
+            'service':service,
+            'is_healthy':isHealthy
+        });
+
+    } else {
+        if (piHostname.length == 0){
+            /*
+              Cache this value to avoid excessive Postgres lookups / load
+              when polling Pi service health checks
+            */
+            piHostname = await readPiField("hostname");
+        }
+        const isHealthy = await piServiceHealth({
+            'host':piHostname,
+            'service':service
+        });
+        updateServiceStatusIcon({
+            'service':service,
+            'is_healthy':isHealthy
+        });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
 
     const settingsWrapper = document.querySelector("#settings-wrapper");
@@ -98,6 +142,16 @@ document.addEventListener('DOMContentLoaded', function() {
         updatePiConnectionStatuses()
     }, 1000);
 
+    // Update Raspberry Pi service statues
+    const piServiceHealthCheckTime = setInterval(function(){
+        updateServiceHealth('record-tracker');
+        updateServiceHealth('video');
+        updateServiceHealth('control-loop');
+        updateServiceHealth('user-input');
+        updateServiceHealth('engine');
+        updateServiceHealth('ps3-controller');
+    }, 1000);
+
     const testPiConnectionButton = document.querySelector('button#test-pi-connection-button');
     testPiConnectionButton.onclick = async function(){
         this.textContent = 'Checking...';
@@ -120,3 +174,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 }, false);
+
+var piHostname = '';
