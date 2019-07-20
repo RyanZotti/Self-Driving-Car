@@ -2022,16 +2022,5 @@ if __name__ == "__main__":
     app.angle_only = args['angle_only']
     # TODO: Remove hard-coded Pi host
     app.pi_host = 'ryanzotti.local'
-    # Create cert with the command below. Note that the localhost part is important
-    """
-    openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
-    -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=localhost" \
-    -keyout ca.key  -out ca.cert
-    """
-    # TODO: Make the cert paths not hardcoded
-    http_server = tornado.httpserver.HTTPServer(app, ssl_options={
-        "certfile": "/Users/ryanzotti/Documents/repos/Self-Driving-Car/coordinator/ca.cert",
-        "keyfile": "/Users/ryanzotti/Documents/repos/Self-Driving-Car/coordinator/ca.key",
-    })
-    http_server.listen(port)
+    app.listen(port)
     tornado.ioloop.IOLoop.current().start()
