@@ -1554,6 +1554,44 @@ class PiHealthCheck(tornado.web.RequestHandler):
         result = yield self.health_check()
         self.write(result)
 
+class PiServiceHealth(tornado.web.RequestHandler):
+
+    # Need lots of threads because there are many services
+    executor = ThreadPoolExecutor(30)
+
+    @tornado.concurrent.run_on_executor
+    def health_check(self,json_input):
+        service = json_input['service']
+        host = json_input['host']
+        # TODO: Remove these hardcoded ports and accept as arg in json_input
+        ports = {
+            'record-tracker':8093,
+            'ffmpeg':8091,
+            'control_loop':8887,
+            'user_input':8884,
+            'vehicle-engine':8092,
+            'ps3_controller':8094
+        }
+        port = ports[service]
+        try:
+            seconds = 0.5
+            endpoint = 'http://{host}:{port}/health'.format(
+                host=host,
+                port=port
+            )
+            _ = requests.get(
+                endpoint,
+                timeout=seconds
+            )
+            return {'is_healthy': True}
+        except:
+            return {'is_healthy': False}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.health_check(json_input=json_input)
+        self.write(result)
 
 class ResumeTraining(tornado.web.RequestHandler):
 
@@ -1940,6 +1978,7 @@ def make_app():
         (r"/raspberry-pi-healthcheck", PiHealthCheck),
         (r"/start-car-service", StartCarService),
         (r"/vehicle-memory", Memory),
+        (r"/pi-service-health", PiServiceHealth),
     ]
     return tornado.web.Application(handlers)
 

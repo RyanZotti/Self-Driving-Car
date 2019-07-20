@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import contextlib
 import cv2
 from datetime import datetime
@@ -54,10 +55,26 @@ class VideoAPI(tornado.web.RequestHandler):
             else:
                 yield tornado.gen.Task(ioloop.add_timeout, ioloop.time() + interval)
 
+class Health(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def is_healthy(self):
+        result = {
+            'is_healthy': True
+        }
+        return result
+
+    @tornado.gen.coroutine
+    def get(self):
+        result = yield self.is_healthy()
+        self.write(result)
 
 def make_app():
     handlers = [
         (r"/video", VideoAPI),
+        (r"/health", Health)
     ]
     return tornado.web.Application(handlers)
 

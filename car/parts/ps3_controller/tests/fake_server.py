@@ -22,6 +22,22 @@ class GetAngleAndThrottle(tornado.web.RequestHandler):
         result = yield self.get_metadata()
         self.write(result)
 
+class Health(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def is_healthy(self):
+        result = {
+            'is_healthy': True
+        }
+        return result
+
+    @tornado.gen.coroutine
+    def get(self):
+        result = yield self.is_healthy()
+        self.write(result)
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument(
@@ -32,7 +48,8 @@ if __name__ == "__main__":
     args = vars(ap.parse_args())
     port = args['port']
     app = tornado.web.Application([
-        (r'/get-angle-and-throttle', GetAngleAndThrottle)
+        (r'/get-angle-and-throttle', GetAngleAndThrottle),
+        (r"/health", Health)
     ])
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()

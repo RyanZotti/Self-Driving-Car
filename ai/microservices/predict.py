@@ -30,6 +30,21 @@ class ModelMetadata(tornado.web.RequestHandler):
         result = yield self.get_metadata()
         self.write(result)
 
+class Health(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def is_healthy(self):
+        result = {
+            'is_healthy': True
+        }
+        return result
+
+    @tornado.gen.coroutine
+    def get(self):
+        result = yield self.is_healthy()
+        self.write(result)
 
 class PredictionHandler(tornado.web.RequestHandler):
 
@@ -148,7 +163,8 @@ def make_app(sess, x, prediction, image_scale, crop_percent, angle_only):
            'image_scale':image_scale,
            'crop_percent':crop_percent,
            'angle_only':angle_only}),
-         (r"/model-metadata", ModelMetadata),])
+         (r"/model-metadata", ModelMetadata),
+        (r"/health", Health)])
 
 
 if __name__ == "__main__":

@@ -29,11 +29,27 @@ class Output(tornado.web.RequestHandler):
     def get(self):
         self.write(self.application.data)
 
+class Health(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def is_healthy(self):
+        result = {
+            'is_healthy': True
+        }
+        return result
+
+    @tornado.gen.coroutine
+    def get(self):
+        result = yield self.is_healthy()
+        self.write(result)
 
 def make_app():
     handlers = [
         (r"/update", Input),
-        (r"/output", Output)
+        (r"/output", Output),
+        (r"/health", Health)
     ]
     return tornado.web.Application(handlers)
 

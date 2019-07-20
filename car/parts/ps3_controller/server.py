@@ -22,6 +22,21 @@ class GetAngleAndThrottle(tornado.web.RequestHandler):
         result = yield self.get_metadata()
         self.write(result)
 
+class Health(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def is_healthy(self):
+        result = {
+            'is_healthy': True
+        }
+        return result
+
+    @tornado.gen.coroutine
+    def get(self):
+        result = yield self.is_healthy()
+        self.write(result)
 
 class PS3Controller():
 
@@ -32,7 +47,8 @@ class PS3Controller():
     # https://github.com/tornadoweb/tornado/issues/2308
     def start_microservice(self, port):
         self.microservice = tornado.web.Application([
-            (r'/get-angle-and-throttle', GetAngleAndThrottle)
+            (r'/get-angle-and-throttle', GetAngleAndThrottle),
+            (r"/health", Health)
         ])
         self.microservice.listen(port)
         self.microservice.angle = 0.0
