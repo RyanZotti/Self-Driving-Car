@@ -134,7 +134,7 @@ async function stopService(service){
     });
 }
 
-async function osAgnosticPollServices(){
+async function osAgnosticPollServices(services){
     const testLocally = document.getElementById("toggle-test-services-locally");
     const host = await getServiceHost()
     const dockerArgs = getDockerArgs(testLocally);
@@ -181,6 +181,16 @@ async function pollServices(args){
 
 document.addEventListener('DOMContentLoaded', function() {
 
+    const services = [
+        "video",
+        "record-tracker",
+        "control-loop",
+        "user-input",
+        "engine",
+        "ps3-controller",
+        "model"
+    ]
+
     const settingsWrapper = document.querySelector("#settings-wrapper");
     const servicesWrapper = document.querySelector("#services-wrapper");
     const testLocallyToggleWrapper = document.querySelector("#toggle-test-services-locally-wrapper");
@@ -217,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'detail': detail
         });
         const is_on = await readToggle(readInput);
-        osAgnosticPollServices();
+        osAgnosticPollServices(services);
         testLocally.checked = is_on;
 
         servicesWrapper.style.display = 'block';
@@ -279,16 +289,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const resetTimer = setTimeout(resetCheckStatusButton, 3000);
     }
 
-    const services = [
-        "video",
-        "record-tracker",
-        "control-loop",
-        "user-input",
-        "engine",
-        "ps3-controller",
-        "model"
-    ]
-
     for (const service of services){
         const toggle = document.querySelector("input#toggle-"+service);
         toggle.setAttribute("toggle-web-page","raspberry pi");
@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 1000);
     const resumeServicesTime = setInterval(function(){
-        osAgnosticPollServices();
+        osAgnosticPollServices(services);
     }, 5000);
 
 }, false);
