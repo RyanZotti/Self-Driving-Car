@@ -16,6 +16,7 @@ import tornado.httpserver
 import requests
 import json
 import signal
+import subprocess
 from coordinator.utilities import *
 import json
 from shutil import rmtree
@@ -1298,84 +1299,39 @@ class VideoAPI(tornado.web.RequestHandler):
                 yield tornado.gen.Task(ioloop.add_timeout, ioloop.time() + interval)
 
 
-class StartCar(tornado.web.RequestHandler):
 
-    executor = ThreadPoolExecutor(5)
+class StopService(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(10)
 
     @tornado.concurrent.run_on_executor
-    def start_car(self):
-        # TODO: Remove this hardcoded path
-        command = 'export PYTHONPATH=$PYTHONPATH:/home/pi/Self-Driving-Car && cd ~/Self-Driving-Car && python3 /home/pi/Self-Driving-Car/car/start.py > /home/pi/Self-Driving-Car/start-logs.txt 2>&1 &'
-        execute_pi_command(
-            command=command
-        )
+    def stop_service(self, json_input):
+        host = json_input['host']
+        service = json_input['service']
+        command = "docker rm -f {service}".format(service=service)
+        if host == 'localhost':
+            # Ignore exceptions due to Docker not finding an image
+            try:
+                subprocess.run(
+                    command,
+                    shell=True,
+                    check=False,
+                    stderr=False,
+                    stdout=False
+                )
+            except:
+                pass
+        else:
+            asyncio.set_event_loop(asyncio.new_event_loop())
+            execute_pi_command(
+                command=command
+            )
         return {}
 
     @tornado.gen.coroutine
     def post(self):
-        result = yield self.start_car()
-        self.write(result)
-
-class StartCarVideo(tornado.web.RequestHandler):
-
-    executor = ThreadPoolExecutor(5)
-
-    @tornado.concurrent.run_on_executor
-    def start_car_video(self):
-
-        # Got the ffmpeg and ffmserver setup instructions from here:
-        # https://www.hackster.io/whitebank/rasbperry-pi-ffmpeg-install-and-stream-to-web-389c34
-        # Start ffmserver and ffmpeg
-        # nohup keeps PID from getting killed after logout
-        """
-        Regarding errors ffmpeg errors like: "/dev/video0: Device or resource busy":
-        There doesn't seem to be a solution, so I'll just tell code to keep trying
-        until it succeeds. The loop code exists in a shell script I created called
-        start_ffmpeg.sh
-        - https://github.com/moritzmhmk/homebridge-camera-rpi/issues/30
-        - https://github.com/KhaosT/homebridge-camera-ffmpeg/issues/163
-        - https://stackoverflow.com/questions/5274294/how-can-you-run-a-command-in-bash-over-until-success
-        """
-        """
-        This rm command exists as a fail-safe option in case
-        you didn't clean up the last ffmpeg container. This
-        can occur if you shut down the coordinator server
-        before closing the drive modal window, which calls
-        the /stop-car-video endpoint
-        """
-        rm_command = 'docker rm -f ffmpeg'
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        execute_pi_command(
-            command=rm_command, is_printable=True
-        )
-        command = 'docker run -t -d -i --device=/dev/video0 --network car_network -p 8091:8091 --name ffmpeg ryanzotti/ffmpeg:latest'
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        execute_pi_command(
-            command=command, is_printable=True
-        )
-        return {}
-
-    @tornado.gen.coroutine
-    def post(self):
-        result = yield self.start_car_video()
-        self.write(result)
-
-class StopCarVideo(tornado.web.RequestHandler):
-
-    executor = ThreadPoolExecutor(5)
-
-    @tornado.concurrent.run_on_executor
-    def stop_ffmpeg(self):
-        command_ffmpeg = "docker rm -f ffmpeg"
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        execute_pi_command(
-            command=command_ffmpeg
-        )
-        return {}
-
-    @tornado.gen.coroutine
-    def post(self):
-        result = yield self.stop_ffmpeg()
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.stop_service(json_input=json_input)
         self.write(result)
 
 class StartCarService(tornado.web.RequestHandler):
@@ -1383,13 +1339,11 @@ class StartCarService(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def submit_pi_command(self, command):
-        print(command)
         asyncio.set_event_loop(asyncio.new_event_loop())
         execute_pi_command(command=command)
 
     @tornado.concurrent.run_on_executor
     def submit_local_shell_command(self, command):
-        print(command)
         asyncio.set_event_loop(asyncio.new_event_loop())
         shell_command(cmd=command)
 
@@ -1441,12 +1395,12 @@ class StartCarService(tornado.web.RequestHandler):
             port = 8091
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
-                self.submit_pi_command(command='docker rm -f ffmpeg; docker run -t -d -i --device=/dev/video0 {network} --name ffmpeg ryanzotti/ffmpeg:latest'.format(
+                self.submit_pi_command(command='docker rm -f video; docker run -t -d -i --device=/dev/video0 {network} --name video ryanzotti/ffmpeg:latest'.format(
                         network=network
                     )
                 )
             elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f ffmpeg; docker run -t -d -i {network} --name ffmpeg ryanzotti/ffmpeg:latest python3 /root/tests/fake_server.py --port {port}'.format(
+                self.submit_local_shell_command(command='docker rm -f video; docker run -t -d -i {network} --name video ryanzotti/ffmpeg:latest python3 /root/tests/fake_server.py --port {port}'.format(
                         network=network,
                         port=port
                     )
@@ -1470,13 +1424,13 @@ class StartCarService(tornado.web.RequestHandler):
             port = 8884
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
-                self.submit_pi_command(command='docker rm -f user_input; docker run -i -t {network} --name user_input --privileged -d ryanzotti/user_input:latest python3 /root/server.py --port 8884'.format(
+                self.submit_pi_command(command='docker rm -f user-input; docker run -i -t {network} --name user-input --privileged -d ryanzotti/user_input:latest python3 /root/server.py --port 8884'.format(
                         network=network,
                         port=port
                     )
                 )
             elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f user_input; docker run -t -d -i {network} --name user_input ryanzotti/user_input:latest python3 /root/server.py --port {port}'.format(
+                self.submit_local_shell_command(command='docker rm -f user-input; docker run -t -d -i {network} --name user-input ryanzotti/user_input:latest python3 /root/server.py --port {port}'.format(
                         network=network,
                         port=port
                     )
@@ -1485,12 +1439,12 @@ class StartCarService(tornado.web.RequestHandler):
             port = 8092
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
-                self.submit_pi_command(command='docker rm -f vehicle-engine; docker run -t -d -i --privileged {network} --name vehicle-engine ryanzotti/vehicle-engine:latest'.format(
+                self.submit_pi_command(command='docker rm -f engine; docker run -t -d -i --privileged {network} --name engine ryanzotti/vehicle-engine:latest'.format(
                         network=network
                     )
                 )
             elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f vehicle-engine; docker run -t -d -i {network} --name vehicle-engine ryanzotti/vehicle-engine:latest python3 /root/tests/fake_server.py --port {port}'.format(
+                self.submit_local_shell_command(command='docker rm -f engine; docker run -t -d -i {network} --name engine ryanzotti/vehicle-engine:latest python3 /root/tests/fake_server.py --port {port}'.format(
                         network=network,
                         port=port
                     )
@@ -1500,13 +1454,13 @@ class StartCarService(tornado.web.RequestHandler):
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
                 self.submit_pi_command(command=
-                    'docker rm -f ps3_controller; docker run -i -t --name ps3_controller {network} --volume /dev/bus/usb:/dev/bus/usb --volume /run/dbus:/run/dbus --volume /var/run/dbus:/var/run/dbus --volume /dev/input:/dev/input --privileged ryanzotti/ps3_controller:latest python /root/server.py --port {port}'.format(
+                    'docker rm -f ps3-controller; docker run -i -t --name ps3-controller {network} --volume /dev/bus/usb:/dev/bus/usb --volume /run/dbus:/run/dbus --volume /var/run/dbus:/var/run/dbus --volume /dev/input:/dev/input --privileged ryanzotti/ps3_controller:latest python /root/server.py --port {port}'.format(
                         network=network,
                         port=port
                     )
                 )
             elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f ps3_controller; docker run -t -d -i {network} --name ps3_controller ryanzotti/ps3_controller:latest python /root/tests/fake_server.py --port {port}'.format(
+                self.submit_local_shell_command(command='docker rm -f ps3-controller; docker run -t -d -i {network} --name ps3-controller ryanzotti/ps3_controller:latest python /root/tests/fake_server.py --port {port}'.format(
                         network=network,
                         port=port
                     )
@@ -1929,8 +1883,6 @@ def make_app():
         (r"/image", ImageAPI),
         (r"/video", VideoAPI),
         (r"/new-dataset-name", NewDatasetName),
-        (r"/start-car-video", StartCarVideo),
-        (r"/stop-car-video", StopCarVideo),
         (r"/video-health-check", VideoHealthCheck),
         (r"/update-drive-state", UpdateDriveState),
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
@@ -1971,7 +1923,6 @@ def make_app():
         (r"/read-toggle", ReadToggle),
         (r"/write-slider", WriteSlider),
         (r"/read-slider", ReadSlider),
-        (r"/start-car", StartCar),
         (r"/write-pi-field", WritePiField),
         (r"/read-pi-field", ReadPiField),
         (r"/refresh-record-reader", RefreshRecordReader),
@@ -1979,6 +1930,7 @@ def make_app():
         (r"/start-car-service", StartCarService),
         (r"/vehicle-memory", Memory),
         (r"/pi-service-health", PiServiceHealth),
+        (r"/stop-service", StopService)
     ]
     return tornado.web.Application(handlers)
 

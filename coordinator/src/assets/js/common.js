@@ -120,7 +120,6 @@ function raspberryPiConnectionTest() {
 
 function piServiceHealth(json_input){
     return new Promise(function(resolve, reject) {
-        console.log(json_input)
         $.ajax({
             method: 'POST',
             url: '/pi-service-health',

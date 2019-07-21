@@ -62,49 +62,56 @@ function updateServiceStatusIcon(args){
     }
 }
 
+function getDockerArgs(testLocally){
+    if (testLocally.checked == true){
+        return {
+          'target_host_os': 'mac',
+          'target_host_type': 'laptop'
+        };
+    } else {
+        return {
+          'target_host_os': 'linux',
+          'target_host_type': 'pi'
+        };
+    }
+}
+
+async function getServiceHost(){
+    const testLocally = document.getElementById("toggle-test-services-locally");
+    if (testLocally.checked == true){
+        return 'localhost';
+    } else{
+        if (piHostname.length == 0){
+            /*
+              Cache this value to avoid excessive Postgres lookups / load
+              when polling Pi service health checks
+            */
+            piHostname = await readPiField("hostname");
+        } else {
+            return piHostname;
+        }
+    }
+}
+
 async function updateServiceHealth(service){
     const testLocally = document.getElementById("toggle-test-services-locally");
     const serviceToggle = document.querySelector("input#toggle-"+service);
+    const host = await getServiceHost();
     if (serviceToggle.checked == true){
-        if (testLocally.checked == true){
-            const isHealthy = await piServiceHealth({
-                'host':'localhost',
-                'service':service
+        const isHealthy = await piServiceHealth({
+            'host':host,
+            'service':service
+        });
+        if (isHealthy == true){
+            updateServiceStatusIcon({
+                'service':service,
+                'status':'healthy'
             });
-            if (isHealthy == true){
-                updateServiceStatusIcon({
-                    'service':service,
-                    'status':'healthy'
-                });
-            } else {
-                updateServiceStatusIcon({
-                    'service':service,
-                    'status':'unhealthy'
-                });
-            }
         } else {
-            if (piHostname.length == 0){
-                /*
-                  Cache this value to avoid excessive Postgres lookups / load
-                  when polling Pi service health checks
-                */
-                piHostname = await readPiField("hostname");
-            }
-            const isHealthy = await piServiceHealth({
-                'host':piHostname,
-                'service':service
+            updateServiceStatusIcon({
+                'service':service,
+                'status':'unhealthy'
             });
-            if (isHealthy == true){
-                updateServiceStatusIcon({
-                    'service':service,
-                    'status':'healthy'
-                });
-            } else {
-                updateServiceStatusIcon({
-                    'service':service,
-                    'status':'unhealthy'
-                });
-            }
         }
     } else {
         updateServiceStatusIcon({
@@ -114,11 +121,76 @@ async function updateServiceHealth(service){
     }
 }
 
+async function stopService(service){
+    const host = await getServiceHost();
+    const input = JSON.stringify({
+      'host': host,
+      'service': service
+    });
+    await new Promise(function(resolve, reject) {
+        $.post('/stop-service', input, function(){
+            resolve();
+        });
+    });
+}
+
+async function osAgnosticPollServices(){
+    const testLocally = document.getElementById("toggle-test-services-locally");
+    const host = await getServiceHost()
+    const dockerArgs = getDockerArgs(testLocally);
+    if (testLocally.checked == true){
+        pollServices({
+            'services':services,
+            'docker_args':dockerArgs
+        });
+    } else {
+        // Share Pi status among services to avoid overwhelming Pi with redundant calls
+        const isHealthy = await raspberryPiConnectionTest();
+        if (isHealthy == true){
+            pollServices({
+                'services':services,
+                'docker_args':dockerArgs
+            });
+        }
+    }
+}
+
+async function pollServices(args){
+    const services = args['services'];
+    const dockerArgs = args['docker_args'];
+    for (const service of services){
+        const toggle = document.querySelector("input#toggle-"+service);
+        if (toggle.checked == true){
+            const isHealthy = await piServiceHealth({
+                'host':'localhost',
+                'service':service
+            });
+            if (!isHealthy){
+                const input = JSON.stringify({
+                  'target_host_os': dockerArgs['target_host_os'],
+                  'target_host_type': dockerArgs['target_host_type'],
+                  'service': service
+                });
+                $.post('/start-car-service', input);
+            }
+        } else {
+            stopService(service);
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
 
     const settingsWrapper = document.querySelector("#settings-wrapper");
     const servicesWrapper = document.querySelector("#services-wrapper");
-    const testLocallyToggleWrapper = document.querySelector("#toggle-test-services-locally-wrapper")
+    const testLocallyToggleWrapper = document.querySelector("#toggle-test-services-locally-wrapper");
+    const testLocally = document.getElementById("toggle-test-services-locally");
+
+    testLocally.setAttribute("toggle-web-page","raspberry pi");
+    testLocally.setAttribute("toggle-name","test locally");
+    testLocally.setAttribute("toggle-detail","test locally");
+    // Reads/writes status from/to DB
+    configureToggle(testLocally);
 
     const settingsNav = document.querySelector("#settings-nav");
     settingsNav.onclick = function () {
@@ -134,7 +206,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const servicesNav = document.querySelector("#services-nav");
-    servicesNav.onclick = function () {
+    servicesNav.onclick = async function () {
+
+        const webPage = testLocally.getAttribute('toggle-web-page');
+        const name = testLocally.getAttribute('toggle-name');
+        const detail = testLocally.getAttribute('toggle-detail');
+        const readInput = JSON.stringify({
+            'web_page': webPage,
+            'name': name,
+            'detail': detail
+        });
+        const is_on = await readToggle(readInput);
+        osAgnosticPollServices();
+        testLocally.checked = is_on;
 
         servicesWrapper.style.display = 'block';
         servicesNav.classList.add('active');
@@ -170,15 +254,10 @@ document.addEventListener('DOMContentLoaded', function() {
         updatePiConnectionStatuses()
     }, 1000);
 
-    // Update Raspberry Pi service statues
-    const piServiceHealthCheckTime = setInterval(function(){
-        updateServiceHealth('record-tracker');
-        updateServiceHealth('video');
-        updateServiceHealth('control-loop');
-        updateServiceHealth('user-input');
-        updateServiceHealth('engine');
-        updateServiceHealth('ps3-controller');
-    }, 1000);
+    // Periodically check that Pi hostname hasn't changed
+    const piHostNameTime = setInterval(async function(){
+        piHostname = await readPiField("hostname");
+    }, 5000);
 
     const testPiConnectionButton = document.querySelector('button#test-pi-connection-button');
     testPiConnectionButton.onclick = async function(){
@@ -209,6 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
         "ps3-controller",
         "model"
     ]
+
     for (const service of services){
         const toggle = document.querySelector("input#toggle-"+service);
         toggle.setAttribute("toggle-web-page","raspberry pi");
@@ -218,6 +298,15 @@ document.addEventListener('DOMContentLoaded', function() {
         configureToggle(toggle);
     }
 
+    // Update Raspberry Pi service statues
+    const piServiceHealthCheckTime = setInterval(function(){
+        for (const service of services){
+            updateServiceHealth(service);
+        }
+    }, 1000);
+    const resumeServicesTime = setInterval(function(){
+        osAgnosticPollServices();
+    }, 5000);
 
 }, false);
 
