@@ -44,44 +44,72 @@ function resetCheckStatusButton(){
 
 function updateServiceStatusIcon(args){
     const status = document.querySelector('span.' + args['service'] + '-status');
-    if(args['is_healthy'] == true){
+    if(args['status'] == 'healthy'){
         status.classList.remove('text-danger');
+        status.classList.remove('text-light');
         status.classList.add('text-success');
+        status.style.display = 'inline';
+    } else if (args['status'] == 'unhealthy') {
+        status.classList.remove('text-success');
+        status.classList.remove('text-light');
+        status.classList.add('text-danger');
         status.style.display = 'inline';
     } else {
         status.classList.remove('text-success');
-        status.classList.add('text-danger');
+        status.classList.remove('text-danger');
+        status.classList.add('text-light');
         status.style.display = 'inline';
     }
 }
 
 async function updateServiceHealth(service){
     const testLocally = document.getElementById("toggle-test-services-locally");
-    if (testLocally.checked == true){
-        const isHealthy = await piServiceHealth({
-            'host':'localhost',
-            'service':service
-        });
-        updateServiceStatusIcon({
-            'service':service,
-            'is_healthy':isHealthy
-        });
-
-    } else {
-        if (piHostname.length == 0){
-            /*
-              Cache this value to avoid excessive Postgres lookups / load
-              when polling Pi service health checks
-            */
-            piHostname = await readPiField("hostname");
+    const serviceToggle = document.querySelector("input#toggle-"+service);
+    if (serviceToggle.checked == true){
+        if (testLocally.checked == true){
+            const isHealthy = await piServiceHealth({
+                'host':'localhost',
+                'service':service
+            });
+            if (isHealthy == true){
+                updateServiceStatusIcon({
+                    'service':service,
+                    'status':'healthy'
+                });
+            } else {
+                updateServiceStatusIcon({
+                    'service':service,
+                    'status':'unhealthy'
+                });
+            }
+        } else {
+            if (piHostname.length == 0){
+                /*
+                  Cache this value to avoid excessive Postgres lookups / load
+                  when polling Pi service health checks
+                */
+                piHostname = await readPiField("hostname");
+            }
+            const isHealthy = await piServiceHealth({
+                'host':piHostname,
+                'service':service
+            });
+            if (isHealthy == true){
+                updateServiceStatusIcon({
+                    'service':service,
+                    'status':'healthy'
+                });
+            } else {
+                updateServiceStatusIcon({
+                    'service':service,
+                    'status':'unhealthy'
+                });
+            }
         }
-        const isHealthy = await piServiceHealth({
-            'host':piHostname,
-            'service':service
-        });
+    } else {
         updateServiceStatusIcon({
             'service':service,
-            'is_healthy':isHealthy
+            'status':'inactive'
         });
     }
 }

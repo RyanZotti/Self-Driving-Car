@@ -112,5 +112,17 @@ End slider CSS
 */
 
 .slider.slider-horizontal {
-    width: 100%;
+  width: 100%;
+}
+
+.pull-right {
+  float: right !important;
+}
+
+.medium-toggle {
+  transform: scale(.8);
+}
+
+.col-no-padding {
+  padding: 0rem !important;
 }
