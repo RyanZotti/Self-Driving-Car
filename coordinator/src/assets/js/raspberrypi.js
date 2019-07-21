@@ -200,6 +200,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const resetTimer = setTimeout(resetCheckStatusButton, 3000);
     }
 
+    const services = [
+        "video",
+        "record-tracker",
+        "control-loop",
+        "user-input",
+        "engine",
+        "ps3-controller",
+        "model"
+    ]
+    for (const service of services){
+        const toggle = document.querySelector("input#toggle-"+service);
+        toggle.setAttribute("toggle-web-page","raspberry pi");
+        toggle.setAttribute("toggle-name","service");
+        toggle.setAttribute("toggle-detail",service);
+        // Reads/writes status from/to DB
+        configureToggle(toggle);
+    }
+
 
 }, false);
 

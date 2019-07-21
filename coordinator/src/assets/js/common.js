@@ -149,14 +149,16 @@ function configureToggle(checkbox){
         });
         writeToggle(writeInput);
     }
-    const readInput = JSON.stringify({
-        'web_page': webPage,
-        'name': name,
-        'detail': detail
-    });
-    readToggle(readInput).then(function(is_on) {
+    const checkToggleTime = setInterval(async function(){
+        const readInput = JSON.stringify({
+            'web_page': webPage,
+            'name': name,
+            'detail': detail
+        });
+        const is_on = await readToggle(readInput);
         checkbox.checked = is_on;
-    });
+    }, 5000);
+
 }
 
 async function updatePiConnectionStatuses(){
