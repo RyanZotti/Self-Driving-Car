@@ -141,6 +141,7 @@ async function osAgnosticPollServices(services){
     if (testLocally.checked == true){
         pollServices({
             'services':services,
+            'host':host,
             'docker_args':dockerArgs
         });
     } else {
@@ -149,6 +150,7 @@ async function osAgnosticPollServices(services){
         if (isHealthy == true){
             pollServices({
                 'services':services,
+                'host':host,
                 'docker_args':dockerArgs
             });
         }
@@ -158,11 +160,12 @@ async function osAgnosticPollServices(services){
 async function pollServices(args){
     const services = args['services'];
     const dockerArgs = args['docker_args'];
+    const host = args['host'];
     for (const service of services){
         const toggle = document.querySelector("input#toggle-"+service);
         if (toggle.checked == true){
             const isHealthy = await piServiceHealth({
-                'host':'localhost',
+                'host':host,
                 'service':service
             });
             if (!isHealthy){
