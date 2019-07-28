@@ -343,3 +343,11 @@ async function measureLatency(functionTested){
     const seconds = (end.getTime() - start.getTime()) / 1000;
     return seconds
 }
+
+// Got code example from here: https://codehandbook.org/javascript-date-format/
+// Returns in format: "2018-10-19 17:25:56"
+function getDateTime(){
+    const current_datetime = new Date()
+    const formatted_date = current_datetime.getFullYear() + "-" + (current_datetime.getMonth() + 1) + "-" + current_datetime.getDate() + " " + current_datetime.getHours() + ":" + current_datetime.getMinutes() + ":" + current_datetime.getSeconds()
+    return formatted_date
+}
