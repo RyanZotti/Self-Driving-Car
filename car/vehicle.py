@@ -4,6 +4,10 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 from threading import Thread
 import tornado
+import tornado.concurrent
+import tornado.gen
+import tornado.ioloop
+import tornado.web
 from .Memory import Memory
 from datetime import datetime
 
@@ -49,10 +53,6 @@ class Vehicle():
 
         self.microservice = tornado.web.Application([(r"/health", Health)])
         self.microservice.listen(port)
-        self.microservice.model_id = self.model_id
-        self.microservice.batch_count = self.record_reader.get_batches_per_epoch()
-        self.microservice.batch_id = -1
-        self.microservice.epoch_id = self.start_epoch
         tornado.ioloop.IOLoop.current().start()
 
     def add(self, part):
