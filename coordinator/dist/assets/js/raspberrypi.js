@@ -248,16 +248,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const servicesNav = document.querySelector("#services-nav");
     servicesNav.onclick = async function () {
 
-        // Update Raspberry Pi service statues
-        var piServiceHealthCheckTime = setInterval(function(){
-            for (const service of services){
-                updateServiceHealth(service);
-            }
-        }, 1000);
-        var resumeServicesTime = setInterval(function(){
-            osAgnosticPollServices(services);
-        }, 5000);
-
         const webPage = testLocally.getAttribute('toggle-web-page');
         const name = testLocally.getAttribute('toggle-name');
         const detail = testLocally.getAttribute('toggle-detail');
@@ -269,6 +259,38 @@ document.addEventListener('DOMContentLoaded', function() {
         const is_on = await readToggle(readInput);
         osAgnosticPollServices(services);
         testLocally.checked = is_on;
+
+        const checkboxStatuses = [];
+        for (const service of services){
+            const toggle = document.querySelector("input#toggle-"+service);
+            checkboxStatuses.push(
+                updateToggleHtmlFromDB(toggle)
+            );
+        }
+
+        /*
+          Previously sometimes services that were already up get killed on
+          page load. This happened because all of the check boxes were set
+          to off when the page loads, and it takes a little while to look
+          up their statuses in the DB and update the page accordingly.
+          During this waiting period the "pollServices" function might run,
+          which checked the un-updated check boxes and thought that they're
+          supposed to be off. Forcing update all of the check boxes on page
+          load before starting the loop that checks all services fixes the
+          issue. Using async/await to block the loop will prevent the
+          service checks from running out of order
+        */
+        await Promise.all(checkboxStatuses)
+
+        // Update Raspberry Pi service statues
+        var piServiceHealthCheckTime = setInterval(function(){
+            for (const service of services){
+                updateServiceHealth(service);
+            }
+        }, 1000);
+        var resumeServicesTime = setInterval(function(){
+            osAgnosticPollServices(services);
+        }, 5000);
 
         servicesWrapper.style.display = 'block';
         servicesNav.classList.add('active');
