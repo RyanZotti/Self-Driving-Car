@@ -352,6 +352,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const resetTimer = setTimeout(resetCheckStatusButton, 3000);
     }
 
+    const ps3ControllerServiceToggle = document.querySelector('#toggle-ps3-controller');
+    ps3ControllerServiceToggle.onchange = function(){
+        const timelineWrapper = document.querySelector('#controller-timeline-wrapper');
+        if (ps3ControllerServiceToggle.checked == true){
+            timelineWrapper.style.display = 'block';
+        } else {
+            timelineWrapper.style.display = 'none';
+        }
+    }
+
 }, false);
 
 var piHostname = '';
