@@ -1477,6 +1477,24 @@ class StartCarService(tornado.web.RequestHandler):
                         port=port
                     )
                 )
+        elif service == 'memory':
+            port = 8095
+            network = operating_system_config[operating_system]['network'].format(port=port)
+            if target_host == 'pi':
+                self.submit_pi_command(command=
+                    'docker rm -f {service}; docker run -i -t -d --name {service} {network} ryanzotti/vehicle-memory:latest python /root/server.py --port {port}'.format(
+                        service=service,
+                        network=network,
+                        port=port
+                    )
+                )
+            elif target_host == 'laptop':
+                self.submit_local_shell_command(command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/vehicle-memory:latest python /root/server.py --port {port}'.format(
+                        service=service,
+                        network=network,
+                        port=port
+                    )
+                )
         self.write({})
 
 
@@ -1536,7 +1554,8 @@ class PiServiceHealth(tornado.web.RequestHandler):
             'control-loop':8887,
             'user-input':8884,
             'engine':8092,
-            'ps3-controller':8094
+            'ps3-controller':8094,
+            'memory':8095
         }
         port = ports[service]
         try:

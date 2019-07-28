@@ -192,7 +192,8 @@ document.addEventListener('DOMContentLoaded', function() {
         "user-input",
         "engine",
         "ps3-controller",
-        "model"
+        "model",
+        "memory"
     ]
 
     for (const service of services){
