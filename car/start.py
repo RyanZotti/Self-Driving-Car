@@ -24,9 +24,22 @@ ap.add_argument(
     help="Port for vehicle health check",
     default=8887
 )
+"""
+The `store_true` defaulting to False is confusing, but
+that's the way it is according to Stackoverflow:
+https://stackoverflow.com/a/15008806/554481
+"""
+ap.add_argument(
+    "--localhost",
+    action='store_true',
+    dest='is_localhost',
+    help="Indicates if control-loop clients should expect part services on localhost or named Docker container"
+)
+
 args = vars(ap.parse_args())
 remote_host = args['remote_host']
 port = int(args['port'])
+is_localhost = args['is_localhost']
 
 # Load default settings
 cfg = load_config()
@@ -46,22 +59,24 @@ car = Vehicle(
 
 # Consume video from a cheap webcam
 camera = Camera(
-    name='camera',
+    name='video',
     output_names=[
         'camera/image_array'
-    ]
+    ],
+    is_localhost=is_localhost
 )
 car.add(camera)
 
 # Listen for user input
 user_input = UserInput(
-    name='user_input',
+    name='user-input',
     output_names=[
         'user_input/brake',
         'user_input/driver_type',
         'user_input/max_throttle',
         'user_input/recording'
-    ]
+    ],
+    is_localhost=is_localhost
 )
 car.add(user_input)
 
@@ -79,7 +94,8 @@ engine = Engine(
         'user_input/max_throttle'
         'user_input/throttle',
         'vehicle/brake'
-    ]
+    ],
+    is_localhost=is_localhost
 )
 car.add(engine)
 
@@ -98,7 +114,8 @@ memoryClient = MemoryClient(
         'user_input/recording',
         'user_input/throttle',
         'vehicle/brake'
-    ]
+    ],
+    is_localhost=is_localhost
 )
 car.add(memoryClient)
 
@@ -112,31 +129,32 @@ remote_model = Model(
     ],
     output_names=[
         'remote_model/angle'
-    ]
+    ],
+    is_localhost=False
 )
 car.add(remote_model)
 
 # Optionally consume driving predictions from a local model
 local_model = Model(
     name='local_model',
-    host='local_model',
     input_names=[
         'camera/image_array',
         'user_input/driver_type'
     ],
     output_names=[
         'local_model/angle'
-    ]
+    ],
+    is_localhost=is_localhost
 )
 car.add(local_model)
 
 ps3_controller = PS3Controller(
-    name='ps3_controller',
-    host='ps3_controller',
+    name='ps3-controller',
     output_names=[
         'user_input/angle',
         'user_input/throttle'
-    ]
+    ],
+    is_localhost=is_localhost
 )
 car.add(ps3_controller)
 
@@ -149,7 +167,7 @@ client and server parts as well, since the
 names are hard coded there
 """
 record_tracker = RecordTracker(
-    name='record_tracker',
+    name='record-tracker',
     input_names=[
         'camera/image_array',
         'user_input/angle',
@@ -161,7 +179,8 @@ record_tracker = RecordTracker(
         'float',
         'boolean',
         'float'
-    ]
+    ],
+    is_localhost=is_localhost
 )
 car.add(record_tracker)
 

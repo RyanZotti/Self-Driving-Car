@@ -7,8 +7,9 @@ import traceback
 
 class Part:
 
-    def __init__(self, name, host, port, url, input_names=None, output_names=None,
-                 latency_threshold_seconds=0.5, is_loopable=True):
+    def __init__(self, name, port, url, host=None, input_names=None, output_names=None,
+            latency_threshold_seconds=0.5, is_loopable=True, is_localhost=True):
+
         """
         This function creates a new part. This is used as a
         template for the client portion a part's client-server
@@ -27,19 +28,24 @@ class Part:
             In the case of the model, I use the part's name to check
             if it matches the drive mode (remote_model, local_model
             or user)
-        host: string
-            This is the host name of the part's server. Most of the
-            parts run on the Docker network and can always be
-            referred to by their constant container name. However,
-            this does not apply to some parts, like the remote
-            model, whose host will vary according to the name of the
-            laptop doing the deployment
         port: int
             The server's port
         url: string
             The url associated with server. It doesn't matter if
             you include a leading / or not. I sanitize it either
             way
+        host: string
+            The host can take on three types of values. If no host
+            is specified because you are running on the Pi, this will
+            be set to "localhost", since Docker's --net=host option
+            uses localhost (required for PS3 Bluetooth to work). On
+            the Mac, a Docker container must run in a named Linux VM,
+            so the part's host takes on its part name. Lastly, a
+            part could be executed remotely, like the remote model,
+            which could be on AWS, your laptop, etc. If you specify
+            a host the code will assume you're referring to a remote
+            service. If you add the --localhost flag, when you call
+            start.py, the code will assume you're running on the Pi
         is_loopable: boolean
             This field is used for parts that shouldn't be executed
             every iteration of the infinite loop. For example, the
@@ -60,13 +66,32 @@ class Part:
         latency_threshold_seconds: float
             The number of seconds beyond which the part server is
             marked as unresponsive
+        is_localhost: boolean
+            Indicates whether to use the part's default hostname or
+            localhost. This way I don't need an if statement for
+            every single part in vehicle.py when I switch between
+            running on the Mac, which requires named containers, or
+            on the Pi, where I need to use --net=host and localhost.
+            This way I can pass a single boolean to the start.py CLI
+            in argparse and it will cascade the change to all parts
         """
 
         self.last_update_time = None
         self.thread = Thread(target=self.infinite_loop, args=())
         self.thread.daemon = True
         self.name = name
-        self.host = host
+
+        self.is_localhost = is_localhost
+        if host is not None:
+            # Remote services, like remote model, can be anything
+            self.host = host
+        elif self.is_localhost == True:
+            # Pi services use Docker's --net=host and localhost
+            self.host = 'localhost'
+        else:
+            # MacOS containers are named and run in a Linux VM
+            self.host = name
+
         self.port = port
         self.input_names = input_names
         if self.input_names is not None:
@@ -115,7 +140,7 @@ class Part:
             inputs[input_name] = None
         self.inputs = inputs
 
-    def sanitize_url(self,url):
+    def sanitize_url(self, url):
         """
         Standardizes the url so that the user doesn't have to
         remember if they need a leading / or not
@@ -147,7 +172,7 @@ class Part:
         """
         raise NotImplementedError
 
-    def update_outputs(self,response, defaults=None):
+    def update_outputs(self, response, defaults=None):
         """
         This function ensures that outputs (if any) are returned
         in the same as order they are expected in the drive loop
@@ -239,11 +264,12 @@ class Part:
                 seconds=latency_seconds,
                 timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
             ))
-        else: print('{timestamp} - {part} delayed by {seconds} seconds!'.format(
-            part=self.name,
-            seconds=latency_seconds,
-            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        ))
+        else:
+            print('{timestamp} - {part} delayed by {seconds} seconds!'.format(
+                part=self.name,
+                seconds=latency_seconds,
+                timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            ))
 
     def is_safe(self):
         """
@@ -259,4 +285,3 @@ class Part:
         Starts a part's client thread
         """
         self.thread.start()
-

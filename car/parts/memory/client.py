@@ -5,10 +5,10 @@ from car.Part import Part
 
 class Client(Part):
 
-    def __init__(self, name, input_names, host='vehicle-memory', port=8095, url='/update'):
+    def __init__(self, name, input_names, is_localhost, port=8095, url='/update'):
         super().__init__(
             name=name,
-            host=host,
+            is_localhost=is_localhost,
             port=port,
             url=url,
             input_names=input_names

@@ -1380,13 +1380,15 @@ class StartCarService(tornado.web.RequestHandler):
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
                 self.submit_pi_command(
-                    command='mkdir -p ~/vehicle-datasets; docker rm -f record-tracker; docker run -t -d -i {network} --name record-tracker --volume ~/vehicle-datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port}'.format(
+                    command='mkdir -p ~/vehicle-datasets; docker rm -f {service}; docker run -t -d -i {network} --name {service} --volume ~/vehicle-datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port}'.format(
+                        service=service,
                         network=network,
                         port=port
                     )
                 )
             elif target_host == 'laptop':
-                self.submit_local_shell_command(command='mkdir -p ~/vehicle-datasets; docker rm -f record-tracker; docker run -t -d -i {network} --name record-tracker --volume ~/vehicle-datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port}'.format(
+                self.submit_local_shell_command(command='mkdir -p ~/vehicle-datasets; docker rm -f {service}; docker run -t -d -i {network} --name {service} --volume ~/vehicle-datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port}'.format(
+                        service=service,
                         network=network,
                         port=port
                     )
@@ -1395,12 +1397,14 @@ class StartCarService(tornado.web.RequestHandler):
             port = 8091
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
-                self.submit_pi_command(command='docker rm -f video; docker run -t -d -i --device=/dev/video0 {network} --name video ryanzotti/ffmpeg:latest'.format(
+                self.submit_pi_command(command='docker rm -f {service}; docker run -t -d -i --device=/dev/video0 {network} --name {service} ryanzotti/ffmpeg:latest'.format(
+                        service=service,
                         network=network
                     )
                 )
             elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f video; docker run -t -d -i {network} --name video ryanzotti/ffmpeg:latest python3 /root/tests/fake_server.py --port {port}'.format(
+                self.submit_local_shell_command(command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/ffmpeg:latest python3 /root/tests/fake_server.py --port {port}'.format(
+                        service=service,
                         network=network,
                         port=port
                     )
@@ -1409,13 +1413,15 @@ class StartCarService(tornado.web.RequestHandler):
             port = 8887
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
-                self.submit_pi_command(command='docker rm -f control-loop; docker run -i -t -d {network} --name control-loop ryanzotti/control_loop:latest python3 /root/car/start.py --port {port}'.format(
+                self.submit_pi_command(command='docker rm -f {service}; docker run -i -t -d {network} --name {service} ryanzotti/control_loop:latest python3 /root/car/start.py --port {port} --localhost'.format(
+                        service=service,
                         network=network,
                         port=port
                     )
                 )
             elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f control-loop; docker run -t -d -i {network} --name control-loop ryanzotti/control_loop:latest python3 /root/car/start.py --port {port}'.format(
+                self.submit_local_shell_command(command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/control_loop:latest python3 /root/car/start.py --port {port}'.format(
+                        service=service,
                         network=network,
                         port=port
                     )
@@ -1424,13 +1430,15 @@ class StartCarService(tornado.web.RequestHandler):
             port = 8884
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
-                self.submit_pi_command(command='docker rm -f user-input; docker run -i -t {network} --name user-input --privileged -d ryanzotti/user_input:latest python3 /root/server.py --port 8884'.format(
+                self.submit_pi_command(command='docker rm -f {service}; docker run -i -t {network} --name {service} --privileged -d ryanzotti/user_input:latest python3 /root/server.py --port 8884'.format(
+                        service=service,
                         network=network,
                         port=port
                     )
                 )
             elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f user-input; docker run -t -d -i {network} --name user-input ryanzotti/user_input:latest python3 /root/server.py --port {port}'.format(
+                self.submit_local_shell_command(command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/user_input:latest python3 /root/server.py --port {port}'.format(
+                        service=service,
                         network=network,
                         port=port
                     )
@@ -1439,12 +1447,14 @@ class StartCarService(tornado.web.RequestHandler):
             port = 8092
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
-                self.submit_pi_command(command='docker rm -f engine; docker run -t -d -i --privileged {network} --name engine ryanzotti/vehicle-engine:latest'.format(
+                self.submit_pi_command(command='docker rm -f {service}; docker run -t -d -i --privileged {network} --name {service} ryanzotti/vehicle-engine:latest'.format(
+                        service=service,
                         network=network
                     )
                 )
             elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f engine; docker run -t -d -i {network} --name engine ryanzotti/vehicle-engine:latest python3 /root/tests/fake_server.py --port {port}'.format(
+                self.submit_local_shell_command(command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/vehicle-engine:latest python3 /root/tests/fake_server.py --port {port}'.format(
+                        service=service,
                         network=network,
                         port=port
                     )
@@ -1454,13 +1464,15 @@ class StartCarService(tornado.web.RequestHandler):
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
                 self.submit_pi_command(command=
-                    'docker rm -f ps3-controller; docker run -i -t --name ps3-controller {network} --volume /dev/bus/usb:/dev/bus/usb --volume /run/dbus:/run/dbus --volume /var/run/dbus:/var/run/dbus --volume /dev/input:/dev/input --privileged ryanzotti/ps3_controller:latest python /root/server.py --port {port}'.format(
+                    'docker rm -f {service}; docker run -i -t --name {service} {network} --volume /dev/bus/usb:/dev/bus/usb --volume /run/dbus:/run/dbus --volume /var/run/dbus:/var/run/dbus --volume /dev/input:/dev/input --privileged ryanzotti/ps3_controller:latest python /root/server.py --port {port}'.format(
+                        service=service,
                         network=network,
                         port=port
                     )
                 )
             elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f ps3-controller; docker run -t -d -i {network} --name ps3-controller ryanzotti/ps3_controller:latest python /root/tests/fake_server.py --port {port}'.format(
+                self.submit_local_shell_command(command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/ps3_controller:latest python /root/tests/fake_server.py --port {port}'.format(
+                        service=service,
                         network=network,
                         port=port
                     )

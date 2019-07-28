@@ -7,10 +7,10 @@ from car.Part import Part
 
 class Client(Part):
 
-    def __init__(self, name, input_names, input_types, host='record_tracker', port=8093, url='/write-record'):
+    def __init__(self, name, input_names, input_types, is_localhost, port=8093, url='/write-record'):
         super().__init__(
             name=name,
-            host=host,
+            is_localhost=is_localhost,
             port=port,
             url=url,
             input_names=input_names,
