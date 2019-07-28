@@ -141,7 +141,7 @@ End slider CSS
 .timeline:before {
   content: "";
   position: absolute;
-  left: 7px;
+  left: 5px;
   top: 2px;
   height: 100%;
   width: 2px;
@@ -151,7 +151,7 @@ End slider CSS
 .timeline:after {
   content: "";
   position: absolute;
-  left: 4px;
+  left: 2px;
   bottom: -2px;
   height: 8px;
   width: 8px;
@@ -171,8 +171,8 @@ End slider CSS
   position: absolute;
   left: 0;
   top: 2px;
-  height: 16px;
-  width: 16px;
+  height: 12px;
+  width: 12px;
   background-color: #FFFFFF;
   border-radius: 50%;
   border: 1px solid #2c7be5;
@@ -183,6 +183,7 @@ End slider CSS
 }
 
 .timeline-date {
+  opacity: 0.5;
   font-size: 0.85rem;
   text-transform: uppercase;
   color: #6e84a3
