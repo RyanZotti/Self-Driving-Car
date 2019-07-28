@@ -135,6 +135,19 @@ function piServiceHealth(json_input){
     });
 }
 
+async function updateToggleHtmlFromDB(checkbox){
+    const webPage = checkbox.getAttribute('toggle-web-page');
+    const name = checkbox.getAttribute('toggle-name');
+    const detail = checkbox.getAttribute('toggle-detail');
+    const readInput = JSON.stringify({
+            'web_page': webPage,
+            'name': name,
+            'detail': detail
+    });
+    const is_on = await readToggle(readInput);
+    checkbox.checked = is_on;
+}
+
 function configureToggle(checkbox){
     const webPage = checkbox.getAttribute('toggle-web-page');
     const name = checkbox.getAttribute('toggle-name');
@@ -148,14 +161,8 @@ function configureToggle(checkbox){
         });
         writeToggle(writeInput);
     }
-    const checkToggleTime = setInterval(async function(){
-        const readInput = JSON.stringify({
-            'web_page': webPage,
-            'name': name,
-            'detail': detail
-        });
-        const is_on = await readToggle(readInput);
-        checkbox.checked = is_on;
+    const checkToggleTime = setInterval(function(){
+        updateToggleHtmlFromDB(checkbox);
     }, 5000);
 
 }
