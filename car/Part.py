@@ -162,12 +162,46 @@ class Part:
         return sanitized_url
 
     @abc.abstractmethod
-    def call(self):
+    def _call(self, *args):
         """
         A placeholder function that Vehicle.py uses to send
-        data to the part and receive data from the part
+        data to the part and receive data from the part. This
+        part is hidden so that non-part classes must call
+        the public call(), which wraps the _call() function
+        in a try-except clause and prevents the control-loop
+        from completely crashing when one of the parts is not
+        functioning properly, like when the PS3 controller is
+        not alive, and therefore the engine is not able to
+        receive inputs
+
+        Note the single _ and not double __. If you use two
+        underscores your subclasses won't be able to inherit
+        the method: https://stackoverflow.com/a/20261595/554481
+
+        Parameters
+        ----------
+        *args : List
+            A list of generic args to be overwritten by the
+            inheriting class
         """
         raise NotImplementedError
+
+    def call(self, *args):
+        """
+        Wraps a part's _call() method in a try-except clause to
+        avoid killing the entire control-loop when one part fails
+
+        Parameters
+        ----------
+        *args : List
+            A generic list of args, if any
+        """
+        try:
+            self._call(*args)
+            pass
+        except:
+            if self.is_verbose:
+                traceback.print_exc()
 
     @abc.abstractmethod
     def request(self):

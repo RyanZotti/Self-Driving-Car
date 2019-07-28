@@ -84,9 +84,9 @@ class Engine(object):
             self.pwm_right.ChangeDutyCycle(0)
 
     def run(self, inputs):
-        driver_type = inputs['user_input/driver_type']
-        assert (driver_type in ['user', 'remote_model', 'local_model'])
         if inputs['vehicle/brake'] is False and inputs['user_input/brake'] is False:
+            driver_type = inputs['user_input/driver_type']
+            assert (driver_type in ['user', 'remote_model', 'local_model'])
             if driver_type == 'remote_model':
                 self.run_angle(inputs['remote_model/angle'])
                 self.run_throttle(inputs['user/max_throttle'])

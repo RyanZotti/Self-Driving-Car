@@ -26,5 +26,5 @@ class Client(Part):
         )
 
     # This is how the main control loop interacts with the part
-    def call(self, *args):
+    def _call(self, *args):
         self.inputs = dict(zip(self.input_names, *args))

@@ -83,7 +83,7 @@ class Client(Part):
             self.is_requestable = False
 
     # This is how the main control loop interacts with the part
-    def call(self, *args):
+    def _call(self, *args):
         self.inputs = dict(zip(self.input_names, *args))
         if self.inputs['user_input/recording']:
             self.is_requestable = True

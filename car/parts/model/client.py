@@ -46,7 +46,7 @@ class Client(Part):
         self.outputs = predicted_angle
 
     # This is how the main control loop interacts with the part
-    def call(self, *args):
+    def __call(self, *args):
         self.inputs = dict(zip(self.input_names, *args))
         return self.outputs
 

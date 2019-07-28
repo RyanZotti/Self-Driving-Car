@@ -85,7 +85,7 @@ class Client(Part):
             self.was_available = False
 
     # This is how the main control loop interacts with the part
-    def call(self):
+    def _call(self):
         return self.frame
 
     def open_stream(self):

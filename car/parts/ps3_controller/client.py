@@ -27,5 +27,5 @@ class Client(Part):
             self.update_outputs(response=response)
 
     # This is how the main control loop interacts with the part
-    def call(self):
+    def _call(self):
         return self.outputs
