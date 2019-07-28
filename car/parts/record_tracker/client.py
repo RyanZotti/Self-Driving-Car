@@ -7,14 +7,15 @@ from car.Part import Part
 
 class Client(Part):
 
-    def __init__(self, name, input_names, input_types, is_localhost, port=8093, url='/write-record'):
+    def __init__(self, name, input_names, input_types, is_localhost, port=8093, url='/write-record', is_verbose=False):
         super().__init__(
             name=name,
             is_localhost=is_localhost,
             port=port,
             url=url,
             input_names=input_names,
-            is_loopable=False
+            is_loopable=False,
+            is_verbose=is_verbose
         )
         self.with_image_endpoint = 'http://{host}:{port}/{url}'.format(
             host=self.host,

@@ -5,13 +5,14 @@ from car.Part import Part
 
 class Client(Part):
 
-    def __init__(self, name, input_names, is_localhost, port=8092, url='/command'):
+    def __init__(self, name, input_names, is_localhost, port=8092, url='/command', is_verbose=False):
         super().__init__(
             name=name,
             is_localhost=is_localhost,
             port=port,
             url=url,
-            input_names=input_names
+            input_names=input_names,
+            is_verbose=is_verbose
         )
 
     # The parent class, Part.py, automatically runs this function an in infinite loop

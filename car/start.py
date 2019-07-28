@@ -36,6 +36,25 @@ ap.add_argument(
     help="Indicates if control-loop clients should expect part services on localhost or named Docker container"
 )
 
+part_names = [
+    "video",
+    "record-tracker",
+    "control-loop",
+    "user-input",
+    "engine",
+    "ps3-controller",
+    "local-model",
+    "remote-model",
+    "memory"
+]
+for part_name in part_names:
+    ap.add_argument(
+        "--verbose-"+part_name,
+        action='store_true',
+        dest='verbose-'+part_name,
+        help="Indicates if the control-loop should print exceptions from this part"
+    )
+
 args = vars(ap.parse_args())
 remote_host = args['remote_host']
 port = int(args['port'])
@@ -63,7 +82,8 @@ camera = Camera(
     output_names=[
         'camera/image_array'
     ],
-    is_localhost=is_localhost
+    is_localhost=is_localhost,
+    is_verbose=args['verbose-video']
 )
 car.add(camera)
 
@@ -76,7 +96,8 @@ user_input = UserInput(
         'user_input/max_throttle',
         'user_input/recording'
     ],
-    is_localhost=is_localhost
+    is_localhost=is_localhost,
+    is_verbose=args['verbose-user-input']
 )
 car.add(user_input)
 
@@ -95,7 +116,8 @@ engine = Engine(
         'user_input/throttle',
         'vehicle/brake'
     ],
-    is_localhost=is_localhost
+    is_localhost=is_localhost,
+    is_verbose=args['verbose-engine']
 )
 car.add(engine)
 
@@ -115,13 +137,14 @@ memoryClient = MemoryClient(
         'user_input/throttle',
         'vehicle/brake'
     ],
-    is_localhost=is_localhost
+    is_localhost=is_localhost,
+    is_verbose=args['verbose-memory']
 )
 car.add(memoryClient)
 
 # Optionally consume driving predictions from a remote model
 remote_model = Model(
-    name='remote_model',
+    name='remote-model',
     host=remote_host,
     input_names=[
         'camera/image_array',
@@ -130,13 +153,14 @@ remote_model = Model(
     output_names=[
         'remote_model/angle'
     ],
-    is_localhost=False
+    is_localhost=False,
+    is_verbose=args['verbose-remote-model']
 )
 car.add(remote_model)
 
 # Optionally consume driving predictions from a local model
 local_model = Model(
-    name='local_model',
+    name='local-model',
     input_names=[
         'camera/image_array',
         'user_input/driver_type'
@@ -144,7 +168,8 @@ local_model = Model(
     output_names=[
         'local_model/angle'
     ],
-    is_localhost=is_localhost
+    is_localhost=is_localhost,
+    is_verbose=args['verbose-local-model']
 )
 car.add(local_model)
 
@@ -154,7 +179,8 @@ ps3_controller = PS3Controller(
         'user_input/angle',
         'user_input/throttle'
     ],
-    is_localhost=is_localhost
+    is_localhost=is_localhost,
+    is_verbose=args['verbose-ps3-controller']
 )
 car.add(ps3_controller)
 
@@ -180,7 +206,8 @@ record_tracker = RecordTracker(
         'boolean',
         'float'
     ],
-    is_localhost=is_localhost
+    is_localhost=is_localhost,
+    is_verbose=args['verbose-record-tracker']
 )
 car.add(record_tracker)
 

@@ -6,7 +6,7 @@ from car.Part import Part
 
 class Client(Part):
 
-    def __init__(self, name, input_names, output_names, is_localhost, host=None, port=8885, url='/predict'):
+    def __init__(self, name, input_names, output_names, is_localhost, host=None, port=8885, url='/predict', is_verbose=False):
         super().__init__(
             name=name,
             host=host,
@@ -14,7 +14,8 @@ class Client(Part):
             port=port,
             url=url,
             input_names=input_names,
-            output_names=output_names
+            output_names=output_names,
+            is_verbose=is_verbose
         )
         self.outputs = None
 

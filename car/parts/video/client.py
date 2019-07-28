@@ -7,13 +7,14 @@ from car.utils import *
 
 class Client(Part):
 
-    def __init__(self, name, output_names, is_localhost, port=8091, url='/video', consecutive_no_image_count_threshold=150):
+    def __init__(self, name, output_names, is_localhost, port=8091, url='/video', consecutive_no_image_count_threshold=150, is_verbose=False):
         super().__init__(
             name=name,
             is_localhost=is_localhost,
             port=port,
             url=url,
-            output_names=output_names
+            output_names=output_names,
+            is_verbose=is_verbose
         )
         # Need to define as None to avoid "does not exist bugs"
         self.frame = None

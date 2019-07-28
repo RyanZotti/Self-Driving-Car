@@ -5,13 +5,14 @@ from car.Part import Part
 
 class Client(Part):
 
-    def __init__(self, name, output_names, is_localhost, port=8094, url='/get-angle-and-throttle'):
+    def __init__(self, name, output_names, is_localhost, port=8094, url='/get-angle-and-throttle', is_verbose=False):
         super().__init__(
             name=name,
             is_localhost=is_localhost,
             port=port,
             url=url,
-            output_names=output_names
+            output_names=output_names,
+            is_verbose=is_verbose
         )
         self.outputs = None
 

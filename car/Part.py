@@ -8,7 +8,7 @@ import traceback
 class Part:
 
     def __init__(self, name, port, url, host=None, input_names=None, output_names=None,
-            latency_threshold_seconds=0.5, is_loopable=True, is_localhost=True, is_debug=False):
+            latency_threshold_seconds=0.5, is_loopable=True, is_localhost=True, is_verbose=False):
 
         """
         This function creates a new part. This is used as a
@@ -74,7 +74,7 @@ class Part:
             on the Pi, where I need to use --net=host and localhost.
             This way I can pass a single boolean to the start.py CLI
             in argparse and it will cascade the change to all parts
-        is_debug: boolean
+        is_verbose: boolean
             Indicates whether to print the stack trace of the part.
             This can be really noisy when the model services aren't
             on, but can be helpful for other services
@@ -134,7 +134,7 @@ class Part:
         as soon as all parts are marked as responsive again
         """
         self.latency_threshold_seconds = latency_threshold_seconds
-        self.is_debug = is_debug
+        self.is_verbose = is_verbose
 
     def initialize_inputs(self):
         """
@@ -213,7 +213,7 @@ class Part:
                     self.request()
                     self.last_update_time = datetime.now()
                 except:
-                    if self.is_debug:
+                    if self.is_verbose:
                         traceback.print_exc()
 
     def get_last_update_time(self):
