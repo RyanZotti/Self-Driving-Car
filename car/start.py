@@ -18,8 +18,15 @@ ap.add_argument(
     help="The laptop's hostname",
     default='ryans-macbook-pro.local'
 )
+ap.add_argument(
+    "--port",
+    required=False,
+    help="Port for vehicle health check",
+    default=8887
+)
 args = vars(ap.parse_args())
 remote_host = args['remote_host']
+port = int(args['port'])
 
 # Load default settings
 cfg = load_config()
@@ -33,7 +40,8 @@ memory.put(['vehicle/brake'], True)
 # Initialize the car
 car = Vehicle(
     mem=memory,
-    warm_up_seconds=cfg.WARM_UP_SECONDS
+    warm_up_seconds=cfg.WARM_UP_SECONDS,
+    port=port
 )
 
 # Consume video from a cheap webcam

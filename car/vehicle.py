@@ -1,12 +1,15 @@
+import asyncio
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
 import time
 from threading import Thread
+import tornado
 from .Memory import Memory
 from datetime import datetime
 
 
 class Vehicle():
-    def __init__(self, warm_up_seconds, mem=None):
+    def __init__(self, warm_up_seconds, port, mem=None):
 
         if not mem:
             mem = Memory()
@@ -14,6 +17,43 @@ class Vehicle():
         self.parts = OrderedDict()
         self.on = True
         self.warm_up_seconds = warm_up_seconds
+        self.port = port
+
+        """
+        The UI will ping this server's health check when
+        the contorl-loop is dockerized and running on the
+        Pi. The health check is used to indicate if the
+        service needs to be started because it is down
+        """
+        self.microservice_thread = Thread(target=self.start_microservice, kwargs={'port': self.port})
+        self.microservice_thread.daemon = True
+        self.microservice_thread.start()
+
+    def start_microservice(self, port):
+        asyncio.set_event_loop(asyncio.new_event_loop())
+
+        class Health(tornado.web.RequestHandler):
+            executor = ThreadPoolExecutor(5)
+
+            @tornado.concurrent.run_on_executor
+            def is_healthy(self):
+                result = {
+                    'is_healthy': True
+                }
+                return result
+
+            @tornado.gen.coroutine
+            def get(self):
+                result = yield self.is_healthy()
+                self.write(result)
+
+        self.microservice = tornado.web.Application([(r"/health", Health)])
+        self.microservice.listen(port)
+        self.microservice.model_id = self.model_id
+        self.microservice.batch_count = self.record_reader.get_batches_per_epoch()
+        self.microservice.batch_id = -1
+        self.microservice.epoch_id = self.start_epoch
+        tornado.ioloop.IOLoop.current().start()
 
     def add(self, part):
         """
