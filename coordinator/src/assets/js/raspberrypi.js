@@ -87,6 +87,7 @@ async function getServiceHost(){
               when polling Pi service health checks
             */
             piHostname = await readPiField("hostname");
+            return piHostname;
         } else {
             return piHostname;
         }
@@ -136,7 +137,7 @@ async function stopService(service){
 
 async function osAgnosticPollServices(services){
     const testLocally = document.getElementById("toggle-test-services-locally");
-    const host = await getServiceHost()
+    const host = await getServiceHost();
     const dockerArgs = getDockerArgs(testLocally);
     if (testLocally.checked == true){
         pollServices({
