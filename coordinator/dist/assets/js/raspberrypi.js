@@ -290,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
         var resumeServicesTime = setInterval(function(){
             osAgnosticPollServices(services);
-        }, 5000);
+        }, 10000);
 
         servicesWrapper.style.display = 'block';
         servicesNav.classList.add('active');
