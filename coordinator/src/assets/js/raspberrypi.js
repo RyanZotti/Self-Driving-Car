@@ -194,6 +194,28 @@ document.addEventListener('DOMContentLoaded', function() {
         "model"
     ]
 
+    for (const service of services){
+        const toggle = document.querySelector("input#toggle-"+service);
+        toggle.setAttribute("toggle-web-page","raspberry pi");
+        toggle.setAttribute("toggle-name","service");
+        toggle.setAttribute("toggle-detail",service);
+        // Reads/writes status from/to DB
+        configureToggle(toggle);
+    }
+
+    /*
+      These two intervals are represented as vars so that they can
+      be set and cleared multiple times. For example, they're off
+      when you land on the settings page, but then get turned on
+      when you click to the services page. Then if you click the
+      settings page they get turned off again so that you don't
+      continue to hammer the Pi with health checks. I define both
+      at the top so that they're both in scope of the <nav>.onclick
+      functions, which are responsible for turning them on and off
+    */
+    var piServiceHealthCheckTime = null;
+    var resumeServicesTime = null;
+
     const settingsWrapper = document.querySelector("#settings-wrapper");
     const servicesWrapper = document.querySelector("#services-wrapper");
     const testLocallyToggleWrapper = document.querySelector("#toggle-test-services-locally-wrapper");
@@ -208,6 +230,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const settingsNav = document.querySelector("#settings-nav");
     settingsNav.onclick = function () {
 
+        // Stop polling the services when not on the services page
+        clearInterval(piServiceHealthCheckTime);
+        clearInterval(resumeServicesTime);
+
         settingsNav.classList.add("active");
         settingsWrapper.style.display = 'block';
 
@@ -220,6 +246,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const servicesNav = document.querySelector("#services-nav");
     servicesNav.onclick = async function () {
+
+        // Update Raspberry Pi service statues
+        var piServiceHealthCheckTime = setInterval(function(){
+            for (const service of services){
+                updateServiceHealth(service);
+            }
+        }, 1000);
+        var resumeServicesTime = setInterval(function(){
+            osAgnosticPollServices(services);
+        }, 5000);
 
         const webPage = testLocally.getAttribute('toggle-web-page');
         const name = testLocally.getAttribute('toggle-name');
@@ -291,25 +327,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         const resetTimer = setTimeout(resetCheckStatusButton, 3000);
     }
-
-    for (const service of services){
-        const toggle = document.querySelector("input#toggle-"+service);
-        toggle.setAttribute("toggle-web-page","raspberry pi");
-        toggle.setAttribute("toggle-name","service");
-        toggle.setAttribute("toggle-detail",service);
-        // Reads/writes status from/to DB
-        configureToggle(toggle);
-    }
-
-    // Update Raspberry Pi service statues
-    const piServiceHealthCheckTime = setInterval(function(){
-        for (const service of services){
-            updateServiceHealth(service);
-        }
-    }, 1000);
-    const resumeServicesTime = setInterval(function(){
-        osAgnosticPollServices(services);
-    }, 5000);
 
 }, false);
 
