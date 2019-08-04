@@ -253,8 +253,10 @@ class StartSixAxisLoop(tornado.web.RequestHandler):
     @tornado.gen.coroutine
     def post(self):
         if not self.application.ps3_controller.is_loop_on:
-            result = yield self.start_loop()
-        self.write(result)
+             result = yield self.start_loop()
+             self.write(result)
+        else:
+            self.write({'is_healthy':self.application.ps3_controller.is_loop_on})
 
 class GetAngleAndThrottle(tornado.web.RequestHandler):
 
