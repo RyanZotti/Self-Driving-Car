@@ -394,20 +394,30 @@
                   </div>
                   <div class="card-body">
                     <ul class="timeline" id="controller-timeline-wrapper" style="display:none">
-                      <li class="latest" id="controller-timeline-test-connectivity">
+                      <li class="latest" id="controller-timeline-finalize-service-connection" style="display:none">
                         <div class="timeline-date">Just Now</div>
-                        <div class="timeline-title">Testing connectivity</div>
-                        <div class="timeline-description text-muted">Disconnect the cable. Press the triangle button</div>
+                        <div class="timeline-title">Finalize Service Connection</div>
+                        <div class="timeline-description text-muted">Press the PS3 button on the controller</div>
                       </li>
-                      <li id="controller-timeline-running-commands">
+                      <li class="latest" id="controller-timeline-connect-bluetooth" style="display:none">
+                        <div class="timeline-date">Just Now</div>
+                        <div class="timeline-title">Connect with Bluetooth</div>
+                        <div class="timeline-description text-muted">Press the PS3 button on the controller</div>
+                      </li>
+                      <li id="controller-timeline-cable-disconnected" style="display:none">
                         <div class="timeline-date">Today - 15:35</div>
-                        <div class="timeline-title">Pairing device</div>
-                        <div class="timeline-description text-muted">Running bluetooth connection commands</div>
+                        <div class="timeline-title">Disconnect Mini-USB Cable</div>
+                        <div class="timeline-description text-muted">Disconnect the mini USB cable</div>
                       </li>
-                      <li id="controller-timeline-device-search">
+                      <li id="controller-timeline-run-commands" style="display:none">
+                        <div class="timeline-date">Today - 15:35</div>
+                        <div class="timeline-title">Run Setup Commands</div>
+                        <div class="timeline-description text-muted">This step is run automatically</div>
+                      </li>
+                      <li id="controller-timeline-cable-connected">
                         <div class="timeline-date">Yesterday - 10:41</div>
-                        <div class="timeline-title">Searching for device</div>
-                        <div class="timeline-description text-muted">Ensure the controller is connected to the Pi using the cable</div>
+                        <div class="timeline-title">Connect Mini-USB Cable</div>
+                        <div class="timeline-description text-muted">Connect the controller to the Pi with the mini-USB cable. You might need to quickly disconnect the cable and reconnect if this step takes more than 5 seconds to process</div>
                       </li>
                     </ul>
                     <div class="card-text">

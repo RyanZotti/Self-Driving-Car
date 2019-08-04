@@ -1,3 +1,226 @@
+async function pairController(){
+
+    /*
+    This command facilitates the pairing workflow. It walks
+    through a series of steps to connect the PS3 controller
+    to the Pi via bluetooth and updates the UI with its
+    progress each step of the way
+    */
+
+    /*
+      This is used to ensure that the pairing process isn't
+      run more than once simultaneously
+    */
+    isWizardOn = true;
+
+    // TODO: Remove hardcoded port
+    const port = 8094;
+    const host = await getServiceHost();
+    const apiInputJson = {
+        'host':host,
+        'port':port
+    }
+
+    const timelineWrapper = document.querySelector('#controller-timeline-wrapper');
+    const cableConnectedSection = document.querySelector('#controller-timeline-cable-connected');
+    const runCommandsSection = document.querySelector('#controller-timeline-run-commands');
+    const cableDisconnectedSection = document.querySelector('#controller-timeline-cable-disconnected');
+    const connectBluetoothSection = document.querySelector('#controller-timeline-connect-bluetooth');
+    const finalizeServiceSection = document.querySelector('#controller-timeline-finalize-service-connection');
+
+    cableConnectedSection.classList.add('latest');
+    cableConnectedSection.style.display = 'block';
+    runCommandsSection.style.display = 'none';
+    cableDisconnectedSection.style.display = 'none';
+    connectBluetoothSection.style.display = 'none';
+    finalizeServiceSection.style.display = 'none';
+
+    /*
+      Make sure the user has connected the controller to
+      the Pi via the cable before starting the setup
+      commands
+    */
+    var isConnected = false;
+    while(isConnected != true){
+        isConnected = await isControllerConnected(
+            apiInputJson
+        )
+        await sleep(1000);
+    }
+
+    console.log('Cable connected!')
+
+    cableConnectedSection.classList.remove('latest');
+    runCommandsSection.classList.add('latest');
+    runCommandsSection.style.display = 'block';
+
+    /*
+      Run bluetoothctl commands like turning on the agent,
+      and trusting the MAC address
+    */
+    var setupCommandsComplete = false;
+    while(setupCommandsComplete != true){
+        setupCommandsComplete = await runPS3SetupCommands(
+            apiInputJson
+        )
+        await sleep(2000);
+    }
+
+    console.log('Commands complete!')
+
+    runCommandsSection.classList.remove('latest');
+    cableDisconnectedSection.classList.add('latest');
+    cableDisconnectedSection.style.display = 'block';
+
+    /*
+      Make sure the user unplugs the cable so that the
+      next test is valid. If the cable is still plugged
+      in when the user tests commands, it will look like
+      the bluetooth connectivity is working even if it
+      isn't
+    */
+    while(isConnected != false){
+        isConnected = await isControllerConnected(
+            apiInputJson
+        )
+        await sleep(1000);
+    }
+
+    console.log('Cable disconnected!')
+
+    cableDisconnectedSection.classList.remove('latest');
+    connectBluetoothSection.classList.add('latest');
+    connectBluetoothSection.style.display = 'block';
+
+    /*
+      Assume that the user has hit the PS3 button on the
+      controller and hasn't just plugged the cable back in
+    */
+    while(isConnected != true){
+        isConnected = await isControllerConnected(
+            apiInputJson
+        )
+        await sleep(1000);
+    }
+
+    console.log('Bluetooth connected!')
+
+    connectBluetoothSection.classList.remove('latest');
+    finalizeServiceSection.classList.add('latest');
+    finalizeServiceSection.style.display = 'block';
+
+    var isServiceComplete = false;
+    while(isServiceComplete == false || isConnected == false ){
+        isServiceComplete = await startSixAxisLoop(
+            apiInputJson
+        );
+    }
+
+    console.log('Service on!')
+
+    timelineWrapper.style.display = 'none';
+    isWizardOn = false;
+}
+
+function isControllerConnected(args){
+
+    /*
+    js0 will show up either when the PS3 controller is plugged
+    in or when it is successfully connected over bluethooth,
+    though it might not show up if it has been plugged in for
+    awhile without being used. In this case you just need to
+    unplug it and plug it in again.
+
+    The caller of this function first checks for a connection,
+    which is assumed to be wired. If the connection exists, then
+    some registration commands are run. Then the caller checks
+    that the user has disconnected. Then the caller checks that
+    the connection exists after the user has hit the PS button,
+    so effectively this function will get called at least three
+    times during the pairing workflow
+    */
+
+    const host = args['host'];
+    const port = args['port'];
+    return new Promise(function(resolve, reject) {
+        const input = JSON.stringify({
+            'host': host,
+            'port': port
+        });
+        $.ajax({
+            method: 'POST',
+            url: '/is-ps3-connected',
+            timeout: 1000,
+            data: input,
+            success: function(response) {
+                resolve(response['is_connected']);
+            },
+            error: function(){
+                resolve(false);
+            }
+        });
+    });
+}
+
+function runPS3SetupCommands(args) {
+    /*
+    This bundles the commands used to start the Bluetooth
+    pairing of the PS3 device. It runs `sudo ./sixpair` as
+    well as turns on an agent, and registers the MAC Address
+    */
+    const host = args['host'];
+    const port = args['port'];
+    return new Promise(function(resolve, reject) {
+        const input = JSON.stringify({
+          'host': host,
+          'port': port
+        });
+        $.post('/run-ps3-setup-commands', input, function(output){
+            console.log(output)
+            resolve(output['is_complete']);
+        });
+    });
+}
+
+function startSixAxisLoop(args) {
+    /*
+    This starts the Python module that listen for events
+    from the PS3 controller
+    */
+    const host = args['host'];
+    const port = args['port'];
+    return new Promise(function(resolve, reject) {
+        const input = JSON.stringify({
+          'host': host,
+          'port': port
+        });
+        $.post('/start-sixaxis-loop', input, function(output){
+            resolve(output['is_healthy']);
+        });
+    });
+}
+
+function getPS3ControllerHealth(args) {
+    /*
+      This should not be confused with the health of the
+      PS3 controller service. This checks if the SixAxis
+      (custom PS3 module) is able to connect to the
+      controller. The PS3 controller service might be up
+      and healthy, but it might not be connected to the
+      controller. This will always be true the before you
+      have paired the controller with the service
+    */
+    const host = args['host'];
+    return new Promise(function(resolve, reject) {
+        const input = JSON.stringify({
+            'host': host,
+        });
+        $.post('/ps3-controller-health', input, function(output){
+            resolve(output['is_healthy']);
+        });
+    });
+}
+
 function writePiField(fieldName, fieldValue) {
     return new Promise(function(resolve, reject) {
         const input = JSON.stringify({
@@ -47,16 +270,25 @@ function updateServiceStatusIcon(args){
     if(args['status'] == 'healthy'){
         status.classList.remove('text-danger');
         status.classList.remove('text-light');
+        status.classList.remove('text-warning');
         status.classList.add('text-success');
         status.style.display = 'inline';
     } else if (args['status'] == 'unhealthy') {
         status.classList.remove('text-success');
         status.classList.remove('text-light');
+        status.classList.remove('text-warning');
         status.classList.add('text-danger');
+        status.style.display = 'inline';
+    } else if (args['status'] == 'in-progress') {
+        status.classList.remove('text-success');
+        status.classList.remove('text-light');
+        status.classList.remove('text-danger');
+        status.classList.add('text-warning');
         status.style.display = 'inline';
     } else {
         status.classList.remove('text-success');
         status.classList.remove('text-danger');
+        status.classList.remove('text-warning');
         status.classList.add('text-light');
         status.style.display = 'inline';
     }
@@ -104,10 +336,25 @@ async function updateServiceHealth(service){
             'service':service
         });
         if (isHealthy == true){
-            updateServiceStatusIcon({
-                'service':service,
-                'status':'healthy'
-            });
+            if (service == 'ps3-controller'){
+                const isConnected = await getPS3ControllerHealth({'host':host});
+                if (isConnected == true){
+                    updateServiceStatusIcon({
+                        'service':service,
+                        'status':'healthy'
+                    });
+                } else {
+                    updateServiceStatusIcon({
+                        'service':service,
+                        'status':'in-progress'
+                    });
+                }
+            } else{
+                updateServiceStatusIcon({
+                    'service':service,
+                    'status':'healthy'
+                });
+            }
         } else {
             updateServiceStatusIcon({
                 'service':service,
@@ -352,9 +599,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const resetTimer = setTimeout(resetCheckStatusButton, 3000);
     }
 
+    const timelineWrapper = document.querySelector('#controller-timeline-wrapper');
     const ps3ControllerServiceToggle = document.querySelector('#toggle-ps3-controller');
     ps3ControllerServiceToggle.onchange = function(){
-        const timelineWrapper = document.querySelector('#controller-timeline-wrapper');
+
         if (ps3ControllerServiceToggle.checked == true){
             timelineWrapper.style.display = 'block';
         } else {
@@ -362,6 +610,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    /*
+      Show PS3 connect wizard while PS3 controller connection
+      status is not healthy but service is turned on
+    */
+    const ps3ControllerWizardInterval = setInterval(async function(){
+        const host = await getServiceHost();
+        const isConnected = await getPS3ControllerHealth({'host':host});
+        if (isConnected == true){
+            timelineWrapper.style.display = 'none';
+        } else {
+            timelineWrapper.style.display = 'block';
+            if (isWizardOn == false){
+                await pairController();
+            }
+        }
+
+    }, 5000);
+
 }, false);
 
 var piHostname = '';
+var isWizardOn = false;
