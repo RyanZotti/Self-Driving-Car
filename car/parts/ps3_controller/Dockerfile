@@ -25,4 +25,7 @@ RUN pip install evdev==0.6.0
 # https://github.com/tornadoweb/tornado/issues/2331#issuecomment-500099935
 RUN pip install futures tornado==4.5.3
 
+# This is used to interact with bluetoothctl
+RUN pip install pexpect
+
 COPY ./ /root/
