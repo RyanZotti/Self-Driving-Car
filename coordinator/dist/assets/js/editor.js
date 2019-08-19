@@ -77,22 +77,6 @@ function deleteDataset(dataset) {
     });
 }
 
-function startCarVideo() {
-    return new Promise(function(resolve, reject) {
-        $.post('/start-car-video', function(){
-            resolve();
-        });
-    });
-}
-
-function stopCarVideo() {
-    return new Promise(function(resolve, reject) {
-        $.post('/stop-car-video', function(){
-            resolve();
-        });
-    });
-}
-
 function videoHealthCheck() {
     return new Promise(function(resolve, reject) {
         $.post('/video-health-check', function(response){
@@ -882,7 +866,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const datasetId = await getDatasetIdFromDataset(recordingDataset);
         const driveVehicleHeaderDatasetId = document.querySelector('span#driveVehicleHeaderDatasetId')
         driveVehicleHeaderDatasetId.textContent = datasetId;
-        startCarVideo();
         const videoHeathCheckLoop = setInterval(async function(){
             const isHealthy = await videoHealthCheck();
             if(isHealthy == true){
@@ -911,7 +894,6 @@ document.addEventListener('DOMContentLoaded', function() {
     driveVehicleCloseButton.onclick = function(){
         isDriveModalOpen = false // Used to stop updating modal w/ vehicle state
         removeVideoSafely();
-        stopCarVideo();
         initialBeta = null;
         const videoSpinner = document.querySelector("div#video-loader");
         videoSpinner.style.display = 'block';
