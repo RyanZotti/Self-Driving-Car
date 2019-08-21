@@ -397,11 +397,6 @@ function updateAiAndHumanLabelValues(dataset, recordId){
     });
 }
 
-function adjustSpeedBar(barId, speed){
-    const speedBar = document.querySelector("div#"+barId);
-    const speedPercent = (speed * 100).toFixed(2) + '%';
-    speedBar.style.height = speedPercent;
-}
 
 async function playVideo(args) {
     const dataset = args[0];
@@ -587,14 +582,6 @@ function datasetNameToId(datasetName){
     return datasetId
 }
 
-function getNewDatasetName(){
-    return new Promise(function(resolve, reject) {
-        $.post('/new-dataset-name', function(result){
-           resolve(result['name']);
-        });
-    });
-}
-
 function updateDatasetsCountBadge(datasetType){
     $.get( "/list-"+datasetType+"-datasets").then(function(response){
         return response.datasets;
@@ -647,22 +634,6 @@ function batchMatchRecordIdsToIndices(sample, population){
         }
     }
     return sampleIndices;
-}
-
-function removeVideoSafely(){
-    if (document.contains(document.getElementById("drive-mpeg-image"))) {
-        document.querySelector("#drive-mpeg-image").remove();
-    }
-}
-
-function showVideo(){
-    removeVideoSafely();
-    const videoImageContainer = document.querySelector('div#video-image-container');
-    const videoImage = new Image();
-    videoImage.src = "/video";
-    videoImage.setAttribute("id","drive-mpeg-image");
-    videoImageContainer.appendChild(videoImage);
-    return videoImage
 }
 
 function rewindFrameIndex(){
@@ -727,16 +698,6 @@ function stopRecording(){
 function hideDriveButtonsRow(){
     const driveButtonsRow = document.querySelector('div#driveButtonsRow');
     driveButtonsRow.style.display = 'none';
-}
-
-function showDriveButtonsRow(){
-    const driveButtonsRow = document.querySelector('div#driveButtonsRow');
-    driveButtonsRow.style.display = 'flex';
-}
-
-async function makeNewDataset(){
-    recordingDataset = await getNewDatasetName();
-    recordingRecordId = 0;
 }
 
 document.addEventListener('DOMContentLoaded', function() {

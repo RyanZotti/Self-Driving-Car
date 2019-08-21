@@ -102,3 +102,24 @@ function refreshRecordReader() {
         });
     });
 }
+
+function showVideo(){
+    removeVideoSafely();
+    const videoImageContainer = document.querySelector('div#video-image-container');
+    const videoImage = new Image();
+    videoImage.src = "/video";
+    videoImage.setAttribute("id","drive-mpeg-image");
+    videoImageContainer.appendChild(videoImage);
+    return videoImage
+}
+
+function removeVideoSafely(){
+    if (document.contains(document.getElementById("drive-mpeg-image"))) {
+        document.querySelector("#drive-mpeg-image").remove();
+    }
+}
+
+function showDriveButtonsRow(){
+    const driveButtonsRow = document.querySelector('div#driveButtonsRow');
+    driveButtonsRow.style.display = 'flex';
+}

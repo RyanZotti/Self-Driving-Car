@@ -326,6 +326,55 @@ async function getServiceHost(){
     }
 }
 
+async function checkDashboardVideoReadiness(){
+    /*
+    This checks if the video feed is up and running and if it
+    is, displays all of the video-related features. I envision
+    running this sort of "isReady()" function in an interval
+    until ready, and then when ready starts running the
+    original interval "isNotReady()", so that the two can pair
+    off as needed in a potentially endless loop starting and
+    stopping each other's setInterval() functions.
+    */
+    pollVehicleAndUpdateUI();
+    await makeNewDataset();
+    const datasetId = await getDatasetIdFromDataset(recordingDataset);
+    const driveVehicleHeaderDatasetId = document.querySelector('span#driveVehicleHeaderDatasetId')
+    driveVehicleHeaderDatasetId.textContent = datasetId;
+    dashboardVideoWhileOffInterval = setInterval(async function(){
+
+        /*
+        Remove this deprecated type of video health check
+        and replace it with the one that is also compatible
+        with the test / local video server
+        */
+        //const isHealthy = await videoHealthCheck();
+        isHealthy = true;
+
+        if(isHealthy == true){
+            clearInterval(dashboardVideoWhileOffInterval);
+            const videoImage = showVideo();
+            videoImage.onload = function(){
+                const videoSpinner = document.querySelector("div#video-loader");
+                videoSpinner.style.display = 'none';
+                const metricsHeader = document.querySelector('div#drive-metrics-header');
+                const metricsGraphics = document.querySelector('div#drive-metrics-graphics');
+                const metricsText = document.querySelector('div#drive-metrics-text');
+                metricsHeader.style.display = 'flex';
+                metricsGraphics.style.display = 'flex';
+                metricsText.style.display = 'flex';
+                showDriveButtonsRow();
+            }
+        } else {
+            // Turn spinner back on and hide the video content
+        }
+    }, 1000);
+    // Check if device supports orientation (ie is a phone vs laptop)
+    if (window.DeviceOrientationEvent) {
+        window.addEventListener("deviceorientation", captureDeviceOrientation);
+    }
+}
+
 async function updateServiceHealth(service){
     const testLocally = document.getElementById("toggle-test-services-locally");
     const serviceToggle = document.querySelector("input#toggle-"+service);
@@ -432,6 +481,14 @@ async function pollServices(args){
 
 document.addEventListener('DOMContentLoaded', function() {
 
+    /*
+    These are global variables but need to be defined here
+    or else you'll get undefined errors for makeDonut
+    */
+    donuts.ai = makeDonut('aiAngleDonut');
+    donuts.human = makeDonut('humanAngleDonut');
+    donuts.drive = makeDonut('driveHumanAngleDonut');
+
     const services = [
         "video",
         "record-tracker",
@@ -495,6 +552,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         testLocallyToggleWrapper.style.display = 'none';
 
+        // Stop updating video data if video is no longer shown
+        clearInterval(dashboardVideoWhileOffInterval);
+
     }
 
     const servicesNav = document.querySelector("#services-nav");
@@ -554,6 +614,9 @@ document.addEventListener('DOMContentLoaded', function() {
         dashboardNav.classList.remove("active");
 
         testLocallyToggleWrapper.style.display = 'block';
+
+        // Stop updating video data if video is no longer shown
+        clearInterval(dashboardVideoWhileOffInterval);
     }
 
     const dashboardNav = document.querySelector("#dashboard-nav");
@@ -569,6 +632,8 @@ document.addEventListener('DOMContentLoaded', function() {
         settingsNav.classList.remove('active');
 
         testLocallyToggleWrapper.style.display = 'none';
+
+        checkDashboardVideoReadiness();
 
     }
 
@@ -655,3 +720,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
 var piHostname = '';
 var isWizardOn = false;
+
+/*
+It's possible that the video shown in the dashboard
+live session goes in and out (e.g., bad connection).
+If the connection goes out I want to revert back to
+the spinning wheel and vice-versa. This means that I
+need to be able to turns these intervals on and off
+again from anywhere, hence their global nature. I
+also want to support turning off the loop when I no
+longer need to show the video but am still on the
+raspberrypi.html page, like in the settings nav or
+in the services nav
+*/
+var dashboardVideoWhileOffInterval = null;
+var dashboardVideoWhileOnInterval = null;
+
+/*
+Need these donuts to be set in the DOMContentLoaded
+but available outside of that scope
+*/
+var donuts = {
+    "ai":null,
+    'human':null,
+    'drive':null
+}
