@@ -85,7 +85,6 @@ class UpdateDriveState(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def send_drive_state(self, json_input):
-        print(json_input)
         is_recording = json_input['recording']
         if is_recording == True:
             # TODO: Remove hardcoded port
@@ -192,22 +191,26 @@ class Memory(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
     @tornado.concurrent.run_on_executor
-    def get_memory(self):
+    def get_memory(self, json_input):
         seconds = 1
+        host = json_input['host']
+        port = int(json_input['port'])
+        # TODO: Remove hardcoded port
+        endpoint = 'http://{host}:{port}/output'.format(
+           host=host,
+           port=port
+        )
         request = requests.get(
-           # TODO: Remove hardcoded port
-           'http://{host}:{port}/output'.format(
-               host=self.application.pi_host,
-               port=8095
-           ),
+           endpoint,
            timeout=seconds
         )
         response = json.loads(request.text)
         return response
 
     @tornado.gen.coroutine
-    def get(self):
-        result = yield self.get_memory()
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.get_memory(json_input=json_input)
         self.write(result)
 
 

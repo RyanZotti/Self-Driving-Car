@@ -467,6 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const settingsWrapper = document.querySelector("#settings-wrapper");
     const servicesWrapper = document.querySelector("#services-wrapper");
+    const dashboardWrapper = document.querySelector("#dashboard-wrapper");
     const testLocallyToggleWrapper = document.querySelector("#toggle-test-services-locally-wrapper");
     const testLocally = document.getElementById("toggle-test-services-locally");
 
@@ -488,6 +489,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         servicesWrapper.style.display = 'none';
         servicesNav.classList.remove('active');
+
+        dashboardWrapper.style.display = 'none';
+        dashboardNav.classList.remove("active");
 
         testLocallyToggleWrapper.style.display = 'none';
 
@@ -546,7 +550,26 @@ document.addEventListener('DOMContentLoaded', function() {
         settingsWrapper.style.display = 'none';
         settingsNav.classList.remove('active');
 
+        dashboardWrapper.style.display = 'none';
+        dashboardNav.classList.remove("active");
+
         testLocallyToggleWrapper.style.display = 'block';
+    }
+
+    const dashboardNav = document.querySelector("#dashboard-nav");
+    dashboardNav.onclick = async function(){
+
+        dashboardNav.classList.add("active");
+        dashboardWrapper.style.display = 'block';
+
+        servicesWrapper.style.display = 'none';
+        servicesNav.classList.remove('active');
+
+        settingsWrapper.style.display = 'none';
+        settingsNav.classList.remove('active');
+
+        testLocallyToggleWrapper.style.display = 'none';
+
     }
 
     const raspberryPiFields = document.querySelectorAll('input.raspberry-pi-field');

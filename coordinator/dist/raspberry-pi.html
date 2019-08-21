@@ -618,6 +618,11 @@
                           Services
                         </a>
                       </li>
+                      <li class="nav-item">
+                        <a href="#!" class="nav-link" id="dashboard-nav">
+                          Dashboard
+                        </a>
+                      </li>
                     </ul>
                   </div>
 
@@ -639,6 +644,142 @@
 
               </div>
             </div>
+
+            <div class="row justify-content-center" id="dashboard-wrapper" style="display:none">
+              <div class="col-12">
+
+                <div class="card" id="drive-vehicle-modal">
+                  <div class="card-header">
+                    <div class="row align-items-center">
+                      <div class="col">
+
+                        <!-- Title -->
+                        <p class="card-header-title" >
+                          <b>Dataset ID:</b>
+                          <span id="driveVehicleHeaderDatasetId"></span>
+                        </p>
+                      </div>
+                      <div class="col-auto">
+
+                      </div>
+                    </div> <!-- / .row -->
+                  </div>
+                  <div class="card-body" style="padding-top: 1.5rem; padding-bottom: 0rem;">
+                    <div class="row">
+                      <div class="col">
+                        <div id="video-loader">
+                        </div>
+                      </div>
+                    </div>
+                    <div id='drive-metrics-header' class="row" style="display:none;">
+                      <div class="col-3"></div>
+                      <div class="col-3 text-center">
+                        Speed
+                      </div>
+                      <div class="col-3 text-center">
+                        Human
+                      </div>
+                      <div class="col-3"></div>
+                    </div>
+
+                    <div id='drive-metrics-graphics' class="row align-items-center" style="display:none; padding: 0.5rem">
+                      <div class="col-3"></div>
+                      <div class="col-3">
+                        <div class="progress progress-bar-vertical">
+                          <div id="driveSpeedBar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                          </div>
+                      </div>
+                      </div>
+                      <div class="chart-container col-3" style="position: relative; height:5vh; width:10vw">
+                        <canvas id="driveHumanAngleDonut" class="chart-canvas"></canvas>
+                      </div>
+                      <div class="col-3"></div>
+
+                    </div>
+                    <div id="drive-metrics-text" class="row" style="display:none;">
+                      <div class="col-3"></div>
+                      <div id="driveSpeedText" class="col-3 text-center">
+                      </div>
+                      <div id="driveHumanSteeringText" class="col-3 text-center">
+                      </div>
+                      <div class="col-3"></div>
+
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <div class="row justify-content-md-center">
+                      <div id="video-image-container" class="col-md-auto">
+                        <span id='recordingDotAndText' class="text-success" style="position: absolute;margin-right: 1em;margin-top: 1em;right: 1em;display: none;">● Recording</span>
+                      </div>
+                    </div>
+
+                    <div id="driveButtonsRow" style="display:none" class="row mt-3">
+
+                      <div id='driveRecordOnColumn' class="col-1">
+                        <span style="width:1em;" id="driveRecordOnButton">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-video">
+                            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                          </svg>
+                        </span>
+                      </div>
+
+                      <div id="driveRecordOffColumn" style="display:none;" class="col-1">
+                        <span style="width:1em" id="driveRecordOffButton">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-video-off">
+                            <path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                          </svg>
+                        </span>
+                      </div>
+
+                      <div class="col-1">
+                        <span style="width:1em" id="makeNewDatasetButton">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </span>
+                      </div>
+                      <div class="col-1">
+                        <span style="width:1em" id="resetDeviceOrientation">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-compass"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                        </span>
+                      </div>
+                      <div id="applyBrakeColumn" style="display:none;" class="col-1">
+                        <span style="width:1em;" id="applyBrakeButton">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#E53757" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather feather-octagon">
+                            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                            <text x="0.7em" dx="0.0em" stroke="#ffffff" y="1.8em" dy="0.5em" stroke-width="0.2" fill="#ffffff" style="font-size:0.4em; font-family:Arial" viewBox="0 0 24 24">
+                              STOP
+                            </text>
+                          </svg>
+                            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                          </svg>
+                        </span>
+                      </div>
+                      <div id="releaseBrakeColumn" style="display:inline;" class="col-1">
+                        <span style="width:1em;" id="releaseBrakeButton">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-power"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                        </span>
+                      </div>
+                      <div class="col text-right">
+                          <span class="text-muted">
+                            Show Cut Image:
+                          </span>
+                      </div>
+                      <div>
+                        <!-- Toggle -->
+                        <div class="custom-control custom-checkbox-toggle">
+                          <input type="checkbox" class="custom-control-input" id="drive-show-cut-image">
+                          <label class="custom-control-label" for="show-cut-image"></label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div> <!-- / .card -->
+
+
+              </div>
+            </div>
+
 
             <div class="row justify-content-center" id="services-wrapper" style="display:none">
               <div class="col-12">
