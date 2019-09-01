@@ -371,12 +371,14 @@ async function checkDashboardVideoReadiness(){
     const driveVehicleHeaderDatasetId = document.querySelector('span#driveVehicleHeaderDatasetId')
     driveVehicleHeaderDatasetId.textContent = datasetId;
     dashboardVideoWhileOffInterval = setInterval(async function(){
-
+        const videoSpinner = document.querySelector("div#video-loader");
+        const metricsHeader = document.querySelector('div#drive-metrics-header');
+        const metricsGraphics = document.querySelector('div#drive-metrics-graphics');
+        const metricsText = document.querySelector('div#drive-metrics-text');
         const isHealthy = await piServiceHealth({
             'host':serviceHost,
             'service':'video'
         });
-
         if(isHealthy == true){
             clearInterval(dashboardVideoWhileOffInterval);
             const videoImage = showLiveVideo({
@@ -384,11 +386,7 @@ async function checkDashboardVideoReadiness(){
                 'port':8091 // TODO: Don't hard code this port
             });
             videoImage.onload = function(){
-                const videoSpinner = document.querySelector("div#video-loader");
                 videoSpinner.style.display = 'none';
-                const metricsHeader = document.querySelector('div#drive-metrics-header');
-                const metricsGraphics = document.querySelector('div#drive-metrics-graphics');
-                const metricsText = document.querySelector('div#drive-metrics-text');
                 metricsHeader.style.display = 'flex';
                 metricsGraphics.style.display = 'flex';
                 metricsText.style.display = 'flex';
@@ -396,6 +394,14 @@ async function checkDashboardVideoReadiness(){
             }
         } else {
             // Turn spinner back on and hide the video content
+            console.log("Spinner should be on")
+            videoSpinner.style.display = 'flex';
+            metricsHeader.style.display = 'none';
+            metricsGraphics.style.display = 'none';
+            metricsText.style.display = 'none';
+            const driveButtonsRow = document.querySelector('div#driveButtonsRow');
+            driveButtonsRow.style.display = 'none';
+            removeVideoSafely();
         }
     }, 1000);
     // Check if device supports orientation (ie is a phone vs laptop)
