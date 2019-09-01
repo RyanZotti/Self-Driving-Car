@@ -113,6 +113,26 @@ function showVideo(){
     return videoImage
 }
 
+/*
+I use this function in the Pi page to pass host to
+the editor.py script so that I can run local tests
+similarly to how run tests on the real Pi. The
+original showVideo function doesn't accept a header
+parameter to contain the host
+*/
+function showLiveVideo(args){
+    const host = args.host
+    const port = args.port
+    removeVideoSafely();
+    const videoImageContainer = document.querySelector('div#video-image-container');
+    const videoImage = new Image();
+    const videoUrl = '/video?host='+host+'&port='+port;
+    videoImage.src = videoUrl;
+    videoImage.setAttribute("id","drive-mpeg-image");
+    videoImageContainer.appendChild(videoImage);
+    return videoImage
+}
+
 function removeVideoSafely(){
     if (document.contains(document.getElementById("drive-mpeg-image"))) {
         document.querySelector("#drive-mpeg-image").remove();

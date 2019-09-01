@@ -1270,14 +1270,16 @@ class VideoAPI(tornado.web.RequestHandler):
     @tornado.gen.coroutine
     def get(self):
 
+        host = self.get_argument("host")
+        port = int(self.get_argument("port"))
+
         ioloop = tornado.ioloop.IOLoop.current()
         self.set_header("Content-type", "multipart/x-mixed-replace;boundary=--boundarydonotcross")
 
         self.served_image_timestamp = time.time()
         my_boundary = "--boundarydonotcross"
 
-        # TODO: Remove this hardcoded URL
-        for frame in live_video_stream('ryanzotti.local',port=8091):
+        for frame in live_video_stream(host,port=port):
 
             interval = .1
             if self.served_image_timestamp + interval < time.time():

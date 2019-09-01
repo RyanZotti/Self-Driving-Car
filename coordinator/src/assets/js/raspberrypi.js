@@ -15,7 +15,7 @@ async function pairController(){
 
     // TODO: Remove hardcoded port
     const port = 8094;
-    const host = await getServiceHost();
+    const host = serviceHost;
     const apiInputJson = {
         'host':host,
         'port':port
@@ -309,19 +309,50 @@ function getDockerArgs(testLocally){
 }
 
 async function getServiceHost(){
-    const testLocally = document.getElementById("toggle-test-services-locally");
-    if (testLocally.checked == true){
-        return 'localhost';
-    } else{
-        if (piHostname.length == 0){
-            /*
-              Cache this value to avoid excessive Postgres lookups / load
-              when polling Pi service health checks
-            */
-            piHostname = await readPiField("hostname");
-            return piHostname;
+
+    /*
+    Check the DB if the "test locally" toggle is not visible,
+    since it might not yet have been updated from the DB since
+    the server started up
+    */
+    const testLocallyToggleWrapper = document.querySelector("#toggle-test-services-locally-wrapper");
+    if (testLocallyToggleWrapper.style.display == 'none'){
+        /*
+        Used to check if the "test locally" button is selected
+        in the DB. This function gets called when clicking the
+        "services nav" section and when checking for service
+        host elsewhere in the code and on pages where the toggle
+        isn't available
+        */
+        const readInput = JSON.stringify({
+            'web_page': 'raspberry pi',
+            'name': 'test locally',
+            'detail': 'test locally'
+        });
+        isLocalTest = await readToggle(readInput);
+        if (isLocalTest == true) {
+            serviceHost = 'localhost'
+            return serviceHost;
         } else {
-            return piHostname;
+            piHostname = await readPiField("hostname");
+            serviceHost = piHostname;
+            return serviceHost;
+        }
+    } else {
+        const testLocally = document.getElementById("toggle-test-services-locally");
+        if (testLocally.checked == true){
+            return 'localhost';
+        } else{
+            if (piHostname.length == 0){
+                /*
+                  Cache this value to avoid excessive Postgres lookups / load
+                  when polling Pi service health checks
+                */
+                piHostname = await readPiField("hostname");
+                return piHostname;
+            } else {
+                return piHostname;
+            }
         }
     }
 }
@@ -353,7 +384,10 @@ async function checkDashboardVideoReadiness(){
 
         if(isHealthy == true){
             clearInterval(dashboardVideoWhileOffInterval);
-            const videoImage = showVideo();
+            const videoImage = showLiveVideo({
+                'host':serviceHost,
+                'port':8091 // TODO: Don't hard code this port
+            });
             videoImage.onload = function(){
                 const videoSpinner = document.querySelector("div#video-loader");
                 videoSpinner.style.display = 'none';
@@ -378,7 +412,7 @@ async function checkDashboardVideoReadiness(){
 async function updateServiceHealth(service){
     const testLocally = document.getElementById("toggle-test-services-locally");
     const serviceToggle = document.querySelector("input#toggle-"+service);
-    const host = await getServiceHost();
+    const host = serviceHost;
     if (serviceToggle.checked == true){
         const isHealthy = await piServiceHealth({
             'host':host,
@@ -419,7 +453,7 @@ async function updateServiceHealth(service){
 }
 
 async function stopService(service){
-    const host = await getServiceHost();
+    const host = serviceHost;
     const input = JSON.stringify({
       'host': host,
       'service': service
@@ -433,7 +467,7 @@ async function stopService(service){
 
 async function osAgnosticPollServices(services){
     const testLocally = document.getElementById("toggle-test-services-locally");
-    const host = await getServiceHost();
+    const host = serviceHost;
     const dockerArgs = getDockerArgs(testLocally);
     if (testLocally.checked == true){
         pollServices({
@@ -657,6 +691,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     setEndpointText();
 
+    /*
+    The "test locally" toggle isn't available on all Pi tabs, but
+    I do use its boolean on all Pi tabs. I think it's more reliable
+    to get the DB-saved toggle state when the toggle is not
+    available than to try to read the state of a hidden object. Also
+    since the variable is global in scope, and since the I use it
+    in places where it needs to be checked frequently, like when
+    requesting live video, I don't want to block video updates on
+    DB checks for each frame, so I only update the global variable
+    periodically with this interval
+    */
+    const serviceHostInterval = setInterval(function(){
+        serviceHost = getServiceHost()
+    }, 500);
+
     // Update Raspberry Pi statues
     const piHealthCheckTime = setInterval(function(){
         updatePiConnectionStatuses()
@@ -703,8 +752,7 @@ document.addEventListener('DOMContentLoaded', function() {
       status is not healthy but service is turned on
     */
     const ps3ControllerWizardInterval = setInterval(async function(){
-        const host = await getServiceHost();
-        const isConnected = await getPS3ControllerHealth({'host':host});
+        const isConnected = await getPS3ControllerHealth({'host':serviceHost});
         if (isConnected == true){
             timelineWrapper.style.display = 'none';
         } else {
@@ -720,6 +768,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 var piHostname = '';
 var isWizardOn = false;
+
+/*
+This global variable is used to keep track of whether
+I have a unit test or not from any page, even if I'm
+not on the page that has the "test locally" button.
+This variable is used in lots of places, for example
+to tell editor.py whether to check for video from
+localhost or from the Pi. This variable also gets
+updated in an interval, so it should always be fairly
+up-to-date
+*/
+var serviceHost = '';
 
 /*
 It's possible that the video shown in the dashboard
