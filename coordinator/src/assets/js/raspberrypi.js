@@ -574,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
         clearInterval(resumeServicesTime);
 
         settingsNav.classList.add("active");
-        settingsWrapper.style.display = 'block';
+        settingsWrapper.style.display = 'flex';
 
         servicesWrapper.style.display = 'none';
         servicesNav.classList.remove('active');
@@ -636,7 +636,7 @@ document.addEventListener('DOMContentLoaded', function() {
             osAgnosticPollServices(services);
         }, 10000);
 
-        servicesWrapper.style.display = 'block';
+        servicesWrapper.style.display = 'flex';
         servicesNav.classList.add('active');
 
         settingsWrapper.style.display = 'none';
@@ -655,7 +655,7 @@ document.addEventListener('DOMContentLoaded', function() {
     dashboardNav.onclick = async function(){
 
         dashboardNav.classList.add("active");
-        dashboardWrapper.style.display = 'block';
+        dashboardWrapper.style.display = 'flex';
 
         servicesWrapper.style.display = 'none';
         servicesNav.classList.remove('active');
