@@ -308,7 +308,7 @@ function getDockerArgs(testLocally){
     }
 }
 
-async function getServiceHost(){
+async function setServiceHost(){
 
     /*
     Check the DB if the "test locally" toggle is not visible,
@@ -332,11 +332,9 @@ async function getServiceHost(){
         isLocalTest = await readToggle(readInput);
         if (isLocalTest == true) {
             serviceHost = 'localhost'
-            return serviceHost;
         } else {
             piHostname = await readPiField("hostname");
             serviceHost = piHostname;
-            return serviceHost;
         }
     } else {
         const testLocally = document.getElementById("toggle-test-services-locally");
@@ -703,7 +701,7 @@ document.addEventListener('DOMContentLoaded', function() {
     periodically with this interval
     */
     const serviceHostInterval = setInterval(function(){
-        serviceHost = getServiceHost()
+        setServiceHost()
     }, 500);
 
     // Update Raspberry Pi statues
