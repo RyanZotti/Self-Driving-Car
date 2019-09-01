@@ -372,13 +372,10 @@ async function checkDashboardVideoReadiness(){
     driveVehicleHeaderDatasetId.textContent = datasetId;
     dashboardVideoWhileOffInterval = setInterval(async function(){
 
-        /*
-        Remove this deprecated type of video health check
-        and replace it with the one that is also compatible
-        with the test / local video server
-        */
-        //const isHealthy = await videoHealthCheck();
-        isHealthy = true;
+        const isHealthy = await piServiceHealth({
+            'host':serviceHost,
+            'service':'video'
+        });
 
         if(isHealthy == true){
             clearInterval(dashboardVideoWhileOffInterval);
