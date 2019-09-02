@@ -390,17 +390,14 @@ async function checkDashboardVideoReadiness(){
                 metricsHeader.style.display = 'flex';
                 metricsGraphics.style.display = 'flex';
                 metricsText.style.display = 'flex';
-                showDriveButtonsRow();
+
             }
         } else {
             // Turn spinner back on and hide the video content
-            console.log("Spinner should be on")
             videoSpinner.style.display = 'flex';
             metricsHeader.style.display = 'none';
             metricsGraphics.style.display = 'none';
             metricsText.style.display = 'none';
-            const driveButtonsRow = document.querySelector('div#driveButtonsRow');
-            driveButtonsRow.style.display = 'none';
             removeVideoSafely();
         }
     }, 1000);
@@ -764,6 +761,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
     }, 5000);
+
+    configureSlider({
+        'sliderId':'model-constant-speed-slider',
+        'web_page':'raspberry pi',
+        'name':'model constant speed',
+        'type':'percent',
+        'min':0,
+        'max':100,
+        'step':5
+    });
+
+    const trackedToggles = document.querySelectorAll('input.tracked-toggle');
+    for (const toggle of trackedToggles){
+        configureToggle(toggle);
+    }
 
 }, false);
 
