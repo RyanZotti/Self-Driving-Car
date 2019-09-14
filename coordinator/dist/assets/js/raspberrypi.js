@@ -80,7 +80,7 @@ async function pairController(){
     var isInitializedComplete = false;
     while (isInitializedComplete != true){
         console.log(isInitializedComplete)
-        isInitializedComplete = await initializePS3Setup(
+        isInitializedComplete = await unregisterPs3Controllers(
             apiInputJson
         );
         await sleep(250);
@@ -314,7 +314,7 @@ function startSixAxisLoop(args) {
     });
 }
 
-function initializePS3Setup(args) {
+function unregisterPs3Controllers(args) {
     const host = args['host'];
     const port = args['port'];
     return new Promise(function(resolve, reject) {
@@ -871,6 +871,17 @@ document.addEventListener('DOMContentLoaded', function() {
             timelineWrapper.style.display = 'none';
         }
     }
+
+    /*
+    Sometimes I encounter issues getting the PS3 controller
+    bluetooth pairing to work. In those situations it can
+    be helpful to restart the pairing process, and I can't
+    think of a better way than to turn off the toggle
+    */
+    ps3ControllerServiceToggle.addEventListener(
+        'onclick',
+        unregisterPs3Controllers
+    );
 
     /*
       Show PS3 connect wizard while PS3 controller connection
