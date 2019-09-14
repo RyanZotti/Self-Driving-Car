@@ -23,90 +23,181 @@ async function pairController(){
 
     const timelineWrapper = document.querySelector('#controller-timeline-wrapper');
     const cableConnectedSection = document.querySelector('#controller-timeline-cable-connected');
-    const runCommandsSection = document.querySelector('#controller-timeline-run-commands');
+    const disconnectAndConnectSection = document.querySelector('#controller-timeline-disconnect-and-connect');
     const cableDisconnectedSection = document.querySelector('#controller-timeline-cable-disconnected');
     const connectBluetoothSection = document.querySelector('#controller-timeline-connect-bluetooth');
     const finalizeServiceSection = document.querySelector('#controller-timeline-finalize-service-connection');
 
-    cableConnectedSection.classList.add('latest');
+    const cableConnectedStatusText = cableConnectedSection.querySelector('div.timeline-date');
+    const disconnectAndConnectStatusText = disconnectAndConnectSection.querySelector('div.timeline-date');
+    const cableDisconnectedStatusText = cableDisconnectedSection.querySelector('div.timeline-date');
+    const connectBluetoothStatusText = connectBluetoothSection.querySelector('div.timeline-date');
+    const finalizeServiceStatusText = finalizeServiceSection.querySelector('div.timeline-date');
+
     cableConnectedSection.style.display = 'block';
-    runCommandsSection.style.display = 'none';
+    disconnectAndConnectSection.style.display = 'none';
     cableDisconnectedSection.style.display = 'none';
     connectBluetoothSection.style.display = 'none';
     finalizeServiceSection.style.display = 'none';
 
     /*
-      Make sure the user has connected the controller to
-      the Pi via the cable before starting the setup
-      commands
+    The instructions I've read online assume you're only using one
+    PS3 device. It assumes that when you type the "devices" command
+    you'll know which MAC address to copy because you'll only see
+    one PS3 controller. If you have multiple registered PS3
+    controllers, then you will have no way to tell which is which.
+    The physical PS3 does not have any label about its MAC address
+    so you couldn't figure it out even if you wanted to. So, what
+    should you do if you need multiple controllers, for example if
+    you're at a live event, and the battery of your first controller
+    dies and you need the second? Assume that you will need to go
+    through the registration process all over again with the second
+    controller, which means wiping all registered controllers from
+    the list of registered devices.
     */
-    var isConnected = false;
-    while(isConnected != true){
+
+    /*
+    I think wiping registered devices requires that the wire is
+    not connected
+
+    console.log('Checking that wire is not connected...')
+    var isConnected = await isControllerConnected(
+        apiInputJson
+    )
+    while(isConnected == true){
         isConnected = await isControllerConnected(
             apiInputJson
         )
-        await sleep(1000);
+        await sleep(250);
     }
+    console.log('Confirmed that wire is not connected.')
 
-    console.log('Cable connected!')
+    */
 
-    cableConnectedSection.classList.remove('latest');
-    runCommandsSection.classList.add('latest');
-    runCommandsSection.style.display = 'block';
+
+    // This wipes the registered devices
+    console.log('Wiping registered devices...')
+    var isInitializedComplete = false;
+    while (isInitializedComplete != true){
+        console.log(isInitializedComplete)
+        isInitializedComplete = await initializePS3Setup(
+            apiInputJson
+        );
+        await sleep(250);
+    }
+    console.log('Registered devices have been wiped.')
+
+    console.log('Making sure wired is connected before sudo sixpair...')
+    /*
+    Make sure the user has connected the controller to
+    the Pi via the cable before starting the setup
+    commands
+    */
+    var isConnected = await isControllerConnected(
+        apiInputJson
+    )
+    while(isConnected == false){
+        isConnected = await isControllerConnected(
+            apiInputJson
+        )
+        await sleep(250);
+    }
+    console.log('Wired is connected.')
+    console.log('Running sudo sixpair...')
+    var isSudoSixPairComplete = false;
+    while(isSudoSixPairComplete != true){
+        isSudoSixPairComplete = await runSudoSixPair(
+            apiInputJson
+        );
+        await sleep(2000);
+    }
+    console.log('Sudo sixpair complete.')
 
     /*
-      Run bluetoothctl commands like turning on the agent,
-      and trusting the MAC address
+    At this point the sudo sixpair command should have
+    run, which means that the device will appear to be
+    disconnected, even if it is still connected. To make
+    it look connected the user must disconnect and
+    reconnect
     */
+    console.log('Checking for reconnection...')
+    var isConnected = await isControllerConnected(
+        apiInputJson
+    )
+    while(isConnected == false){
+        isConnected = await isControllerConnected(
+            apiInputJson
+        )
+        await sleep(250);
+    }
+    console.log('Device reconnected.')
+    cableConnectedStatusText.textContent = 'Complete!'
+    disconnectAndConnectStatusText.textContent = 'Pending...'
+    cableConnectedSection.classList.add('complete');
+    disconnectAndConnectSection.style.display = 'block';
+
+    /*
+    Run bluetoothctl commands like turning on the agent,
+    and trusting the MAC address
+    */
+    console.log('Registering device...')
     var setupCommandsComplete = false;
     while(setupCommandsComplete != true){
         setupCommandsComplete = await runPS3SetupCommands(
             apiInputJson
         )
-        await sleep(2000);
+        await sleep(3000);
     }
+    console.log('Device registered')
 
-    console.log('Commands complete!')
-
-    runCommandsSection.classList.remove('latest');
-    cableDisconnectedSection.classList.add('latest');
+    disconnectAndConnectStatusText.textContent = 'Complete!'
+    cableDisconnectedStatusText.textContent = 'Pending...'
+    disconnectAndConnectSection.classList.add('complete');
     cableDisconnectedSection.style.display = 'block';
 
+    console.log('Checking that cable is disconnected before bluetooth test...')
     /*
-      Make sure the user unplugs the cable so that the
-      next test is valid. If the cable is still plugged
-      in when the user tests commands, it will look like
-      the bluetooth connectivity is working even if it
-      isn't
+    Make sure the user unplugs the cable so that the
+    next test is valid. If the cable is still plugged
+    in when the user tests commands, it will look like
+    the bluetooth connectivity is working even if it
+    isn't
     */
+    var isConnected = await isControllerConnected(
+        apiInputJson
+    )
     while(isConnected != false){
         isConnected = await isControllerConnected(
             apiInputJson
         )
-        await sleep(1000);
+        await sleep(250 );
     }
+    console.log('Disonnected.')
 
-    console.log('Cable disconnected!')
-
-    cableDisconnectedSection.classList.remove('latest');
-    connectBluetoothSection.classList.add('latest');
+    cableDisconnectedStatusText.textContent = 'Complete!'
+    connectBluetoothStatusText.textContent = 'Pending...'
+    cableDisconnectedSection.classList.add('complete');
     connectBluetoothSection.style.display = 'block';
 
     /*
-      Assume that the user has hit the PS3 button on the
-      controller and hasn't just plugged the cable back in
+    Assume that the user has hit the PS3 button on the
+    controller and hasn't just plugged the cable back in
     */
+    console.log('Checking bluetooth connection...')
+    var isConnected = await isControllerConnected(
+        apiInputJson
+    )
     while(isConnected != true){
         isConnected = await isControllerConnected(
             apiInputJson
         )
-        await sleep(1000);
+        await sleep(250);
     }
+    console.log('Bluetooth connected')
 
-    console.log('Bluetooth connected!')
-
-    connectBluetoothSection.classList.remove('latest');
-    finalizeServiceSection.classList.add('latest');
+    connectBluetoothStatusText.textContent = 'Complete!'
+    finalizeServiceStatusText.textContent = 'Pending...'
+    connectBluetoothSection.classList.add('complete');
     finalizeServiceSection.style.display = 'block';
 
     var isServiceComplete = false;
@@ -114,10 +205,11 @@ async function pairController(){
         isServiceComplete = await startSixAxisLoop(
             apiInputJson
         );
+        await sleep(1000);
     }
 
-    console.log('Service on!')
-
+    connectBluetoothStatusText.textContent = 'Complete!'
+    finalizeServiceSection.classList.add('complete');
     timelineWrapper.style.display = 'none';
     isWizardOn = false;
 }
@@ -130,14 +222,6 @@ function isControllerConnected(args){
     though it might not show up if it has been plugged in for
     awhile without being used. In this case you just need to
     unplug it and plug it in again.
-
-    The caller of this function first checks for a connection,
-    which is assumed to be wired. If the connection exists, then
-    some registration commands are run. Then the caller checks
-    that the user has disconnected. Then the caller checks that
-    the connection exists after the user has hit the PS button,
-    so effectively this function will get called at least three
-    times during the pairing workflow
     */
 
     const host = args['host'];
@@ -162,6 +246,37 @@ function isControllerConnected(args){
     });
 }
 
+function runSudoSixPair(args){
+    /*
+    This runs the first PS3 step, calling `sudo sixpair`. It
+    has the annoying side effect of making it appear as though
+    the user has unplugged the controller, but this annoying
+    behavior is expected, according to the official docus:
+    https://pythonhosted.org/triangula/sixaxis.html. Anyways,
+    The user will need to reconnect after this step is run
+    */
+    const host = args['host'];
+    const port = args['port'];
+    return new Promise(function(resolve, reject) {
+        const input = JSON.stringify({
+            'host': host,
+            'port': port
+        });
+        $.ajax({
+            method: 'POST',
+            url: '/sudo-sixpair',
+            timeout: 3000,
+            data: input,
+            success: function(response) {
+                resolve(response['is_success']);
+            },
+            error: function(){
+                resolve(false);
+            }
+        });
+    });
+}
+
 function runPS3SetupCommands(args) {
     /*
     This bundles the commands used to start the Bluetooth
@@ -176,8 +291,7 @@ function runPS3SetupCommands(args) {
           'port': port
         });
         $.post('/run-ps3-setup-commands', input, function(output){
-            console.log(output)
-            resolve(output['is_complete']);
+            resolve(output['is_success']);
         });
     });
 }
@@ -196,6 +310,20 @@ function startSixAxisLoop(args) {
         });
         $.post('/start-sixaxis-loop', input, function(output){
             resolve(output['is_healthy']);
+        });
+    });
+}
+
+function initializePS3Setup(args) {
+    const host = args['host'];
+    const port = args['port'];
+    return new Promise(function(resolve, reject) {
+        const input = JSON.stringify({
+            'host': host,
+            'port': port
+        });
+        $.post('/initialize-ps3-setup', input, function(output){
+            resolve(output['is_success']);
         });
     });
 }
@@ -390,7 +518,6 @@ async function checkDashboardVideoReadiness(){
                 metricsHeader.style.display = 'flex';
                 metricsGraphics.style.display = 'flex';
                 metricsText.style.display = 'flex';
-
             }
         } else {
             // Turn spinner back on and hide the video content

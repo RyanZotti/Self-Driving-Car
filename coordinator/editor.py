@@ -1305,6 +1305,201 @@ class VideoAPI(tornado.web.RequestHandler):
 
 
 
+class PS3ControllerSixAxisStart(tornado.web.RequestHandler):
+
+    """
+    Start the SixAxis module so that commands from the controller
+    can be relayed to the car
+    """
+
+    executor = ThreadPoolExecutor(3)
+
+    @tornado.concurrent.run_on_executor
+    def start_sixaxis_loop(self, json_input):
+        host = json_input['host']
+        port = json_input['port']
+        try:
+            seconds = 0.5
+            endpoint = 'http://{host}:{port}/start-sixaxis-loop'.format(
+                host=host,
+                port=port
+            )
+            response = requests.post(
+                endpoint,
+                timeout=seconds
+            )
+            result = json.loads(response.text)
+            return result
+        except:
+            return {'is_healthy': False}
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = {}
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.start_sixaxis_loop(json_input=json_input)
+        self.write(result)
+
+
+class IsPS3ControllerConnected(tornado.web.RequestHandler):
+
+    """
+    This says if js0 is available at /dev/input. If true, it
+    means that the controller is either connected using the
+    cable or Bluetooth. It should not be confused with the
+    controller health check, which checks if the SixAxis
+    module is able to connect. I'm keeping them separate to
+    make it easier to find the root cause of the problem if
+    a problem arises
+    """
+
+    executor = ThreadPoolExecutor(3)
+
+    @tornado.concurrent.run_on_executor
+    def is_connected(self, json_input):
+        host = json_input['host']
+        port = json_input['port']
+        try:
+            seconds = 0.5
+            endpoint = 'http://{host}:{port}/is-connected'.format(
+                host=host,
+                port=port
+            )
+            response = requests.post(
+                endpoint,
+                timeout=seconds
+            )
+            result = json.loads(response.text)
+            return result
+        except:
+            return {'is_connected': False}
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = {}
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.is_connected(json_input=json_input)
+        self.write(result)
+
+
+class InitiaizePS3Setup(tornado.web.RequestHandler):
+
+    """
+    This class removes all PS3 controllers from the list of devices
+    that you see in the bluetoothctl console when you type `devices`
+
+    The instructions I've read online assume you're only using one
+    PS3 device. It assumes that when you type the "devices" command
+    you'll know which MAC address to copy because you'll only see
+    one PS3 controller. If you have multiple registered PS3
+    controllers, then you will have no way to tell which is which.
+    The physical PS3 does not have any label about its MAC address
+    so you couldn't figure it out even if you wanted to. So, what
+    should you do if you need multiple controllers, for example if
+    you're at a live event, and the battery of your first controller
+    dies and you need the second? Assume that you will need to go
+    through the registration process all over again with the second
+    controller, which means wiping all registered controllers from
+    the list of registered devices. That is what this class does.
+    """
+
+    executor = ThreadPoolExecutor(10)
+
+    @tornado.concurrent.run_on_executor
+    def run(self, json_input):
+        host = json_input['host']
+        port = json_input['port']
+        try:
+            seconds = 3.0
+            endpoint = 'http://{host}:{port}/is-ps3-connected'.format(
+                host=host,
+                port=port
+            )
+            _ = requests.post(
+                endpoint,
+                timeout=seconds,
+                data = json.dumps(json_input)
+            )
+        except:
+            return {'is_success': False}
+        return {'is_success': True}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.run(json_input=json_input)
+        self.write(result)
+
+
+class PS3SudoSixPair(tornado.web.RequestHandler):
+
+    """
+    This runs the first PS3 step, calling `sudo sixpair`. It
+    has the annoying side effect of making it appear as though
+    the user has unplugged the controller, but this annoying
+    behavior is expected, according to the official docus:
+    https://pythonhosted.org/triangula/sixaxis.html. Anyways,
+    The user will need to reconnect after this step is run
+    """
+
+    executor = ThreadPoolExecutor(3)
+
+    @tornado.concurrent.run_on_executor
+    def run_sudo_sixpair(self, json_input):
+        host = json_input['host']
+        port = json_input['port']
+        try:
+            seconds = 1.0
+            endpoint = 'http://{host}:{port}/sudo-sixpair'.format(
+                host=host,
+                port=port
+            )
+            _ = requests.post(
+                endpoint,
+                timeout=seconds
+            )
+            return {'is_success':True}
+        except:
+            return {'is_success':False}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.run_sudo_sixpair(json_input=json_input)
+        self.write(result)
+
+
+class RunPS3Setup(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(10)
+
+    @tornado.concurrent.run_on_executor
+    def run_setup(self, json_input):
+        host = json_input['host']
+        port = json_input['port']
+        try:
+            seconds = 5
+            endpoint = 'http://{host}:{port}/run-setup-commands'.format(
+                host=host,
+                port=port
+            )
+            response = requests.post(
+                endpoint,
+                timeout=seconds
+            )
+            _ = json.loads(response.text)
+            return {'is_success':True}
+        except:
+            return {'is_success': False}
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = {}
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.run_setup(json_input=json_input)
+        self.write(result)
+
+
 class StopService(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(10)
@@ -1542,6 +1737,50 @@ class PiHealthCheck(tornado.web.RequestHandler):
     def post(self):
         result = yield self.health_check()
         self.write(result)
+
+
+class PS3ControllerHealth(tornado.web.RequestHandler):
+
+    """
+    This should not be confused with the health of the
+    PS3 controller service. This checks if the SixAxis
+    (custom PS3 module) is able to connect to the
+    controller. The PS3 controller service might be up
+    and healthy, but it might not be connected to the
+    controller. This will always be true the before you
+    have paired the controller with the service
+    """
+
+    # Need lots of threads because there are many services
+    executor = ThreadPoolExecutor(3)
+
+    @tornado.concurrent.run_on_executor
+    def health_check(self,json_input):
+        host = json_input['host']
+        # TODO: Remove this hardcoded port
+        port = 8094
+
+        try:
+            seconds = 0.5
+            endpoint = 'http://{host}:{port}/ps3-health'.format(
+                host=host,
+                port=port
+            )
+            response = requests.get(
+                endpoint,
+                timeout=seconds
+            )
+            result = json.loads(response.text)
+            return result
+        except:
+            return {'is_healthy': False}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.health_check(json_input=json_input)
+        self.write(result)
+
 
 class PiServiceHealth(tornado.web.RequestHandler):
 
@@ -1966,7 +2205,13 @@ def make_app():
         (r"/start-car-service", StartCarService),
         (r"/vehicle-memory", Memory),
         (r"/pi-service-health", PiServiceHealth),
-        (r"/stop-service", StopService)
+        (r"/stop-service", StopService),
+        (r"/initialize-ps3-setup", InitiaizePS3Setup),
+        (r"/run-ps3-setup-commands", RunPS3Setup),
+        (r"/ps3-controller-health", PS3ControllerHealth),
+        (r"/start-sixaxis-loop", PS3ControllerSixAxisStart),
+        (r"/is-ps3-connected", IsPS3ControllerConnected),
+        (r"/sudo-sixpair", PS3SudoSixPair),
     ]
     return tornado.web.Application(handlers)
 

@@ -1,6 +1,7 @@
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 import pexpect
+import re
 import subprocess
 from threading import Thread
 import time
@@ -10,188 +11,159 @@ import tornado.concurrent
 import traceback
 from triangula.input import SixAxis, SixAxisResource
 
-
-class BluetoothctlError(Exception):
-    """This exception is raised when bluetoothctl fails to start."""
-    pass
+"""
+Docs for understanding the pexpect module:
+https://pexpect.readthedocs.io/en/stable/overview.html
+"""
 
 
 class Bluetoothctl:
-    """
-    A wrapper for bluetoothctl utility.
-    Got this code from here: https://gist.github.com/egorf/66d88056a9d703928f93
-    """
 
     def __init__(self):
-        self.child = pexpect.spawn("bluetoothctl", echo = False)
+        self.child = pexpect.spawn('bluetoothctl')
+        """
+        For some reason starting bluetoothctl in pexpect returns
+        the text 'Waiting to connect to bluetoothd...', but you
+        don't get that when you type that manually.
+        """
 
-    def get_output(self, command, pause = 0):
-        """Run a command in bluetoothctl prompt, return output as a list of lines."""
-        self.child.send(command + "\n")
-        time.sleep(pause)
-        start_failed = self.child.expect(["bluetooth", pexpect.EOF])
+    def match_everything(self):
+        """
+        I have no idea why I can't just run '.*', but I tested
+        '.' and then '.*' and I always had to use both to match
+        all stdout. Note that this will fail if there is no
+        stdout.
 
-        if start_failed:
-            raise BluetoothctlError("Bluetoothctl failed after running " + command)
-
-        return self.child.before.split("\r\n")
-
-    def start_scan(self):
-        """Start bluetooth scanning process."""
+        Timeout of 0 means return whatever I have now, and
+        if nothing exists then fail immediately. I assume
+        that if I actually care about waiting for additional
+        stdout to accumulate that I perform the wait outside
+        of this function.
+        """
         try:
-            out = self.get_output("scan on")
+            self.child.expect('.', timeout=0.0)
+            self.child.expect('.*', timeout=0.0)
         except:
-            traceback.print_exc()
-            return None
+            pass
 
-    def make_discoverable(self):
-        """Make device discoverable."""
-        try:
-            out = self.get_output("discoverable on")
-        except:
-            traceback.print_exc()
-            return None
+    def run(self, command, wait_seconds=0.2):
+        """
+        Run a command and return the output.
 
-    def parse_device_info(self, info_string):
-        """Parse a string corresponding to a device."""
-        device = {}
-        block_list = ["[\x1b[0;", "removed"]
-        string_valid = not any(keyword in info_string for keyword in block_list)
+        When you send a command to pexpect and then "expect" a
+        specific regex result, you can access the stdout before
+        and after the regex match using the "before" and "after"
+        property of the child process. Unfortunately this seems
+        to be the only way to get stdout from pexpect. It would
+        be great if you could get it from child.stdout, but that
+        doesn't seem to exist. All of the examples I saw on
+        Stack Overflow used the before and after property to get
+        stdout. This means you have to write some hacky code even
+        if all you want to do is run a command to see its output.
+        That's why I wrote this function -- to make it easy to
+        get output and to document how my hack works.
 
-        if string_valid:
-            try:
-                device_position = info_string.index("Device")
-            except ValueError:
-                pass
-            else:
-                if device_position > -1:
-                    attribute_list = info_string[device_position:].split(" ", 2)
-                    device = {
-                        "mac_address": attribute_list[1],
-                        "name": attribute_list[2]
-                    }
+        Parameters
+        ----------
+        command : string
+            The command you want to run
 
-        return device
+        Returns
+        ----------
+        stdout : list<string>
+            The results of your command
+        """
 
-    def get_available_devices(self):
-        """Return a list of tuples of paired and discoverable devices."""
-        try:
-            out = self.get_output("devices")
-        except:
-            traceback.print_exc()
-            return None
-        else:
-            available_devices = []
-            for line in out:
-                device = self.parse_device_info(line)
-                if device:
-                    available_devices.append(device)
+        """
+        One important thing to note about pexpect is that it seems
+        to keep all stdout that occurred after the most recent last
+        match. So if a bunch of previous commands' stdout contain
+        "bluetooth" and you didn't bother to run pexpect.match([...]),
+        you'll match on the first occurrence, even if that's long
+        before you issued the command you care about. This can
+        happen if you run commands outside of self.run() or if you
+        have timeouts or other errors that add stdout clutter. So
+        when I care about the output I clear out all previous
+        stdout by matching on everything before I run the command of
+        interest. And I have no idea why, but I need to run "."
+        before I can run ".*", but I tested it repeatedly and that
+        was how I had to do it to clear about the old stdout.
 
-            return available_devices
+        My match_everything() function discards the first space, so
+        I send a blank command, which does nothing, to ensure that
+        I don't lose any of the characters from the command I
+        actually care about. Also, if you're debugging this class
+        manually it makes the printed stdout look clean.
+        """
+        self.match_everything()
+        self.child.sendline('')
 
-    def get_paired_devices(self):
-        """Return a list of tuples of paired devices."""
-        try:
-            out = self.get_output("paired-devices")
-        except:
-            traceback.print_exc()
-            return None
-        else:
-            paired_devices = []
-            for line in out:
-                device = self.parse_device_info(line)
-                if device:
-                    paired_devices.append(device)
+        # Run the command
+        self.child.sendline(command)
+        """
+        Normally in files newlines are represented as \n, but for
+        some complicated historical reasons that have to do with how
+        the linux command line works, prompt-based new lines are
+        represented as \r\n. The pexpect docs talk about this a bit,
+        but I don't have the exact link at the moment.
 
-            return paired_devices
+        This is regex text that optionally checks for the blue colored
+        text of the bluetoothctl command prompt.
+        - Text: \x1b[0m
+          Meaning: Reset all color attributes
+        - Text: \x1b[0;94m
+          Meaning: the color blue
 
-    def get_discoverable_devices(self):
-        """Filter paired devices out of available."""
-        available = self.get_available_devices()
-        paired = self.get_paired_devices()
+        See these sources for more details on color codes:
+        - http://jafrog.com/2013/11/23/colors-in-terminal.html
+        - https://bixense.com/clicolors/
 
-        return [d for d in available if d not in paired]
+        See this source for an explanation of regex:
+        - https://regex101.com/
+        """
+        if wait_seconds > 0:
+            time.sleep(wait_seconds)
+        self.match_everything()
+        stdout = self.child.after
+        print(stdout)
+        """
+        Sometimes pexpect's child won't return a string but a timeout
+        class, so I need to check stdout type before trying to
+        perform a split
+        """
+        if isinstance(stdout, str):
+            return stdout.split("\r\n")
+        return stdout
 
-    def get_device_info(self, mac_address):
-        """Get device info by mac address."""
-        try:
-            out = self.get_output("info " + mac_address)
-        except:
-            traceback.print_exc()
-            return None
-        else:
-            return out
+    def get_all_ps3_mac_addresses(self):
+        devices_stdout_list = self.run('devices')
+        devices_stdout_str = ' '.join(devices_stdout_list)
+        mac_addresses = re.findall(
+            '(?<=Device[\s]).{17}(?=[\s]PLAYSTATION)',
+            devices_stdout_str
+        )
+        return mac_addresses
 
-    def register(self, mac_address):
-        """Try to pair with a device by mac address."""
-        try:
-            out = subprocess.check_output("sudo ./sixpair", shell=True)
-            out = self.get_output("agent on")
-            result_0 = self.child.expect(["Agent registered", pexpect.EOF])
-            out = self.get_output("trust " + mac_address)
-            result_1 = self.child.expect(["trust succeeded", pexpect.EOF])
-        except:
-            traceback.print_exc()
-            return None
-        else:
-            # Checks the result against the position of expected items
-            # The we care about is in position 0
-            success = True if result_1 == 0 else False
-            return success
+    def remove_all_ps3_controllers(self):
+        mac_addresses = self.get_all_ps3_mac_addresses()
+        for mac_address in mac_addresses:
+            self.run('remove {mac_address}'.format(
+                mac_address=mac_address)
+            )
 
-    def remove(self, mac_address):
-        """Remove paired device by mac address, return success of the operation."""
-        try:
-            out = self.get_output("remove " + mac_address, 3)
-        except:
-            traceback.print_exc()
-            return None
-        else:
-            res = self.child.expect(["not available", "Device has been removed", pexpect.EOF])
-            success = True if res == 1 else False
-            return success
-
-    def connect(self, mac_address):
-        """Try to connect to a device by mac address."""
-        try:
-            out = self.get_output("connect " + mac_address, 2)
-        except:
-            traceback.print_exc()
-            return None
-        else:
-            res = self.child.expect(["Failed to connect", "Connection successful", pexpect.EOF])
-            success = True if res == 1 else False
-            return success
-
-    def disconnect(self, mac_address):
-        """Try to disconnect to a device by mac address."""
-        try:
-            out = self.get_output("disconnect " + mac_address, 2)
-        except:
-            traceback.print_exc()
-            return None
-        else:
-            res = self.child.expect(["Failed to disconnect", "Successful disconnected", pexpect.EOF])
-            success = True if res == 1 else False
-            return success
-
-    def is_wired(self):
-        devices = self.get_discoverable_devices()
-        is_discovered = False
-        for device in devices:
-            if 'playstation' in device['name'].lower():
-                is_discovered = True
-                break
-        return is_discovered
-
-    def get_playstation_mac_address(self):
-        devices = self.get_discoverable_devices()
-        mac_address = None
-        for device in devices:
-            if 'playstation' in device['name'].lower():
-                mac_address = device['mac_address']
-                break
-        return mac_address
+    def register_ps3_device(self):
+        mac_addresses = self.get_all_ps3_mac_addresses()
+        """
+        I assume that you will only ever see one PS3 controller
+        MAC address because on server startup I run
+        remove_all_ps3_controllers() to ensure there aren't any
+        mix-ups.
+        """
+        mac_address = mac_addresses[0]
+        _ = self.run('agent on')
+        _ = self.run('trust {mac_address}'.format(
+            mac_address=mac_address
+        ))
 
 class RunSetupCommands(tornado.web.RequestHandler):
 
@@ -199,9 +171,8 @@ class RunSetupCommands(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def run_commands(self):
-        mac_address = self.application.bluetoothctl.get_playstation_mac_address()
-        is_complete = self.application.bluetoothctl.register(mac_address=mac_address)
-        return {'is_complete':is_complete}
+        self.application.bluetoothctl.register_ps3_device()
+        return {}
 
     @tornado.gen.coroutine
     def post(self):
@@ -308,10 +279,59 @@ class PS3Health(tornado.web.RequestHandler):
         result = yield self.is_healthy()
         self.write(result)
 
+
+class RemoveAllPS3Controllers(tornado.web.RequestHandler):
+    """
+    This class removes all PS3 controllers from the list of devices
+    that you see in the bluetoothctl console when you type `devices`
+
+    The instructions I've read online assume you're only using one
+    PS3 device. It assumes that when you type the "devices" command
+    you'll know which MAC address to copy because you'll only see
+    one PS3 controller. If you have multiple registered PS3
+    controllers, then you will have no way to tell which is which.
+    The physical PS3 does not have any label about its MAC address
+    so you couldn't figure it out even if you wanted to. So, what
+    should you do if you need multiple controllers, for example if
+    you're at a live event, and the battery of your first controller
+    dies and you need the second? Assume that you will need to go
+    through the registration process all over again with the second
+    controller, which means wiping all registered controllers from
+    the list of registered devices. That is what this class does.
+    """
+    executor = ThreadPoolExecutor(5)
+    @tornado.concurrent.run_on_executor
+    def remove_all_ps3_controllers(self):
+        self.application.bluetoothctl.remove_all_ps3_controllers()
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.remove_all_ps3_controllers()
+        self.write(result)
+
+class SudoSixpair(tornado.web.RequestHandler):
+    """
+    Runs `sudo ./sixpair`. This will clear js0 from
+    /dev/input, which will make it look like the
+    controller has disconnected. The only way to get
+    it to show up again is to reconnect it with the
+    wire afterwards
+    """
+    executor = ThreadPoolExecutor(5)
+    @tornado.concurrent.run_on_executor
+    def sudo_sixpair(self):
+        subprocess.check_output("sudo ./sixpair", shell=True)
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = yield self.sudo_sixpair()
+        self.write(result)
+
 class PS3Controller():
 
     def __init__(self):
-        self.bluetoothctl = Bluetoothctl()
         self.angle = 0.0
         self.throttle = 0.0
         self.is_loop_on = False
@@ -342,7 +362,10 @@ def make_app():
         (r"/ps3-health", PS3Health),
         (r"/run-setup-commands", RunSetupCommands),
         (r"/is-connected", IsConnected),
-        (r"/start-sixaxis-loop", StartSixAxisLoop)
+        (r"/sudo-sixpair", SudoSixpair),
+        (r"/start-sixaxis-loop", StartSixAxisLoop),
+        (r"/remove-all-ps3-controllers", RemoveAllPS3Controllers),
+
     ]
     return tornado.web.Application(handlers)
 
