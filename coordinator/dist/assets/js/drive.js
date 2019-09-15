@@ -122,14 +122,13 @@ async function pollVehicleAndUpdateUI(){
     updateDonut(donuts.drive,steering);
     const steeringText = document.querySelector("div#driveHumanSteeringText");
     steeringText.textContent = (steering * 100).toFixed(0) + '%';
-    // isDriveModalOpen gets toggled on/off when modal is opened/closed
-    if (isDriveModalOpen == true) {
+
+    // Show the video when viewing the dashboard
+    const dashboardWrapper = document.querySelector("#dashboard-wrapper");
+    if (dashboardWrapper.style.display != 'none') {
         pollVehicleAndUpdateUI();
     }
 }
-
-// Used to check if vehicle state should be polled
-var isDriveModalOpen = false;
 
 /*
 This will no longer be necessary once I move drive.js to Pi page
