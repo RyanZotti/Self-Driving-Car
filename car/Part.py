@@ -197,8 +197,17 @@ class Part:
             A generic list of args, if any
         """
         try:
-            self._call(*args)
-            pass
+            output = self._call(*args)
+            """
+            It's not possible to return self.output because not all
+            parts have an output, and trying to retrieve that field
+            when it isn't defined will lead to an error. If a part
+            has an output, the part will set it in self._call(),
+            which will still be able to return None when a part has
+            no output, since all Python functions return None by
+            default.
+            """
+            return output
         except:
             if self.is_verbose:
                 traceback.print_exc()
