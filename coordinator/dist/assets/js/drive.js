@@ -91,10 +91,12 @@ function captureDeviceOrientation(event) {
     }
 }
 
-function getMemory(){
+function getMemory(args){
+    const host = args['host'];
+    const port = args['port'];
     data = JSON.stringify({
-        'port': 8095,
-        'host':'localhost'
+        'port': port,
+        'host': host
     });
     return new Promise(function(resolve, reject){
         const jsonData = JSON.stringify(data);
@@ -105,7 +107,11 @@ function getMemory(){
 }
 
 async function pollVehicleAndUpdateUI(){
-    const result = await getMemory();
+    apiInput = {
+        'host' : serviceHost,
+        'port' : 8095 // Don't hardcode this port
+    }
+    const result = await getMemory(apiInput);
     // Set speed
     const speed = result['user_input/throttle'];
     adjustSpeedBar('driveSpeedBar',speed);
