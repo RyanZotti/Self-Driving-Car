@@ -9,7 +9,7 @@ import tornado.ioloop
 import tornado.web
 import tornado.concurrent
 import traceback
-from triangula.input import SixAxis, SixAxisResource
+from triangula_fork import SixAxis, SixAxisResource
 
 """
 Docs for understanding the pexpect module:

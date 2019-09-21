@@ -13,9 +13,8 @@ RUN gcc -o sixpair sixpair.c -lusb
 
 # The triangula package requires python2.7
 RUN apt install -y python2.7 python-pip
-RUN pip install triangula
 
-# Fixes triangula error: "NameError: name 'BTN' is not defined"
+# Fixes error: "NameError: name 'BTN' is not defined"
 # https://github.com/gvalkov/python-evdev/issues/43#issuecomment-221976730
 RUN pip install evdev==0.6.0
 
