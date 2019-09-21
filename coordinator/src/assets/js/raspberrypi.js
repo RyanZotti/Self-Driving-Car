@@ -56,25 +56,6 @@ async function pairController(){
     the list of registered devices.
     */
 
-    /*
-    I think wiping registered devices requires that the wire is
-    not connected
-
-    console.log('Checking that wire is not connected...')
-    var isConnected = await isControllerConnected(
-        apiInputJson
-    )
-    while(isConnected == true){
-        isConnected = await isControllerConnected(
-            apiInputJson
-        )
-        await sleep(250);
-    }
-    console.log('Confirmed that wire is not connected.')
-
-    */
-
-
     // This wipes the registered devices
     console.log('Wiping registered devices...')
     var isInitializedComplete = false;
@@ -113,6 +94,11 @@ async function pairController(){
     }
     console.log('Sudo sixpair complete.')
 
+    cableConnectedStatusText.textContent = 'Complete!'
+    disconnectAndConnectStatusText.textContent = 'Pending...'
+    cableConnectedSection.classList.add('complete');
+    disconnectAndConnectSection.style.display = 'block';
+
     /*
     At this point the sudo sixpair command should have
     run, which means that the device will appear to be
@@ -131,10 +117,6 @@ async function pairController(){
         await sleep(250);
     }
     console.log('Device reconnected.')
-    cableConnectedStatusText.textContent = 'Complete!'
-    disconnectAndConnectStatusText.textContent = 'Pending...'
-    cableConnectedSection.classList.add('complete');
-    disconnectAndConnectSection.style.display = 'block';
 
     /*
     Run bluetoothctl commands like turning on the agent,
