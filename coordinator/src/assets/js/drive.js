@@ -107,18 +107,42 @@ function getMemory(args){
 }
 
 async function pollVehicleAndUpdateUI(){
-    apiInput = {
+
+    const userEngineToggle = document.querySelector("input#engine-toggle");
+    const modelToggle = document.querySelector("input#model-toggle");
+    const constantSpeed = document.querySelector("input#model-constant-speed-slider");
+
+    function getDriverType(modelToggle){
+        if (constantSpeed.checked){
+            return 'model'
+        } else {
+            return 'user'
+        }
+    }
+
+    // The /update-drive-state API can be async. The result doesn't matter
+    userInputArgs = {
+        'host' : serviceHost,
+        'port' : 8884, // Don't hardcode this port
+        'dashboard/brake' : !userEngineToggle.checked,
+        'dashboard/model_constant_throttle' : constantSpeed.getAttribute("value"),
+        'dashboard/driver_type' : getDriverType(modelToggle)
+    }
+    $.post('/update-drive-state', JSON.stringify(userInputArgs));
+
+    memoryArgs = {
         'host' : serviceHost,
         'port' : 8095 // Don't hardcode this port
     }
-    const result = await getMemory(apiInput);
+    const result = await getMemory(memoryArgs);
+
     // Set speed
-    const speed = result['user_input/throttle'];
+    const speed = result['ps3_controller/throttle'];
     adjustSpeedBar('driveSpeedBar',speed);
     const speedText = document.querySelector("div#driveSpeedText");
     speedText.textContent = (speed * 100).toFixed(0) + '%';
     // Set steering
-    const steering = result['user_input/angle'];
+    const steering = result['ps3_controller/angle'];
     updateDonut(donuts.drive,steering);
     const steeringText = document.querySelector("div#driveHumanSteeringText");
     steeringText.textContent = (steering * 100).toFixed(0) + '%';

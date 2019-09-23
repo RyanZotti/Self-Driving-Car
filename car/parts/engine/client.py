@@ -64,7 +64,8 @@ class Client(Part):
             """
             emergency_inputs = {
                 'vehicle/brake':True,
-                'user_input/brake':True
+                'ps3_controller/brake':True,
+                'dashboard/brake': True
             }
             _ = requests.post(
                 self.endpoint,

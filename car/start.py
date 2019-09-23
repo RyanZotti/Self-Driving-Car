@@ -65,8 +65,9 @@ cfg = load_config()
 
 # Assign default states
 memory = Memory()
-memory.put(['user_input/brake'], True)
-memory.put(['user_input/driver_type'], 'user')
+memory.put(['ps3_controller/brake'], True)
+memory.put(['dashboard/brake'], False)
+memory.put(['dashboard/driver_type'], 'user')
 memory.put(['vehicle/brake'], True)
 
 # Initialize the car
@@ -91,10 +92,9 @@ car.add(camera)
 user_input = UserInput(
     name='user-input',
     output_names=[
-        'user_input/brake',
-        'user_input/driver_type',
-        'user_input/max_throttle',
-        'user_input/recording'
+        'dashboard/brake',
+        'dashboard/driver_type',
+        'dashboard/model_constant_throttle'
     ],
     is_localhost=is_localhost,
     is_verbose=args['verbose-user-input']
@@ -105,15 +105,16 @@ car.add(user_input)
 engine = Engine(
     name='engine',
     input_names=[
+        'dashboard/brake',
+        'dashboard/driver_type',
+        'dashboard/model_constant_throttle'
         'local_model/angle',
         'local_model/throttle',
+        'ps3_controller/angle',
+        'ps3_controller/brake',
+        'ps3_controller/throttle',
         'remote_model/angle',
         'remote_model/throttle',
-        'user_input/angle',
-        'user_input/brake',
-        'user_input/driver_type',
-        'user_input/max_throttle'
-        'user_input/throttle',
         'vehicle/brake'
     ],
     is_localhost=is_localhost,
@@ -125,16 +126,18 @@ car.add(engine)
 memoryClient = MemoryClient(
     name='memory',
     input_names=[
+        'dashboard/brake',
+        'dashboard/driver_type',
+        'dashboard/model_constant_throttle',
         'local_model/angle',
         'local_model/throttle',
+        'ps3_controller/angle',
+        'ps3_controller/brake',
+        'ps3_controller/new_dataset',
+        'ps3_controller/recording',
+        'ps3_controller/throttle',
         'remote_model/angle',
         'remote_model/throttle',
-        'user_input/angle',
-        'user_input/brake',
-        'user_input/driver_type',
-        'user_input/max_throttle',
-        'user_input/recording',
-        'user_input/throttle',
         'vehicle/brake'
     ],
     is_localhost=is_localhost,
@@ -148,7 +151,7 @@ remote_model = Model(
     host=remote_host,
     input_names=[
         'camera/image_array',
-        'user_input/driver_type'
+        'dashboard/driver_type'
     ],
     output_names=[
         'remote_model/angle'
@@ -156,14 +159,14 @@ remote_model = Model(
     is_localhost=False,
     is_verbose=args['verbose-remote-model']
 )
-car.add(remote_model)
+#car.add(remote_model)
 
 # Optionally consume driving predictions from a local model
 local_model = Model(
     name='local-model',
     input_names=[
         'camera/image_array',
-        'user_input/driver_type'
+        'dashboard/driver_type'
     ],
     output_names=[
         'local_model/angle'
@@ -171,13 +174,16 @@ local_model = Model(
     is_localhost=is_localhost,
     is_verbose=args['verbose-local-model']
 )
-car.add(local_model)
+#car.add(local_model)
 
 ps3_controller = PS3Controller(
     name='ps3-controller',
     output_names=[
-        'user_input/angle',
-        'user_input/throttle'
+        'ps3_controller/angle',
+        'ps3_controller/brake',
+        'ps3_controller/new_dataset',
+        'ps3_controller/throttle',
+        'ps3_controller/recording'
     ],
     is_localhost=is_localhost,
     is_verbose=args['verbose-ps3-controller']
@@ -196,9 +202,9 @@ record_tracker = RecordTracker(
     name='record-tracker',
     input_names=[
         'camera/image_array',
-        'user_input/angle',
-        'user_input/recording',
-        'user_input/throttle'
+        'ps3_controller/angle',
+        'ps3_controller/recording',
+        'ps3_controller/throttle'
     ],
     input_types=[
         'image_array',

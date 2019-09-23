@@ -11,12 +11,10 @@ class TrackHumanRequests(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def update(self,data):
-        data = tornado.escape.json_decode(self.request.body)
-        self.application.driver_type = data['driver_type']
-        self.application.recording = data['recording']
-        self.application.brake = data['brake']
-        self.application.max_throttle = data['max_throttle']
         print(data)
+        self.application.driver_type = data['dashboard/driver_type']
+        self.application.brake = data['dashboard/brake']
+        self.application.model_constant_throttle = data['dashboard/model_constant_throttle']
         return {}
 
     @tornado.gen.coroutine
@@ -33,10 +31,9 @@ class GetInput(tornado.web.RequestHandler):
     @tornado.gen.coroutine
     def get(self):
         state = {
-            'user_input/driver_type': self.application.driver_type,
-            'user_input/recording': self.application.recording,
-            'user_input/brake': self.application.brake,
-            'user_input/max_throttle': self.application.max_throttle
+            'dashboard/driver_type': self.application.driver_type,
+            'dashboard/brake': self.application.brake,
+            'dashboard/model_constant_throttle': self.application.model_constant_throttle
         }
         self.write(state)
 
@@ -78,8 +75,7 @@ if __name__ == "__main__":
     app.remote_model_angle = 0.0
     app.remote_model_throttle = 0.0
     app.driver_type = 'user'
-    app.recording = False
     app.brake = True
-    app.max_throttle = 1.0
+    app.model_constant_throttle = 1.0
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()

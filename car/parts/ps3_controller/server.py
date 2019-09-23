@@ -290,8 +290,8 @@ class GetState(tornado.web.RequestHandler):
     def get_metadata(self):
         self.translate_buttons()
         result = self.application.button_states
-        result['user_input/angle'] = self.application.ps3_controller.angle
-        result['user_input/throttle'] = self.application.ps3_controller.throttle
+        result['ps3_controller/angle'] = self.application.ps3_controller.angle
+        result['ps3_controller/throttle'] = self.application.ps3_controller.throttle
         self.application.ps3_controller.pressed_buttons = set()
         print(result)
         return result

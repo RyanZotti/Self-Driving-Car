@@ -84,18 +84,18 @@ class Engine(object):
             self.pwm_right.ChangeDutyCycle(0)
 
     def run(self, inputs):
-        if inputs['vehicle/brake'] is False and inputs['user_input/brake'] is False:
-            driver_type = inputs['user_input/driver_type']
+        if inputs['vehicle/brake'] is False and inputs['ps3_controller/brake'] is False and inputs['dashboard/brake'] is False:
+            driver_type = inputs['dashboard/driver_type']
             assert (driver_type in ['user', 'remote_model', 'local_model'])
             if driver_type == 'remote_model':
                 self.run_angle(inputs['remote_model/angle'])
-                self.run_throttle(inputs['user/max_throttle'])
+                self.run_throttle(inputs['dashboard/max_throttle'])
             elif driver_type == 'local_model':
                 self.run_angle(inputs['remote_model/angle'])
-                self.run_throttle(inputs['user/max_throttle'])
+                self.run_throttle(inputs['dashboard/max_throttle'])
             else:
-                self.run_angle(inputs['user/angle'])
-                self.run_throttle(inputs['user/throttle'])
+                self.run_angle(inputs['ps3_controller/angle'])
+                self.run_throttle(inputs['ps3_controller/throttle'])
         else:
             self.stop()
 

@@ -11,6 +11,7 @@ class Input(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def update(self,data):
+        print(data)
         self.application.data = data
         return {}
 
@@ -64,16 +65,18 @@ if __name__ == "__main__":
     port = args['port']
     app = make_app()
     app.data = {
+        'dashboard/brake':None,
+        'dashboard/driver_type':None,
+        'dashboard/model_constant_throttle':None,
         'local_model/angle':None,
         'local_model/throttle':None,
+        'ps3_controller/angle': None,
+        'ps3_controller/brake': None,
+        'ps3_controller/new_dataset': None,
+        'ps3_controller/recording': None,
+        'ps3_controller/throttle': None,
         'remote_model/angle':None,
         'remote_model/throttle':None,
-        'user_input/angle':None,
-        'user_input/brake':None,
-        'user_input/driver_type':None,
-        'user_input/max_throttle':None,
-        'user_input/recording':None,
-        'user_input/throttle':None,
         'vehicle/brake':None
     }
     app.listen(port)
