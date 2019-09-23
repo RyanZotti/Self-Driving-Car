@@ -113,7 +113,7 @@ class SixAxis:
                      SixAxis.Axis('right_x', dead_zone=dead_zone, hot_zone=hot_zone),
                      SixAxis.Axis('right_y', dead_zone=dead_zone, hot_zone=hot_zone, invert=True)]
         self.button_handlers = []
-        self.buttons_pressed = 0
+        self.buttons_pressed = []
         if connect:
             self.connect()
 
@@ -136,7 +136,7 @@ class SixAxis:
             this method. Test with e.g. 'if button_press_field & SixAxis.BUTTON_CIRCLE:...'
         """
         old_buttons = self.buttons_pressed
-        self.buttons_pressed = 0
+        self.buttons_pressed = []
         return old_buttons
 
     def connect(self):
@@ -277,44 +277,92 @@ class SixAxis:
                 # Right stick, Y axis (yes, 5...)
                 self.axes[3]._set(value)
         elif event.type == ecodes.EV_KEY:
-
-
-
             if event.value == 1:
                 if event.code == 314:
                     button = SixAxis.BUTTON_SELECT
+                    self.buttons_pressed.append(
+                        'BUTTON_SELECT'
+                    )
                 elif event.code == 315:
                     button = SixAxis.BUTTON_START
+                    self.buttons_pressed.append(
+                        'BUTTON_START'
+                    )
                 elif event.code == 317:
                     button = SixAxis.BUTTON_LEFT_STICK
+                    self.buttons_pressed.append(
+                        'BUTTON_LEFT_STICK'
+                    )
                 elif event.code == 318:
                     button = SixAxis.BUTTON_RIGHT_STICK
+                    self.buttons_pressed.append(
+                        'BUTTON_RIGHT_STICK'
+                    )
                 elif event.code == 546:
                     button = SixAxis.BUTTON_D_LEFT
+                    self.buttons_pressed.append(
+                        'BUTTON_D_LEFT'
+                    )
                 elif event.code == 544:
                     button = SixAxis.BUTTON_D_UP
+                    self.buttons_pressed.append(
+                        'BUTTON_D_UP'
+                    )
                 elif event.code == 547:
                     button = SixAxis.BUTTON_D_RIGHT
+                    self.buttons_pressed.append(
+                        'BUTTON_D_RIGHT'
+                    )
                 elif event.code == 545:
                     button = SixAxis.BUTTON_D_DOWN
+                    self.buttons_pressed.append(
+                        'BUTTON_D_DOWN'
+                    )
                 elif event.code == 316:
                     button = SixAxis.BUTTON_PS
+                    self.buttons_pressed.append(
+                        'BUTTON_PS'
+                    )
                 elif event.code == 308:
                     button = SixAxis.BUTTON_SQUARE
+                    self.buttons_pressed.append(
+                        'BUTTON_SQUARE'
+                    )
                 elif event.code == 307:
                     button = SixAxis.BUTTON_TRIANGLE
+                    self.buttons_pressed.append(
+                        'BUTTON_TRIANGLE'
+                    )
                 elif event.code == 305:
                     button = SixAxis.BUTTON_CIRCLE
+                    self.buttons_pressed.append(
+                        'BUTTON_CIRCLE'
+                    )
                 elif event.code == 304:
                     button = SixAxis.BUTTON_CROSS
+                    self.buttons_pressed.append(
+                        'BUTTON_CROSS'
+                    )
                 elif event.code == 311:
                     button = SixAxis.BUTTON_R1
+                    self.buttons_pressed.append(
+                        'BUTTON_R1'
+                    )
                 elif event.code == 313:
                     button = SixAxis.BUTTON_R2
+                    self.buttons_pressed.append(
+                        'BUTTON_R2'
+                    )
                 elif event.code == 310:
                     button = SixAxis.BUTTON_L1
+                    self.buttons_pressed.append(
+                        'BUTTON_L1'
+                    )
                 elif event.code == 312:
                     button = SixAxis.BUTTON_L2
+                    self.buttons_pressed.append(
+                        'BUTTON_L2'
+                    )
                 else:
                     button = None
                 if button is not None:

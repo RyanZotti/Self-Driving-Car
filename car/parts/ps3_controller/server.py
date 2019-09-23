@@ -229,16 +229,71 @@ class StartSixAxisLoop(tornado.web.RequestHandler):
         else:
             self.write({'is_healthy':self.application.ps3_controller.is_loop_on})
 
-class GetAngleAndThrottle(tornado.web.RequestHandler):
+class GetState(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
 
+    # TODO: Don't hardcode these
+    def translate_buttons(self):
+        """
+        Takes a list of buttons and returns a dictionary of
+        states. Assumes that if there are no unacknowledged
+        buttons that the new state will be the same as the
+        previous state. If there are any unacknowledged buttons
+        then they will be cleared out (marked as acknowledged
+        after the function is called).
+        """
+
+        """
+        I have to use different buttons for the same on/off
+        setting because there is no visual feedback (e.g., a
+        screen) on the PS3 controller to indicate the current
+        state
+        """
+        mapping = {
+            'ps3_controller/recording:ON': 'BUTTON_TRIANGLE',
+            'ps3_controller/recording:OFF': 'BUTTON_SQUARE',
+            'ps3_controller/brake:ON': 'BUTTON_CROSS',
+            'ps3_controller/brake:OFF': 'BUTTON_CIRCLE',
+            'ps3_controller/new_dataset': 'BUTTON_D_UP'
+        }
+
+        previous_state = self.application.button_states
+
+        new_state = {}
+        if mapping['ps3_controller/recording:ON'] in self.application.ps3_controller.pressed_buttons and \
+                mapping['ps3_controller/recording:OFF'] not in self.application.ps3_controller.pressed_buttons:
+            new_state['ps3_controller/recording'] = True
+        elif mapping['ps3_controller/recording:OFF'] in self.application.ps3_controller.pressed_buttons and \
+                mapping['ps3_controller/recording:ON'] not in self.application.ps3_controller.pressed_buttons:
+            new_state['ps3_controller/recording'] = False
+        else:
+            new_state['ps3_controller/recording'] = previous_state['ps3_controller/recording']
+
+        if mapping['ps3_controller/brake:ON'] in self.application.ps3_controller.pressed_buttons and \
+                mapping['ps3_controller/brake:OFF'] not in self.application.ps3_controller.pressed_buttons:
+            new_state['ps3_controller/brake'] = True
+        elif mapping['ps3_controller/brake:OFF'] in self.application.ps3_controller.pressed_buttons and \
+                mapping['ps3_controller/brake:ON'] not in self.application.ps3_controller.pressed_buttons:
+            new_state['ps3_controller/brake'] = False
+        else:
+            new_state['ps3_controller/brake'] = previous_state['ps3_controller/brake']
+
+        if mapping['ps3_controller/new_dataset'] in self.application.ps3_controller.pressed_buttons:
+            new_state['ps3_controller/new_dataset'] = True
+        else:
+            new_state['ps3_controller/new_dataset'] = previous_state['ps3_controller/new_dataset']
+
+        self.application.button_states = new_state
+
     @tornado.concurrent.run_on_executor
     def get_metadata(self):
-        result = {
-            'user_input/angle' : self.application.ps3_controller.angle,
-            'user_input/throttle' : self.application.ps3_controller.throttle
-        }
+        self.translate_buttons()
+        result = self.application.button_states
+        result['user_input/angle'] = self.application.ps3_controller.angle
+        result['user_input/throttle'] = self.application.ps3_controller.throttle
+        self.application.ps3_controller.pressed_buttons = set()
+        print(result)
         return result
 
     @tornado.gen.coroutine
@@ -335,19 +390,23 @@ class PS3Controller():
         self.angle = 0.0
         self.throttle = 0.0
         self.is_loop_on = False
+        self.pressed_buttons = set()
 
     def loop(self):
         with SixAxisResource(bind_defaults=True) as self.joystick:
             # Register a button handler for the square button
             # self.joystick.register_button_handler(handler, SixAxis.BUTTON_SQUARE)
+            print('starting loop')
             try:
                 while True:
                     # Read the x and y axes of the left hand stick, the right hand stick has axes 2 and 3
                     self.angle = self.joystick.axes[0].corrected_value()
                     self.throttle = self.joystick.axes[1].corrected_value()
-                    print(self.angle, self.throttle)
+                    pressed_buttons = set(self.joystick.get_and_clear_button_press_history())
+                    self.pressed_buttons = self.pressed_buttons.union(pressed_buttons)
                     self.is_loop_on = True
             except:
+                traceback.print_exc()
                 self.is_loop_on = False
 
     def start_loop(self):
@@ -357,7 +416,7 @@ class PS3Controller():
 
 def make_app():
     handlers = [
-        (r'/get-angle-and-throttle', GetAngleAndThrottle),
+        (r'/get-state', GetState),
         (r"/health", Health),
         (r"/ps3-health", PS3Health),
         (r"/run-setup-commands", RunSetupCommands),
@@ -382,6 +441,14 @@ if __name__ == "__main__":
     app = make_app()
     app.listen(port)
     app.ps3_controller = PS3Controller()
+
+    # TODO: Put this in a DB. It's bad to maintain state in the API
+    app.button_states = {
+        'ps3_controller/recording':False,
+        'ps3_controller/brake':True,
+        'ps3_controller/new_dataset':False
+    }
+
     app.bluetoothctl = Bluetoothctl()
     app.sixaxis_thread = None
     app.is_sixaxis_loop_on = False
