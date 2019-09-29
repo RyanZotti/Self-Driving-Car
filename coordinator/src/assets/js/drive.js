@@ -116,6 +116,16 @@ function stopRecording(){
     recordingIndicatorLight.style.display = 'none';
 }
 
+function applyBrake(){
+    const brakeIcon = document.querySelector('span#applyBrakeButton');
+    brakeIcon.style.display = 'inline';
+}
+
+function releaseBrake(){
+    const brakeIcon = document.querySelector('span#applyBrakeButton');
+    brakeIcon.style.display = 'none';
+}
+
 async function pollVehicleAndUpdateUI(){
 
     const userEngineToggle = document.querySelector("input#engine-toggle");
@@ -168,6 +178,14 @@ async function pollVehicleAndUpdateUI(){
     } else {
         stopRecording();
     }
+
+    if (result["ps3_controller/brake"] == true || result["vehicle/brake"] == true || result["dashboard/brake"] == true){
+        applyBrake();
+    } else {
+        releaseBrake();
+    }
+
+
 }
 
 /*
