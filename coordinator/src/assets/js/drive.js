@@ -106,6 +106,16 @@ function getMemory(args){
     });
 }
 
+function startRecording(){
+    const recordingIndicatorLight = document.querySelector('span#recordingDotAndText');
+    recordingIndicatorLight.style.display = 'inline';
+}
+
+function stopRecording(){
+    const recordingIndicatorLight = document.querySelector('span#recordingDotAndText');
+    recordingIndicatorLight.style.display = 'none';
+}
+
 async function pollVehicleAndUpdateUI(){
 
     const userEngineToggle = document.querySelector("input#engine-toggle");
@@ -151,6 +161,12 @@ async function pollVehicleAndUpdateUI(){
     const dashboardWrapper = document.querySelector("#dashboard-wrapper");
     if (dashboardWrapper.style.display != 'none') {
         pollVehicleAndUpdateUI();
+    }
+
+    if (result["ps3_controller/recording"] == true){
+        startRecording();
+    } else {
+        stopRecording();
     }
 }
 
