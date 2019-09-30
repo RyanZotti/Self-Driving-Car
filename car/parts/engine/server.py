@@ -57,7 +57,6 @@ class Engine(object):
         return bounded_input
 
     def run_throttle(self, throttle):
-        throttle = throttle * self.inputs['max_throttle']
         if throttle > 0:
             pwm_intensity = self.normalize_input(throttle)
             self.pwm_forward.ChangeDutyCycle(pwm_intensity)
@@ -89,10 +88,10 @@ class Engine(object):
             assert (driver_type in ['user', 'remote_model', 'local_model'])
             if driver_type == 'remote_model':
                 self.run_angle(inputs['remote_model/angle'])
-                self.run_throttle(inputs['dashboard/max_throttle'])
+                self.run_throttle(inputs['dashboard/model_constant_throttle'])
             elif driver_type == 'local_model':
                 self.run_angle(inputs['remote_model/angle'])
-                self.run_throttle(inputs['dashboard/max_throttle'])
+                self.run_throttle(inputs['dashboard/model_constant_throttle'])
             else:
                 self.run_angle(inputs['ps3_controller/angle'])
                 self.run_throttle(inputs['ps3_controller/throttle'])
@@ -116,6 +115,7 @@ class Command(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def run(self, json_input):
+        print(json_input)
         self.application.engine.run(json_input)
         return {}
 
