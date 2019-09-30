@@ -107,7 +107,7 @@ engine = Engine(
     input_names=[
         'dashboard/brake',
         'dashboard/driver_type',
-        'dashboard/model_constant_throttle'
+        'dashboard/model_constant_throttle',
         'local_model/angle',
         'local_model/throttle',
         'ps3_controller/angle',
