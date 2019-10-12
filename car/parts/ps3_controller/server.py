@@ -403,6 +403,15 @@ class PS3Controller():
                     self.angle = self.joystick.axes[0].corrected_value()
                     self.throttle = self.joystick.axes[1].corrected_value()
                     pressed_buttons = set(self.joystick.get_and_clear_button_press_history())
+
+                    """
+                    This makes debugging easier and you only see it when
+                    you're running the server in interactive, which you
+                    only use for debugging anyways
+                    """
+                    if len(pressed_buttons) > 0:
+                        print(pressed_buttons)
+
                     self.pressed_buttons = self.pressed_buttons.union(pressed_buttons)
                     self.is_loop_on = True
             except:

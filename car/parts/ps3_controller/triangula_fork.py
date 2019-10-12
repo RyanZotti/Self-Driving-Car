@@ -39,8 +39,14 @@ class SixAxisResource:
         self.joystick = SixAxis(dead_zone=self.dead_zone, hot_zone=self.hot_zone)
         self.joystick.connect()
         if self.bind_defaults:
-            self.joystick.register_button_handler(self.joystick.reset_axis_calibration, SixAxis.BUTTON_START)
-            self.joystick.register_button_handler(self.joystick.set_axis_centres, SixAxis.BUTTON_SELECT)
+            self.joystick.register_button_handler(
+                triggered_function=self.joystick.reset_axis_calibration,
+                button=SixAxis.BUTTON_R1
+            )
+            self.joystick.register_button_handler(
+                triggered_function=self.joystick.set_axis_centres,
+                button=SixAxis.BUTTON_L1
+            )
         return self.joystick
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -60,23 +66,23 @@ class SixAxis:
     controller. The list of axes is, in order: left x, left y, right x, right y.
     """
 
-    BUTTON_SELECT = 0  #: The Select button
-    BUTTON_LEFT_STICK = 1  #: Left stick click button
-    BUTTON_RIGHT_STICK = 2  #: Right stick click button
-    BUTTON_START = 3  #: Start button
-    BUTTON_D_UP = 4  #: D-pad up
-    BUTTON_D_RIGHT = 5  #: D-pad right
-    BUTTON_D_DOWN = 6  #: D-pad down
-    BUTTON_D_LEFT = 7  #: D-pad left
-    BUTTON_L2 = 8  #: L2 lower shoulder trigger
-    BUTTON_R2 = 9  #: R2 lower shoulder trigger
-    BUTTON_L1 = 10  #: L1 upper shoulder trigger
-    BUTTON_R1 = 11  #: R1 upper shoulder trigger
-    BUTTON_TRIANGLE = 12  #: Triangle
-    BUTTON_CIRCLE = 13  #: Circle
-    BUTTON_CROSS = 14  #: Cross
-    BUTTON_SQUARE = 15  #: Square
-    BUTTON_PS = 16  #: PS button
+    BUTTON_SELECT = 'BUTTON_SELECT'  #: The Select button
+    BUTTON_LEFT_STICK = 'BUTTON_LEFT_STICK'  #: Left stick click button
+    BUTTON_RIGHT_STICK = 'BUTTON_RIGHT_STICK'  #: Right stick click button
+    BUTTON_START = 'BUTTON_START'  #: Start button
+    BUTTON_D_UP = 'BUTTON_D_UP'  #: D-pad up
+    BUTTON_D_RIGHT = 'BUTTON_D_RIGHT'  #: D-pad right
+    BUTTON_D_DOWN = 'BUTTON_D_DOWN'  #: D-pad down
+    BUTTON_D_LEFT = 'BUTTON_D_LEFT'  #: D-pad left
+    BUTTON_L2 = 'BUTTON_L2'  #: L2 lower shoulder trigger
+    BUTTON_R2 = 'BUTTON_R2'  #: R2 lower shoulder trigger
+    BUTTON_L1 = 'BUTTON_L1'  #: L1 upper shoulder trigger
+    BUTTON_R1 = 'BUTTON_R1'  #: R1 upper shoulder trigger
+    BUTTON_TRIANGLE = 'BUTTON_TRIANGLE'  #: Triangle
+    BUTTON_CIRCLE = 'BUTTON_CIRCLE'  #: Circle
+    BUTTON_CROSS = 'BUTTON_CROSS'  #: Cross
+    BUTTON_SQUARE = 'BUTTON_SQUARE'  #: Square
+    BUTTON_PS = 'BUTTON_PS'  #: PS button
 
     def __init__(self, dead_zone=0.05, hot_zone=0.0, connect=False):
         """
@@ -112,7 +118,7 @@ class SixAxis:
                      SixAxis.Axis('left_y', dead_zone=dead_zone, hot_zone=hot_zone, invert=True),
                      SixAxis.Axis('right_x', dead_zone=dead_zone, hot_zone=hot_zone),
                      SixAxis.Axis('right_y', dead_zone=dead_zone, hot_zone=hot_zone, invert=True)]
-        self.button_handlers = []
+        self.button_handlers = {}
         self.buttons_pressed = []
         if connect:
             self.connect()
@@ -224,31 +230,8 @@ class SixAxis:
         for axis in self.axes:
             axis._reset()
 
-    def register_button_handler(self, button_handler, buttons):
-        """
-        Register a handler function which will be called when a button is pressed
-        :param handler: a function which will be called when any of the specified buttons are pressed. The function is
-            called with the integer code for the button as the sole argument.
-        :param [int] buttons: a list or one or more buttons which should trigger the handler when pressed. Buttons are
-            specified as ints, for convenience the PS3 button assignments are mapped to names in SixAxis, i.e.
-            SixAxis.BUTTON_CIRCLE. This includes the buttons in each of the analogue sticks. A bare int value is also
-            accepted here and will be treated as if a single element list was supplied.
-        :return: a no-arg function which can be used to remove this registration
-        """
-        mask = 0
-        if isinstance(buttons, list):
-            for button in buttons:
-                mask += 1 << button
-        else:
-            mask += 1 << buttons
-        h = {'handler': button_handler,
-             'mask': mask}
-        self.button_handlers.append(h)
-
-        def remove():
-            self.button_handlers.remove(h)
-
-        return remove
+    def register_button_handler(self, triggered_function, button):
+        self.button_handlers[button] = triggered_function
 
     def handle_event(self, event):
         """
@@ -280,96 +263,47 @@ class SixAxis:
             if event.value == 1:
                 if event.code == 314:
                     button = SixAxis.BUTTON_SELECT
-                    self.buttons_pressed.append(
-                        'BUTTON_SELECT'
-                    )
                 elif event.code == 315:
                     button = SixAxis.BUTTON_START
-                    self.buttons_pressed.append(
-                        'BUTTON_START'
-                    )
                 elif event.code == 317:
                     button = SixAxis.BUTTON_LEFT_STICK
-                    self.buttons_pressed.append(
-                        'BUTTON_LEFT_STICK'
-                    )
                 elif event.code == 318:
                     button = SixAxis.BUTTON_RIGHT_STICK
-                    self.buttons_pressed.append(
-                        'BUTTON_RIGHT_STICK'
-                    )
                 elif event.code == 546:
                     button = SixAxis.BUTTON_D_LEFT
-                    self.buttons_pressed.append(
-                        'BUTTON_D_LEFT'
-                    )
                 elif event.code == 544:
                     button = SixAxis.BUTTON_D_UP
-                    self.buttons_pressed.append(
-                        'BUTTON_D_UP'
-                    )
                 elif event.code == 547:
                     button = SixAxis.BUTTON_D_RIGHT
-                    self.buttons_pressed.append(
-                        'BUTTON_D_RIGHT'
-                    )
                 elif event.code == 545:
                     button = SixAxis.BUTTON_D_DOWN
-                    self.buttons_pressed.append(
-                        'BUTTON_D_DOWN'
-                    )
                 elif event.code == 316:
                     button = SixAxis.BUTTON_PS
-                    self.buttons_pressed.append(
-                        'BUTTON_PS'
-                    )
                 elif event.code == 308:
                     button = SixAxis.BUTTON_SQUARE
-                    self.buttons_pressed.append(
-                        'BUTTON_SQUARE'
-                    )
                 elif event.code == 307:
                     button = SixAxis.BUTTON_TRIANGLE
-                    self.buttons_pressed.append(
-                        'BUTTON_TRIANGLE'
-                    )
                 elif event.code == 305:
                     button = SixAxis.BUTTON_CIRCLE
-                    self.buttons_pressed.append(
-                        'BUTTON_CIRCLE'
-                    )
                 elif event.code == 304:
                     button = SixAxis.BUTTON_CROSS
-                    self.buttons_pressed.append(
-                        'BUTTON_CROSS'
-                    )
                 elif event.code == 311:
                     button = SixAxis.BUTTON_R1
-                    self.buttons_pressed.append(
-                        'BUTTON_R1'
-                    )
                 elif event.code == 313:
                     button = SixAxis.BUTTON_R2
-                    self.buttons_pressed.append(
-                        'BUTTON_R2'
-                    )
                 elif event.code == 310:
                     button = SixAxis.BUTTON_L1
-                    self.buttons_pressed.append(
-                        'BUTTON_L1'
-                    )
                 elif event.code == 312:
                     button = SixAxis.BUTTON_L2
-                    self.buttons_pressed.append(
-                        'BUTTON_L2'
-                    )
                 else:
                     button = None
+
+                self.buttons_pressed.append(button)
+
+                # Call the function associated with the button
                 if button is not None:
-                    self.buttons_pressed |= 1 << button
-                    for button_handler in self.button_handlers:
-                        if button_handler['mask'] & (1 << button) != 0:
-                            button_handler['handler'](button)
+                    if button in self.button_handlers:
+                        self.button_handlers[button]()
 
     class Axis():
         """A single analogue axis on the SixAxis controller"""
