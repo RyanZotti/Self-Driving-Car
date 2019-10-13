@@ -85,7 +85,7 @@ class Client(Part):
     # This is how the main control loop interacts with the part
     def _call(self, *args):
         self.inputs = dict(zip(self.input_names, *args))
-        if self.inputs['user_input/recording']:
+        if self.inputs['ps3_controller/recording']:
             self.is_requestable = True
 
     # TODO: Apply real logic
