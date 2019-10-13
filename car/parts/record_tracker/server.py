@@ -339,11 +339,12 @@ if __name__ == "__main__":
     port = args['port']
     app = make_app()
     dataset_handler = DatasetHandler(path='/datasets')
+    # TODO: Make sure this always matches what's in start.py or you'll get key not found bugs
     input_names = [
         'camera/image_array',
-        'user_input/angle',
-        'user_input/recording',
-        'user_input/throttle'
+        'ps3_controller/angle',
+        'ps3_controller/recording',
+        'ps3_controller/throttle'
     ]
     input_types = [
         'image_array',
