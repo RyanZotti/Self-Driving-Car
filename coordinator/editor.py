@@ -1622,7 +1622,7 @@ class StartCarService(tornado.web.RequestHandler):
             network = operating_system_config[operating_system]['network'].format(port=port)
             if target_host == 'pi':
                 self.submit_pi_command(command=
-                    'docker rm -f {service}; docker run -i -t --name {service} {network} --volume /dev/bus/usb:/dev/bus/usb --volume /run/dbus:/run/dbus --volume /var/run/dbus:/var/run/dbus --volume /dev/input:/dev/input --privileged ryanzotti/ps3_controller:latest python /root/server.py --port {port}'.format(
+                    'docker rm -f {service}; docker run -i -t -d --name {service} {network} --volume /dev/bus/usb:/dev/bus/usb --volume /run/dbus:/run/dbus --volume /var/run/dbus:/var/run/dbus --volume /dev/input:/dev/input --privileged ryanzotti/ps3_controller:latest python /root/server.py --port {port}'.format(
                         service=service,
                         network=network,
                         port=port
