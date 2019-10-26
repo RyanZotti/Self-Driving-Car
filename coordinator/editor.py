@@ -80,49 +80,6 @@ class NewDatasetName(tornado.web.RequestHandler):
         self.write(result)
 
 
-class UpdateDriveState(tornado.web.RequestHandler):
-    executor = ThreadPoolExecutor(200)
-
-    @tornado.concurrent.run_on_executor
-    def send_drive_state(self, json_input):
-        is_recording = json_input['recording']
-        if is_recording == True:
-            # TODO: Remove hardcoded port
-            image = one_frame_from_stream(
-                ip=self.application.pi_host,
-                port=8091
-            )
-            record_id = json_input['record_id']
-            angle = json_input['angle']
-            throttle = json_input['throttle']
-            dataset = json_input['dataset']
-            self.application.record_reader.write_new_record(
-                dataset_name=dataset,
-                record_id=record_id,
-                angle=angle,
-                throttle=throttle,
-                image=image
-            )
-        # TODO: Send brake, drive-mode details to Pi even if not recording
-        seconds = 1
-        request = requests.post(
-            # TODO: Remove hardcoded port
-            'http://{host}:{port}/track-human-requests'.format(
-                host=self.application.pi_host,
-                port=8884
-            ),
-            data=json.dumps(json_input),
-            timeout=seconds
-        )
-        return {}
-
-    @tornado.gen.coroutine
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
-        result = yield self.send_drive_state(json_input=json_input)
-        self.write(result)
-
-
 class DeploymentHealth(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
@@ -205,6 +162,7 @@ class Memory(tornado.web.RequestHandler):
            timeout=seconds
         )
         response = json.loads(request.text)
+        print(response)
         return response
 
     @tornado.gen.coroutine
@@ -2159,7 +2117,6 @@ def make_app():
         (r"/video", VideoAPI),
         (r"/new-dataset-name", NewDatasetName),
         (r"/video-health-check", VideoHealthCheck),
-        (r"/update-drive-state", UpdateDriveState),
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
         (r"/dataset-record-ids-filesystem", DatasetRecordIdsAPIFileSystem),
         (r"/deployment-health", DeploymentHealth),
