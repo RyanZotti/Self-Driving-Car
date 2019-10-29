@@ -871,7 +871,7 @@ document.addEventListener('DOMContentLoaded', function() {
     */
     const ps3ControllerWizardInterval = setInterval(async function(){
         const isConnected = await getPS3ControllerHealth({'host':serviceHost});
-        if (isConnected == true){
+        if (isConnected == true || !ps3ControllerServiceToggle.checked){
             timelineWrapper.style.display = 'none';
         } else {
             timelineWrapper.style.display = 'block';
