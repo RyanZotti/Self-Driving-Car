@@ -1503,7 +1503,7 @@ class StartCarService(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def submit_local_shell_command(self, command):
         asyncio.set_event_loop(asyncio.new_event_loop())
-        shell_command(cmd=command)
+        return shell_command(cmd=command)
 
     @tornado.gen.coroutine
     def post(self):
@@ -1533,6 +1533,20 @@ class StartCarService(tornado.web.RequestHandler):
         service = json_input['service'].lower()
         # TODO: Remove hardcoded ports
         result = {}
+
+        if target_host == 'laptop':
+            """
+            Make sure the Docker network exists on the laptop
+            before attempting to create Docker containers. The
+            containers will fail if the network doesn't exist.
+            The 2>/dev/null ignores standard error, since
+            Docker complains if the network already exists
+            """
+            command = 'docker network create car_network 2>/dev/null'
+            _ = self.submit_local_shell_command(
+                command=command
+            )
+
         if service == 'record-tracker':
             port = 8093
             network = operating_system_config[operating_system]['network'].format(port=port)
