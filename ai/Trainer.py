@@ -20,6 +20,7 @@ class Trainer:
                  data_path,
                  model_file,
                  s3_bucket,
+                 port,
                  epochs=50,
                  max_sample_records=500,
                  start_epoch=0,
@@ -49,6 +50,7 @@ class Trainer:
             is_for_model=True
         )
         self.s3_bucket = format_s3_bucket(s3_bucket)
+        self.port = port
         self.model_file = model_file
         self.n_epochs = int(epochs)
         self.max_sample_records = max_sample_records
@@ -103,8 +105,7 @@ class Trainer:
 
         # Prints batch processing speed, among other things
         self.show_speed = show_speed
-        # TODO: Remove hardcoded port
-        self.microservice_thread = Thread(target=self.start_microservice,kwargs={'port':8091})
+        self.microservice_thread = Thread(target=self.start_microservice,kwargs={'port':self.port})
         self.microservice_thread.daemon = True
         self.microservice_thread.start()
 
@@ -341,6 +342,11 @@ def parse_args():
     ap.add_argument("-s", "--s3_bucket", required=False,
                     help="S3 backup URL",
                     default='self-driving-car')
+    ap.add_argument(
+        "--port",
+        required=False,
+        help="Docker port"
+    )
     ap.add_argument("-a", "--show_speed", required=False,
                     help="Show speed in seconds",
                     default=False)
@@ -370,6 +376,7 @@ def parse_args():
         default=50)
     args = vars(ap.parse_args())
     args['image_scale'] = float(args['image_scale'])
+    args['port'] = int(args['port'])
     args['crop_percent'] = float(args['crop_percent'])
     args['show_speed'] = parse_boolean_cli_args(args['show_speed'])
     args['overfit'] = parse_boolean_cli_args(args['overfit'])

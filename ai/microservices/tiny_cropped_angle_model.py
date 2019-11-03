@@ -8,6 +8,7 @@ args = parse_args()
 data_path = args["datapath"]
 epochs = args["epochs"]
 s3_bucket = args['s3_bucket']
+port = args['port']
 show_speed = args['show_speed']
 s3_sync = args['s3_sync']
 save_to_disk = args['save_to_disk']
@@ -77,6 +78,7 @@ model_file = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basenam
 trainer = Trainer(data_path=data_path,
                   model_file=model_file,
                   s3_bucket=s3_bucket,
+                  port=port,
                   epochs=epochs,
                   max_sample_records=100,
                   show_speed=show_speed,

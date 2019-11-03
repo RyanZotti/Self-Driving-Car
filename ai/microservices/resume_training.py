@@ -10,6 +10,7 @@ epochs = args["epochs"]
 model_dir = args["model_dir"]
 show_speed = args['show_speed']
 s3_bucket = format_s3_bucket(args['s3_bucket'])
+port = format_s3_bucket(args['port'])
 s3_sync = args['s3_sync']
 save_to_disk = args['save_to_disk']
 batch_size = int(args['batch_size'])
@@ -53,6 +54,7 @@ except:
 trainer = Trainer(data_path=data_path,
                   model_file=None,
                   s3_bucket=s3_bucket,
+                  port=port,
                   epochs=epochs,
                   max_sample_records=100,  # TODO: Get max_sample_records from collections file
                   start_epoch = start_epoch,

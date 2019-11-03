@@ -361,7 +361,10 @@ def stop_training():
         ).wait()
 
 
-def train_new_model(data_path,epochs=10,show_speed='n', save_to_disk='y',image_scale=8,crop_percent=50, s3_bucket='self-driving-car'):
+def train_new_model(
+    data_path, port, epochs=10, show_speed='n', save_to_disk='y', image_scale=8, crop_percent=50,
+    s3_bucket='self-driving-car'
+):
     stop_training()
     """
     If you want to see why a Docker container failed, remove the --rm
@@ -375,8 +378,8 @@ def train_new_model(data_path,epochs=10,show_speed='n', save_to_disk='y',image_s
     see the container ID with `docker ps -a` if the --rm option is used
     """
     command = '''
-        docker run -i -t -d -p 8091:8091 --rm \
-          --network app_network \
+        docker run -i -t -d -p {port}:{port} \
+          --network car_network \
           --volume '{data_path}':/root/ai/data \
           --name model-training \
           ryanzotti/ai-laptop:latest \
@@ -385,6 +388,7 @@ def train_new_model(data_path,epochs=10,show_speed='n', save_to_disk='y',image_s
             --angle_only y \
             --crop_percent {crop_percent} \
             --show_speed {show_speed} \
+            --port {port} \
             --s3_sync n \
             --save_to_disk {save_to_disk}
     '''.format(
@@ -394,8 +398,10 @@ def train_new_model(data_path,epochs=10,show_speed='n', save_to_disk='y',image_s
         save_to_disk=save_to_disk,
         image_scale=image_scale,
         crop_percent=crop_percent,
-        s3_bucket=s3_bucket
+        s3_bucket=s3_bucket,
+        port=port
     )
+    print(command)
     process = subprocess.Popen(
         command,
         shell=True
@@ -440,6 +446,7 @@ def get_datasets_path():
 def resume_training(
         model_id,
         host_data_path,
+        port,
         s3_bucket='self-driving-car',
         show_speed='False',
         s3_sync='n',
@@ -460,8 +467,8 @@ def resume_training(
     model_metadata = get_sql_rows(sql_query)[0]
     # The & is required or Tornado will get stuck
     # TODO: Remove the hardcoded script path
-    command = 'docker run -i -t -d -p 8091:8091 \
-    --network app_network \
+    command = 'docker run -i -t -d -p {port}:{port} \
+    --network car_network \
     --volume {host_data_path}:/root/ai/data \
     --name resume-training \
     ryanzotti/ai-laptop:latest \
@@ -470,6 +477,7 @@ def resume_training(
         --epochs {epochs} \
         --model_dir /root/ai/data/tf_visual_data/runs/{model_id} \
         --s3_bucket {s3_bucket} \
+        --port {port} \
         --show_speed {show_speed} \
         --s3_sync {s3_sync} \
         --save_to_disk {save_to_disk} \
@@ -489,7 +497,8 @@ def resume_training(
         image_scale=model_metadata['scale'],
         crop_percent=model_metadata['crop'],
         batch_size=batch_size,
-        angle_only=angle_only
+        angle_only=angle_only,
+        port=port
     )
     process = subprocess.Popen(
         command,

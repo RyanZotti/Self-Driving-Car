@@ -1803,7 +1803,8 @@ class ResumeTraining(tornado.web.RequestHandler):
         model_id = json_input['model_id']
         resume_training(
             model_id=model_id,
-            host_data_path=get_datasets_path()
+            host_data_path=get_datasets_path(),
+            port=self.application.model_training_port
         )
         return {}
 
@@ -1840,7 +1841,8 @@ class TrainNewModel(tornado.web.RequestHandler):
             data_path=get_datasets_path(),
             epochs=100,
             image_scale=json_input['scale'],
-            crop_percent=json_input['crop_percent']
+            crop_percent=json_input['crop_percent'],
+            port=self.application.model_training_port
         )
         return {}
 
@@ -1860,7 +1862,9 @@ class IsTraining(tornado.web.RequestHandler):
         try:
             # TODO: Remove hardcoded port
             request = requests.post(
-                'http://localhost:8091/training-state',
+                'http://localhost:{port}/training-state'.format(
+                    port=self.application.model_training_port
+                ),
                 timeout=seconds
             )
             response = json.loads(request.text)
@@ -2218,6 +2222,9 @@ if __name__ == "__main__":
     app.brake = True
     app.max_throttle = 1.0
     app.new_data_path = args['new_data_path']
+
+    # TODO: Remove hard coded port
+    app.model_training_port = 8096
 
     # TODO: Remove this hard-coded path
     app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
