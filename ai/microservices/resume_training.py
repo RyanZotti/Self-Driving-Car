@@ -6,6 +6,7 @@ import os
 
 args = parse_args()
 data_path = args["datapath"]
+postgres_host = args["postgres-host"]
 epochs = args["epochs"]
 model_dir = args["model_dir"]
 show_speed = args['show_speed']
@@ -52,6 +53,7 @@ except:
     test_feed_dict[dropout_keep_prob] = 1.0
 
 trainer = Trainer(data_path=data_path,
+                  postgres_host=postgres_host,
                   model_file=None,
                   s3_bucket=s3_bucket,
                   port=port,

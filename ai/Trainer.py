@@ -18,6 +18,7 @@ class Trainer:
 
     def __init__(self,
                  data_path,
+                 postgres_host,
                  model_file,
                  s3_bucket,
                  port,
@@ -37,6 +38,7 @@ class Trainer:
                  angle_only=False):
 
         self.data_path = data_path
+        self.postgres_host = postgres_host
         self.save_to_disk = save_to_disk
         self.is_restored_model = is_restored_model
         self.batch_size = batch_size
@@ -44,6 +46,7 @@ class Trainer:
         self.angle_only = angle_only
         self.record_reader = RecordReader(
             base_directory=self.data_path,
+            postgres_host=self.postgres_host,
             batch_size=self.batch_size,
             overfit=self.overfit,
             angle_only=self.angle_only,
@@ -100,6 +103,7 @@ class Trainer:
                 scale=int(self.image_scale)
             )
             execute_sql(
+                host=self.postgres_host,
                 sql=models_sql
             )
 
@@ -205,7 +209,10 @@ class Trainer:
                     train=train_accuracy,
                     validation=test_accuracy
                 )
-                execute_sql(sql_query)
+                execute_sql(
+                    host=self.postgres_host,
+                    sql=sql_query
+                )
             self.save_model(sess, epoch=self.start_epoch)
             if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
                 sync_to_aws(s3_path=self.s3_bucket, local_path=self.data_path)  # Save to AWS
@@ -288,7 +295,10 @@ class Trainer:
                         train=train_accuracy,
                         validation=test_accuracy
                     )
-                    execute_sql(sql_query)
+                    execute_sql(
+                        host=self.postgres_host,
+                        sql=sql_query
+                    )
 
                 # Save a model checkpoint after every epoch
                 self.save_model(sess,epoch=epoch)
@@ -333,6 +343,11 @@ def parse_args():
     ap.add_argument("-d", "--datapath", required=False,
                     help="path to all of the data",
                     default='/root/ai/data')
+    ap.add_argument(
+        "--postgres-host",
+        required=False,
+        help="Postgres host for record_reader.py"
+    )
     ap.add_argument("-e", "--epochs", required=False,
                     help="quantity of batch iterations to run",
                     default='500')

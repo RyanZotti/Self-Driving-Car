@@ -71,16 +71,17 @@ def shell_command(cmd,print_to_stdout=False):
         for line in iter(p.stdout.readline, b''):
             print(line.rstrip())
 
-# TODO: Remove this hard coded hostname
-def connect_to_postgres(host='localhost'):
-    connection_string = "host='postgres-11-1' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
+def connect_to_postgres(host):
+    connection_string = "host='{host}' dbname='autonomous_vehicle' user='postgres' password='' port=5432".format(
+        host=host
+    )
     connection = psycopg2.connect(connection_string)
     cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     return connection, cursor
 
 
-def execute_sql(sql):
-    connection, cursor = connect_to_postgres()
+def execute_sql(host, sql):
+    connection, cursor = connect_to_postgres(host=host)
     cursor.execute(sql)
     connection.commit()
     cursor.close()
@@ -141,8 +142,8 @@ def delete_old_model_backups(checkpoint_dir):
             shell_command(cmd)
 
 
-def get_sql_rows(sql):
-    connection, cursor = connect_to_postgres()
+def get_sql_rows(host, sql):
+    connection, cursor = connect_to_postgres(host=host)
     cursor.execute(sql)
     rows = cursor.fetchall()
     cursor.close()

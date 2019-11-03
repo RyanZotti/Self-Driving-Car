@@ -314,23 +314,25 @@ def one_frame_from_stream(ip, port):
 
 # A single place for all connection related details
 # Storing a password in plain text is bad, but this is for a temp db with default credentials
-def connect_to_postgres(host='localhost'):
-    connection_string = "host='localhost' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
+def connect_to_postgres(host):
+    connection_string = "host='{host}' dbname='autonomous_vehicle' user='postgres' password='' port=5432".format(
+        host=host
+    )
     connection = psycopg2.connect(connection_string)
     cursor = connection.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
     return connection, cursor
 
 
-def execute_sql(sql):
-    connection, cursor = connect_to_postgres()
+def execute_sql(host, sql):
+    connection, cursor = connect_to_postgres(host=host)
     cursor.execute(sql)
     connection.commit()
     cursor.close()
     connection.close()
 
 
-def get_sql_rows(sql):
-    connection, cursor = connect_to_postgres()
+def get_sql_rows(host, sql):
+    connection, cursor = connect_to_postgres(host=host)
     cursor.execute(sql)
     rows = cursor.fetchall()
     cursor.close()
@@ -362,7 +364,7 @@ def stop_training():
 
 
 def train_new_model(
-    data_path, port, epochs=10, show_speed='n', save_to_disk='y', image_scale=8, crop_percent=50,
+    data_path, postgres_host, port, epochs=10, show_speed='n', save_to_disk='y', image_scale=8, crop_percent=50,
     s3_bucket='self-driving-car'
 ):
     stop_training()
@@ -384,6 +386,7 @@ def train_new_model(
           --name model-training \
           ryanzotti/ai-laptop:latest \
           python /root/ai/microservices/tiny_cropped_angle_model.py \
+            --postgres-host {postgres_host} \
             --image_scale {image_scale} \
             --angle_only y \
             --crop_percent {crop_percent} \
@@ -393,6 +396,7 @@ def train_new_model(
             --save_to_disk {save_to_disk}
     '''.format(
         data_path=data_path,
+        postgres_host=postgres_host,
         epochs=epochs,
         show_speed=show_speed,
         save_to_disk=save_to_disk,
@@ -434,18 +438,19 @@ def batch_predict(dataset, predictions_port, datasets_port):
     return process
 
 
-def get_datasets_path():
+def get_datasets_path(postgres_host):
     sql_query = '''
         SELECT
           datasets_parent_path
         FROM raspberry_pi
     '''
-    datasets_parent_path = get_sql_rows(sql_query)[0]['datasets_parent_path']
+    datasets_parent_path = get_sql_rows(host=postgres_host, sql=sql_query)[0]['datasets_parent_path']
     return datasets_parent_path
 
 def resume_training(
         model_id,
         host_data_path,
+        postgres_host,
         port,
         s3_bucket='self-driving-car',
         show_speed='False',
@@ -464,7 +469,10 @@ def resume_training(
         FROM models
         WHERE models.model_id = {model_id}
     '''.format(model_id=model_id)
-    model_metadata = get_sql_rows(sql_query)[0]
+    model_metadata = get_sql_rows(
+        host=postgres_host,
+        sql=sql_query
+    )[0]
     # The & is required or Tornado will get stuck
     # TODO: Remove the hardcoded script path
     command = 'docker run -i -t -d -p {port}:{port} \
@@ -474,6 +482,7 @@ def resume_training(
     ryanzotti/ai-laptop:latest \
     python /root/ai/microservices/resume_training.py \
         --datapath /root/ai/data \
+        --postgres-host {postgres_host} \
         --epochs {epochs} \
         --model_dir /root/ai/data/tf_visual_data/runs/{model_id} \
         --s3_bucket {s3_bucket} \
@@ -487,6 +496,7 @@ def resume_training(
         --batch_size {batch_size} \
         --angle_only {angle_only}'.format(
         host_data_path=host_data_path,
+        postgres_host=postgres_host,
         epochs=epochs,
         model_id=model_id,
         s3_bucket=s3_bucket,
@@ -506,7 +516,7 @@ def resume_training(
     )
 
 
-def get_pi_connection_details():
+def get_pi_connection_details(postgres_host):
     username = None
     hostname = None
     password = None
@@ -517,7 +527,10 @@ def get_pi_connection_details():
           password
         FROM raspberry_pi;
     '''
-    rows = get_sql_rows(sql_query)
+    rows = get_sql_rows(
+        host=postgres_host,
+        sql=sql_query
+    )
     if len(rows) > 0:
         first_row = rows[0]
         username = first_row['username']
@@ -526,8 +539,10 @@ def get_pi_connection_details():
     return username, hostname, password
 
 # Connects to the Pi and runs a command
-def execute_pi_command(command, is_printable=False, return_first_line=False):
-    username, hostname, password = get_pi_connection_details()
+def execute_pi_command(command, postgres_host, is_printable=False, return_first_line=False):
+    username, hostname, password = get_pi_connection_details(
+        postgres_host=postgres_host
+    )
     async def run_client():
         async with asyncssh.connect(hostname, username=username, password=password) as conn:
             result = await conn.run(command, check=True)
@@ -538,8 +553,10 @@ def execute_pi_command(command, is_printable=False, return_first_line=False):
         pass
 
 
-def is_pi_healthy(command, is_printable=False, return_first_line=False):
-    username, hostname, password = get_pi_connection_details()
+def is_pi_healthy(command, postgres_host, is_printable=False, return_first_line=False):
+    username, hostname, password = get_pi_connection_details(
+        postgres_host=postgres_host
+    )
     async def run_client():
         async with asyncssh.connect(hostname, username=username, password=password) as conn:
             result = await conn.run(command, check=True)

@@ -39,7 +39,10 @@ class NewDatasetName(tornado.web.RequestHandler):
               dataset
             FROM records
         '''
-        rows = get_sql_rows(sql_query)
+        rows = get_sql_rows(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )
         if len(rows) > 0:
             ids = []
             for row in rows:
@@ -96,7 +99,10 @@ class DeploymentHealth(tornado.web.RequestHandler):
                   username
                 FROM raspberry_i
             '''
-            first_row = get_sql_rows(sql_query)[0]
+            first_row = get_sql_rows(
+                host=self.application.postgres_host,
+                sql=sql_query
+            )[0]
             host = first_row['hostname']
         else:
             pass
@@ -134,7 +140,10 @@ class ListModels(tornado.web.RequestHandler):
             FROM models
             ORDER BY created_timestamp ASC
         '''
-        rows = get_sql_rows(sql_query)
+        rows = get_sql_rows(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )
         result = {'models':rows}
         return result
 
@@ -192,7 +201,10 @@ class ReadSlider(tornado.web.RequestHandler):
             web_page=web_page,
             name=name
         )
-        rows = get_sql_rows(sql_query)
+        rows = get_sql_rows(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )
         if len(rows) > 0:
             first_row = rows[0]
             amount = first_row['amount']
@@ -236,7 +248,10 @@ class WriteSlider(tornado.web.RequestHandler):
             name=name,
             amount=amount
         )
-        execute_sql(sql_query)
+        execute_sql(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )
         return {}
 
     @tornado.gen.coroutine
@@ -271,7 +286,10 @@ class ListModelDeployments(tornado.web.RequestHandler):
             '''.format(
                 device=device
             )
-            rows = get_sql_rows(sql_query)
+            rows = get_sql_rows(
+                host=self.application.postgres_host,
+                sql=sql_query
+            )
             if len(rows) > 0:
                 first_row = rows[0]
                 metadata = {
@@ -316,7 +334,10 @@ class ReadToggle(tornado.web.RequestHandler):
             name=name,
             detail=detail
         )
-        rows = get_sql_rows(sql_query)
+        rows = get_sql_rows(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )
         if len(rows) > 0:
             first_row = rows[0]
             is_on = first_row['is_on']
@@ -363,7 +384,10 @@ class WriteToggle(tornado.web.RequestHandler):
             detail=detail,
             is_on=is_on
         )
-        execute_sql(sql_query)
+        execute_sql(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )
         return {}
 
     @tornado.gen.coroutine
@@ -386,7 +410,10 @@ class WritePiField(tornado.web.RequestHandler):
             column_name=column_name,
             column_value=column_value
         )
-        execute_sql(sql_query)
+        execute_sql(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )
         return {}
 
     @tornado.gen.coroutine
@@ -408,7 +435,10 @@ class ReadPiField(tornado.web.RequestHandler):
         '''.format(
             column_name=column_name
         )
-        rows = get_sql_rows(sql=sql_query)
+        rows = get_sql_rows(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )
         column_value = None
         if len(rows) > 0:
             first_row = rows[0]
@@ -498,7 +528,10 @@ class DatasetRecordIdsAPIFileSystem(tornado.web.RequestHandler):
                   AND ABS(records.angle - predictions.angle) >= 0.8
                 ORDER BY record_id ASC
                 '''.format(dataset=dataset_name)
-            rows = get_sql_rows(sql_query)
+            rows = get_sql_rows(
+                host=self.application.postgres_host,
+                sql=sql_query
+            )
             for row in rows:
                 record_id = row['record_id']
                 record_ids.append(record_id)
@@ -566,7 +599,10 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
                   AND ABS(records.angle - predictions.angle) >= 0.8
                 ORDER BY record_id ASC
                 '''.format(dataset=dataset_name)
-            rows = get_sql_rows(sql_query)
+            rows = get_sql_rows(
+                host=self.application.postgres_host,
+                sql=sql_query
+            )
             for row in rows:
                 record_id = row['record_id']
                 record_ids.append(record_id)
@@ -615,7 +651,10 @@ class IsDatasetPredictionFromLatestDeployedModel(tornado.web.RequestHandler):
                 AND predictions.epoch = deploy.epoch
             WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%')
             '''.format(dataset=dataset_name)
-        first_row = get_sql_rows(sql_query)[0]
+        first_row = get_sql_rows(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )[0]
         is_up_to_date = first_row['is_up_to_date']
         result = {
             'is_up_to_date': is_up_to_date
@@ -676,7 +715,10 @@ class SaveRecordToDB(tornado.web.RequestHandler):
                 angle=angle,
                 throttle=throttle
             )
-            execute_sql(sql_query)
+            execute_sql(
+                host=self.application.postgres_host,
+                sql=sql_query
+            )
             return {}
         except:
             print(json_input)
@@ -726,7 +768,10 @@ class DeployModel(tornado.web.RequestHandler):
         """.format(
             device=device
         )
-        checkpoint_directory = get_sql_rows(checkpoint_directory_sql)[0]['deploy_model_parent_path']
+        checkpoint_directory = get_sql_rows(
+            host=self.application.postgres_host,
+            sql=checkpoint_directory_sql
+        )[0]['deploy_model_parent_path']
 
         # TODO: Don't hardcode any of these things
         port = 8885
@@ -757,7 +802,10 @@ class DeployModel(tornado.web.RequestHandler):
         """.format(
             device=device
         )
-        first_row = get_sql_rows(sql_query)[0]
+        first_row = get_sql_rows(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )[0]
         model_id = first_row['model_id']
         epoch = first_row['epoch_id']
         scale = first_row['scale']
@@ -887,7 +935,10 @@ class UpdateDeploymentsTable(tornado.web.RequestHandler):
         '''.format(
             model_id=model_id
         )
-        epoch_id = get_sql_rows(sql_epoch_query)[0]['epoch_id']
+        epoch_id = get_sql_rows(
+            host=self.application.postgres_host,
+            sql=sql_epoch_query
+        )[0]['epoch_id']
 
         insert_deployment_record_sql = """
             INSERT INTO deployments (
@@ -906,7 +957,10 @@ class UpdateDeploymentsTable(tornado.web.RequestHandler):
             model_id=model_id,
             epoch_id=epoch_id
         )
-        execute_sql(insert_deployment_record_sql)
+        execute_sql(
+            host=self.application.postgres_host,
+            sql=insert_deployment_record_sql
+        )
 
     @tornado.gen.coroutine
     def post(self):
@@ -927,7 +981,10 @@ class DeleteModel(tornado.web.RequestHandler):
               deploy_model_parent_path AS parent_directory
             FROM raspberry_pi;
         '''
-        rows = get_sql_rows(sql=sql_query)
+        rows = get_sql_rows(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )
         parent_directory = rows[0]['parent_directory']
         full_path = os.path.join(parent_directory,str(model_id))
         rmtree(full_path)
@@ -941,7 +998,10 @@ class DeleteModel(tornado.web.RequestHandler):
         """.format(
             model_id=model_id
         )
-        execute_sql(delete_records_sql)
+        execute_sql(
+            host=self.application.postgres_host,
+            sql=delete_records_sql
+        )
 
     @tornado.gen.coroutine
     def post(self):
@@ -973,7 +1033,10 @@ class DeleteRecord(tornado.web.RequestHandler):
             record_id=record_id,
             dataset=dataset_name
         )
-        execute_sql(delete_records_sql)
+        execute_sql(
+            host=self.application.postgres_host,
+            sql=delete_records_sql
+        )
         delete_predictions_sql = """
             DELETE FROM predictions
             WHERE record_id = {record_id}
@@ -982,7 +1045,10 @@ class DeleteRecord(tornado.web.RequestHandler):
             record_id=record_id,
             dataset=dataset_name
         )
-        execute_sql(delete_predictions_sql)
+        execute_sql(
+            host=self.application.postgres_host,
+            sql=delete_predictions_sql
+        )
         os.remove(label_path)
         os.remove(image_path)
 
@@ -1498,7 +1564,10 @@ class StartCarService(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def submit_pi_command(self, command):
         asyncio.set_event_loop(asyncio.new_event_loop())
-        execute_pi_command(command=command)
+        execute_pi_command(
+            postgres_host=self.application.postgres_host,
+            command=command
+        )
 
     @tornado.concurrent.run_on_executor
     def submit_local_shell_command(self, command):
@@ -1702,7 +1771,10 @@ class PiHealthCheck(tornado.web.RequestHandler):
     def health_check(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
         return {
-            'is_able_to_connect':is_pi_healthy('ls -ltr')
+            'is_able_to_connect':is_pi_healthy(
+                postgres_host=self.application.postgres_host,
+                command='ls -ltr'
+            )
         }
 
     @tornado.gen.coroutine
@@ -1802,6 +1874,7 @@ class ResumeTraining(tornado.web.RequestHandler):
     def resume_training(self, json_input):
         model_id = json_input['model_id']
         resume_training(
+            postgres_host=self.application.postgres_host,
             model_id=model_id,
             host_data_path=get_datasets_path(),
             port=self.application.model_training_port
@@ -1836,9 +1909,12 @@ class TrainNewModel(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def train_new_model(self, json_input):
-
+        data_path = get_datasets_path(
+            postgres_host=self.application.postgres_host
+        )
         train_new_model(
-            data_path=get_datasets_path(),
+            postgres_host=self.application.postgres_host,
+            data_path=data_path,
             epochs=100,
             image_scale=json_input['scale'],
             crop_percent=json_input['crop_percent'],
@@ -1934,7 +2010,10 @@ class IsDatasetPredictionSyncing(tornado.web.RequestHandler):
         '''.format(
             dataset=dataset_name
         )
-        rows = get_sql_rows(sql=sql_query)
+        rows = get_sql_rows(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )
         first_row = rows[0]
         return {
             'is_syncing': first_row['answer']
@@ -1972,7 +2051,10 @@ class NewEpochs(tornado.web.RequestHandler):
         '''.format(
             model_id=model_id
         )
-        epochs = get_sql_rows(sql=sql_query)
+        epochs = get_sql_rows(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )
         result = {
             'epochs':epochs
         }
@@ -2034,7 +2116,10 @@ class DatasetPredictionSyncPercent(tornado.web.RequestHandler):
         '''.format(
             dataset=dataset_name
         )
-        rows = get_sql_rows(sql=sql_query)
+        rows = get_sql_rows(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )
         first_row = rows[0]
         result = {
             'percent':float(first_row['completion_percent'])
@@ -2094,7 +2179,10 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
                 model_id=model_id,
                 epoch=epoch
             )
-            rows = get_sql_rows(sql=sql_query)
+            rows = get_sql_rows(
+                host=self.application.postgres_host,
+                sql=sql_query
+            )
             first_row = rows[0]
             if first_row['prediction_count'] > 0:
                 result = {
@@ -2226,10 +2314,24 @@ if __name__ == "__main__":
     # TODO: Remove hard coded port
     app.model_training_port = 8096
 
+    # TODO: Remove hard coded ref
+    """
+    The Postgres host is what editor.py tells record_reader.py
+    the host to reach Postgres. If you run editor.py from PyCharm
+    in your laptop this will be localhost. Eventually once the
+    code has stabilized and editor.py is run inside of a container
+    you'll need to use the named container instead
+    """
+    app.postgres_host = 'localhost'
+
     # TODO: Remove this hard-coded path
     app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
     app.model_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data/tf_visual_data/runs/1'
-    app.record_reader = RecordReader(base_directory=app.data_path,overfit=False)
+    app.record_reader = RecordReader(
+        base_directory=app.data_path,
+        postgres_host=app.postgres_host,
+        overfit=False
+    )
     app.angle_only = args['angle_only']
     # TODO: Remove hard-coded Pi host
     app.pi_host = 'ryanzotti.local'

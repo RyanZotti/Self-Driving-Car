@@ -6,6 +6,7 @@ from ai.tf_ops import *
 
 args = parse_args()
 data_path = args["datapath"]
+postgres_host = args["postgres-host"]
 epochs = args["epochs"]
 s3_bucket = args['s3_bucket']
 port = args['port']
@@ -76,6 +77,7 @@ with tf.control_dependencies(update_ops):
 
 model_file = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basename(__file__)
 trainer = Trainer(data_path=data_path,
+                  postgres_host=postgres_host,
                   model_file=model_file,
                   s3_bucket=s3_bucket,
                   port=port,

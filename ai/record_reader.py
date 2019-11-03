@@ -20,7 +20,9 @@ class RecordReader(object):
     batches to a model trainer.
     """
 
-    def __init__(self,base_directory,batch_size=50,overfit=False,angle_only=False,is_for_model=False):
+    def __init__(
+        self, base_directory, postgres_host, batch_size=50, overfit=False, angle_only=False, is_for_model=False
+    ):
 
         """
         Create a RecordReader object
@@ -32,6 +34,12 @@ class RecordReader(object):
             dataset folders. If you have datasets like /root/data/dataset_1_18-04-15
             and /root/data/dataset_1_18-04-15, then your base_directory
             should be /root/data
+        postgres_host: string
+            Name of the Postgres host to connect to for details about records
+            and other things. If record_reader.py is running in a Docker container
+            the host would be the name of the container, e.g., postgres-11-1 but
+            if record_reader.py is running in PyCharm on the Mac, then you would
+            use localhost
         batch_size : int
             Number of records per batch. Defaults to 50 records
         overfit : boolean
@@ -51,6 +59,7 @@ class RecordReader(object):
         """
 
         self.base_directory = base_directory
+        self.postgres_host = postgres_host
         self.refresh_folders()
         self.overfit = overfit
         self.angle_only = angle_only
@@ -209,7 +218,7 @@ class RecordReader(object):
             name=name,
             detail=detail
         )
-        rows = get_sql_rows(sql=sql_query)
+        rows = get_sql_rows(host=self.postgres_host, sql=sql_query)
         is_on = False
         if len(rows) > 0:
             first_row = rows[0]
@@ -272,7 +281,7 @@ class RecordReader(object):
             angle=angle,
             throttle=throttle
         )
-        execute_sql(sql_query)
+        execute_sql(host=self.postgres_host, sql=sql_query)
 
     def get_dataset_selections(self, dataset_type):
         """
@@ -311,7 +320,7 @@ class RecordReader(object):
         '''.format(
             dataset_type=dataset_type
         )
-        rows = get_sql_rows(sql=sql_query)
+        rows = get_sql_rows(host=self.postgres_host, sql=sql_query)
         datasets = []
         if len(rows) > 0:
             for row in rows:
@@ -345,7 +354,7 @@ class RecordReader(object):
               AND ABS(records.angle - predictions.angle) >= 0.8
             ORDER BY record_id ASC
             '''.format(dataset=dataset_name)
-        rows = get_sql_rows(sql_query)
+        rows = get_sql_rows(host=self.postgres_host, sql=sql_query)
         for row in rows:
             record_id = row['record_id']
             record_ids.append(record_id)
@@ -360,7 +369,7 @@ class RecordReader(object):
             WHERE LOWER(dataset) LIKE LOWER('%{dataset}%')
               AND is_flagged = TRUE
         '''.format(dataset=dataset_name)
-        rows = get_sql_rows(sql_query)
+        rows = get_sql_rows(host=self.postgres_host, sql=sql_query)
         for row in rows:
             record_id = row['record_id']
             record_ids.append(record_id)
@@ -375,7 +384,7 @@ class RecordReader(object):
             WHERE LOWER(dataset) LIKE LOWER('%{dataset}%')
               AND is_flagged = TRUE
         '''.format(dataset=dataset_name)
-        rows = get_sql_rows(sql_query)
+        rows = get_sql_rows(host=self.postgres_host, sql=sql_query)
         if len(rows) > 0:
             first_row = rows[0]
             count = first_row['count']
@@ -396,7 +405,7 @@ class RecordReader(object):
             record_id=record_id,
             is_flagged=is_flagged
         )
-        execute_sql(sql_query)
+        execute_sql(host=self.postgres_host, sql=sql_query)
 
     def read_flag(self, dataset, record_id):
         sql_query = '''
@@ -409,7 +418,7 @@ class RecordReader(object):
             dataset=dataset,
             record_id=record_id
         )
-        rows = get_sql_rows(sql=sql_query)
+        rows = get_sql_rows(host=self.postgres_host, sql=sql_query)
         is_flagged = False
         if len(rows) > 0:
             first_row = rows[0]
@@ -424,7 +433,7 @@ class RecordReader(object):
         '''.format(
             dataset=dataset
         )
-        execute_sql(sql_query)
+        execute_sql(host=self.postgres_host, sql=sql_query)
 
     def delete_dataset(self, dataset_name):
         full_path = self.get_dataset_absolute_path(dataset_name)
@@ -436,7 +445,7 @@ class RecordReader(object):
         '''.format(
             dataset=dataset_name
         )
-        execute_sql(sql_query)
+        execute_sql(host=self.postgres_host, sql=sql_query)
         rmtree(full_path)
 
     # Merge paths into single numpy array for fast random selection
@@ -632,7 +641,7 @@ class RecordReader(object):
         '''.format(
             dataset_name=dataset_name
         )
-        rows = get_sql_rows(sql=sql_query)
+        rows = get_sql_rows(host=self.postgres_host, sql=sql_query)
         for row in rows:
             record_id = row['record_id']
             record_ids.append(record_id)
@@ -660,7 +669,7 @@ class RecordReader(object):
             FROM records
             ORDER BY dataset ASC
         '''
-        rows = get_sql_rows(sql=sql_query)
+        rows = get_sql_rows(host=self.postgres_host, sql=sql_query)
         for row in rows:
             dataset = row['dataset']
             number = int(re.search(r'(?<=dataset_)([0-9]*)(?=_)', dataset).group(1))
