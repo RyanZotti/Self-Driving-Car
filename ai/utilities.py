@@ -71,6 +71,7 @@ def shell_command(cmd,print_to_stdout=False):
         for line in iter(p.stdout.readline, b''):
             print(line.rstrip())
 
+# TODO: Remove this hard coded hostname
 def connect_to_postgres(host='localhost'):
     connection_string = "host='postgres-11-1' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
     connection = psycopg2.connect(connection_string)

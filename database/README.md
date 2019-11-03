@@ -9,12 +9,12 @@ Navigate to the directory that contains this `README.md` file, then follow the s
 		
 	# Make sure the docker network exists, otherwise create it
 	docker network ls
-	docker network create app_network
+	docker network create car_network
 
 	# Run the image
 	HOST_PGDATA=/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/postgres-db
 	docker run -t -d -i -p 5432:5432 \
-	  --network app_network \
+	  --network car_network \
 	  --volume HOST_PGDATA:/var/lib/postgresql/data \
 	  --rm \
 	  --name postgres-11-1 \
