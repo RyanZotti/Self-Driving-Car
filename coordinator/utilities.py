@@ -340,6 +340,26 @@ def get_sql_rows(host, sql):
     return rows
 
 
+def read_pi_setting(host, field_name):
+    connection, cursor = connect_to_postgres(host=host)
+    cursor.execute(
+        """
+        SELECT
+          field_value
+        FROM pi_settings
+        WHERE LOWER(field_name) LIKE LOWER('%{field_name}%')
+        ORDER BY event_ts DESC
+        LIMIT 1;
+        """.format(
+            field_name=field_name
+        )
+    )
+    rows = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    if len(rows) > 0:
+        return rows[0]['field_value']
+
 def stop_training():
     scripts = [
         'docker rm -f resume-training',
@@ -517,25 +537,9 @@ def resume_training(
 
 
 def get_pi_connection_details(postgres_host):
-    username = None
-    hostname = None
-    password = None
-    sql_query = '''
-        SELECT
-          username,
-          hostname,
-          password
-        FROM raspberry_pi;
-    '''
-    rows = get_sql_rows(
-        host=postgres_host,
-        sql=sql_query
-    )
-    if len(rows) > 0:
-        first_row = rows[0]
-        username = first_row['username']
-        hostname = first_row['hostname']
-        password = first_row['password']
+    username = read_pi_setting(host=postgres_host, field_name='username')
+    hostname = read_pi_setting(host=postgres_host, field_name='hostname')
+    password = read_pi_setting(host=postgres_host, field_name='password')
     return username, hostname, password
 
 # Connects to the Pi and runs a command

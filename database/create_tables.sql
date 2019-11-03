@@ -75,46 +75,9 @@ CREATE TABLE IF NOT EXISTS deployments(
 COMMIT;
 
 BEGIN;
-CREATE TABLE IF NOT EXISTS raspberry_pi(
-    username VARCHAR(100),
-    hostname VARCHAR(100),
-    password VARCHAR(100),
-    git_repo_parent_path VARCHAR(100),
-    deploy_model_parent_path VARCHAR(100),
-    datasets_parent_path VARCHAR(100)
+CREATE TABLE IF NOT EXISTS pi_settings(
+    event_ts TIMESTAMP,
+    field_name VARCHAR(100),
+    field_value VARCHAR(100)
 );
-COMMIT;
-
--- I don't have an API to fill in the defaults, so I need
--- to fill those in myself or my update APIs will fail
-BEGIN;
-INSERT INTO raspberry_pi(
-  username,
-  hostname,
-  password,
-  git_repo_parent_path,
-  deploy_model_parent_path,
-  datasets_parent_path)
-VALUES (
-  'pi',
-  'raspberrypi.local',
-  'raspberry',
-  '~/',
-  '~/Self-Driving-Car/car/parts/model/',
-  '~/Self-Driving-Car/car/templates/data/'
-);
-COMMIT;
-
-BEGIN;
-INSERT INTO sliders (event_ts, web_page, name, amount) VALUES
-    (now(), 'datasets', 'auto clean speed', 15),
-    (now(), 'datasets', 'image top cut', 50),
-    (now(), 'datasets', 'image scale', 8),
-    (now(), 'datasets', 'critical error', 80);
-COMMIT;
-
-BEGIN;
-INSERT INTO sliders (event_ts, web_page, name, amount) VALUES
-    (now(), 'machine learning', 'image top cut', 50),
-    (now(), 'machine learning', 'image scale', 8);
 COMMIT;

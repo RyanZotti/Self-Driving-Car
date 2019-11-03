@@ -31,12 +31,16 @@ You only need to follow the steps below once.
 	HOST="localhost"
 	DB="autonomous_vehicle"
 	CREATE_TABLES="./create_tables.sql"
+	ADD_DEFAULTS="./add_defaults.sql"
 	
 	# Create the database
 	psql -U postgres -h $HOST -c "create database ${DB};"
 	
 	# Build the tables 
 	psql -h $HOST -U postgres -d ${DB} -a -f ${CREATE_TABLES}
+
+	# Add default values to tables
+	psql -h $HOST -U postgres -d ${DB} -a -f ${ADD_DEFAULTS}
 
 
 ### Build
