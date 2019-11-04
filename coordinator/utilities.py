@@ -551,8 +551,10 @@ def execute_pi_command(command, postgres_host, is_printable=False, return_first_
         async with asyncssh.connect(hostname, username=username, password=password) as conn:
             result = await conn.run(command, check=True)
             print(result.stdout, end='')
+            return result.stdout
     try:
-        asyncio.get_event_loop().run_until_complete(run_client())
+        result = asyncio.get_event_loop().run_until_complete(run_client())
+        return result
     except (OSError, asyncssh.Error) as exc:
         pass
 
@@ -572,5 +574,27 @@ def is_pi_healthy(command, postgres_host, is_printable=False, return_first_line=
     except (OSError, asyncssh.Error) as exc:
         return False
 
-def sftp_from_laptop_to_pi(source_path,destination_path):
-    pass
+
+def list_pi_datasets(datasets_dir, postgres_host):
+    command = 'ls {datasets_dir}'.format(
+        datasets_dir=datasets_dir
+    )
+    datasets = execute_pi_command(
+        command=command,
+        postgres_host=postgres_host
+    )
+    return datasets
+
+def sftp(hostname, username, password, from_path, to_path):
+    async def run_client():
+        async with asyncssh.connect(hostname, username=username, password=password) as conn:
+            async with conn.start_sftp_client() as sftp:
+                await sftp.get(
+                    remotepaths=from_path,
+                    localpath=to_path,
+                    recurse=True
+                )
+    try:
+        asyncio.get_event_loop().run_until_complete(run_client())
+    except (OSError, asyncssh.Error) as exc:
+        sys.exit('SFTP operation failed: ' + str(exc))
