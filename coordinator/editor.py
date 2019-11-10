@@ -1561,6 +1561,7 @@ class StopService(tornado.web.RequestHandler):
         else:
             asyncio.set_event_loop(asyncio.new_event_loop())
             execute_pi_command(
+                postgres_host=self.application.postgres_host,
                 command=command
             )
         return {}
