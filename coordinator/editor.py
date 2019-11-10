@@ -1085,7 +1085,7 @@ class DeleteFlaggedDataset(tornado.web.RequestHandler):
         result = yield self.delete_flagged_dataset(json_input=json_input)
         self.write(result)
 
-class DeleteDataset(tornado.web.RequestHandler):
+class DeleteLaptopDataset(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
 
@@ -1102,6 +1102,35 @@ class DeleteDataset(tornado.web.RequestHandler):
         json_input = tornado.escape.json_decode(self.request.body)
         result = yield self.delete_dataset(json_input=json_input)
         self.write(result)
+
+
+class DeletePiDataset(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(10)
+
+    @tornado.concurrent.run_on_executor
+    def delete_dataset(self,json_input):
+        dataset_name = json_input['dataset']
+        datasets_dir = read_pi_setting(
+            host=self.application.postgres_host,
+            field_name='pi datasets directory'
+        )
+        command = 'sudo rm -rf {datasets_dir}/{dataset_name}'.format(
+            datasets_dir=datasets_dir,
+            dataset_name=dataset_name
+        )
+        execute_pi_command(
+            postgres_host=self.application.postgres_host,
+            command=command
+        )
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.delete_dataset(json_input=json_input)
+        self.write(result)
+
 
 class ImageCountFromDataset(tornado.web.RequestHandler):
 
@@ -2242,7 +2271,8 @@ def make_app():
         (r"/deployment-health", DeploymentHealth),
         (r"/delete-model", DeleteModel),
         (r"/delete",DeleteRecord),
-        (r"/delete-dataset", DeleteDataset),
+        (r"/delete-laptop-dataset", DeleteLaptopDataset),
+        (r"/delete-pi-dataset", DeletePiDataset),
         (r"/save-reocord-to-db", SaveRecordToDB),
         (r"/delete-flagged-record", DeleteFlaggedRecord),
         (r"/delete-flagged-dataset", DeleteFlaggedDataset),

@@ -31,12 +31,19 @@ function addDatasetImportRows() {
                 tr.querySelector('td.created-date').textContent = dataset.date;
                 tr.querySelector('td.images').textContent = dataset.images;
                 tr.querySelector('span.download-dataset-button').setAttribute("dataset",datasetText);
-                tr.querySelector('button.trash-dataset-button').setAttribute("dataset",datasetText);
+                tr.querySelector('button.delete-dataset-button').setAttribute("dataset",datasetText);
                 const input = tr.querySelector('input[name="datasetsSelect"]');
                 input.setAttribute('id','dataset-id-'+dataset.id);
                 const label = tr.querySelector('label[name="datasetsSelect"]');
                 label.setAttribute('for','dataset-id-'+dataset.id);
                 tbody.appendChild(tr);
+                const deleteDatasetButton = tr.querySelector('button.delete-dataset-button');
+                deleteDatasetButton.onclick = function(){
+                    const dataset = this.getAttribute("dataset");
+                    deleteDataset("pi", dataset);
+                    //addDatasetImportRows(); // Refresh page
+                    tr.parentNode.removeChild(tr);
+                }
             });
         }
     });
@@ -66,12 +73,13 @@ function unflagDataset(dataset) {
     });
 }
 
-function deleteDataset(dataset) {
+function deleteDataset(machine_type, dataset) {
+    // machine_type: "laptop" or "pi"
     return new Promise(function(resolve, reject) {
         deleteDatasetPayload = JSON.stringify({
             'dataset': dataset
         })
-        $.post('/delete-dataset', deleteDatasetPayload, function(){
+        $.post('/delete-'+machine_type+'-dataset', deleteDatasetPayload, function(){
             resolve();
         });
     });
@@ -153,8 +161,8 @@ async function addDatasetReviewRows() {
                 const deleteDatasetButton = tr.querySelector('button.delete-dataset-action');
                 deleteDatasetButton.onclick = function(){
                     const dataset = this.getAttribute("dataset");
-                    deleteDataset(dataset);
-                    addDatasetReviewRows(); // Refresh page
+                    deleteDataset("laptop",dataset);
+                    tr.parentNode.removeChild(tr);
                 }
                 deleteDatasetButton.setAttribute("dataset",datasetText);
                 const input = tr.querySelector('input[name="datasetsSelect"]');
