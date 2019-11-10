@@ -61,14 +61,14 @@ function getDatasetMetadata(datasetType, dataset) {
     });
 }
 
-function loadDatasetMetadata() {
+function loadDatasetMetadata(dataset_type) {
     return new Promise(function(resolveLoad, reject) {
-        $.get( "/list-review-datasets").then(function(response){
+        $.get( "/list-"+dataset_type+"-datasets").then(function(response){
             return response.datasets;
         }).then(function(datasets){
             let allMetadata = datasets.map(function (dataset) {
                 return new Promise(function (resolve) {
-                  resolve(getDatasetMetadata("review",dataset));
+                  resolve(getDatasetMetadata(dataset_type,dataset));
                 });
             });
             Promise.all(allMetadata).then(function() {

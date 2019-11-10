@@ -550,10 +550,13 @@ def execute_pi_command(command, postgres_host, is_printable=False, return_first_
     async def run_client():
         async with asyncssh.connect(hostname, username=username, password=password) as conn:
             result = await conn.run(command, check=True)
-            print(result.stdout, end='')
+            if is_printable:
+                print(result.stdout, end='')
             return result.stdout
     try:
-        result = asyncio.get_event_loop().run_until_complete(run_client())
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(run_client())
         return result
     except (OSError, asyncssh.Error) as exc:
         pass
@@ -579,10 +582,19 @@ def list_pi_datasets(datasets_dir, postgres_host):
     command = 'ls {datasets_dir}'.format(
         datasets_dir=datasets_dir
     )
-    datasets = execute_pi_command(
+    std_out = execute_pi_command(
         command=command,
         postgres_host=postgres_host
     )
+    datasets = []
+    if std_out is not None:
+        for line in std_out.split(os.linesep):
+            """
+            There is a newline at the end of the stdout that you
+            can avoid adding by checking the length of the split
+            """
+            if len(line) > 0:
+                datasets.append(line)
     return datasets
 
 def sftp(hostname, username, password, from_path, to_path):

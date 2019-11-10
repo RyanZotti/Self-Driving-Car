@@ -1197,6 +1197,31 @@ class ListReviewDatasets(tornado.web.RequestHandler):
         self.write(results)
 
 
+class ListPiDatasets(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def list_datasets(self):
+        datasets_dir = read_pi_setting(
+            host=self.application.postgres_host,
+            field_name='pi datasets directory'
+        )
+        dataset_names = list_pi_datasets(
+            datasets_dir=datasets_dir,
+            postgres_host=self.application.postgres_host
+        )
+        results = {
+            'datasets': dataset_names
+        }
+        return results
+
+    @tornado.gen.coroutine
+    def get(self):
+        results = yield self.list_datasets()
+        self.write(results)
+
+
 class ListReviewDatasetsFileSystem(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -2222,7 +2247,7 @@ def make_app():
         (r"/delete-flagged-dataset", DeleteFlaggedDataset),
         (r"/add-flagged-record", Keep),
         (r"/list-models", ListModels),
-        (r"/list-import-datasets", ListReviewDatasets),
+        (r"/list-import-datasets", ListPiDatasets),
         (r"/list-review-datasets", ListReviewDatasets),
         (r"/list-datasets-filesystem", ListReviewDatasetsFileSystem),
         (r"/image-count-from-dataset", ImageCountFromDataset),

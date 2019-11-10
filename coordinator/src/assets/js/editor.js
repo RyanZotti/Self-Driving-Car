@@ -17,7 +17,7 @@ function getDatasetReviewRowString() {
 function addDatasetImportRows() {
     const promises = [
         getDatasetImportRowString(),
-        loadDatasetMetadata()
+        loadDatasetMetadata('import')
     ];
     Promise.all(promises).then(function(promiseResults){
         const datasetRowString = promiseResults[0];
@@ -114,7 +114,7 @@ async function addDatasetReviewRows() {
     }
     const promises = [
         getDatasetReviewRowString(),
-        loadDatasetMetadata()
+        loadDatasetMetadata("review")
     ];
     Promise.all(promises).then(function(promiseResults){
         const datasetRowString = promiseResults[0];
