@@ -92,18 +92,10 @@ class DeploymentHealth(tornado.web.RequestHandler):
         if device.lower() == 'laptop':
             host = 'localhost'
         elif device.lower() == 'pi':
-            sql_query = '''
-                SELECT
-                  hostname,
-                  password,
-                  username
-                FROM raspberry_i
-            '''
-            first_row = get_sql_rows(
+            host = read_pi_setting(
                 host=self.application.postgres_host,
-                sql=sql_query
-            )[0]
-            host = first_row['hostname']
+                field_name='hostname'
+            )
         else:
             pass
         seconds = 1
@@ -404,10 +396,17 @@ class WritePiField(tornado.web.RequestHandler):
         column_name = json_input['column_name']
         column_value = json_input['column_value']
         sql_query = '''
-            UPDATE raspberry_pi
-            SET {column_name} = '{column_value}';
+            BEGIN;
+            INSERT INTO pi_settings(
+              event_ts,
+              field_name,
+              field_value
+            )
+            VALUES
+              (now(), '{column_name}', '{column_value}');
+            COMMIT;
         '''.format(
-            column_name=column_name,
+            column_name=column_name.lower(),
             column_value=column_value
         )
         execute_sql(
@@ -428,21 +427,10 @@ class ReadPiField(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def read_pi_field(self, json_input):
         column_name = json_input['column_name']
-        sql_query = '''
-            SELECT
-              {column_name} AS column_value
-            FROM raspberry_pi;
-        '''.format(
-            column_name=column_name
-        )
-        rows = get_sql_rows(
+        column_value = read_pi_setting(
             host=self.application.postgres_host,
-            sql=sql_query
+            field_name=column_name
         )
-        column_value = None
-        if len(rows) > 0:
-            first_row = rows[0]
-            column_value = first_row['column_value']
         result = {
             'column_value':column_value
         }
