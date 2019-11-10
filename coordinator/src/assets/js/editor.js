@@ -346,31 +346,39 @@ function areDatasetPredictionsUpdated(dataset) {
 }
 
 async function checkPredictionUpdateStatuses(){
-    const rows = document.querySelectorAll('tbody#datasetsTbody > tr')
-    for (const row of rows){
-        const dataset = row.getAttribute("dataset");
-        const isUpdated = await areDatasetPredictionsUpdated(dataset);
-        const analyzeDatasetButton = row.querySelector('button.analyze-dataset-button');
-        const progressCircle = row.querySelector('svg.analyze-progress-circle');
-        if (isUpdated == true){
-            const errorMetrics = await getDatasetErrorMetrics(dataset);
-            row.querySelector('td.dataset-error').textContent = errorMetrics['avg_abs_error'];
-            row.querySelector('td.dataset-critical-percent').textContent = errorMetrics['critical_percent'];
-            analyzeDatasetButton.style.display = 'none';
-            progressCircle.style.display = 'block';
-            updateProgressCircle(progressCircle,100);
-        } else {
-            const isSyncing = await isDatasetPredictionSyncing(dataset);
-            if (isSyncing == true){
-                const syncPercent = await datasetPredictionSyncPercent(dataset);
-                updateProgressCircle(progressCircle,syncPercent);
+    if (getActiveDatasetType() == 'review'){
+        const rows = document.querySelectorAll('tbody#datasetsTbody > tr')
+        for (const row of rows){
+            const dataset = row.getAttribute("dataset");
+            const isUpdated = await areDatasetPredictionsUpdated(dataset);
+            const analyzeDatasetButton = row.querySelector('button.analyze-dataset-button');
+            const progressCircle = row.querySelector('svg.analyze-progress-circle');
+            if (isUpdated == true){
+                const errorMetrics = await getDatasetErrorMetrics(dataset);
+                row.querySelector('td.dataset-error').textContent = errorMetrics['avg_abs_error'];
+                row.querySelector('td.dataset-critical-percent').textContent = errorMetrics['critical_percent'];
                 analyzeDatasetButton.style.display = 'none';
                 progressCircle.style.display = 'block';
+                updateProgressCircle(progressCircle,100);
             } else {
-                analyzeDatasetButton.style.display = 'block';
-                progressCircle.style.display = 'none';
+                const isSyncing = await isDatasetPredictionSyncing(dataset);
+                if (isSyncing == true){
+                    const syncPercent = await datasetPredictionSyncPercent(dataset);
+                    updateProgressCircle(progressCircle,syncPercent);
+                    analyzeDatasetButton.style.display = 'none';
+                    progressCircle.style.display = 'block';
+                } else {
+                    analyzeDatasetButton.style.display = 'block';
+                    progressCircle.style.display = 'none';
+                }
             }
         }
+    } else {
+        /*
+        Do nothing because I only apply model inference to records on the
+        laptop. I don't apply inference to records that are only on the Pi
+        and not yet imported onto the laptop
+        */
     }
 }
 
