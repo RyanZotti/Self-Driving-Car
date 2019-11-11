@@ -27,6 +27,7 @@ function addDatasetImportRows() {
             const tr = htmlToElement(datasetRowString);
             datsetPromise.then(function(dataset){
                 const datasetText = dataset.name;
+                tr.setAttribute("dataset",datasetText);
                 tr.querySelector('td.dataset-id').textContent = dataset.id;
                 tr.querySelector('td.created-date').textContent = dataset.date;
                 tr.querySelector('td.images').textContent = dataset.images;
@@ -568,6 +569,17 @@ function loadReviewDatasetsTable() {
     });
 }
 
+function assignBulkDeleteDatasetsAction(button){
+    button.addEventListener("click", async function(){
+        const tabType = button.getAttribute("tab");
+        const checkedDatasets = getCheckedDatasets();
+        for (const dataset of checkedDatasets){
+            const tr = document.querySelector('tr[dataset="'+dataset+'"]')
+            deleteDataset(tabType, dataset);
+            tr.parentNode.removeChild(tr);
+        }
+    });
+}
 
 function loadImportDatasetsTable() {
     getDatasetImportTableHtml().then(function(tableHtml){
@@ -583,6 +595,9 @@ function loadImportDatasetsTable() {
         addDatasetImportRows();
     }).then(function(){
         selectAllDatasetsTrigger();
+    }).then(function(){
+        const button = document.querySelector('button#delete-pi-datasets-bulk-action');
+        assignBulkDeleteDatasetsAction(button);
     });
 }
 
