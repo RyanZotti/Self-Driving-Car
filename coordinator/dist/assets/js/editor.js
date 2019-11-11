@@ -31,7 +31,11 @@ function addDatasetImportRows() {
                 tr.querySelector('td.dataset-id').textContent = dataset.id;
                 tr.querySelector('td.created-date').textContent = dataset.date;
                 tr.querySelector('td.images').textContent = dataset.images;
-                tr.querySelector('span.download-dataset-button').setAttribute("dataset",datasetText);
+                const downloadButton = tr.querySelector('span.download-dataset-button');
+                downloadButton.setAttribute("dataset",datasetText);
+                downloadButton.addEventListener("click", async function(){
+                    transferDataset(datasetText);
+                });
                 tr.querySelector('button.delete-dataset-button').setAttribute("dataset",datasetText);
                 const input = tr.querySelector('input[name="datasetsSelect"]');
                 input.setAttribute('id','dataset-id-'+dataset.id);
@@ -42,7 +46,6 @@ function addDatasetImportRows() {
                 deleteDatasetButton.onclick = function(){
                     const dataset = this.getAttribute("dataset");
                     deleteDataset("pi", dataset);
-                    //addDatasetImportRows(); // Refresh page
                     tr.parentNode.removeChild(tr);
                 }
             });
@@ -642,6 +645,17 @@ function isRecordAlreadyFlagged(dataset, recordId){
            resolve(result['is_already_flagged']);
         }).then(function(result){
             return result;
+        });
+    });
+}
+
+function transferDataset(dataset){
+    return new Promise(function(resolve, reject) {
+        data = JSON.stringify({
+            'dataset': dataset
+        })
+        $.post('/transfer-dataset', data, function(result){
+           resolve(result);
         });
     });
 }

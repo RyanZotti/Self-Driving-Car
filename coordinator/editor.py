@@ -1132,6 +1132,59 @@ class DeletePiDataset(tornado.web.RequestHandler):
         self.write(result)
 
 
+class TransferDatasetFromPiToLaptop(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(10)
+
+    @tornado.concurrent.run_on_executor
+    def transfer_dataset(self,json_input):
+        dataset_name = json_input['dataset']
+        datasets_dir = read_pi_setting(
+            host=self.application.postgres_host,
+            field_name='pi datasets directory'
+        )
+        pi_hostname = read_pi_setting(
+            host=self.application.postgres_host,
+            field_name='hostname'
+        )
+        username = read_pi_setting(
+            host=self.application.postgres_host,
+            field_name='username'
+        )
+        password = read_pi_setting(
+            host=self.application.postgres_host,
+            field_name='password'
+        )
+        laptop_datasets_directory = read_pi_setting(
+            host=self.application.postgres_host,
+            field_name='laptop datasets directory'
+        )
+        from_path = '{datasets_dir}/{dataset_name}'.format(
+            datasets_dir=datasets_dir,
+            dataset_name=dataset_name
+        )
+        to_path = '{laptop_datasets_directory}/{dataset_name}'.format(
+            laptop_datasets_directory=laptop_datasets_directory,
+            dataset_name=dataset_name
+        )
+        print(from_path)
+        print(to_path)
+        sftp(
+            hostname=pi_hostname,
+            username=username,
+            password=password,
+            from_path=from_path,
+            to_path=to_path
+        )
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.transfer_dataset(json_input=json_input)
+        self.write(result)
+
+
 class ImageCountFromDataset(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -2273,6 +2326,7 @@ def make_app():
         (r"/delete",DeleteRecord),
         (r"/delete-laptop-dataset", DeleteLaptopDataset),
         (r"/delete-pi-dataset", DeletePiDataset),
+        (r"/transfer-dataset", TransferDatasetFromPiToLaptop),
         (r"/save-reocord-to-db", SaveRecordToDB),
         (r"/delete-flagged-record", DeleteFlaggedRecord),
         (r"/delete-flagged-dataset", DeleteFlaggedDataset),

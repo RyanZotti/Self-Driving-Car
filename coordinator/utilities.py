@@ -607,6 +607,9 @@ def sftp(hostname, username, password, from_path, to_path):
                     recurse=True
                 )
     try:
-        asyncio.get_event_loop().run_until_complete(run_client())
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(run_client())
+
     except (OSError, asyncssh.Error) as exc:
         sys.exit('SFTP operation failed: ' + str(exc))
