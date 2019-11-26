@@ -234,26 +234,16 @@ class RecordReader(object):
         # to datasets. Assumes dataset is not elsewhere in the file path
         self.folders = [folder for folder in self.folders if 'dataset' in folder]
 
-    def write_new_record(self,dataset_name, record_id, angle, throttle, image):
+    def write_new_record_to_db(self,dataset_name, record_id, angle, throttle):
         dataset_path = join(self.base_directory, dataset_name)
-        mkdir(dataset_path)  # Does not make dir if already exists
         image_file = '{record_id}_cam-image_array_.png'.format(
             record_id=record_id
         )
         image_path = join(dataset_path, image_file)
-        cv2.imwrite(image_path, image)
         label_file = 'record_{id}.json'.format(
             id=record_id
         )
         label_path = join(dataset_path, label_file)
-        # TODO: Stop writing label files once everything reads from DB
-        label_content = {
-            "cam/image_array":image_path,
-            "user/throttle": throttle,
-            "user/angle": angle
-        }
-        with open(label_path, 'w') as label_writer:
-            json.dump(label_content, label_writer)
         sql_query = '''
             BEGIN;
             INSERT INTO records (

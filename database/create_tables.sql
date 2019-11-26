@@ -81,3 +81,13 @@ CREATE TABLE IF NOT EXISTS pi_settings(
     field_value VARCHAR(100)
 );
 COMMIT;
+
+BEGIN;
+CREATE TABLE IF NOT EXISTS jobs(
+    created_at TIMESTAMP,
+    session_id VARCHAR(100),
+    name VARCHAR(100),
+    detail VARCHAR(100),
+    status VARCHAR(100)
+);
+COMMIT;
