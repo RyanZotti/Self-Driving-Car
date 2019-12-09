@@ -15,7 +15,20 @@
     <td class="images">
     </td>
     <td class="download text-center">
-        <span class="fe fe-cloud-rain mr-4 download-dataset-button"></span>
+        <button class="pretty-button download-dataset-button" style="display:none;" data-toggle="modal">
+            <svg style="transform: scale(.75);" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="16" y1="13" x2="16" y2="21"></line>
+                <line x1="8" y1="13" x2="8" y2="21"></line>
+                <line x1="12" y1="15" x2="12" y2="23"></line>
+                <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>
+            </svg>
+        </button>
+        <svg class="import-progress-circle" style="height:2em; width:2em; display:none;" viewBox="-50 -50 100 100">
+            <circle class="circle-progress-background" cx="0" cy="0" fill="none" r="40" stroke="#E3EBF5" stroke-width="4" ></circle>
+            <path class="partial-circle-progress" fill="none" stroke="#00D97E" stroke-width="4" />
+            <circle class="full-circle-progress" style="display:'none'" cx="0" cy="0" fill="none" r="40" stroke="#00D97E" stroke-width="4" ></circle>
+            <text class="circle-progress-text" style="font-size:30; font-family:Arial" fill="#00D97E" stroke-width="0.75" dy="0.35em" y="0" dx="0" x="0" text-anchor="middle">0</text>
+        </svg>
     </td>
     <td class="text-right">
         <button class="fe fe-trash-2 mr-4 delete-dataset-button"></button>

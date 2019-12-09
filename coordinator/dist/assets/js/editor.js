@@ -59,7 +59,7 @@ function addDatasetImportRows() {
                 tr.querySelector('td.dataset-id').textContent = dataset.id;
                 tr.querySelector('td.created-date').textContent = dataset.date;
                 tr.querySelector('td.images').textContent = dataset.images;
-                const downloadButton = tr.querySelector('span.download-dataset-button');
+                const downloadButton = tr.querySelector('button.download-dataset-button');
                 downloadButton.setAttribute("dataset",datasetText);
                 downloadButton.addEventListener("click", async function(){
                     transferDataset(datasetText);
@@ -383,6 +383,28 @@ function areDatasetPredictionsUpdated(dataset) {
            resolve(result['is_up_to_date'])
         });
     });
+}
+
+
+async function checkAllDatasetsImportProgress(){
+    if (getActiveDatasetType() == 'import'){
+        const rows = document.querySelectorAll('tbody#datasetsTbody > tr');
+        for (const row of rows){
+            const dataset = row.getAttribute("dataset");
+            const percent = await getDatasetTransferProgress(dataset);
+            console.log(dataset + ' ' + percent);
+            const importDatasetButton = row.querySelector('button.download-dataset-button');
+            const progressCircle = row.querySelector('svg.import-progress-circle');
+            if (percent < 0){
+                progressCircle.style.display = 'none';
+                importDatasetButton.style.display = 'inline';
+            } else {
+                importDatasetButton.style.display = 'none';
+                progressCircle.style.display = 'inline';
+                updateProgressCircle(progressCircle, percent);
+            }
+        }
+    }
 }
 
 async function checkPredictionUpdateStatuses(){
@@ -951,6 +973,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const trainingStateTimer = setInterval(function(){
       checkPredictionUpdateStatuses()
+    }, 1000);
+
+    const importProgressTimer = setInterval(function(){
+      checkAllDatasetsImportProgress()
     }, 1000);
 
     // Update Raspberry Pi statues
