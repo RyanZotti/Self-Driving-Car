@@ -1,3 +1,31 @@
+function getDatasetTransferProgress(dataset_name) {
+    /*
+    Used to report the completion percentage when transferring
+    a dataset from the Pi to the laptop. 0% means that no files
+    have been transferred. 50% means that the SFTP step has
+    completed. 100% means that the SFTP has completed and the
+    DB load has also completed
+
+    Parameters
+    ----------
+    dataset_name : string
+        Ex: dataset_3_18-10-20
+
+    Returns
+    -------
+    percent: int
+        Percent complete
+    */
+    return new Promise(function(resolve, reject) {
+        inputPayload = JSON.stringify({
+            'dataset': dataset_name
+        });
+        $.post('/transfer-dataset-progress', inputPayload, function(result){
+            resolve(result['percent']);
+        });
+    });
+}
+
 function getDatasetImportRowString() {
     return new Promise(function(resolve, reject) {
         $.get( "/dataset-import.html", function(datasetString) {

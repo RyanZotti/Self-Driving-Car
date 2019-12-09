@@ -543,7 +543,7 @@ def get_pi_connection_details(postgres_host):
     return username, hostname, password
 
 # Connects to the Pi and runs a command
-def execute_pi_command(command, postgres_host, is_printable=False, return_first_line=False):
+def execute_pi_command(command, postgres_host, is_printable=False):
     username, hostname, password = get_pi_connection_details(
         postgres_host=postgres_host
     )
@@ -613,3 +613,288 @@ def sftp(hostname, username, password, from_path, to_path):
 
     except (OSError, asyncssh.Error) as exc:
         sys.exit('SFTP operation failed: ' + str(exc))
+
+
+def dataset_import_percent(postgres_host, dataset_name, session_id):
+    """
+    Used to update the html dataset import rows. Transferring files
+    from the Pi to the laptop is not instantaneous. It can take a
+    few minutes, so it's helpful to see completion percent to know
+    that the transfer is working.
+    Possible Results:
+    * Not Started: percent < 0
+    * In Progress 0 <= percent < 100
+    * Done: 100
+    """
+
+    db_record_count = get_dataset_db_record_count(
+        postgres_host=postgres_host,
+        dataset_name=dataset_name
+    )
+
+    is_job_available = get_is_job_availbale(
+        postgres_host=postgres_host,
+        session_id=session_id,
+        name='dataset import',
+        detail=dataset_name
+    )
+
+    laptop_file_count = get_laptop_total_file_count(
+        postgres_host=postgres_host,
+        dataset_name=dataset_name
+    )
+
+    pi_file_count = get_pi_total_file_count(
+        postgres_host=postgres_host,
+        dataset_name=dataset_name
+    )
+
+    """
+    If a dataset has any records in the DB and no active jobs
+    then assume the dataset is complete. In practice, this could
+    mean that an import job failed and the editor.py script was
+    restarted, but for code simplicity assume this can't happen.
+    If it does, the user can delete the dataset in the "laptop"
+    nav section and import it again from the "pi" nav section
+    to start the dataset import from scratch. Alternatively, I
+    could also compare the number of records in the DB to the
+    records on the Pi's file system, but this isn't a good idea
+    because 1) I won't always have access to the Pi, and 2) I
+    want to be able to delete dirty records on the laptop but
+    don't care about cleanup on the Pi
+    """
+    if db_record_count > 0 and is_job_available is False:
+        return 100
+
+    """
+    If the dataset has an active job with records in the DB,
+    then assume the SFTP step has completed but the DB import
+    has not. The DB import doesn't happen until the SFTP
+    completes. Completion percent is 50% + DB (DB record count /
+    the file json record count) x 50%. Each job is assigned a
+    session_id, which corresponds to a unique inovcation of the
+    editor.py script. If there is a job in the table whose
+    session_id does not match the current editor.py session_id,
+    then the job is not actually active.
+    """
+    if db_record_count > 0 and is_job_available is True:
+        """
+        There is one DB record for each label file. There are
+        roughly twice as many total files as there are label files.
+        The ratio isn't exact because there are some metadata
+        files and also because the ls command returns some of its
+        own metadata, like the number of records, so to get a rough
+        sense of the percentage of files loaded to the DB I divide
+        the DB files by the half the total Pi files
+        """
+        approximate_pi_label_files = int(pi_file_count / 2)
+        return 50 + int((db_record_count / approximate_pi_label_files) * 50)
+
+    """
+    If the dataset has an active job but no records in the DB,
+    assume the DB import hasn't started yet and the SFTP part
+    is still in progress. However, if the session_id doesn't
+    match the session_id in editor.py, then assume that the
+    job did not complete and was terminated without cleanup.
+    Completion percent is (laptop record
+    count / Pi record count) x 50%
+    """
+    if db_record_count == 0 and is_job_available is True:
+        return int((laptop_file_count / pi_file_count) * 50)
+
+    """
+    If the dataset has not records in the DB and no active job
+    assume that import hasn't started yet
+    """
+    return 0
+
+
+def get_pi_total_file_count(postgres_host, dataset_name):
+    """
+    Lists the total number of files on the Pi for a
+    given dataset. This is one of several functions
+    used to check the progress of the SFTP transfer
+    of a dataset from the Pi to the laptop during the
+    import process
+    """
+    pi_datasets_dir = read_pi_setting(
+        host=postgres_host,
+        field_name='pi datasets directory'
+    )
+    pi_command = 'ls -ltr {pi_datasets_dir}/{dataset_name} | wc -l'.format(
+        pi_datasets_dir=pi_datasets_dir,
+        dataset_name=dataset_name
+    )
+    stdout = execute_pi_command(
+        command=pi_command,
+        postgres_host=postgres_host,
+        is_printable=False
+    )
+    file_count = int(stdout.replace('\n',''))
+    return file_count
+
+
+def get_laptop_total_file_count(postgres_host, dataset_name):
+    """
+    Lists the total number of files on the Pi for a
+    given dataset. The total includes label files +
+    image files. This is one of several functions
+    used to check the progress of the SFTP transfer
+    of a dataset from the Pi to the laptop during the
+    import process
+    """
+    laptop_datasets_dir = read_pi_setting(
+        host=postgres_host,
+        field_name='laptop datasets directory'
+    )
+    full_path = '{laptop_datasets_dir}/{dataset_name}'.format(
+        laptop_datasets_dir=laptop_datasets_dir,
+        dataset_name=dataset_name
+    )
+    if os.path.exists(full_path):
+        command = 'ls -ltr {laptop_datasets_dir}/{dataset_name} | wc -l'.format(
+            laptop_datasets_dir=laptop_datasets_dir,
+            dataset_name=dataset_name
+        )
+        stdout = shell_command(command).strip()
+        file_count = int(stdout)
+        return file_count
+    else:
+        return 0
+
+
+def get_dataset_db_record_count(postgres_host, dataset_name):
+    """
+    Can be used to tell if an SFTP is complete (if count > 0)
+    or can be an input to determine completion percent of a
+    DB load. Both of these things are needed to check a
+    dataset's import status. This is one of several
+    functions used to check the progress of the SFTP transfer
+    of a dataset from the Pi to the laptop during the import
+    process
+    """
+    read_sql = '''
+        SELECT
+          COUNT(*) AS count
+        FROM records
+        WHERE
+          LOWER(dataset) = LOWER('{dataset}')
+        '''.format(
+        dataset=dataset_name
+    )
+    rows = get_sql_rows(
+        host=postgres_host,
+        sql=read_sql
+    )
+    return rows[0]['count']
+
+
+def add_job(postgres_host, session_id, name, detail, status):
+    """
+    Used to check SFTP file transfers from the Pi to the laptop
+    during the dataset import process.
+    """
+    insert_sql = '''
+    INSERT INTO jobs(
+      created_at,
+      session_id,
+      name,
+      detail,
+      status
+    )
+    VALUES (
+      NOW(),
+      '{session_id}',
+      '{name}',
+      '{detail}',
+      '{status}'
+    )
+    '''.format(
+        session_id=session_id,
+        name=name,
+        detail=detail,
+        status=status
+    )
+    execute_sql(
+        host=postgres_host,
+        sql=insert_sql
+    )
+
+
+def get_is_job_availbale(postgres_host, session_id, name, detail):
+    """
+    Checks if a job is running. This was originally written to
+    track SFTP transfers from the Pi to the laptop. Each time
+    you run the editor.py script you'll get a new session_id
+    variable that you can use to see which jobs in the jobs are
+    from the current session
+    """
+    read_sql = '''
+    SELECT
+      COUNT(*) AS count
+    FROM jobs
+    WHERE
+      LOWER(name) = LOWER('{name}')
+      AND LOWER(detail) = LOWER('{detail}')
+      AND LOWER(session_id) = LOWER('{session_id}')
+    '''.format(
+        session_id=session_id,
+        name=name,
+        detail=detail
+    )
+    rows = get_sql_rows(
+        host=postgres_host,
+        sql=read_sql
+    )
+    if rows[0]['count'] > 0:
+        return True
+    else:
+        return False
+
+
+def delete_stale_jobs(postgres_host, session_id):
+    """
+    I created the jobs table to track the status of
+    SFTP jobs during the "import data" process. Each
+    time the editor.py script runs I generate a new
+    UUID that serves as the session_id. Any rows in
+    the job table that do not match this value are
+    from past runs and be ignored, which is why this
+    function deletes them.
+    """
+
+    delete_sql = '''
+        DELETE FROM jobs
+        WHERE LOWER(session_id) != LOWER('{session_id}')
+        '''.format(
+        session_id=session_id
+    )
+    execute_sql(
+        host=postgres_host,
+        sql=delete_sql
+    )
+
+
+def delete_job(postgres_host, job_name, job_detail):
+    """
+    I created the jobs table to track the status of
+    SFTP jobs during the "import data" process. Each
+    time the editor.py script runs I generate a new
+    UUID that serves as the session_id. I should run
+    this script if an import has ended, which could
+    mean it was a success, it failed,
+    """
+
+    delete_sql = '''
+        DELETE FROM jobs
+        WHERE
+            LOWER(name) = LOWER('{job_name}')
+            AND LOWER(detail) = LOWER('{job_detail}')
+        '''.format(
+        job_name=job_name,
+        job_detail=job_detail
+    )
+    execute_sql(
+        host=postgres_host,
+        sql=delete_sql
+    )

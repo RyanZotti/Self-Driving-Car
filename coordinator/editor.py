@@ -17,6 +17,7 @@ import requests
 import json
 import signal
 import subprocess
+from uuid import uuid4
 from coordinator.utilities import *
 import json
 from shutil import rmtree
@@ -1167,6 +1168,17 @@ class TransferDatasetFromPiToLaptop(tornado.web.RequestHandler):
             laptop_datasets_directory=laptop_datasets_directory,
             dataset_name=dataset_name
         )
+
+        # Add to jobs table for tracking
+        add_job(
+            postgres_host=self.application.postgres_host,
+            session_id=self.application.session_id,
+            name='dataset import',
+            detail=dataset_name,
+            status='pending'
+        )
+
+        # Run the SFTP step
         sftp(
             hostname=pi_hostname,
             username=username,
@@ -1174,6 +1186,7 @@ class TransferDatasetFromPiToLaptop(tornado.web.RequestHandler):
             from_path=from_path,
             to_path=to_path
         )
+
         # Load the data into Postgres
         folder = os.path.join(
             self.application.record_reader.base_directory,
@@ -1188,7 +1201,42 @@ class TransferDatasetFromPiToLaptop(tornado.web.RequestHandler):
                 angle=angle,
                 throttle=throttle
             )
+
+        # Remove the job from the jobs table, which signifies completion
+        delete_job(
+            postgres_host=self.application.postgres_host,
+            job_name='dataset import',
+            job_detail=dataset_name
+        )
         return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.transfer_dataset(json_input=json_input)
+        self.write(result)
+
+
+class TransferDatasetProgress(tornado.web.RequestHandler):
+
+    """
+    Used to check the percentage of completion of a dataset
+    transfer from the Pi to the laptop during the import
+    process. Covers both the SFTP and also the load into
+    the DB
+    """
+
+    executor = ThreadPoolExecutor(10)
+
+    @tornado.concurrent.run_on_executor
+    def transfer_dataset(self,json_input):
+        dataset_name = json_input['dataset']
+        percent = dataset_import_percent(
+            postgres_host=self.application.postgres_host,
+            dataset_name=dataset_name,
+            session_id=self.application.session_id
+        )
+        return {'percent':percent}
 
     @tornado.gen.coroutine
     def post(self):
@@ -2339,6 +2387,7 @@ def make_app():
         (r"/delete-laptop-dataset", DeleteLaptopDataset),
         (r"/delete-pi-dataset", DeletePiDataset),
         (r"/transfer-dataset", TransferDatasetFromPiToLaptop),
+        (r"/transfer-dataset-progress", TransferDatasetProgress),
         (r"/save-reocord-to-db", SaveRecordToDB),
         (r"/delete-flagged-record", DeleteFlaggedRecord),
         (r"/delete-flagged-dataset", DeleteFlaggedDataset),
@@ -2442,6 +2491,23 @@ if __name__ == "__main__":
         postgres_host=app.postgres_host,
         overfit=False
     )
+
+    """
+    I have a SQL table called "jobs" that I use to track
+    the status of various background processes, such as
+    SFTP file transfers when import a dataset to my
+    laptop from the Pi. I use a session_id that is unique
+    to each editor.py invocation to distinguish current
+    jobs vs old jobs. When I start up the editor.py server
+    for the first time I perform clean up the jobs table
+    by removing anything that is not from the current run
+    """
+    app.session_id = uuid4()
+    delete_stale_jobs(
+        postgres_host=app.postgres_host,
+        session_id=app.session_id
+    )
+
     app.angle_only = args['angle_only']
     # TODO: Remove hard-coded Pi host
     app.pi_host = 'ryanzotti.local'
