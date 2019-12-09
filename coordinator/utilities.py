@@ -649,66 +649,63 @@ def dataset_import_percent(postgres_host, dataset_name, session_id):
         dataset_name=dataset_name
     )
 
-    """
-    If a dataset has any records in the DB and no active jobs
-    then assume the dataset is complete. In practice, this could
-    mean that an import job failed and the editor.py script was
-    restarted, but for code simplicity assume this can't happen.
-    If it does, the user can delete the dataset in the "laptop"
-    nav section and import it again from the "pi" nav section
-    to start the dataset import from scratch. Alternatively, I
-    could also compare the number of records in the DB to the
-    records on the Pi's file system, but this isn't a good idea
-    because 1) I won't always have access to the Pi, and 2) I
-    want to be able to delete dirty records on the laptop but
-    don't care about cleanup on the Pi
-    """
-    if db_record_count > 0 and is_job_available is False:
-        return 100
-
-    """
-    If the dataset has an active job with records in the DB,
-    then assume the SFTP step has completed but the DB import
-    has not. The DB import doesn't happen until the SFTP
-    completes. Completion percent is 50% + DB (DB record count /
-    the file json record count) x 50%. Each job is assigned a
-    session_id, which corresponds to a unique inovcation of the
-    editor.py script. If there is a job in the table whose
-    session_id does not match the current editor.py session_id,
-    then the job is not actually active.
-    """
-    if db_record_count > 0 and is_job_available is True:
+    if db_record_count > 0:
         """
-        There is one DB record for each label file. There are
-        roughly twice as many total files as there are label files.
-        The ratio isn't exact because there are some metadata
-        files and also because the ls command returns some of its
-        own metadata, like the number of records, so to get a rough
-        sense of the percentage of files loaded to the DB I divide
-        the DB files by the half the total Pi files
+        If a dataset has any records in the DB and no active jobs
+        then assume the dataset is complete. In practice, this could
+        mean that an import job failed and the editor.py script was
+        restarted, but for code simplicity assume this can't happen.
+        If it does, the user can delete the dataset in the "laptop"
+        nav section and import it again from the "pi" nav section
+        to start the dataset import from scratch. Alternatively, I
+        could also compare the number of records in the DB to the
+        records on the Pi's file system, but this isn't a good idea
+        because 1) I won't always have access to the Pi, and 2) I
+        want to be able to delete dirty records on the laptop but
+        don't care about cleanup on the Pi
         """
-        approximate_pi_label_files = int(pi_file_count / 2)
-        return 50 + int((db_record_count / approximate_pi_label_files) * 50)
+        if is_job_available is False:
+            return 100
+        else:
+            """
+            If the dataset has an active job with records in the DB,
+            then assume the SFTP step has completed but the DB import
+            has not. The DB import doesn't happen until the SFTP
+            completes. Completion percent is 50% + DB (DB record count /
+            the file json record count) x 50%. Each job is assigned a
+            session_id, which corresponds to a unique inovcation of the
+            editor.py script. If there is a job in the table whose
+            session_id does not match the current editor.py session_id,
+            then the job is not actually active.
 
-    """
-    If the dataset has an active job but no records in the DB,
-    assume the DB import hasn't started yet and the SFTP part
-    is still in progress. However, if the session_id doesn't
-    match the session_id in editor.py, then assume that the
-    job did not complete and was terminated without cleanup.
-    Completion percent is (laptop record
-    count / Pi record count) x 50%
-    """
-    if db_record_count == 0 and is_job_available is True:
-        return int((laptop_file_count / pi_file_count) * 50)
-
-    """
-    If the dataset has no records in the DB, no files on the
-    laptop, and no active job then assume that import hasn't
-    started yet
-    """
-    if db_record_count == 0 and is_job_available is False and laptop_file_count == 0:
-        return -1
+            There is one DB record for each label file. There are
+            roughly twice as many total files as there are label files.
+            The ratio isn't exact because there are some metadata
+            files and also because the ls command returns some of its
+            own metadata, like the number of records, so to get a rough
+            sense of the percentage of files loaded to the DB I divide
+            the DB files by the half the total Pi files
+            """
+            approximate_pi_label_files = int(pi_file_count / 2)
+            return 50 + int((db_record_count / approximate_pi_label_files) * 50)
+    else:
+        """
+        If the dataset has an active job but no records in the DB,
+        assume the DB import hasn't started yet and the SFTP part
+        is still in progress. However, if the session_id doesn't
+        match the session_id in editor.py, then assume that the
+        job did not complete and was terminated without cleanup.
+        Completion percent is (laptop record
+        count / Pi record count) x 50%
+        """
+        if is_job_available is True:
+            return int((laptop_file_count / pi_file_count) * 50)
+        else:
+            """
+            If the dataset has no records in the DB and no active job
+            then assume that import hasn't started yet
+            """
+            return -1
 
 
 def get_pi_total_file_count(postgres_host, dataset_name):
