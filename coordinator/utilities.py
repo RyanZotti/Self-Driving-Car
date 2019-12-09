@@ -703,10 +703,12 @@ def dataset_import_percent(postgres_host, dataset_name, session_id):
         return int((laptop_file_count / pi_file_count) * 50)
 
     """
-    If the dataset has not records in the DB and no active job
-    assume that import hasn't started yet
+    If the dataset has no records in the DB, no files on the
+    laptop, and no active job then assume that import hasn't
+    started yet
     """
-    return 0
+    if db_record_count == 0 and is_job_available is False and laptop_file_count == 0:
+        return -1
 
 
 def get_pi_total_file_count(postgres_host, dataset_name):
