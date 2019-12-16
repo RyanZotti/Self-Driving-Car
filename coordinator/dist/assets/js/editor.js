@@ -42,23 +42,33 @@ function getDatasetReviewRowString() {
     });
 }
 
-function addDatasetImportRows() {
-    const promises = [
-        getDatasetImportRowString(),
-        loadDatasetMetadata('import')
-    ];
-    Promise.all(promises).then(function(promiseResults){
-        const datasetRowString = promiseResults[0];
-        const datasetPromises = promiseResults[1];
+function getDatasetImpotRows() {
+    return new Promise(function(resolve, reject) {
+        $.get( "/list-import-datasets", function(result) {
+            resolve(result['records']);
+        });
+    });
+}
+
+async function addDatasetImportRows(){
+
+    if (getActiveDatasetType() == 'import'){
+        const datasetRowString = await getDatasetImportRowString();
         const tbody = document.querySelector("tbody#datasetsTbody");
-        for (datsetPromise of datasetPromises) {
-            const tr = htmlToElement(datasetRowString);
-            datsetPromise.then(function(dataset){
-                const datasetText = dataset.name;
+        const records = await getDatasetImpotRows();
+        for (let record of records){
+            const datasetText = record.dataset;
+
+            // Only add row if it doesn't exist
+            const rowId = 'import-row-'+record.dataset;
+            const row = document.getElementById(rowId);
+            if (row == null){
+                const tr = htmlToElement(datasetRowString);
+                tr.id = rowId;
                 tr.setAttribute("dataset",datasetText);
-                tr.querySelector('td.dataset-id').textContent = dataset.id;
-                tr.querySelector('td.created-date').textContent = dataset.date;
-                tr.querySelector('td.images').textContent = dataset.images;
+                tr.querySelector('td.dataset-id').textContent = record.id;
+                tr.querySelector('td.created-date').textContent = record.date;
+                tr.querySelector('td.images').textContent = record.count;
                 const downloadButton = tr.querySelector('button.download-dataset-button');
                 downloadButton.setAttribute("dataset",datasetText);
                 downloadButton.addEventListener("click", async function(){
@@ -66,9 +76,9 @@ function addDatasetImportRows() {
                 });
                 tr.querySelector('button.delete-dataset-button').setAttribute("dataset",datasetText);
                 const input = tr.querySelector('input[name="datasetsSelect"]');
-                input.setAttribute('id','dataset-id-'+dataset.id);
+                input.setAttribute('id','dataset-id-'+record.id);
                 const label = tr.querySelector('label[name="datasetsSelect"]');
-                label.setAttribute('for','dataset-id-'+dataset.id);
+                label.setAttribute('for','dataset-id-'+record.id);
                 tbody.appendChild(tr);
                 const deleteDatasetButton = tr.querySelector('button.delete-dataset-button');
                 deleteDatasetButton.onclick = function(){
@@ -76,9 +86,22 @@ function addDatasetImportRows() {
                     deleteDataset("pi", dataset);
                     tr.parentNode.removeChild(tr);
                 }
-            });
+            } else {
+                // The only thing that should change from time to time is the import progress
+                const importDatasetButton = row.querySelector('button.download-dataset-button');
+                const progressCircle = row.querySelector('svg.import-progress-circle');
+                percent = record.percent
+                if (percent < 0){
+                    progressCircle.style.display = 'none';
+                    importDatasetButton.style.display = 'inline';
+                } else {
+                    importDatasetButton.style.display = 'none';
+                    progressCircle.style.display = 'inline';
+                    updateProgressCircle(progressCircle, percent);
+                }
+            }
         }
-    });
+    }
 }
 
 function getCheckedDatasets(){
@@ -392,7 +415,6 @@ async function checkAllDatasetsImportProgress(){
         for (const row of rows){
             const dataset = row.getAttribute("dataset");
             const percent = await getDatasetTransferProgress(dataset);
-            console.log(dataset + ' ' + percent);
             const importDatasetButton = row.querySelector('button.download-dataset-button');
             const progressCircle = row.querySelector('svg.import-progress-circle');
             if (percent < 0){
@@ -976,7 +998,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 1000);
 
     const importProgressTimer = setInterval(function(){
-      checkAllDatasetsImportProgress()
+      addDatasetImportRows()
     }, 1000);
 
     // Update Raspberry Pi statues

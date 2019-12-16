@@ -91,3 +91,8 @@ CREATE TABLE IF NOT EXISTS jobs(
     status VARCHAR(100)
 );
 COMMIT;
+
+BEGIN;
+CREATE INDEX pi_settings_field_name ON pi_settings (field_name);
+CREATE INDEX jobs_name_detail_session_id ON jobs (name, detail, session_id);
+COMMIT;

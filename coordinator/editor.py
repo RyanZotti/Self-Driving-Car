@@ -414,6 +414,29 @@ class WritePiField(tornado.web.RequestHandler):
             host=self.application.postgres_host,
             sql=sql_query
         )
+
+        """
+        Update the cache of Pi credentials this API updated
+        in case the credentials being updated is the hostname,
+        password, or username. Normally this would be an expensive
+        operation, but updating Pi fields happens infrequently.
+        It's important to cache the credentials because reading
+        the credentials caused a lot of load Postgres DB. In
+        some cases I would call it for every dataset, and each
+        dataset required 3 separate calls, one for password, user
+        and hostname
+        """
+        self.application.pi_credentials = cache_pi_credentials(
+            postgres_host=app.postgres_host
+        )
+        self.application.laptop_datasets_dir = read_pi_setting(
+            host=app.postgres_host,
+            field_name='laptop datasets directory'
+        )
+        self.application.pi_datasets_dir = read_pi_setting(
+            host=app.postgres_host,
+            field_name='pi datasets directory'
+        )
         return {}
 
     @tornado.gen.coroutine
@@ -1122,7 +1145,8 @@ class DeletePiDataset(tornado.web.RequestHandler):
         )
         execute_pi_command(
             postgres_host=self.application.postgres_host,
-            command=command
+            command=command,
+            pi_credentials=self.application.pi_credentials
         )
         return {}
 
@@ -1216,35 +1240,6 @@ class TransferDatasetFromPiToLaptop(tornado.web.RequestHandler):
         result = yield self.transfer_dataset(json_input=json_input)
         self.write(result)
 
-
-class TransferDatasetProgress(tornado.web.RequestHandler):
-
-    """
-    Used to check the percentage of completion of a dataset
-    transfer from the Pi to the laptop during the import
-    process. Covers both the SFTP and also the load into
-    the DB
-    """
-
-    executor = ThreadPoolExecutor(10)
-
-    @tornado.concurrent.run_on_executor
-    def transfer_dataset(self,json_input):
-        dataset_name = json_input['dataset']
-        percent = dataset_import_percent(
-            postgres_host=self.application.postgres_host,
-            dataset_name=dataset_name,
-            session_id=self.application.session_id
-        )
-        return {'percent':percent}
-
-    @tornado.gen.coroutine
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
-        result = yield self.transfer_dataset(json_input=json_input)
-        self.write(result)
-
-
 class ImageCountFromDataset(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -1337,6 +1332,27 @@ class ListReviewDatasets(tornado.web.RequestHandler):
     def get(self):
         results = yield self.get_review_datasets()
         self.write(results)
+
+
+class GetImportRows(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_review_datasets(self):
+        reocrds = get_pi_dataset_import_stats(
+            pi_datasets_dir=self.application.pi_datasets_dir,
+            laptop_dataset_dir=self.application.laptop_datasets_dir,
+            postgres_host=self.application.postgres_host,
+            session_id=self.application.session_id
+        )
+        return reocrds
+
+    @tornado.gen.coroutine
+    def get(self):
+        records = yield self.get_review_datasets()
+        print(records)
+        self.write({'records':records})
 
 
 class ListPiDatasets(tornado.web.RequestHandler):
@@ -1929,7 +1945,8 @@ class PiHealthCheck(tornado.web.RequestHandler):
         return {
             'is_able_to_connect':is_pi_healthy(
                 postgres_host=self.application.postgres_host,
-                command='ls -ltr'
+                command='ls -ltr',
+                pi_credentials=self.application.pi_credentials
             )
         }
 
@@ -2387,13 +2404,12 @@ def make_app():
         (r"/delete-laptop-dataset", DeleteLaptopDataset),
         (r"/delete-pi-dataset", DeletePiDataset),
         (r"/transfer-dataset", TransferDatasetFromPiToLaptop),
-        (r"/transfer-dataset-progress", TransferDatasetProgress),
         (r"/save-reocord-to-db", SaveRecordToDB),
         (r"/delete-flagged-record", DeleteFlaggedRecord),
         (r"/delete-flagged-dataset", DeleteFlaggedDataset),
         (r"/add-flagged-record", Keep),
         (r"/list-models", ListModels),
-        (r"/list-import-datasets", ListPiDatasets),
+        (r"/list-import-datasets", GetImportRows),
         (r"/list-review-datasets", ListReviewDatasets),
         (r"/list-datasets-filesystem", ListReviewDatasetsFileSystem),
         (r"/image-count-from-dataset", ImageCountFromDataset),
@@ -2506,6 +2522,19 @@ if __name__ == "__main__":
     delete_stale_jobs(
         postgres_host=app.postgres_host,
         session_id=app.session_id
+    )
+
+    # Cache fields to reduce strain on PG
+    app.pi_credentials = cache_pi_credentials(
+        postgres_host=app.postgres_host
+    )
+    app.laptop_datasets_dir = read_pi_setting(
+        host=app.postgres_host,
+        field_name='laptop datasets directory'
+    )
+    app.pi_datasets_dir = read_pi_setting(
+        host=app.postgres_host,
+        field_name='pi datasets directory'
     )
 
     app.angle_only = args['angle_only']

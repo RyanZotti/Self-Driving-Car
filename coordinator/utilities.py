@@ -543,10 +543,15 @@ def get_pi_connection_details(postgres_host):
     return username, hostname, password
 
 # Connects to the Pi and runs a command
-def execute_pi_command(command, postgres_host, is_printable=False):
-    username, hostname, password = get_pi_connection_details(
-        postgres_host=postgres_host
-    )
+def execute_pi_command(command, postgres_host, is_printable=False, pi_credentials=None):
+    if pi_credentials:
+        username = pi_credentials['username']
+        hostname = pi_credentials['hostname']
+        password = pi_credentials['password']
+    else:
+        username, hostname, password = get_pi_connection_details(
+            postgres_host=postgres_host
+        )
     async def run_client():
         async with asyncssh.connect(hostname, username=username, password=password) as conn:
             result = await conn.run(command, check=True)
@@ -562,10 +567,15 @@ def execute_pi_command(command, postgres_host, is_printable=False):
         pass
 
 
-def is_pi_healthy(command, postgres_host, is_printable=False, return_first_line=False):
-    username, hostname, password = get_pi_connection_details(
-        postgres_host=postgres_host
-    )
+def is_pi_healthy(command, postgres_host, is_printable=False, return_first_line=False, pi_credentials=None):
+    if pi_credentials:
+        username = pi_credentials['username']
+        hostname = pi_credentials['hostname']
+        password = pi_credentials['password']
+    else:
+        username, hostname, password = get_pi_connection_details(
+            postgres_host=postgres_host
+        )
     async def run_client():
         async with asyncssh.connect(hostname, username=username, password=password) as conn:
             result = await conn.run(command, check=True)
@@ -615,100 +625,7 @@ def sftp(hostname, username, password, from_path, to_path):
         sys.exit('SFTP operation failed: ' + str(exc))
 
 
-def dataset_import_percent(postgres_host, dataset_name, session_id):
-    """
-    Used to update the html dataset import rows. Transferring files
-    from the Pi to the laptop is not instantaneous. It can take a
-    few minutes, so it's helpful to see completion percent to know
-    that the transfer is working.
-    Possible Results:
-    * Not Started: percent < 0
-    * In Progress 0 <= percent < 100
-    * Done: 100
-    """
-
-    db_record_count = get_dataset_db_record_count(
-        postgres_host=postgres_host,
-        dataset_name=dataset_name
-    )
-
-    is_job_available = get_is_job_availbale(
-        postgres_host=postgres_host,
-        session_id=session_id,
-        name='dataset import',
-        detail=dataset_name
-    )
-
-    laptop_file_count = get_laptop_total_file_count(
-        postgres_host=postgres_host,
-        dataset_name=dataset_name
-    )
-
-    pi_file_count = get_pi_total_file_count(
-        postgres_host=postgres_host,
-        dataset_name=dataset_name
-    )
-
-    if db_record_count > 0:
-        """
-        If a dataset has any records in the DB and no active jobs
-        then assume the dataset is complete. In practice, this could
-        mean that an import job failed and the editor.py script was
-        restarted, but for code simplicity assume this can't happen.
-        If it does, the user can delete the dataset in the "laptop"
-        nav section and import it again from the "pi" nav section
-        to start the dataset import from scratch. Alternatively, I
-        could also compare the number of records in the DB to the
-        records on the Pi's file system, but this isn't a good idea
-        because 1) I won't always have access to the Pi, and 2) I
-        want to be able to delete dirty records on the laptop but
-        don't care about cleanup on the Pi
-        """
-        if is_job_available is False:
-            return 100
-        else:
-            """
-            If the dataset has an active job with records in the DB,
-            then assume the SFTP step has completed but the DB import
-            has not. The DB import doesn't happen until the SFTP
-            completes. Completion percent is 50% + DB (DB record count /
-            the file json record count) x 50%. Each job is assigned a
-            session_id, which corresponds to a unique inovcation of the
-            editor.py script. If there is a job in the table whose
-            session_id does not match the current editor.py session_id,
-            then the job is not actually active.
-
-            There is one DB record for each label file. There are
-            roughly twice as many total files as there are label files.
-            The ratio isn't exact because there are some metadata
-            files and also because the ls command returns some of its
-            own metadata, like the number of records, so to get a rough
-            sense of the percentage of files loaded to the DB I divide
-            the DB files by the half the total Pi files
-            """
-            approximate_pi_label_files = int(pi_file_count / 2)
-            return 50 + int((db_record_count / approximate_pi_label_files) * 50)
-    else:
-        """
-        If the dataset has an active job but no records in the DB,
-        assume the DB import hasn't started yet and the SFTP part
-        is still in progress. However, if the session_id doesn't
-        match the session_id in editor.py, then assume that the
-        job did not complete and was terminated without cleanup.
-        Completion percent is (laptop record
-        count / Pi record count) x 50%
-        """
-        if is_job_available is True:
-            return int((laptop_file_count / pi_file_count) * 50)
-        else:
-            """
-            If the dataset has no records in the DB and no active job
-            then assume that import hasn't started yet
-            """
-            return -1
-
-
-def get_pi_total_file_count(postgres_host, dataset_name):
+def get_pi_total_file_count(postgres_host, dataset_name, pi_credentials=None):
     """
     Lists the total number of files on the Pi for a
     given dataset. This is one of several functions
@@ -727,13 +644,14 @@ def get_pi_total_file_count(postgres_host, dataset_name):
     stdout = execute_pi_command(
         command=pi_command,
         postgres_host=postgres_host,
-        is_printable=False
+        is_printable=False,
+        pi_credentials=pi_credentials
     )
     file_count = int(stdout.replace('\n',''))
     return file_count
 
 
-def get_laptop_total_file_count(postgres_host, dataset_name):
+def get_laptop_total_file_count(postgres_host, dataset_name, laptop_datasets_dir=None):
     """
     Lists the total number of files on the Pi for a
     given dataset. The total includes label files +
@@ -742,10 +660,11 @@ def get_laptop_total_file_count(postgres_host, dataset_name):
     of a dataset from the Pi to the laptop during the
     import process
     """
-    laptop_datasets_dir = read_pi_setting(
-        host=postgres_host,
-        field_name='laptop datasets directory'
-    )
+    if laptop_datasets_dir is None:
+        laptop_datasets_dir = read_pi_setting(
+            host=postgres_host,
+            field_name='laptop datasets directory'
+        )
     full_path = '{laptop_datasets_dir}/{dataset_name}'.format(
         laptop_datasets_dir=laptop_datasets_dir,
         dataset_name=dataset_name
@@ -897,3 +816,230 @@ def delete_job(postgres_host, job_name, job_detail):
         host=postgres_host,
         sql=delete_sql
     )
+
+
+def cache_pi_credentials(postgres_host):
+    username, hostname, password = get_pi_connection_details(
+        postgres_host=postgres_host
+    )
+    pi_credentials = {
+        'username': username,
+        'hostname': hostname,
+        'password': password
+    }
+    return pi_credentials
+
+
+def dataset_import_percent(db_record_count, is_job_available, laptop_file_count, pi_json_file_count):
+    db_record_count = int(db_record_count)
+    laptop_file_count = int(laptop_file_count)
+    pi_json_file_count = int(pi_json_file_count)
+
+    """
+    Used to update the html dataset import rows. Transferring files
+    from the Pi to the laptop is not instantaneous. It can take a
+    few minutes, so it's helpful to see completion percent to know
+    that the transfer is working.
+    Possible Results:
+    * Not Started: percent < 0
+    * In Progress 0 <= percent < 100
+    * Done: 100
+    """
+
+    if db_record_count > 0:
+        """
+        If a dataset has any records in the DB and no active jobs
+        then assume the dataset is complete. In practice, this could
+        mean that an import job failed and the editor.py script was
+        restarted, but for code simplicity assume this can't happen.
+        If it does, the user can delete the dataset in the "laptop"
+        nav section and import it again from the "pi" nav section
+        to start the dataset import from scratch. Alternatively, I
+        could also compare the number of records in the DB to the
+        records on the Pi's file system, but this isn't a good idea
+        because 1) I won't always have access to the Pi, and 2) I
+        want to be able to delete dirty records on the laptop but
+        don't care about cleanup on the Pi
+        """
+        if is_job_available is False:
+            return 100
+        else:
+            """
+            If the dataset has an active job with records in the DB,
+            then assume the SFTP step has completed but the DB import
+            has not. The DB import doesn't happen until the SFTP
+            completes. Completion percent is 50% + DB (DB record count /
+            the file json record count) x 50%. Each job is assigned a
+            session_id, which corresponds to a unique inovcation of the
+            editor.py script. If there is a job in the table whose
+            session_id does not match the current editor.py session_id,
+            then the job is not actually active.
+
+            There is one DB record for each label file. There are
+            roughly twice as many total files as there are label files.
+            The ratio isn't exact because there are some metadata
+            files and also because the ls command returns some of its
+            own metadata, like the number of records, so to get a rough
+            sense of the percentage of files loaded to the DB I divide
+            the DB files by the half the total Pi files
+            """
+            approximate_pi_label_files = pi_json_file_count
+            return 50 + int((db_record_count / approximate_pi_label_files) * 50)
+    else:
+        """
+        If the dataset has an active job but no records in the DB,
+        assume the DB import hasn't started yet and the SFTP part
+        is still in progress. However, if the session_id doesn't
+        match the session_id in editor.py, then assume that the
+        job did not complete and was terminated without cleanup.
+        Completion percent is (laptop record
+        count / Pi record count) x 50%
+        """
+        if is_job_available is True:
+            return int((laptop_file_count / pi_json_file_count) * 50)
+        else:
+            """
+            If the dataset has no records in the DB and no active job
+            then assume that import hasn't started yet
+            """
+            return -1
+
+
+def get_pi_dataset_import_stats(pi_datasets_dir, laptop_dataset_dir, postgres_host, session_id):
+
+    """
+    Used to report JSON file counts from each of the Pi dataset
+    directories. I wrote this function because at one point I
+    saw really bad performance issues on the Postgres DB because
+    I called Postgres a bunch of times for dataset, and I planned
+    on having a bunch of datasets over time. Now there should be
+    just one call that gets the data for all datasets. These
+    results are used to show data on the imports page
+
+    Parameters
+    ----------
+    pi_datasets_dir : string
+        Full path to the datasets directory on the pi. For example:
+        /home/pi/vehicle-datasets
+    laptop_dataset_dir : string
+        Full path to the datasets directory on the Laptop. For
+        example: /home/your-name/vehicle-datasets
+    postgres_host : string
+        Postgres hostname
+    session_id: string
+        The random uuid assigned to a given run of editor.py. This
+        is used to identify active jobs from stale jobs
+
+    Returns
+    ----------
+    records : list
+        List of dictionaries, where each dictionary represents
+        a Pi dataset that could be imported. This is used to
+        display results on the Pi import datasets page
+    """
+
+    """
+    Get data on all active jobs and record counts in the same
+    query to reduce total DB calls
+    """
+    stats_query = '''
+        WITH counts AS (
+        SELECT
+            dataset,
+            count(*) AS total
+        FROM records
+        GROUP BY dataset)
+
+        SELECT
+            CASE WHEN jobs.detail IS NULL
+                THEN counts.dataset
+                ELSE jobs.detail
+            END AS dataset,
+            COALESCE(counts.total,-1) AS total,
+            CASE WHEN jobs.detail IS NULL
+                THEN FALSE
+                ELSE TRUE
+            END AS is_job_active
+        FROM jobs FULL JOIN counts ON jobs.detail = counts.dataset
+         AND jobs.session_id = '{session_id}'
+         AND jobs.name = 'dataset import'
+    '''.format(session_id=session_id)
+    rows = get_sql_rows(
+        host=postgres_host,
+        sql=stats_query
+    )
+    stats = {}
+    for row in rows:
+        dataset = row['dataset']
+        stats[dataset] = {
+            'total':row['total'],
+            'is_job_active':row['is_job_active']
+        }
+
+    def parse_file_counts(stdout):
+        raw_lines = stdout.split('\n')
+        records = {}
+        for raw_line in raw_lines:
+            line = raw_line.strip()
+            if 'dataset' in line:
+                json_file_count, dataset_name = line.split(' ')
+                _, id, date = dataset_name.split('_')
+                year, month, day = date.split('-')
+                new_date = '20{year}-{month}-{day}'.format(
+                    year=year, month=month, day=day
+                )
+                records[dataset_name] = {
+                    'id': id,
+                    'date': new_date,
+                    'count': json_file_count
+                }
+        return records
+
+    # Get file counts from multiple directories: https://stackoverflow.com/a/39622947/554481
+    command = 'cd {dir}; du -a | grep -i .json | cut -d/ -f2 | sort | uniq -c | sort -nr'
+
+    # Get laptop file stats
+    laptop_stdout = subprocess.check_output(
+        command.format(dir=laptop_dataset_dir),
+        shell=True
+    ).decode()
+    laptop_metadata = parse_file_counts(
+        stdout=laptop_stdout
+    )
+
+    # Get Pi file stats
+    pi_stdout = execute_pi_command(
+        command=command.format(dir=pi_datasets_dir),
+        postgres_host=postgres_host
+    )
+    pi_metadata = parse_file_counts(
+        stdout=pi_stdout
+    )
+
+    # Join everything together
+    records = []
+    for dataset_name, metadata in pi_metadata.items():
+        laptop_file_count = 0
+        if dataset_name in laptop_metadata:
+            laptop_file_count = laptop_metadata[dataset_name]['count']
+        db_record_count = 0
+        is_job_active = False
+        if dataset_name in stats:
+            db_record_count = stats[dataset_name]['total']
+            is_job_active = stats[dataset_name]['is_job_active']
+        pi_json_file_count = pi_metadata[dataset_name]['count']
+        percent = dataset_import_percent(
+            db_record_count=db_record_count,
+            is_job_available=is_job_active,
+            laptop_file_count=laptop_file_count,
+            pi_json_file_count=pi_json_file_count
+        )
+        record = {
+            'id': pi_metadata[dataset_name]['id'],
+            'dataset': dataset_name,
+            'date': pi_metadata[dataset_name]['date'],
+            'count': pi_json_file_count,
+            'percent': percent
+        }
+        records.append(record)
+    return records
