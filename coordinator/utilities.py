@@ -936,6 +936,12 @@ def get_pi_dataset_import_stats(pi_datasets_dir, laptop_dataset_dir, postgres_ho
         List of dictionaries, where each dictionary represents
         a Pi dataset that could be imported. This is used to
         display results on the Pi import datasets page
+
+        Example: [
+            {'id': '5', 'dataset': 'dataset_5_18-10-20', 'date': '2018-10-20', 'count': '1915', 'percent': -1},
+            {'id': '3', 'dataset': 'dataset_3_18-10-20', 'date': '2018-10-20', 'count': '1400', 'percent': 100},
+            {'id': '4', 'dataset': 'dataset_4_18-10-20', 'date': '2018-10-20', 'count': '1301', 'percent': -1}
+        ]
     """
 
     """
@@ -1042,4 +1048,10 @@ def get_pi_dataset_import_stats(pi_datasets_dir, laptop_dataset_dir, postgres_ho
             'percent': percent
         }
         records.append(record)
+
+    """
+    By default show dataset records in order of their dataset ID,
+    which corresponds to the other that they were created
+    """
+    records = sorted(records, key = lambda i: i['id'])
     return records
