@@ -72,6 +72,11 @@ async function addDatasetImportRows(){
                 const downloadButton = tr.querySelector('button.download-dataset-button');
                 downloadButton.setAttribute("dataset",datasetText);
                 downloadButton.addEventListener("click", async function(){
+                    downloadButton.style.display = 'none';
+                    const progressCircle = tr.querySelector('svg.import-progress-circle');
+                    progressCircle.style.display = 'inline';
+                    const progressPercent = 0;
+                    updateProgressCircle(progressCircle, progressPercent);
                     transferDataset(datasetText);
                 });
                 tr.querySelector('button.delete-dataset-button').setAttribute("dataset",datasetText);
