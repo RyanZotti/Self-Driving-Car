@@ -1351,7 +1351,6 @@ class GetImportRows(tornado.web.RequestHandler):
     @tornado.gen.coroutine
     def get(self):
         records = yield self.get_review_datasets()
-        print(records)
         self.write({'records':records})
 
 
