@@ -24,6 +24,10 @@
     border: 0px;
 }
 
+.pretty-button:hover {
+  transform: scale(1.5);
+}
+
 .centered {
     margin: 0 auto;
 }
