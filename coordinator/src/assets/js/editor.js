@@ -99,6 +99,12 @@ async function addDatasetImportRows(){
                     progressCircle.style.display = 'inline';
                     updateProgressCircle(progressCircle, percent);
                 }
+                /*
+                Make sure the Pi's record count gets updated periodically, since
+                the number of records can change while you're recording a live new
+                dataset
+                */
+                row.querySelector('td.images').textContent = record.count;
             }
         }
     }
