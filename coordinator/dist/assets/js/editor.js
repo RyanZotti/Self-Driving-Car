@@ -696,7 +696,12 @@ function datasetNameToId(datasetName){
 
 function updateDatasetsCountBadge(datasetType){
     $.get( "/list-"+datasetType+"-datasets").then(function(response){
-        return response.datasets;
+        // The import datasets API has changed, but the review API hasn't
+        if (datasetType == 'import'){
+            return response.records;
+        } else {
+            return response.datasets;
+        }
     }).then(function(datasets){
         const badge = document.querySelector("a#dataset-"+datasetType+" > span");
         badge.innerText = datasets.length;
