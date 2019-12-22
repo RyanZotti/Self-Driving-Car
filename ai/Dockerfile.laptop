@@ -17,5 +17,7 @@ ENV PATH /root/anaconda3/envs/ai/bin:$PATH
 # For access to the repo's functions
 ENV PYTHONPATH=$PYTHONPATH:/root
 
+RUN conda install -c anaconda opencv -y
+
 # Copy files at end to minimize iterative build time
 COPY ./ /root/ai/
