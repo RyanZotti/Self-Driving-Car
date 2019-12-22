@@ -461,8 +461,9 @@ def batch_predict(dataset, predictions_port, datasets_port):
 def get_datasets_path(postgres_host):
     sql_query = '''
         SELECT
-          datasets_parent_path
-        FROM raspberry_pi
+          field_value AS datasets_parent_path
+        FROM pi_settings
+        WHERE LOWER(field_name) = 'laptop datasets directory'
     '''
     datasets_parent_path = get_sql_rows(host=postgres_host, sql=sql_query)[0]['datasets_parent_path']
     return datasets_parent_path
