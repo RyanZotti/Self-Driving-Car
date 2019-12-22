@@ -50,22 +50,22 @@
               </div> <!-- / .row -->
             </div>
             <div class="card-body" style="padding-top: 1.5rem; padding-bottom: 0rem;">
-              <div class="row">
+              <div class="row justify-content-md-center">
                 <div class="col-3 text-center">
                   Speed
                 </div>
                 <div class="col-3 text-center">
                   Human
                 </div>
-                <div class="col-3 text-center">
+                <div id="modal-header-text-ai" class="col-3 text-center">
                   AI
                 </div>
-                <div class="col-3 text-center">
+                <div id="modal-header-text-error" class="col-3 text-center">
                   Error
                 </div>
               </div>
 
-              <div class="row align-items-center" style="padding: 0.5rem">
+              <div class="row justify-content-md-center" style="padding: 0.5rem">
                 <div class="col-3">
                   <div class="progress progress-bar-vertical">
                     <div id="speedBar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
@@ -75,10 +75,10 @@
                 <div class="chart-container col-3" style="position: relative; height:5vh; width:10vw">
                   <canvas id="humanAngleDonut" class="chart-canvas"></canvas>
                 </div>
-                <div class="chart-container col-3" style="position: relative; height:5vh; width:10vw">
+                <div id="aiAngleDonutCol" class="chart-container col-3" style="position: relative; height:5vh; width:10vw">
                   <canvas id="aiAngleDonut" class="chart-canvas"></canvas>
                 </div>
-                <div class="col-3">
+                <div id="errorBarCol" class="col-3">
                   <div class="progress progress-bar-vertical">
                     <div id="errorBar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
                     </div>
@@ -236,7 +236,7 @@
                 <div class="col-3"></div>
               </div>
 
-              <div id='drive-metrics-graphics' class="row align-items-center" style="display:none; padding: 0.5rem">
+              <div id='drive-metrics-graphics' class="row justify-content-md-center" style="display:none; padding: 0.5rem">
                 <div class="col-3"></div>
                 <div class="col-3">
                   <div class="progress progress-bar-vertical">
@@ -250,7 +250,7 @@
                 <div class="col-3"></div>
 
               </div>
-              <div id="drive-metrics-text" class="row" style="display:none;">
+              <div id="drive-metrics-text" class="row justify-content-md-center" style="display:none;">
                 <div class="col-3"></div>
                 <div id="driveSpeedText" class="col-3 text-center">
                 </div>
