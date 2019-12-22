@@ -72,7 +72,7 @@ async function loadMachineLearningModels() {
 function addDatasetMachineLearningRows() {
     const promises = [
         getDatasetMachineLearningRowString(),
-        loadDatasetMetadata()
+        loadDatasetMetadata("review")
     ];
     Promise.all(promises).then(function(promiseResults){
         const datasetRowString = promiseResults[0];
