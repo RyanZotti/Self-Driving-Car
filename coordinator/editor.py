@@ -766,6 +766,49 @@ class IsRecordAlreadyFlagged(tornado.web.RequestHandler):
         self.write(result)
 
 
+class LaptopModelAPIHealth(tornado.web.RequestHandler):
+
+    """
+    Used to check if the laptop model Docker container is up. If it's
+    not then I tell the drive modal to not show the model predictions
+    in the javascript code. This will occur when you first start the project
+    because there won't be a trained model to deploy
+    """
+
+    # Prevents awful blocking
+    # https://infinitescript.com/2017/06/making-requests-non-blocking-in-tornado/
+    executor = ThreadPoolExecutor(100)
+
+    @tornado.concurrent.run_on_executor
+    def get_prediction(self, json_input):
+        dataset_name = json_input['dataset']
+        record_id = json_input['record_id']
+
+        frame = self.application.record_reader.get_image(
+            dataset_name=dataset_name,
+            record_id=record_id
+        )
+
+        img = cv2.imencode('.jpg', frame)[1].tostring()
+        files = {'image': img}
+        # TODO: Remove hard-coded model API
+
+        try:
+            request = requests.post('http://localhost:8885/predict', files=files)
+            response = json.loads(request.text)
+            prediction = response['prediction']
+            predicted_angle = prediction[0]
+            return {'is_healthy': True}
+        except:
+            return {'is_healthy': False}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.get_prediction(json_input)
+        self.write(result)
+
+
 class DeployModel(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -2449,6 +2492,7 @@ def make_app():
         (r"/start-sixaxis-loop", PS3ControllerSixAxisStart),
         (r"/is-ps3-connected", IsPS3ControllerConnected),
         (r"/sudo-sixpair", PS3SudoSixPair),
+        (r"/laptop-model-api-health", LaptopModelAPIHealth),
     ]
     return tornado.web.Application(handlers)
 

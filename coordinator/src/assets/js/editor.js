@@ -243,7 +243,7 @@ async function addDatasetReviewRows() {
         // all of the rows have been updated
         const buttons = tbody.querySelectorAll("button.play-dataset-button");
         for (const button of buttons){
-            button.onclick = function() {
+            button.onclick = async function() {
                 const modalPlayPauseButton = document.querySelector("img#modalPlayPauseButton");
                 // Ensure that video starts playing when modal first opens
                 modalPlayPauseButton.removeAttribute("src");
@@ -253,9 +253,41 @@ async function addDatasetReviewRows() {
                 datasetPlaying = dataset; // set global variable in case of pause and then resume
                 datasetIdPlaying = datasetNameToId(dataset);
                 const datasetType = getActiveDatasetType();
-                getDatasetRecordIds("review", dataset).then(function(recordIds){
+                getDatasetRecordIds("review", dataset).then(async function(recordIds){
                     recordIdIndexPlaying = 0;
                     recordIdIndexPlaying = recordIdIndexPlaying + 1;
+
+                    /*
+                    Check if the Docker container model is healthy. If not, set global
+                    variable to tell modal UI window not to show model related stats
+                    */
+                    isLaptopDockerModelHealthy = await getLaptopModelApiHealth(
+                        dataset,
+                        recordIds[recordIdIndexPlaying]
+                    )
+                    const errorAmount = document.querySelector('div#errorText');
+                    const aiSterringAmount = document.querySelector('div#aiSteeringText');
+                    const errorBarCol = document.querySelector('div#errorBarCol');
+                    const aiAngleDonutCol = document.querySelector('div#aiAngleDonutCol');
+                    const modalHeaderTextModel = document.querySelector('div#modal-header-text-ai');
+                    const modalHeaderTextError = document.querySelector('div#modal-header-text-error');
+                    // Hide by default
+                    errorAmount.style.display = "none";
+                    aiSterringAmount.style.display = "none";
+                    errorBarCol.style.display = "none";
+                    aiAngleDonutCol.style.display = "none";
+                    modalHeaderTextModel.style.display = "none";
+                    modalHeaderTextError.style.display = "none";
+                    if (isLaptopDockerModelHealthy == true){
+                        // Show model stats
+                        errorAmount.style.display = "block";
+                        aiSterringAmount.style.display = "block";
+                        errorBarCol.style.display = "block";
+                        aiAngleDonutCol.style.display = "block";
+                        modalHeaderTextModel.style.display = "block";
+                        modalHeaderTextError.style.display = "block";
+                    }
+
                     playVideo([datasetPlaying, recordIds, recordIdIndexPlaying, videoSessionId, cropPercent]);
                 });
                 const modalHeaderDatasetId = document.getElementById("playModalHeaderDatasetId");
@@ -401,6 +433,20 @@ function getAiAngle(dataset, recordId) {
     });
 }
 
+function getLaptopModelApiHealth(dataset, recordId) {
+    /*
+    Used to check if the laptop model API Docker container is alive, so
+    that if it's not I don't show messed up model speed and angle. This
+    happens when you haven't yet trained a model.
+    */
+    return new Promise(function(resolve, reject) {
+        data = JSON.stringify({ 'dataset': dataset, 'record_id' : recordId})
+        $.post('/laptop-model-api-health', data, function(result){
+           resolve(result)
+        });
+    });
+}
+
 function getHumanAngleAndThrottle(dataset, recordId) {
     return new Promise(function(resolve, reject) {
         data = JSON.stringify({ 'dataset': dataset, 'record_id' : recordId})
@@ -478,25 +524,44 @@ async function checkPredictionUpdateStatuses(){
 }
 
 function updateAiAndHumanLabelValues(dataset, recordId){
-    labels = [
-        getHumanAngleAndThrottle(
-            dataset,
-            recordId
-        ),
-        getAiAngle(
-            dataset,
-            recordId
-        )
-    ];
+
+    if (isLaptopDockerModelHealthy == true){
+        labels = [
+            getHumanAngleAndThrottle(
+                dataset,
+                recordId
+            ),
+            getAiAngle(
+                dataset,
+                recordId
+            )
+        ];
+    } else {
+        labels = [
+            getHumanAngleAndThrottle(
+                dataset,
+                recordId
+            )
+        ];
+    }
 
     return Promise.all(labels).then(function AcceptHandler(results) {
-        state.human.angle = results[0].angle;
-        state.human.throttle = results[0].throttle;
-        state.ai.angle = results[1].angle;
-        // TODO: Figure out to do when selecting constant throttle
-        //state.ai.throttle = results[1].throttle;
-        state.ai.angleAbsError = Math.abs(state.human.angle - state.ai.angle);
-        state.ai.throttleAbsError = Math.abs(state.human.throttle - state.ai.throttle);
+        if (isLaptopDockerModelHealthy == true){
+            state.human.angle = results[0].angle;
+            state.human.throttle = results[0].throttle;
+            state.ai.angle = results[1].angle;
+            // TODO: Figure out to do when selecting constant throttle
+            //state.ai.throttle = results[1].throttle;
+            state.ai.angleAbsError = Math.abs(state.human.angle - state.ai.angle);
+            state.ai.throttleAbsError = Math.abs(state.human.throttle - state.ai.throttle);
+        } else {
+            state.human.angle = results[0].angle;
+            state.human.throttle = results[0].throttle;
+            state.ai.angle = 0;
+            state.ai.angleAbsError = 0;
+            state.ai.throttleAbsError = 0;
+        }
+
     });
 }
 
@@ -1136,6 +1201,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }, false);
 
 // Global variables
+var isLaptopDockerModelHealthy = false;
 var cropPercent = 50;
 var videoSessionId = -1;
 var isVideoPlaying = false;
