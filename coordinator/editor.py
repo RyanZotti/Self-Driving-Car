@@ -2088,10 +2088,14 @@ class ResumeTraining(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def resume_training(self, json_input):
         model_id = json_input['model_id']
+        datasets_path = read_pi_setting(
+            host=self.application.postgres_host,
+            field_name='laptop datasets directory'
+        )
         resume_training(
             postgres_host=self.application.postgres_host,
             model_id=model_id,
-            host_data_path=get_datasets_path(),
+            host_data_path=datasets_path,
             port=self.application.model_training_port
         )
         return {}
@@ -2124,8 +2128,9 @@ class TrainNewModel(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def train_new_model(self, json_input):
-        data_path = get_datasets_path(
-            postgres_host=self.application.postgres_host
+        data_path = read_pi_setting(
+            host=self.application.postgres_host,
+            field_name='laptop datasets directory'
         )
         train_new_model(
             postgres_host=self.application.postgres_host,
