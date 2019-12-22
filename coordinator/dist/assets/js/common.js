@@ -236,7 +236,6 @@ async function configureSlider(config){
         'name': config['name']
     });
     const startAmount = await readSlider(inputQuery);
-    console.log(config['name']+' '+startAmount);
     const sliderId = config['sliderId'];
     const slider = $("#"+sliderId);
     slider.attr("data-slider-value",startAmount);
