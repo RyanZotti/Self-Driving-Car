@@ -5,11 +5,13 @@ import json
 import operator
 from os.path import dirname, join, basename
 import numpy as np
+import pandas as pd
 from random import shuffle
 import re
 from shutil import rmtree
 
 from ai.utilities import get_sql_rows, execute_sql, mkdir
+from ai.transformations import process_data_continuous
 
 
 class RecordReader(object):
@@ -169,6 +171,48 @@ class RecordReader(object):
 
         self.batch_size = batch_size
         self.batches_per_epoch = int(len(self.train_paths) / self.batch_size)
+
+    def get_image_paths_and_labels_as_dataframe(self, label_paths):
+        """
+        Returns a Pandas DataFrame where one column has image paths
+        and the other has labels. This serves as input for the Keras
+        flow_from_dataframe() function.
+
+        Parameters
+        ----------
+        label_paths : list<string>
+            A list of paths to each of the label files. Eventually
+            I'll change this to point to the image paths directly
+            but because of legacy code, which saves the image paths
+            in the label files, I point to the label files instead
+
+        Returns
+        ----------
+        data_frame : pd.DataFrame
+            Contains one column of image paths (image_path) and
+            another column of labels (label)
+        """
+
+        pandas_rows = []
+        for label_path in label_paths:
+
+            # Parse JSON file
+            with open(label_path, 'r') as f:
+                contents = json.load(f)
+
+            # Extract file contents
+            angle = contents['user/angle']
+            image_path = self.image_path_from_label_path(label_path)
+
+            # Append the pair
+            pandas_row = (image_path, angle)
+            pandas_rows.append(pandas_row)
+
+        data_frame = pd.DataFrame(
+            pandas_rows,
+            columns=['image_path', 'label']
+        )
+        return data_frame
 
     def get_toggle_status(self, web_page, name, detail):
         """
@@ -610,10 +654,26 @@ class RecordReader(object):
         images, labels = self.get_batch(self.train_paths)
         return (images, labels)
 
+    def get_keras_train_batch(self, image_scale, crop_percent):
+        images, labels = self.get_batch(self.train_paths)
+        images, labels = process_data_continuous(
+            data=(images, labels),
+            image_scale=image_scale,
+            crop_percent=crop_percent)
+        yield (images, labels)
+
     # Get test batch
     def get_test_batch(self):
         images, labels = self.get_batch(self.validation_paths)
         return  (images, labels)
+
+    def get_keras_test_batch(self, image_scale, crop_percent):
+        images, labels = self.get_batch(self.validation_paths)
+        images, labels = process_data_continuous(
+            data=(images, labels),
+            image_scale=image_scale,
+            crop_percent=crop_percent)
+        yield (images, labels)
 
     # Used in Trainer class to know when epoch is reached
     def get_batches_per_epoch(self):
