@@ -1,4 +1,5 @@
 import cv2
+from keras.models import model_from_json
 import numpy as np
 import os
 import psycopg2
@@ -117,6 +118,48 @@ def load_model(checkpoint_dir_path):
     make_logits = graph.get_operation_by_name("logits")
     prediction = make_logits.outputs[0]
     return sess, x, prediction
+
+
+def load_keras_model(path_to_directory):
+    """
+    Load a saved model
+
+    Parameters
+    ----------
+    path_to_directory : string
+        The full path to the directory containing the model.
+        Example:
+            /user/home/ryanzotti/models/1
+
+    Returns
+    ----------
+    loaded_model : Keras model
+        The saved model
+
+    """
+    achitecture_path = '{path_to_directory}/model.json'.format(
+        path_to_directory=path_to_directory
+    )
+    with open(achitecture_path, 'r') as reader:
+
+        # Load model architecture
+        loaded_model_json = reader.read()
+        loaded_model = model_from_json(loaded_model_json)
+
+        # Load model weights
+        weights_path = '{path_to_directory}/model.h5'.format(
+            path_to_directory=path_to_directory
+        )
+        loaded_model.load_weights(weights_path)
+
+        # Assume that these  args will never change between models
+        loaded_model.compile(
+            loss='mse',
+            optimizer='adam',
+            metrics=['mse', 'mae']
+        )
+
+        return loaded_model
 
 # Used to save space. Keeping all model checkpoint epochs can eat up many GB of disk space
 def delete_old_model_backups(checkpoint_dir):
