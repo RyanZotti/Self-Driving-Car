@@ -53,9 +53,14 @@ class PredictionHandler(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def get_prediction(self, file_body):
-        # Ugly code to convert string to image
-        # https://stackoverflow.com/questions/17170752/python-opencv-load-image-from-byte-string/17170855
-        nparr = np.fromstring(file_body, np.uint8)
+
+        """
+        Ugly code to convert string to image. Originally got the code from
+        here: https://stackoverflow.com/questions/17170752/python-opencv-load-image-from-byte-string/17170855
+        but made used frombuffer instead of fromstring because of a deprecation
+        warning
+        """
+        nparr = np.frombuffer(file_body, np.uint8)
         img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         # Normalize for contrast and pixel size
@@ -132,7 +137,6 @@ class PredictionHandler(tornado.web.RequestHandler):
 
         # Result will look something like: '{"prediction": 0.4731147885322571}'
         result = {'prediction': prediction}
-        print(result)
         self.write(result)
 
 
