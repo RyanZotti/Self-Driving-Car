@@ -1,5 +1,13 @@
 import cv2
-from keras.models import model_from_json
+"""
+Using from tensorflow.keras.models import model_from_json
+instead of from keras.models import model_from_json fixes
+an error in multithreaded environments like Tornado and
+Flask. The error looks like this:
+AttributeError: '_thread._local' object has no attribute 'value'
+Source; https://github.com/keras-team/keras/issues/13353#issuecomment-568208728
+"""
+from tensorflow.keras.models import model_from_json
 import numpy as np
 import os
 import psycopg2
