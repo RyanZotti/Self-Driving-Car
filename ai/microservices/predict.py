@@ -1,13 +1,12 @@
 import argparse
 import cv2
 import numpy as np
-import os
 import tornado.ioloop
 import tornado.web
 from concurrent.futures import ThreadPoolExecutor
 
 from ai.transformations import apply_transformations
-from ai.utilities import load_model
+from ai.utilities import load_keras_model
 
 
 class ModelMetadata(tornado.web.RequestHandler):
@@ -59,31 +58,28 @@ class PredictionHandler(tornado.web.RequestHandler):
         nparr = np.fromstring(file_body, np.uint8)
         img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-        # TODO: Fix this bug. Right now if I don't pass mirror image, model outputs unchanging prediction
-        flipped_image = cv2.flip(img_np, 1)
-        normalized_images = [img_np, flipped_image]
-        normalized_images = np.array(normalized_images)
-
         # Normalize for contrast and pixel size
         normalized_images = apply_transformations(
-            images=normalized_images,
+            images=np.array([img_np]),
             image_scale=self.image_scale,
-            crop_percent=self.crop_percent)
+            crop_percent=self.crop_percent
+        )
+        np_normalized_images = np.array(normalized_images)
+        model_ouput = self.model.predict(np_normalized_images)
 
-        prediction = self.prediction.eval(feed_dict={self.x: normalized_images}, session=self.sess).astype(float)
+        """
+        The model_output looks like this: [[0.52258456]], hence
+        the [0][0] to get the prediction. Presumably the output
+        looks this way because the same method could be used to
+        get batch results and also because in some models the
+        result could come from a multi-class model.
 
-        # Ignore second prediction set, which is flipped image, a hack
-        prediction = list(prediction[0])
-
-        if self.angle_only == True:
-            default_throttle = 0.6
-            prediction.append(default_throttle)
+        The float() casting fixes the following bug:
+        "TypeError: Object of type float32 is not JSON serializable"
+        """
+        prediction = float(model_ouput[0][0])
 
         return prediction
-
-    @property
-    def prediction(self):
-        return self._prediction
 
     @property
     def image_scale(self):
@@ -97,10 +93,6 @@ class PredictionHandler(tornado.web.RequestHandler):
     def angle_only(self):
         return self._angle_only
 
-    @prediction.setter
-    def prediction(self,prediction):
-        self._prediction = prediction
-
     @image_scale.setter
     def image_scale(self, image_scale):
         self._image_scale = image_scale
@@ -113,29 +105,19 @@ class PredictionHandler(tornado.web.RequestHandler):
     def angle_only(self, angle_only):
         self._angle_only = angle_only
 
-    def initialize(self, sess, x, prediction, image_scale, crop_percent, angle_only):
-        self.prediction = prediction
-        self.sess = sess
-        self.x = x
+    def initialize(self, model, image_scale, crop_percent, angle_only):
+        self.model = model
         self.image_scale = image_scale
         self.crop_percent = crop_percent
         self.angle_only = angle_only
 
     @property
-    def sess(self):
-        return self._sess
+    def model(self):
+        return self._model
 
-    @sess.setter
-    def sess(self, sess):
-        self._sess = sess
-
-    @property
-    def x(self):
-        return self._x
-
-    @x.setter
-    def x(self, x):
-        self._x = x
+    @model.setter
+    def model(self, model):
+        self._model = model
 
     @tornado.gen.coroutine
     def post(self):
@@ -148,18 +130,16 @@ class PredictionHandler(tornado.web.RequestHandler):
 
         prediction = yield self.get_prediction(file_body=file_body)
 
-        # Result will look something like: '{"prediction": [0.4731147885322571, 0.25]}'
+        # Result will look something like: '{"prediction": 0.4731147885322571}'
         result = {'prediction': prediction}
         print(result)
         self.write(result)
 
 
-def make_app(sess, x, prediction, image_scale, crop_percent, angle_only):
+def make_app(model, image_scale, crop_percent, angle_only):
     return tornado.web.Application(
         [(r"/predict",PredictionHandler,
-          {'sess':sess,
-           'x':x,
-           'prediction':prediction,
+          {'model':model,
            'image_scale':image_scale,
            'crop_percent':crop_percent,
            'angle_only':angle_only}),
@@ -174,12 +154,12 @@ if __name__ == "__main__":
         "--checkpoint_dir",
         required=False,
         help="path to all of the data",
-        #default='/Users/ryanzotti/Documents/Data/Self-Driving-Car/printer-paper/data/tf_visual_data/runs/14/checkpoints')
-        default='/root/ai/model-archives/model/checkpoints')
+        default='/Users/ryanzotti/Documents/repos/Self-Driving-Car/ai/microservices')
     ap.add_argument(
         "--image_scale",
-        required=True,
-        help="Resize image scale")
+        required=False,
+        default=8,
+        help="Resize image scale. Example: 8")
     ap.add_argument(
         "--port",
         required=False,
@@ -192,16 +172,19 @@ if __name__ == "__main__":
         default='y')
     ap.add_argument(
         "--model_id",
-        required=True,
+        required=False,
+        default=1,
         help="Unique identifier for the model")
     ap.add_argument(
         "--epoch",
-        required=True,
+        required=False,
+        default=1,
         help="The model epoch, which is used as a means to version the model")
     ap.add_argument(
         "--crop_percent",
         required=False,
-        help="Percent of image top that is cut")
+        default=50,
+        help="Percent of image top that is cut. Example: 50")
     args = vars(ap.parse_args())
     path = args['checkpoint_dir']
     if 'y' in args['angle_only'].lower():
@@ -216,9 +199,9 @@ if __name__ == "__main__":
     epoch_id = args['epoch']
 
     # Load model just once and store in memory for all future calls
-    sess, x, prediction = load_model(path)
+    model = load_keras_model(path)
 
-    app = make_app(sess, x, prediction,image_scale, crop_percent, angle_only)
+    app = make_app(model, image_scale, crop_percent, angle_only)
     app.model_id = int(model_id)
     app.epoch_id = int(epoch_id)
     app.angle_only = angle_only

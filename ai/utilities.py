@@ -110,24 +110,6 @@ def get_prev_epoch(checkpoint_dir_path):
     return prev_epoch
 
 
-def load_model(checkpoint_dir_path):
-
-    # Read the model into memory
-    sess = tf.Session()
-    start_epoch = get_prev_epoch(checkpoint_dir_path)
-    graph_name = 'model-' + str(start_epoch)
-    checkpoint_file_path = os.path.join(checkpoint_dir_path, graph_name)
-    saver = tf.train.import_meta_graph(checkpoint_dir_path + "/" + graph_name + ".meta")
-    saver.restore(sess, checkpoint_file_path)
-    graph = tf.get_default_graph()
-    x = graph.get_tensor_by_name("x:0")
-    # For more details on why .outputs[0] is required, see:
-    # https://stackoverflow.com/questions/42595543/tensorflow-eval-restored-graph
-    make_logits = graph.get_operation_by_name("logits")
-    prediction = make_logits.outputs[0]
-    return sess, x, prediction
-
-
 def load_keras_model(path_to_directory):
     """
     Load a saved model

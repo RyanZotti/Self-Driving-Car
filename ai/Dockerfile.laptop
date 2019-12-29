@@ -3,21 +3,25 @@ FROM ubuntu:18.04
 RUN apt-get update -y
 RUN apt-get install -y wget vim netcat net-tools
 
-RUN wget https://repo.continuum.io/archive/Anaconda3-2018.12-Linux-x86_64.sh -P /root
-RUN bash /root/Anaconda3-2018.12-Linux-x86_64.sh -b
+RUN wget https://repo.continuum.io/archive/Anaconda3-2019.07-Linux-x86_64.sh -P /root
+RUN bash /root/Anaconda3-2019.07-Linux-x86_64.sh -b
 ENV PATH=/root/anaconda3/bin:$PATH
-
-COPY ./conda.yml /root/ai/conda.yml
-
-RUN conda env create -f /root/ai/conda.yml
-RUN echo "source activate ai" > ~/.bashrc
-
-ENV PATH /root/anaconda3/envs/ai/bin:$PATH
 
 # For access to the repo's functions
 ENV PYTHONPATH=$PYTHONPATH:/root
 
-RUN conda install -c anaconda opencv -y
+# `conda update wrapt` fixes "Cannot uninstall 'wrapt'. It is a distutils installed project"
+# https://github.com/tensorflow/tensorflow/issues/30191#issuecomment-514249543
+RUN conda update wrapt
+
+RUN conda install opencv psycopg2 -y
+RUN pip install \
+    numpy==1.18.0 \
+    Keras==2.3.1 \
+    Keras-Applications==1.0.8 \
+    Keras-Preprocessing==1.1.0 \
+    tensorflow==2.0.0 \
+    tornado==5.1.1
 
 # Copy files at end to minimize iterative build time
 COPY ./ /root/ai/
