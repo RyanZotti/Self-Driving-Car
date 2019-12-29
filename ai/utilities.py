@@ -8,6 +8,7 @@ AttributeError: '_thread._local' object has no attribute 'value'
 Source; https://github.com/keras-team/keras/issues/13353#issuecomment-568208728
 """
 from tensorflow.keras.models import model_from_json
+from keras.backend.tensorflow_backend import clip
 import numpy as np
 import os
 import psycopg2
@@ -134,7 +135,16 @@ def load_keras_model(path_to_directory):
 
         # Load model architecture
         loaded_model_json = reader.read()
-        loaded_model = model_from_json(loaded_model_json)
+        """
+        This is how Keras wants you to add import custom layers. Otherwise you'll get
+        this error: "keras load model NameError: name 'clip' is not defined"
+        Official docs: "Handling custom layers (or other custom objects) in saved models"
+        https://keras.io/getting-started/faq/#how-can-i-save-a-keras-model
+        """
+        loaded_model = model_from_json(
+            loaded_model_json,
+            custom_objects={'clip': clip}
+        )
 
         # Load model weights
         weights_path = '{path_to_directory}/model.h5'.format(
