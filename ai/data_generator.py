@@ -1,11 +1,19 @@
-import keras
 import numpy as np
 from random import shuffle
+"""
+You cann't use `from keras.utils import Sequence` because at runtime
+you'll get an error like this:
+"Custom Generator object has no attribute 'shape'"
+https://github.com/keras-team/keras/issues/12586#issuecomment-478490922
+so instead you need to use this:
+`from tensorflow.python.keras.utils.data_utils import Sequence`
+"""
+from tensorflow.python.keras.utils.data_utils import Sequence
 
 from ai.transformations import process_data_continuous
 
 
-class DataGenerator(keras.utils.Sequence):
+class DataGenerator(Sequence):
 
     'Generates data for Keras'
     def __init__(
