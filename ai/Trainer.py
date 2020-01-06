@@ -229,7 +229,8 @@ class Trainer:
             self.model = architecture.to_model()
 
         # The Keras way of tracking the current batch ID in a training epoch
-        self.progress_callback = ProgressCallBack()
+        # TODO: Get epoch ID from directory if model is retraining
+        self.progress_callback = ProgressCallBack(model_id=self.model_id, postgres_host=postgres_host, epoch_id=0)
 
         self.start_epoch = start_epoch
 
@@ -347,23 +348,26 @@ class ProgressCallBack(Callback):
     Got the documentation from here: https://www.tensorflow.org/guide/keras/custom_callback
     """
 
-    def __init__(self):
+    def __init__(self, model_id, postgres_host, epoch_id):
         self.batch_id = -1
+        self.epoch_id = epoch_id
+        self.model_id = model_id
+        self.postgres_host = postgres_host
         super().__init__()
 
-    def on_train_batch_end(self, batch, logs=None):
-        self.batch_id = batch
+    def on_epoch_begin(self, epoch, logs=None):
+        self.epoch_id = epoch
 
         # TODO: Get these from the "logs" variable?
         train_accuracy = 0.5
         test_accuracy = 0.5
 
         sql_query = '''
-                INSERT INTO epochs(model_id, epoch, train, validation)
-                VALUES ({model_id},{epoch},{train},{validation});
-            '''.format(
+                        INSERT INTO epochs(model_id, epoch, train, validation)
+                        VALUES ({model_id},{epoch},{train},{validation});
+                    '''.format(
             model_id=self.model_id,
-            epoch=0,
+            epoch=self.epoch_id,
             train=train_accuracy,
             validation=test_accuracy
         )
@@ -371,3 +375,6 @@ class ProgressCallBack(Callback):
             host=self.postgres_host,
             sql=sql_query
         )
+
+    def on_train_batch_end(self, batch, logs=None):
+        self.batch_id = batch
