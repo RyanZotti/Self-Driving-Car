@@ -1,46 +1,96 @@
 import argparse
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-import queue
-from datetime import datetime
-from functools import partial
+import os
 from threading import Thread
-from tensorflow.python.client import timeline
+from tensorflow.keras.callbacks import Callback
 import tornado.ioloop
 import tornado.web
 
+from ai.data_generator import DataGenerator
+from ai.model import Architecture
 from ai.record_reader import RecordReader
-from ai.transformations import process_data_continuous
-from ai.utilities import *
+from ai.utilities import load_keras_model, execute_sql, get_sql_rows
 
 
 class Trainer:
 
-    def __init__(self,
-                 data_path,
-                 postgres_host,
-                 model_file,
-                 s3_bucket,
-                 port,
-                 epochs=50,
-                 max_sample_records=500,
-                 start_epoch=0,
-                 batch_size=50,
-                 is_restored_model=False,
-                 restored_model_dir=None,
-                 tf_timeline=False,
-                 show_speed=False,
-                 s3_sync=False,
-                 save_to_disk=False,
-                 image_scale=1.0,
-                 crop_percent=1,
-                 overfit=False,
-                 angle_only=False):
+    # TODO: Add class docs describing each of these args and why they're needed
+    def __init__(
+        self, data_path, postgres_host, port, model_base_directory, model_id= None,
+        total_epochs=50, start_epoch=0, batch_size=50, image_scale=8, crop_percent=50,
+        overfit=False, angle_only=True, n_channels=3
+    ):
+
+        """
+        Create a Trainer object
+
+        Parameters
+        ----------
+        data_path : str
+            The absolute path to the directory immediately above the
+            dataset folders. If you have datasets like /root/data/dataset_1_18-04-15
+            and /root/data/dataset_1_18-04-15, then your base_directory
+            should be /root/data
+        postgres_host: str
+            Name of the Postgres host to connect to for details about records
+            and other things. If record_reader.py is running in a Docker container
+            the host would be the name of the container, e.g., postgres-11-1 but
+            if record_reader.py is running in PyCharm on the Mac, then you would
+            use localhost.
+        port: int
+            The port of the Tornado microservice that is used to report to the UI
+            the current epoch, batch, loss, and model ID
+        model_base_directory: str
+            The directory that contains all of the models. For example, if you
+            have two models: /root/model/1 and /root/model/2, then you should
+            specify /root/model. For simplicity the code assumes all your models
+            are organized under the one base directory, which is a pretty
+            reasonable assumption
+        model_id: int
+            Specify this value if you want to continue training an existing model.
+            The code will expect to find an immediate child directory to
+            model_base_directory that matches the model ID and will fail if such a
+            directory doesn't exist because you can't resume training a model that
+            doesn't exist. The code will automatically pick a model ID for you if
+            you don't specify one and assumes you are training a new model
+        total_epochs: int
+            The total number of epochs to run before training completes
+        batch_size : int
+            The number of records per batch
+        image_scale: int
+            Essentially divide an image by this number to get the new size.
+            For example if you specify 8 the image will shrink to 1/8th of its
+            original size. If you specify 1 then the image won't shrink at all
+        crop_percent: int
+            The percentage of the top portion of the image that should be taken
+            off. Through trial an error this has proven to be an effective
+            technique. Other drivers have come to the same conclusion. Nothing
+            of importance happens in the top half the image. The top half only
+            contains distractions. The model performs better if it has zero
+            chance of fitting to that source of randomness
+            Example: 50, to cut off the top half
+        overfit : boolean
+            Indicates whether the model should be trained and validated
+            on the same data. I use this when I'm training on images
+            that the model got horribly wrong (or recorded disengagements
+            that occurred during a recorded deployment)
+        angle_only : boolean
+            Whether to focus on angle only. Possibly focuses model's
+            attention on the most egregious errors, turning right when
+            the car should turn left, etc
+        is_for_model : boolean
+            Will this be used to feed data to a model, as opposed to an
+            API? The API doesn't care about train / validation selections,
+            but the model does and pulls the selections from Postgres
+        n_channels: int
+            The number of color channels in your image dataset. Should be
+            3 if color (RGB) and 1 if black and white. Used to define the
+            shape of the Keras model input
+        """
 
         self.data_path = data_path
         self.postgres_host = postgres_host
-        self.save_to_disk = save_to_disk
-        self.is_restored_model = is_restored_model
         self.batch_size = batch_size
         self.overfit = overfit
         self.angle_only = angle_only
@@ -52,63 +102,137 @@ class Trainer:
             angle_only=self.angle_only,
             is_for_model=True
         )
-        self.s3_bucket = format_s3_bucket(s3_bucket)
         self.port = port
-        self.model_file = model_file
-        self.n_epochs = int(epochs)
-        self.max_sample_records = max_sample_records
-        self.tf_timeline = tf_timeline
-        self.s3_sync = s3_sync
-        self.image_scale = image_scale
+        self.model_base_directory = model_base_directory
+        self.model_id = model_id
+        self.n_epochs = int(total_epochs)
+        self.image_scale = int(image_scale)
         self.crop_percent = crop_percent
+        self.image_height_pixels = int((240 * (self.crop_percent / 100.0)) / self.image_scale)
+        self.image_width_pixels = int(320 / self.image_scale)
+        self.n_channels = n_channels
+        self.input_shape = (self.image_height_pixels, self.image_width_pixels, self.n_channels)
 
-        # Always sync before training in case I ever train multiple models in parallel
-        if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
-            sync_from_aws(s3_path=self.s3_bucket, local_path=self.data_path)
+        self.train_generator = DataGenerator(
+            record_reader=self.record_reader,
+            partition_type='train',
+            image_scale=int(self.image_scale),
+            crop_percent=self.crop_percent,
+            batch_size=self.batch_size
+        )
 
-        if is_restored_model:
-            self.model_dir = restored_model_dir
-        elif self.save_to_disk is True:
-            self.tfboard_basedir = os.path.join(self.data_path, 'tf_visual_data', 'runs')
-            self.model_dir = mkdir_tfboard_run_dir(self.tfboard_basedir)
+        self.validation_generator = DataGenerator(
+            record_reader=self.record_reader,
+            partition_type='validation',
+            image_scale=int(self.image_scale),
+            crop_percent=self.crop_percent,
+            batch_size=self.batch_size
+        )
 
-        # Assumes model ID is always last element of model_dir
-        self.model_id = self.get_model_id_from_model_dir()
+        """
+        If you specify all of the batches then it will take a very long
+        time to evaluate (in some cases 5+ minutes per epoch) because
+        the model will have to process every single image in the
+        validation set. Assuming your random sample is representative
+        of the entire dataset, picking some arbitrarily small number of
+        steps (batches) should give you a sufficiently accurate
+        representation of the error
+        """
+        self.validation_steps = 3
 
-        if self.save_to_disk is True:
-            self.results_file = os.path.join(self.model_dir, 'results.txt')
-            self.speed_file = os.path.join(self.model_dir, 'speed.txt')
-            self.model_checkpoint_dir = os.path.join(self.model_dir,'checkpoints')
-            self.saver = tf.train.Saver()
-            mkdir(self.model_checkpoint_dir)
+        """
+        If you specify a model ID the code assumes you're retraining. Don't specify a
+        model ID if you want to train a new model. The system doesn't trust that users
+        can safely come up with their own versions because you'll need to check both
+        the file system and Postgres
+        """
+        if self.model_id:  # Existing model
+            self.model_directory = os.path.join(self.model_base_directory, str(self.model_id))
 
-        self.start_epoch = start_epoch
+            # Check for a common user error and provide a helpful error message
+            if not os.path.exists(self.model_directory):
+                print(
+                    "The model doesn't exist at {dir}.".format(dir=self.model_directory),
+                    "Did you specify the right path and model ID?",
+                    "Also, don't specify the model ID if you want to train a new model.",
+                    "The system will automatically determine a new model's model ID."
+                )
+                exit(1)
 
-        if is_restored_model is False:
+
+        else:  # New model
+            """
+            Model IDs are tracked in two places: in Postgres and in the file
+            system. It's possible these two places could get out of sync with
+            each other because of an unforeseen bug, so to be extra safe when
+            creating a new model's ID I take the largest ID from the two
+            sources and increment it
+            """
+            # Get the highest model ID from the file system
+            folders = os.listdir(self.model_base_directory)
+            model_ids = []
+            for folder in folders:
+                """
+                Each model's folder should be its ID, and each ID should be
+                an int. Ignore the folder if it's not an int
+                """
+                try:
+                    model_id = int(folder)
+                    model_ids.append(model_id)
+                except:
+                    pass
+            highest_folder_id = max(model_ids)
+
+            # Get the highest model ID from Postgres
+            sql = """
+                SELECT
+                    COALESCE(
+                        MAX(model_id),
+                    0) AS model_id
+                FROM models
+            """
+            highest_db_id = int(get_sql_rows(host=self.postgres_host, sql=sql)[0]['model_id'])
+
+            # The new model ID is highest known model ID + 1
+            highest_model_id = max(highest_folder_id, highest_db_id)
+            self.model_id = highest_model_id + 1
+
+            # Track the model in the file system
+            self.model_directory = os.path.join(self.model_base_directory, str(self.model_id))
+            os.makedirs(self.model_directory)
+
+            # Track the model in the database
             models_sql = '''
-            INSERT INTO models(
-              model_id,
-              created_timestamp,
-              crop,
-              scale
-            ) VALUES (
-              {model_id},
-              NOW(),
-              {crop},
-              {scale}
-            )
-            '''.format(
-                model_id=self.model_id,
-                crop=self.crop_percent,
-                scale=int(self.image_scale)
-            )
+                INSERT INTO models(
+                    model_id,
+                    created_timestamp,
+                    crop,
+                    scale
+                ) VALUES (
+                    {model_id},
+                    NOW(),
+                    {crop},
+                    {scale}
+                )
+                '''.format(
+                    model_id=self.model_id,
+                    crop=self.crop_percent,
+                    scale=self.image_scale
+                )
             execute_sql(
                 host=self.postgres_host,
                 sql=models_sql
             )
 
-        # Prints batch processing speed, among other things
-        self.show_speed = show_speed
+            # Create the model
+            architecture = Architecture(input_shape=self.input_shape)
+            self.model = architecture.to_model()
+
+        # The Keras way of tracking the current batch ID in a training epoch
+        self.progress_callback = ProgressCallBack()
+
+        self.start_epoch = start_epoch
+
         self.microservice_thread = Thread(target=self.start_microservice,kwargs={'port':self.port})
         self.microservice_thread.daemon = True
         self.microservice_thread.start()
@@ -125,208 +249,19 @@ class Trainer:
         self.microservice.epoch_id = self.start_epoch
         tornado.ioloop.IOLoop.current().start()
 
-    def get_model_id_from_model_dir(self):
-        path_parts = os.path.normpath(self.model_dir)
-        return path_parts[-1]
-
-    # Create this function to make it threadable / parallelizable
-    def get_batch(self,is_train):
-        if is_train == True:
-            while True:
-                batch = self.record_reader.get_train_batch()
-                images, labels = process_data_continuous(
-                    data=batch,
-                    image_scale=self.image_scale,
-                    crop_percent=self.crop_percent)
-                self.train_batches.put((images, labels))
-        else:
-            while True:
-                batch = self.record_reader.get_test_batch()
-                images, labels = process_data_continuous(
-                    data=batch,
-                    image_scale=self.image_scale,
-                    crop_percent=self.crop_percent)
-                self.test_batches.put((images, labels))
-
     # This function is agnostic to the model
-    def train(self, sess, x, y_, optimization, train_step, train_feed_dict, test_feed_dict):
-
-        # To view graph: tensorboard --logdir=/Users/ryanzotti/Documents/repos/Self_Driving_RC_Car/tf_visual_data/runs
-        tf.summary.scalar('optimization', optimization)
-        merged = tf.summary.merge_all()
-
-        # Archive the model script in case of good results that need to be replicated
-        # If model is being restored, then assume model file has already been saved somewhere
-        # and that self.model_file is None
-        if self.model_file is not None and self.save_to_disk is True:
-            cmd = 'cp {model_file} {archive_path}'
-            shell_command(cmd.format(model_file=self.model_file, archive_path=self.model_dir + '/'))
-
-        if not self.is_restored_model:  # Don't want to erase restored model weights
-            sess.run(tf.global_variables_initializer())
-
-        # TODO: Document and understand what RunOptions does
-        run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-        run_opts_metadata = tf.RunMetadata()
-
-        train_batch = self.record_reader.get_train_batch()
-        train_images, train_labels = process_data_continuous(
-            data=train_batch,
-            image_scale=self.image_scale,
-            crop_percent=self.crop_percent)
-        train_feed_dict[x] = train_images
-        train_feed_dict[y_] = train_labels
-
-        train_summary, train_accuracy = sess.run([merged, optimization], feed_dict=train_feed_dict,
-                                                 options=run_opts, run_metadata=run_opts_metadata)
-        test_batch = self.record_reader.get_test_batch()
-        test_images, test_labels = process_data_continuous(
-            data=test_batch,
-            image_scale=self.image_scale,
-            crop_percent=self.crop_percent)
-        test_feed_dict[x] = test_images
-        test_feed_dict[y_] = test_labels
-        test_summary, test_accuracy = sess.run([merged, optimization], feed_dict=test_feed_dict,
-                                               options=run_opts, run_metadata=run_opts_metadata)
-
-        # Always worth printing accuracy, even for a restored model, since it provides an early sanity check
-        message = "epoch: {0}, training accuracy: {1}, validation accuracy: {2}"
-        print(message.format(self.start_epoch, train_accuracy, test_accuracy))
-
-        if self.tf_timeline:  # Used for debugging slow Tensorflow code
-            create_tf_timeline(self.model_dir, run_opts_metadata)
-
-        # Don't double-count. A restored model already has its last checkpoint and results.txt entry available
-        if not self.is_restored_model and self.save_to_disk is True:
-            with open(self.results_file,'a') as f:
-                f.write(message.format(self.start_epoch, train_accuracy, test_accuracy)+'\n')
-                sql_query = '''
-                    INSERT INTO epochs(model_id, epoch, train, validation)
-                    VALUES ({model_id},{epoch},{train},{validation});
-                '''.format(
-                    model_id=self.model_id,
-                    epoch=0,
-                    train=train_accuracy,
-                    validation=test_accuracy
-                )
-                execute_sql(
-                    host=self.postgres_host,
-                    sql=sql_query
-                )
-            self.save_model(sess, epoch=self.start_epoch)
-            if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
-                sync_to_aws(s3_path=self.s3_bucket, local_path=self.data_path)  # Save to AWS
-
-        thread_count = 3
-        train_batch_threads = []
-        test_batch_threads = []
-        self.train_batches = queue.Queue(maxsize=5)
-        self.test_batches = queue.Queue(maxsize=3)
-        for i in range(thread_count):
-
-            train_batch_thread = Thread(
-                name="Train batches",
-                target=partial(self.get_batch,is_train=True),
-                args=())
-            train_batch_thread.start()
-            train_batch_threads.append(train_batch_thread)
-
-            test_batch_thread = Thread(
-                name="Test batches",
-                target=partial(self.get_batch, is_train=False),
-                args=())
-            test_batch_thread.start()
-            test_batch_threads.append(test_batch_thread)
-
-        for epoch in range(self.start_epoch+1, self.start_epoch + self.n_epochs):
-            self.microservice.epoch_id = epoch
-            prev_time = datetime.now()
-            batch_count = self.record_reader.get_batches_per_epoch()
-            for batch_id in range(batch_count):
-                self.microservice.batch_id = batch_id
-                images, labels = self.train_batches.get()
-                self.train_batches.task_done()
-
-                train_feed_dict[x] = images
-                train_feed_dict[y_] = labels
-                sess.run(train_step,feed_dict=train_feed_dict)
-
-                # Track speed to better compare GPUs and CPUs
-                now = datetime.now()
-                diff_seconds = (now - prev_time).total_seconds()
-                if self.show_speed:
-                    speed_results = 'batch {batch_id} of {total_batches}, {seconds} seconds'
-                    speed_results = speed_results.format(batch_id=batch_id,
-                                             seconds=diff_seconds,
-                                             total_batches=batch_count)
-                    if self.save_to_disk is True:
-                        with open(self.speed_file, 'a') as f:
-                            f.write(speed_results + '\n')
-                    print(speed_results)
-                prev_time = datetime.now()
-
-            # TODO: Document and understand what RunOptions does
-            run_opts = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-            run_opts_metadata = tf.RunMetadata()
-
-            train_images, train_labels = self.train_batches.get()
-            self.train_batches.task_done()
-            train_feed_dict[x] = train_images
-            train_feed_dict[y_] = train_labels
-            train_summary, train_accuracy = sess.run([merged, optimization], feed_dict=train_feed_dict,
-                                                     options=run_opts, run_metadata=run_opts_metadata)
-
-            test_images, test_labels = self.train_batches.get()
-            self.train_batches.task_done()
-            test_feed_dict[x] = test_images
-            test_feed_dict[y_] = test_labels
-            test_summary, test_accuracy = sess.run([merged, optimization], feed_dict=test_feed_dict,
-                                                   options=run_opts, run_metadata=run_opts_metadata)
-            print(message.format(epoch, train_accuracy, test_accuracy))
-            if self.save_to_disk is True:
-                with open(self.results_file, 'a') as f:
-                    f.write(message.format(epoch, train_accuracy, test_accuracy)+'\n')
-                    sql_query = '''
-                        INSERT INTO epochs(model_id, epoch, train, validation)
-                        VALUES ({model_id},{epoch},{train},{validation});
-                    '''.format(
-                        model_id=self.model_id,
-                        epoch=epoch,
-                        train=train_accuracy,
-                        validation=test_accuracy
-                    )
-                    execute_sql(
-                        host=self.postgres_host,
-                        sql=sql_query
-                    )
-
-                # Save a model checkpoint after every epoch
-                self.save_model(sess,epoch=epoch)
-                if self.s3_sync is True:  # You have the option to turn off the sync during development to save disk space
-                    sync_to_aws(s3_path=self.s3_bucket, local_path=self.data_path)  # Save to AWS
-
-    def save_model(self,sess,epoch):
-        file_path = os.path.join(self.model_checkpoint_dir,'model')
-        self.saver.save(sess,file_path,global_step=epoch)
-        delete_old_model_backups(checkpoint_dir=self.model_checkpoint_dir)  # Delete all but latest backup to save space
+    def train(self):
+        self.model.fit_generator(
+            self.train_generator,
+            steps_per_epoch=len(self.train_generator),
+            epochs=self.n_epochs,
+            validation_data=self.validation_generator,
+            validation_steps=self.validation_steps,
+            callbacks=[self.progress_callback]
+        )
 
 
-def format_s3_bucket(s3_bucket):
-    if not 's3://' in s3_bucket:
-        return 's3://{s3_bucket}'.format(s3_bucket=s3_bucket)
-    else:
-        return s3_bucket
-
-
-# This is helpful for profiling slow Tensorflow code
-def create_tf_timeline(model_dir,run_metadata):
-    tl = timeline.Timeline(run_metadata.step_stats)
-    ctf = tl.generate_chrome_trace_format()
-    timeline_file_path = os.path.join(model_dir,'timeline.json')
-    with open(timeline_file_path, 'w') as f:
-        f.write(ctf)
-
-
+# TODO: Replace with click package
 def parse_boolean_cli_args(args_value):
     parsed_value = None
     if isinstance(args_value, bool):
@@ -340,7 +275,7 @@ def parse_boolean_cli_args(args_value):
 
 def parse_args():
     ap = argparse.ArgumentParser()
-    ap.add_argument("-d", "--datapath", required=False,
+    ap.add_argument("-d", "--data-path", required=False,
                     help="path to all of the data",
                     default='/root/ai/data')
     ap.add_argument(
@@ -348,38 +283,28 @@ def parse_args():
         required=False,
         help="Postgres host for record_reader.py"
     )
+    ap.add_argument(
+        "--model-base-directory",
+        required=True,
+        help="The full path to the folder containing all model IDs"
+    )
     ap.add_argument("-e", "--epochs", required=False,
                     help="quantity of batch iterations to run",
                     default='500')
-    ap.add_argument("-c", "--model_dir", required=False,
-                    help="location of checkpoint data",
-                    default=None)
-    ap.add_argument("-s", "--s3_bucket", required=False,
-                    help="S3 backup URL",
-                    default='self-driving-car')
     ap.add_argument(
         "--port",
         required=False,
         help="Docker port"
     )
-    ap.add_argument("-a", "--show_speed", required=False,
-                    help="Show speed in seconds",
-                    default=False)
-    ap.add_argument("-b", "--s3_sync", required=False,
-                    help="Save on S3 storage by not syncing during code development",
-                    default=False)
-    ap.add_argument("--save_to_disk", required=False,
-                    help="Default of 'no' avoids naming conflicts during local development when GPU is also running",
-                    default=False)
     ap.add_argument("--overfit", required=False,
                     help="Use same data for train and test (y/n)?",
                     default=False)
     ap.add_argument("--crop_percent", required=False,
                     help="Chop top crop_percent off of image",
-                    default=1.0)
+                    default=50)
     ap.add_argument("--angle_only", required=False,
                     help="Use angle only model (Y/N)?",
-                    default='N')
+                    default='Y')
     ap.add_argument(
         "--image_scale",
         required=False,
@@ -388,18 +313,13 @@ def parse_args():
     ap.add_argument(
         "--batch_size", required=False,
         help="Images per batch",
-        default=50)
+        default=32)
     args = vars(ap.parse_args())
     args['image_scale'] = float(args['image_scale'])
     args['port'] = int(args['port'])
     args['crop_percent'] = float(args['crop_percent'])
-    args['show_speed'] = parse_boolean_cli_args(args['show_speed'])
     args['overfit'] = parse_boolean_cli_args(args['overfit'])
     args['angle_only'] = parse_boolean_cli_args(args['angle_only'])
-    if args['s3_sync']:
-        args['s3_sync'] = parse_boolean_cli_args(args['s3_sync'])
-    if args['save_to_disk']:
-        args['save_to_disk'] = parse_boolean_cli_args(args['save_to_disk'])
     return args
 
 class TrainingState(tornado.web.RequestHandler):
@@ -420,3 +340,34 @@ class TrainingState(tornado.web.RequestHandler):
     def post(self):
         result = yield self.get_metadata()
         self.write(result)
+
+class ProgressCallBack(Callback):
+
+    """
+    Got the documentation from here: https://www.tensorflow.org/guide/keras/custom_callback
+    """
+
+    def __init__(self):
+        self.batch_id = -1
+        super().__init__()
+
+    def on_train_batch_end(self, batch, logs=None):
+        self.batch_id = batch
+
+        # TODO: Get these from the "logs" variable?
+        train_accuracy = 0.5
+        test_accuracy = 0.5
+
+        sql_query = '''
+                INSERT INTO epochs(model_id, epoch, train, validation)
+                VALUES ({model_id},{epoch},{train},{validation});
+            '''.format(
+            model_id=self.model_id,
+            epoch=0,
+            train=train_accuracy,
+            validation=test_accuracy
+        )
+        execute_sql(
+            host=self.postgres_host,
+            sql=sql_query
+        )
