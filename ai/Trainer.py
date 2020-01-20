@@ -345,6 +345,13 @@ class TrainingState(tornado.web.RequestHandler):
 class ProgressCallBack(Callback):
 
     """
+    In the very early version of Tensorflow you would have to pass a feed_dict
+    value for each batch, which created a natural breaking point in the code
+    to update state, which could be used for reporting things like the current
+    batch, epoch, accuracy, and how many batches remained in the epoch (so that
+    you know if you should wait a few more seconds because the epoch is almost
+    done). The Keras approach is to use Callbacks, which is why this class exists
+
     Got the documentation from here: https://www.tensorflow.org/guide/keras/custom_callback
     """
 
@@ -355,21 +362,37 @@ class ProgressCallBack(Callback):
         self.postgres_host = postgres_host
         super().__init__()
 
-    def on_epoch_begin(self, epoch, logs=None):
+    def on_epoch_end(self, epoch, logs=None):
+        """
+        Called at the end of every epoch. Used to track progress so that it
+        can be exposed via the microservice REST API
+
+        Parameters
+        ----------
+        epoch : int
+            The ID of the epoch. Starts at 0.
+        logs: dict
+            Contains loss metrics about the epoch. Looks like this: {
+                'val_loss': 0.07307642698287964,
+                'val_mse': 0.07091525197029114,
+                'val_mae': 0.18278947472572327,
+                'loss': 0.10936613730630096,
+                'mse': 0.10936612,
+                'mae': 0.22850043
+            }
+        """
+
         self.epoch_id = epoch
-
-        # TODO: Get these from the "logs" variable?
-        train_accuracy = 0.5
-        test_accuracy = 0.5
-
+        train_mean_absolute_error = logs['mae']
+        validation_mean_absolute_error = logs['val_mae']
         sql_query = '''
-                        INSERT INTO epochs(model_id, epoch, train, validation)
-                        VALUES ({model_id},{epoch},{train},{validation});
-                    '''.format(
+                INSERT INTO epochs(model_id, epoch, train, validation)
+                VALUES ({model_id},{epoch},{train},{validation});
+            '''.format(
             model_id=self.model_id,
             epoch=self.epoch_id,
-            train=train_accuracy,
-            validation=test_accuracy
+            train=train_mean_absolute_error,
+            validation=validation_mean_absolute_error
         )
         execute_sql(
             host=self.postgres_host,
@@ -377,4 +400,22 @@ class ProgressCallBack(Callback):
         )
 
     def on_train_batch_end(self, batch, logs=None):
+        """
+        Called at the end of every batch. Used to track progress so that it
+        can be exposed via the microservice REST API
+
+        Parameters
+        ----------
+        batch : int
+            The ID of the batch. Starts at 0.
+        logs: dict
+            Contains loss metrics about the training batch. Looks like this: {
+                'batch': 48,
+                'size': 50,
+                'loss': 0.12477378,
+                'mse': 0.11125242,
+                'mae': 0.22997361
+            }
+        """
+
         self.batch_id = batch
