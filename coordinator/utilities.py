@@ -441,13 +441,10 @@ def batch_predict(dataset, predictions_port, datasets_port):
 def resume_training(
         model_id,
         host_data_path,
+        model_base_directory,
         postgres_host,
         port,
-        s3_bucket='self-driving-car',
-        show_speed='False',
-        s3_sync='n',
         epochs=1000,
-        save_to_disk='y',
         overfit='n',
         batch_size='50',
         angle_only='y'):
@@ -464,36 +461,44 @@ def resume_training(
         host=postgres_host,
         sql=sql_query
     )[0]
-    # The & is required or Tornado will get stuck
-    # TODO: Remove the hardcoded script path
+
+    # TODO: Consolidate docker_postgres_host and postgres_host once editor.py is containerized
+    """
+    Eventually the editor.py script, which uses this function will
+    also run in a Docker container, and when that happens both will
+    use the same hostname to refer to Postgres. For now though the
+    editor.py has to use localhost and the Docker container that
+    performs training has to refer to Postgres by its container name,
+    postgres-11-1
+    """
+    docker_postgres_host = 'postgres-11-1'
+
+    """
+    The hardcoded script path is ok because it will always be
+    in the same place in Docker
+    """
     command = 'docker run -i -t -d -p {port}:{port} \
     --network car_network \
     --volume {host_data_path}:/root/ai/data \
+    --volume {model_base_directory}:/root/ai/model \
     --name resume-training \
     ryanzotti/ai-laptop:latest \
     python /root/ai/microservices/resume_training.py \
-        --datapath /root/ai/data \
+        --data-path /root/ai/data \
         --postgres-host {postgres_host} \
         --epochs {epochs} \
-        --model_dir /root/ai/data/tf_visual_data/runs/{model_id} \
-        --s3_bucket {s3_bucket} \
+        --model-base-directory /root/ai/model \
         --port {port} \
-        --show_speed {show_speed} \
-        --s3_sync {s3_sync} \
-        --save_to_disk {save_to_disk} \
         --overfit {overfit} \
         --image_scale {image_scale} \
         --crop_percent {crop_percent} \
         --batch_size {batch_size} \
         --angle_only {angle_only}'.format(
         host_data_path=host_data_path,
-        postgres_host=postgres_host,
+        model_base_directory=model_base_directory,
+        postgres_host=docker_postgres_host,
         epochs=epochs,
         model_id=model_id,
-        s3_bucket=s3_bucket,
-        show_speed=show_speed,
-        s3_sync=s3_sync,
-        save_to_disk=save_to_disk,
         overfit=overfit,
         image_scale=model_metadata['scale'],
         crop_percent=model_metadata['crop'],
