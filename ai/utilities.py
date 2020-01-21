@@ -138,14 +138,6 @@ def load_keras_model(file_path):
         file_path,
         custom_objects={'clip': clip}
     )
-
-    # Assume that these  args will never change between models
-    loaded_model.compile(
-        loss='mse',
-        optimizer='adam',
-        metrics=['mse', 'mae']
-    )
-
     return loaded_model
 
 # Used to save space. Keeping all model checkpoint epochs can eat up many GB of disk space
