@@ -1,13 +1,13 @@
 import cv2
 """
 Using from tensorflow.keras.models import model_from_json
-instead of from keras.models import model_from_json fixes
+instead of from tensorflow.keras.models import load_model fixes
 an error in multithreaded environments like Tornado and
 Flask. The error looks like this:
 AttributeError: '_thread._local' object has no attribute 'value'
 Source; https://github.com/keras-team/keras/issues/13353#issuecomment-568208728
 """
-from tensorflow.keras.models import model_from_json
+from tensorflow.keras.models import load_model
 from keras.backend.tensorflow_backend import clip
 import numpy as np
 import os
@@ -15,7 +15,6 @@ import psycopg2
 import psycopg2.extras
 import re
 import subprocess
-import tensorflow as tf
 import urllib.request
 
 
@@ -111,16 +110,16 @@ def get_prev_epoch(checkpoint_dir_path):
     return prev_epoch
 
 
-def load_keras_model(path_to_directory):
+def load_keras_model(file_path):
     """
     Load a saved model
 
     Parameters
     ----------
-    path_to_directory : string
-        The full path to the directory containing the model.
+    file_path : string
+        The full path to the hdf5 model checkpoint file
         Example:
-            /user/home/ryanzotti/models/1
+            ~/models/23/model.hdf5
 
     Returns
     ----------
@@ -128,38 +127,26 @@ def load_keras_model(path_to_directory):
         The saved model
 
     """
-    achitecture_path = '{path_to_directory}/model.json'.format(
-        path_to_directory=path_to_directory
+
+    """
+    This is how Keras wants you to add import custom layers. Otherwise you'll get
+    this error: "keras load model NameError: name 'clip' is not defined"
+    Official docs: "Handling custom layers (or other custom objects) in saved models"
+    https://keras.io/getting-started/faq/#how-can-i-save-a-keras-model
+    """
+    loaded_model = load_model(
+        file_path,
+        custom_objects={'clip': clip}
     )
-    with open(achitecture_path, 'r') as reader:
 
-        # Load model architecture
-        loaded_model_json = reader.read()
-        """
-        This is how Keras wants you to add import custom layers. Otherwise you'll get
-        this error: "keras load model NameError: name 'clip' is not defined"
-        Official docs: "Handling custom layers (or other custom objects) in saved models"
-        https://keras.io/getting-started/faq/#how-can-i-save-a-keras-model
-        """
-        loaded_model = model_from_json(
-            loaded_model_json,
-            custom_objects={'clip': clip}
-        )
+    # Assume that these  args will never change between models
+    loaded_model.compile(
+        loss='mse',
+        optimizer='adam',
+        metrics=['mse', 'mae']
+    )
 
-        # Load model weights
-        weights_path = '{path_to_directory}/model.h5'.format(
-            path_to_directory=path_to_directory
-        )
-        loaded_model.load_weights(weights_path)
-
-        # Assume that these  args will never change between models
-        loaded_model.compile(
-            loss='mse',
-            optimizer='adam',
-            metrics=['mse', 'mae']
-        )
-
-        return loaded_model
+    return loaded_model
 
 # Used to save space. Keeping all model checkpoint epochs can eat up many GB of disk space
 def delete_old_model_backups(checkpoint_dir):

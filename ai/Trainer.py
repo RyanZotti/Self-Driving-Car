@@ -3,7 +3,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import os
 from threading import Thread
-from tensorflow.keras.callbacks import Callback
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint
 import tornado.ioloop
 import tornado.web
 
@@ -18,8 +18,8 @@ class Trainer:
     # TODO: Add class docs describing each of these args and why they're needed
     def __init__(
         self, data_path, postgres_host, port, model_base_directory, model_id= None,
-        total_epochs=50, start_epoch=0, batch_size=50, image_scale=8, crop_percent=50,
-        overfit=False, angle_only=True, n_channels=3
+        total_epochs=50, batch_size=50, image_scale=8, crop_percent=50, overfit=False,
+        angle_only=True, n_channels=3
     ):
 
         """
@@ -45,8 +45,10 @@ class Trainer:
             The directory that contains all of the models. For example, if you
             have two models: /root/model/1 and /root/model/2, then you should
             specify /root/model. For simplicity the code assumes all your models
-            are organized under the one base directory, which is a pretty
-            reasonable assumption
+            are organized under the one base directory. Nothing about where the
+            model is stored is saved in the DB because the model_base_directory
+            is something you will use frequently such that you'll probably know
+            it from either repetition or already-working examples of your code
         model_id: int
             Specify this value if you want to continue training an existing model.
             The code will expect to find an immediate child directory to
@@ -55,7 +57,11 @@ class Trainer:
             doesn't exist. The code will automatically pick a model ID for you if
             you don't specify one and assumes you are training a new model
         total_epochs: int
-            The total number of epochs to run before training completes
+            The model is not trained for a number of iterations given by epochs,
+            but merely until the epoch id before total_epochs is reached. For
+            retraining, this means nothing will happen if you specify total_epochs=5
+            but your model has already trained for 10; it won't train for 5 more.
+            For new models this makes no difference because epoch_id starts at 0
         batch_size : int
             The number of records per batch
         image_scale: int
@@ -159,6 +165,12 @@ class Trainer:
                 )
                 exit(1)
 
+            self.start_epoch = self.get_starting_epoch()
+
+            # Load the model
+            saved_model_path = os.path.join(self.model_directory, 'model.hdf5')
+            self.model = load_keras_model(file_path=saved_model_path)
+
 
         else:  # New model
             """
@@ -228,11 +240,21 @@ class Trainer:
             architecture = Architecture(input_shape=self.input_shape)
             self.model = architecture.to_model()
 
+            self.start_epoch = 0
+
         # The Keras way of tracking the current batch ID in a training epoch
         # TODO: Get epoch ID from directory if model is retraining
-        self.progress_callback = ProgressCallBack(model_id=self.model_id, postgres_host=postgres_host, epoch_id=0)
-
-        self.start_epoch = start_epoch
+        checkpoint_path = os.path.join(self.model_directory, 'checkpoint.hdf5')
+        self.checkpoint_callback = ModelCheckpoint(
+            filepath=checkpoint_path,
+            verbose=1,
+            save_best_only=True
+        )
+        self.progress_callback = ProgressCallBack(
+            model_id=self.model_id,
+            postgres_host=postgres_host,
+            epoch_id=self.start_epoch
+        )
 
         self.microservice_thread = Thread(target=self.start_microservice,kwargs={'port':self.port})
         self.microservice_thread.daemon = True
@@ -254,12 +276,59 @@ class Trainer:
     def train(self):
         self.model.fit_generator(
             self.train_generator,
+            initial_epoch=self.start_epoch,
             steps_per_epoch=len(self.train_generator),
             epochs=self.n_epochs,
             validation_data=self.validation_generator,
             validation_steps=self.validation_steps,
-            callbacks=[self.progress_callback]
+            callbacks=[self.progress_callback, self.checkpoint_callback]
         )
+
+    def get_starting_epoch(self):
+
+        """
+        Looks up the most recently completed epoch ID for the model
+        and adds one to it. Previously I would track epoch ID in the
+        checkpoint file path, but this made it harder to prune old
+        checkpoint files and required some extra custom code that I
+        felt wasn't worth it. Also, I realized that I can't recall a
+        time where I wanted to go back to an old model. If the latest
+        model was worse I always preferred to make it better by
+        training it on all of the data again rather than loading the
+        older model. I think I had this preference because I felt
+        that if I couldn't get back an approximation of the old model
+        with the same data, then what the model unlearned had been
+        learned by random chance in the first place and wasn't worth
+        trying to replicate or wasn't stable enough to last through
+        additional training.
+
+        This function should only get called during retraining, i.e.,
+        when a model already exists, since you'll always have a
+        starting_epoch of 0 for new models.
+
+        Returns
+        -------
+        starting_epoch: int
+        """
+
+        # Get the highest model ID from Postgres
+        sql = """
+            SELECT
+                MAX(epoch) AS previous_epoch
+            FROM epochs
+            WHERE
+                model_id = {model_id}
+            GROUP BY model_id
+        """.format(
+            model_id=self.model_id
+        )
+        rows = get_sql_rows(host=self.postgres_host, sql=sql)
+        if len(rows) > 0:
+            previous_epoch = int(rows[0]['previous_epoch'])
+            starting_epoch = previous_epoch + 1
+            return starting_epoch
+        else:
+            return 0
 
 
 # TODO: Replace with click package
@@ -296,6 +365,11 @@ def parse_args():
         "--port",
         required=False,
         help="Docker port"
+    )
+    ap.add_argument(
+        "--model_id",
+        required=False,
+        help="The model you would like to retrain"
     )
     ap.add_argument("--overfit", required=False,
                     help="Use same data for train and test (y/n)?",
