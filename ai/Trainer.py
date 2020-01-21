@@ -244,7 +244,7 @@ class Trainer:
 
         # The Keras way of tracking the current batch ID in a training epoch
         # TODO: Get epoch ID from directory if model is retraining
-        checkpoint_path = os.path.join(self.model_directory, 'checkpoint.hdf5')
+        checkpoint_path = os.path.join(self.model_directory, 'model.hdf5')
         self.checkpoint_callback = ModelCheckpoint(
             filepath=checkpoint_path,
             verbose=1,
