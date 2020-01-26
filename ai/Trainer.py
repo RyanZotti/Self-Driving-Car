@@ -256,20 +256,21 @@ class Trainer:
             epoch_id=self.start_epoch
         )
 
-        self.microservice_thread = Thread(target=self.start_microservice,kwargs={'port':self.port})
+        self.microservice_thread = Thread(target=self.start_microservice,kwargs={
+            'port':self.port, 'progress_callback': self.progress_callback
+        })
         self.microservice_thread.daemon = True
         self.microservice_thread.start()
 
     # The asyncio library is required to start Tornado as a separate thread
     # https://github.com/tornadoweb/tornado/issues/2308
-    def start_microservice(self, port):
+    def start_microservice(self, port, progress_callback):
         asyncio.set_event_loop(asyncio.new_event_loop())
         self.microservice = tornado.web.Application([(r'/training-state', TrainingState)])
         self.microservice.listen(port)
         self.microservice.model_id = self.model_id
         self.microservice.batch_count = self.record_reader.get_batches_per_epoch()
-        self.microservice.batch_id = -1
-        self.microservice.epoch_id = self.start_epoch
+        self.microservice.progress_callback = progress_callback
         tornado.ioloop.IOLoop.current().start()
 
     # This function is agnostic to the model
@@ -406,8 +407,8 @@ class TrainingState(tornado.web.RequestHandler):
         result = {
             'model_id' : self.application.model_id,
             'batch_count' : self.application.batch_count,
-            'batch_id' : self.application.batch_id,
-            'epoch_id': self.application.epoch_id
+            'batch_id' : self.application.progress_callback.batch_id,
+            'epoch_id': self.application.progress_callback.epoch_id
         }
         return result
 
