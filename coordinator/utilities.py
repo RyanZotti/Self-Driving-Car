@@ -365,9 +365,19 @@ def stop_training():
 
 
 def train_new_model(
-    data_path, postgres_host, port, epochs=10, show_speed='n', save_to_disk='y', image_scale=8, crop_percent=50,
-    s3_bucket='self-driving-car'
+    data_path, postgres_host, port, model_base_directory, epochs=10, image_scale=8,
+    crop_percent=50, s3_bucket='self-driving-car'
 ):
+    """
+    Eventually the editor.py script, which uses this function will
+    also run in a Docker container, and when that happens both will
+    use the same hostname to refer to Postgres. For now though the
+    editor.py has to use localhost and the Docker container that
+    performs training has to refer to Postgres by its container name,
+    postgres-11-1
+    """
+    docker_postgres_host = 'postgres-11-1'
+
     stop_training()
     """
     If you want to see why a Docker container failed, remove the --rm
@@ -384,26 +394,24 @@ def train_new_model(
         docker run -i -t -d -p {port}:{port} \
           --network car_network \
           --volume '{data_path}':/root/ai/data \
+          --volume {model_base_directory}:/root/ai/model \
           --name model-training \
           ryanzotti/ai-laptop:latest \
-          python /root/ai/microservices/tiny_cropped_angle_model.py \
+          python /root/ai/microservices/train_new_model.py \
             --postgres-host {postgres_host} \
             --image_scale {image_scale} \
             --angle_only y \
             --crop_percent {crop_percent} \
-            --show_speed {show_speed} \
             --port {port} \
-            --s3_sync n \
-            --save_to_disk {save_to_disk}
+            --model-base-directory /root/ai/model
     '''.format(
         data_path=data_path,
-        postgres_host=postgres_host,
+        postgres_host=docker_postgres_host,
         epochs=epochs,
-        show_speed=show_speed,
-        save_to_disk=save_to_disk,
         image_scale=image_scale,
         crop_percent=crop_percent,
         s3_bucket=s3_bucket,
+        model_base_directory=model_base_directory,
         port=port
     )
     print(command)

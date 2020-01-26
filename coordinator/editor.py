@@ -2096,6 +2096,7 @@ class ResumeTraining(tornado.web.RequestHandler):
             postgres_host=self.application.postgres_host,
             model_id=model_id,
             host_data_path=datasets_path,
+            model_base_directory=model_base_directory,
             port=self.application.model_training_port
         )
         return {}
@@ -2134,6 +2135,7 @@ class TrainNewModel(tornado.web.RequestHandler):
         )
         train_new_model(
             postgres_host=self.application.postgres_host,
+            model_base_directory=model_base_directory,
             data_path=data_path,
             epochs=100,
             image_scale=json_input['scale'],
