@@ -492,6 +492,7 @@ def resume_training(
         --overfit {overfit} \
         --image_scale {image_scale} \
         --crop_percent {crop_percent} \
+        --model_id {model_id} \
         --batch_size {batch_size} \
         --angle_only {angle_only}'.format(
         host_data_path=host_data_path,
