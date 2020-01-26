@@ -269,7 +269,7 @@ class Trainer:
         self.microservice = tornado.web.Application([(r'/training-state', TrainingState)])
         self.microservice.listen(port)
         self.microservice.model_id = self.model_id
-        self.microservice.batch_count = self.record_reader.get_batches_per_epoch()
+        self.microservice.batch_count = len(self.train_generator)
         self.microservice.progress_callback = progress_callback
         tornado.ioloop.IOLoop.current().start()
 
@@ -493,4 +493,9 @@ class ProgressCallBack(Callback):
             }
         """
 
-        self.batch_id = batch
+        """
+        Since the first batch is indexed at 0, the last batch in the UI
+        will look like "48 of 49" instead of "49 or 49", so I increment
+        this by 1. It's purely a matter of aesthetics
+        """
+        self.batch_id = int(batch) + 1

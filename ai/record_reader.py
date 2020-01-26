@@ -170,7 +170,6 @@ class RecordReader(object):
             self.validation_paths = self.merge_paths(self.test_folders)
 
         self.batch_size = batch_size
-        self.batches_per_epoch = int(len(self.train_paths) / self.batch_size)
 
     def get_image_paths_and_labels_as_dataframe(self, label_paths):
         """
@@ -674,10 +673,6 @@ class RecordReader(object):
             image_scale=image_scale,
             crop_percent=crop_percent)
         yield (images, labels)
-
-    # Used in Trainer class to know when epoch is reached
-    def get_batches_per_epoch(self):
-        return self.batches_per_epoch
 
     # Used by editor API to keep track of records via DB
     def get_dataset_record_ids(self,dataset_name):
