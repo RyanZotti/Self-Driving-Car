@@ -1376,7 +1376,7 @@ class GetImportRows(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
     @tornado.concurrent.run_on_executor
-    def get_review_datasets(self):
+    def get_import_datasets(self):
         reocrds = get_pi_dataset_import_stats(
             pi_datasets_dir=self.application.pi_datasets_dir,
             laptop_dataset_dir=self.application.laptop_datasets_dir,
@@ -1387,7 +1387,7 @@ class GetImportRows(tornado.web.RequestHandler):
 
     @tornado.gen.coroutine
     def get(self):
-        records = yield self.get_review_datasets()
+        records = yield self.get_import_datasets()
         self.write({'records':records})
 
 
