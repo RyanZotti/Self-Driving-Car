@@ -1031,17 +1031,11 @@ class DeleteModel(tornado.web.RequestHandler):
     def delete_model(self,json_input):
         model_id = json_input['model_id']
         # Delete the model folder and files
-        sql_query = '''
-            SELECT
-              deploy_model_parent_path AS parent_directory
-            FROM raspberry_pi;
-        '''
-        rows = get_sql_rows(
+        base_model_directory = read_pi_setting(
             host=self.application.postgres_host,
-            sql=sql_query
+            field_name='models_location_laptop'
         )
-        parent_directory = rows[0]['parent_directory']
-        full_path = os.path.join(parent_directory,str(model_id))
+        full_path = os.path.join(base_model_directory,str(model_id))
         rmtree(full_path)
         # Delete the model from the table
         delete_records_sql = """
