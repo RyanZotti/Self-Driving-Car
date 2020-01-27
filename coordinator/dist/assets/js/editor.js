@@ -1026,7 +1026,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const driveVehicleHeaderDatasetId = document.querySelector('span#driveVehicleHeaderDatasetId')
         driveVehicleHeaderDatasetId.textContent = datasetId;
         const videoHeathCheckLoop = setInterval(async function(){
-            const isHealthy = await videoHealthCheck();
+
+            /*
+            Remove this deprecated type of video health check
+            and replace it with the one that is also compatible
+            with the test / local video server
+            */
+            //const isHealthy = await videoHealthCheck();
+            isHealthy = true;
+
             if(isHealthy == true){
                 clearInterval(videoHeathCheckLoop);
                 const videoImage = showVideo();
@@ -1079,7 +1087,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 1000);
 
     const importProgressTimer = setInterval(function(){
-      addDatasetImportRows()
+        /*
+        Only attempt to check the import progress if the user is on the
+        import page. This saves the server from checking Pi stats when
+        the Pi isn't connected. This also assumes that the user will
+        also know not to go to the imports page when the Pi is not
+        connected, though it might also be a good idea to disable that
+        page with code when the Pi is not available
+        */
+        if(getActiveDatasetType() == 'import'){
+            addDatasetImportRows()
+        }
     }, 1000);
 
     // Update Raspberry Pi statues
