@@ -183,6 +183,7 @@ async function updatePiConnectionStatuses(){
             status.style.display = 'inline';
         }
     }
+    return isHealthy
 }
 
 /*

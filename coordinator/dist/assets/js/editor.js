@@ -912,7 +912,14 @@ document.addEventListener('DOMContentLoaded', function() {
         $("#dataset-import").addClass('active');
         loadImportDatasetsTable();
     });
-    updateDatasetsCountBadge('import');
+
+    updatePiConnectionStatuses().then(function(isPiHealthy){
+        if(isPiHealthy == true){
+            updateDatasetsCountBadge('import');
+            const piNav = document.querySelector("li#pi-nav");
+            piNav.style.display ='inline'
+        }
+    });
 
     $('#modalTrashButton').click(async function () {
         const recordId = recordIdsPlaying[recordIdIndexPlaying];
@@ -1100,9 +1107,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 1000);
 
-    // Update Raspberry Pi statues
-    const piHealthCheckTime = setInterval(function(){
-        updatePiConnectionStatuses()
+    // Update Raspberry Pi statues and disable Pi connection calls if Pi is unavailable
+    const piHealthCheckTime = setInterval(async function(){
+        isPiHealthy = await updatePiConnectionStatuses();
+        const piNav = document.querySelector("li#pi-nav");
+        if(isPiHealthy == true){
+            piNav.style.display ='inline'
+        } else {
+            piNav.style.display ='none'
+        }
     }, 1000);
 
     /*
@@ -1220,6 +1233,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Global variables
 var isLaptopDockerModelHealthy = false;
+var isPiHealthy = false;
 var cropPercent = 50;
 var videoSessionId = -1;
 var isVideoPlaying = false;

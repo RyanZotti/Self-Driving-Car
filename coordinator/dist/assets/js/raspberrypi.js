@@ -620,7 +620,7 @@ async function pollServices(args){
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
 
     /*
     These are global variables but need to be defined here
@@ -815,7 +815,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update Raspberry Pi statues
     const piHealthCheckTime = setInterval(function(){
-        updatePiConnectionStatuses()
+        isPiHealthy = await updatePiConnectionStatuses();
     }, 1000);
 
     // Periodically check that Pi hostname hasn't changed
