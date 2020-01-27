@@ -25,6 +25,35 @@ function deleteModel(modelId){
     });
 }
 
+function highestModelEpoch(modelId){
+    /*
+    Returns the highest epoch ID of a given model. Results are shown
+    in the models table in the ML page. Helps the user identify which
+    models were mistakes (e.g., accidentally click train button) vs
+    models that have many epochs. Returns 0 if there are no epochs
+
+    Parameters
+    ----------
+
+    modelId: int
+      Example: 23
+
+    Returns
+    -------
+    max_epoch: int
+      The highest epoch ID for the model in the DB. Defaults to 0
+      if no epochs exist. Example: 10
+    */
+
+    const config = {'model_id': modelId}
+    return new Promise(async function(resolve, reject){
+        data = JSON.stringify(config)
+        $.post('/highest-model-epoch', data, function(result){
+            resolve(result['max_epoch']);
+        });
+    });
+}
+
 async function loadMachineLearningModels() {
     const table = document.querySelector("tbody#modelsTbody");
     const models = await listModels();
@@ -48,11 +77,14 @@ async function loadMachineLearningModels() {
     }
     // Add a new row for each model
     for (const model of models){
+        const modelId = model['model_id'];
         const row = await getHtml('/model.html');
-        row.querySelector('td.model-id').textContent = model['model_id'];
+        const epoch = await highestModelEpoch(modelId);
+        row.querySelector('td.model-id').textContent = modelId;
         row.querySelector('td.model-created-ts').textContent = model['created_timestamp'];
         row.querySelector('td.model-top-crop-percent').textContent = model['crop'];
         row.querySelector('td.model-image-scale').textContent = model['scale'];
+        row.querySelector('td.highest-model-epoch').textContent = epoch;
         const deleteButton = row.querySelector('button.delete-model-action');
         deleteButton.onclick = async function(){
             await deleteModel(model['model_id']);

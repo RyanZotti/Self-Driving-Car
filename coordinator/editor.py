@@ -2289,6 +2289,42 @@ class NewEpochs(tornado.web.RequestHandler):
         self.write(result)
 
 
+class HighestModelEpoch(tornado.web.RequestHandler):
+
+    """
+    Used in the machine learning page's models table to show which
+    models might have been trained by mistake. Models that were
+    trained by mistake won't have many epochs (e.g., 0)
+    """
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def get_highest_model_epoch(self,json_inputs):
+        model_id = json_inputs['model_id']
+        sql_query = '''
+            SELECT
+                COALESCE(MAX(epoch),0) AS max_epoch
+            FROM epochs
+            WHERE model_id = {model_id}
+        '''.format(
+            model_id=model_id
+        )
+        max_epoch = get_sql_rows(
+            host=self.application.postgres_host,
+            sql=sql_query
+        )[0]['max_epoch']
+        result = {
+            'max_epoch':max_epoch
+        }
+        return result
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_inputs = tornado.escape.json_decode(self.request.body)
+        result = yield self.get_highest_model_epoch(json_inputs=json_inputs)
+        self.write(result)
+
 class RefreshRecordReader(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -2489,6 +2525,7 @@ def make_app():
         (r"/read-pi-field", ReadPiField),
         (r"/refresh-record-reader", RefreshRecordReader),
         (r"/raspberry-pi-healthcheck", PiHealthCheck),
+        (r"/highest-model-epoch", HighestModelEpoch),
         (r"/start-car-service", StartCarService),
         (r"/vehicle-memory", Memory),
         (r"/pi-service-health", PiServiceHealth),
