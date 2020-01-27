@@ -431,7 +431,7 @@ class ProgressCallBack(Callback):
     """
 
     def __init__(self, model_id, postgres_host, epoch_id):
-        self.batch_id = -1
+        self.batch_id = 1
         self.epoch_id = epoch_id
         self.model_id = model_id
         self.postgres_host = postgres_host

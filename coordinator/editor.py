@@ -2086,6 +2086,10 @@ class ResumeTraining(tornado.web.RequestHandler):
             host=self.application.postgres_host,
             field_name='laptop datasets directory'
         )
+        model_base_directory = read_pi_setting(
+            host=self.application.postgres_host,
+            field_name='models_location_laptop'
+        )
         resume_training(
             postgres_host=self.application.postgres_host,
             model_id=model_id,
@@ -2126,6 +2130,10 @@ class TrainNewModel(tornado.web.RequestHandler):
         data_path = read_pi_setting(
             host=self.application.postgres_host,
             field_name='laptop datasets directory'
+        )
+        model_base_directory = read_pi_setting(
+            host=self.application.postgres_host,
+            field_name='models_location_laptop'
         )
         train_new_model(
             postgres_host=self.application.postgres_host,
