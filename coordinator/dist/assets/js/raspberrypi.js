@@ -814,7 +814,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }, 500);
 
     // Update Raspberry Pi statues
-    const piHealthCheckTime = setInterval(function(){
+    const piHealthCheckTime = setInterval(async function(){
         isPiHealthy = await updatePiConnectionStatuses();
     }, 1000);
 
