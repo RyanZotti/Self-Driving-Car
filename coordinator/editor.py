@@ -940,7 +940,7 @@ class AIAngleAPI(tornado.web.RequestHandler):
         request = requests.post('http://localhost:8885/predict', files=files)
         response = json.loads(request.text)
         prediction = response['prediction']
-        predicted_angle = prediction[0]
+        predicted_angle = prediction
         result = {
             'angle': predicted_angle
         }
