@@ -108,11 +108,11 @@ record_ids = get_record_ids(
 )
 
 request = requests.post(
-    'http://localhost:8885/model-meta-data'
+    'http://localhost:8885/model-metadata'
 )
 response = json.loads(request.text)
 model_id = response['model_id']
-epoch = response['epoch']
+epoch = response['epoch_id']
 
 process_id = os.getpid()
 start_sql = '''
