@@ -261,10 +261,7 @@ async function addDatasetReviewRows() {
                     Check if the Docker container model is healthy. If not, set global
                     variable to tell modal UI window not to show model related stats
                     */
-                    isLaptopDockerModelHealthy = await getLaptopModelApiHealth(
-                        dataset,
-                        recordIds[recordIdIndexPlaying]
-                    )
+                    isLaptopDockerModelHealthy = await getLaptopModelApiHealth()
                     const errorAmount = document.querySelector('div#errorText');
                     const aiSterringAmount = document.querySelector('div#aiSteeringText');
                     const errorBarCol = document.querySelector('div#errorBarCol');
@@ -433,16 +430,15 @@ function getAiAngle(dataset, recordId) {
     });
 }
 
-function getLaptopModelApiHealth(dataset, recordId) {
+function getLaptopModelApiHealth() {
     /*
     Used to check if the laptop model API Docker container is alive, so
     that if it's not I don't show messed up model speed and angle. This
     happens when you haven't yet trained a model.
     */
     return new Promise(function(resolve, reject) {
-        data = JSON.stringify({ 'dataset': dataset, 'record_id' : recordId})
-        $.post('/laptop-model-api-health', data, function(result){
-           resolve(result)
+        $.get('/laptop-model-api-health', function(result){
+           resolve(result['is_healthy'])
         });
     });
 }

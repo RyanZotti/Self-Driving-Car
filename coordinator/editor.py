@@ -780,32 +780,18 @@ class LaptopModelAPIHealth(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(100)
 
     @tornado.concurrent.run_on_executor
-    def get_prediction(self, json_input):
-        dataset_name = json_input['dataset']
-        record_id = json_input['record_id']
-
-        frame = self.application.record_reader.get_image(
-            dataset_name=dataset_name,
-            record_id=record_id
-        )
-
-        img = cv2.imencode('.jpg', frame)[1].tostring()
-        files = {'image': img}
-        # TODO: Remove hard-coded model API
-
+    def get_health(self):
         try:
-            request = requests.post('http://localhost:8885/predict', files=files)
+            timeout_seconds = 1
+            request = requests.get('http://localhost:8885/health',timeout=timeout_seconds)
             response = json.loads(request.text)
-            prediction = response['prediction']
-            predicted_angle = prediction[0]
-            return {'is_healthy': True}
+            return {'is_healthy': response['is_healthy']}
         except:
             return {'is_healthy': False}
 
     @tornado.gen.coroutine
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
-        result = yield self.get_prediction(json_input)
+    def get(self):
+        result = yield self.get_health()
         self.write(result)
 
 
@@ -816,17 +802,10 @@ class DeployModel(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def deploy_model(self, json_input):
         device = json_input['device']
-        checkpoint_directory_sql = """
-            SELECT
-              deploy_model_parent_path
-            FROM raspberry_pi
-        """.format(
-            device=device
-        )
-        checkpoint_directory = get_sql_rows(
+        base_model_directory = read_pi_setting(
             host=self.application.postgres_host,
-            sql=checkpoint_directory_sql
-        )[0]['deploy_model_parent_path']
+            field_name='models_location_laptop'
+        )
 
         # TODO: Don't hardcode any of these things
         port = 8885
@@ -865,23 +844,23 @@ class DeployModel(tornado.web.RequestHandler):
         epoch = first_row['epoch_id']
         scale = first_row['scale']
         crop = first_row['crop']
-        checkpoint_directory = checkpoint_directory + '/{0}/checkpoints'.format(model_id)
         command = '''
             docker run -i -t -d -p {host_port}:8885 \
-                --volume {checkpoint_directory}:/root/ai/model-archives/model/checkpoints \
+                --volume {base_model_directory}:/root/ai/models \
                 --name laptop-predict \
                 --network app_network \
                 ryanzotti/ai-laptop:latest \
                 python /root/ai/microservices/predict.py \
                     --port 8885 \
                     --image_scale {scale} \
+                    --model_base_directory /root/ai/models \
                     --angle_only {angle_only} \
                     --crop_percent {crop_percent} \
                     --model_id {model_id} \
                     --epoch {epoch_id}
         '''.format(
             host_port=port,
-            checkpoint_directory=checkpoint_directory,
+            base_model_directory=base_model_directory,
             scale=scale,
             angle_only=angle_only,
             crop_percent=crop,

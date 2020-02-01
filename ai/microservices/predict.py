@@ -155,10 +155,10 @@ if __name__ == "__main__":
 
     ap = argparse.ArgumentParser()
     ap.add_argument(
-        "--checkpoint_dir",
-        required=False,
-        help="path to all of the data",
-        default='/Users/ryanzotti/Documents/repos/Self-Driving-Car/ai/microservices')
+        "--model_base_directory",
+        required=True,
+        help="Path to the model base directory",
+    )
     ap.add_argument(
         "--image_scale",
         required=False,
@@ -190,7 +190,7 @@ if __name__ == "__main__":
         default=50,
         help="Percent of image top that is cut. Example: 50")
     args = vars(ap.parse_args())
-    path = args['checkpoint_dir']
+    path = args['model_base_directory']
     if 'y' in args['angle_only'].lower():
         args['angle_only'] = True
     else:
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     epoch_id = args['epoch']
 
     # Load model just once and store in memory for all future calls
-    model = load_keras_model(path)
+    model = load_keras_model(path+'/'+str(model_id)+'/model.hdf5')
 
     app = make_app(model, image_scale, crop_percent, angle_only)
     app.model_id = int(model_id)
