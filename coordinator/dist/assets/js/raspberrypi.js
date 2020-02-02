@@ -442,9 +442,11 @@ async function setServiceHost(){
         isLocalTest = await readToggle(readInput);
         if (isLocalTest == true) {
             serviceHost = 'localhost'
+            return serviceHost
         } else {
             piHostname = await readPiField("hostname");
             serviceHost = piHostname;
+            return serviceHost
         }
     } else {
         const testLocally = document.getElementById("toggle-test-services-locally");
@@ -662,6 +664,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     */
     var piServiceHealthCheckTime = null;
     var resumeServicesTime = null;
+    var ps3ControllerWizardInterval = null
 
     const settingsWrapper = document.querySelector("#settings-wrapper");
     const servicesWrapper = document.querySelector("#services-wrapper");
@@ -680,6 +683,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // Stop polling the services when not on the services page
         clearInterval(piServiceHealthCheckTime);
+        clearInterval(ps3ControllerWizardInterval);
         clearInterval(resumeServicesTime);
 
         settingsNav.classList.add("active");
@@ -744,6 +748,22 @@ document.addEventListener('DOMContentLoaded', async function() {
         var resumeServicesTime = setInterval(function(){
             osAgnosticPollServices(services);
         }, 10000);
+        /*
+          Show PS3 connect wizard while PS3 controller connection
+          status is not healthy but service is turned on
+        */
+        ps3ControllerWizardInterval = setInterval(async function(){
+            const isConnected = await getPS3ControllerHealth({'host':serviceHost});
+            if (isConnected == true || !ps3ControllerServiceToggle.checked){
+                timelineWrapper.style.display = 'none';
+            } else {
+                timelineWrapper.style.display = 'block';
+                if (isWizardOn == false){
+                    await pairController();
+                }
+            }
+
+        }, 5000);
 
         servicesWrapper.style.display = 'flex';
         servicesNav.classList.add('active');
@@ -864,23 +884,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         'onclick',
         unregisterPs3Controllers
     );
-
-    /*
-      Show PS3 connect wizard while PS3 controller connection
-      status is not healthy but service is turned on
-    */
-    const ps3ControllerWizardInterval = setInterval(async function(){
-        const isConnected = await getPS3ControllerHealth({'host':serviceHost});
-        if (isConnected == true || !ps3ControllerServiceToggle.checked){
-            timelineWrapper.style.display = 'none';
-        } else {
-            timelineWrapper.style.display = 'block';
-            if (isWizardOn == false){
-                await pairController();
-            }
-        }
-
-    }, 5000);
 
     configureSlider({
         'sliderId':'model-constant-speed-slider',
