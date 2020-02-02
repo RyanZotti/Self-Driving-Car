@@ -318,9 +318,7 @@ async function pollDeployment(){
             deployModel({
                'device':device
             });
-            console.log('is not alive');
         } else {
-            console.log('is alive');
             // If it is running, check that's it up-to-date
             if (parseInt(deployment['model_id'])!=parseInt(healthcheck['model_id']) ||
               parseInt(deployment['epoch_id'])!=parseInt(healthcheck['epoch_id'])) {

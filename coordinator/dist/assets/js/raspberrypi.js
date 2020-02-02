@@ -809,8 +809,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     DB checks for each frame, so I only update the global variable
     periodically with this interval
     */
-    const serviceHostInterval = setInterval(function(){
-        setServiceHost()
+    const serviceHostInterval = setInterval(async function(){
+        serviceHost = await setServiceHost();
     }, 500);
 
     // Update Raspberry Pi statues
