@@ -592,15 +592,23 @@ def list_pi_datasets(datasets_dir, postgres_host):
                 datasets.append(line)
     return datasets
 
-def sftp(hostname, username, password, from_path, to_path):
+def sftp(hostname, username, password, remotepath, localpath, sftp_type):
+    assert sftp_type in ['get', 'put']
     async def run_client():
         async with asyncssh.connect(hostname, username=username, password=password) as conn:
             async with conn.start_sftp_client() as sftp:
-                await sftp.get(
-                    remotepaths=from_path,
-                    localpath=to_path,
-                    recurse=True
-                )
+                if sftp_type == 'get':
+                    await sftp.get(
+                        remotepaths=remotepath,
+                        localpath=localpath,
+                        recurse=True
+                    )
+                elif sftp_type == 'put':
+                    await sftp.put(
+                        remotepath=remotepath,
+                        localpaths=localpath,
+                        recurse=True
+                    )
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

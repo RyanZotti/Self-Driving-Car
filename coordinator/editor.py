@@ -844,33 +844,108 @@ class DeployModel(tornado.web.RequestHandler):
         epoch = first_row['epoch_id']
         scale = first_row['scale']
         crop = first_row['crop']
-        command = '''
-            docker run -i -t -d -p {host_port}:8885 \
-                --volume {base_model_directory}:/root/ai/models \
-                --name laptop-predict \
-                --network app_network \
-                ryanzotti/ai-laptop:latest \
-                python /root/ai/microservices/predict.py \
-                    --port 8885 \
-                    --image_scale {scale} \
-                    --model_base_directory /root/ai/models \
-                    --angle_only {angle_only} \
-                    --crop_percent {crop_percent} \
-                    --model_id {model_id} \
-                    --epoch {epoch_id}
-        '''.format(
-            host_port=port,
-            base_model_directory=base_model_directory,
-            scale=scale,
-            angle_only=angle_only,
-            crop_percent=crop,
-            model_id=model_id,
-            epoch_id=epoch
-        )
-        process = subprocess.Popen(
-            command,
-            shell=True
-        )
+
+        if device.lower() == 'laptop':
+            command = '''
+                docker run -i -t -d -p {host_port}:8885 \
+                    --volume {base_model_directory}:/root/ai/models \
+                    --name laptop-predict \
+                    --network app_network \
+                    ryanzotti/ai-laptop:latest \
+                    python /root/ai/microservices/predict.py \
+                        --port 8885 \
+                        --image_scale {scale} \
+                        --model_base_directory /root/ai/models \
+                        --angle_only {angle_only} \
+                        --crop_percent {crop_percent} \
+                        --model_id {model_id} \
+                        --epoch {epoch_id}
+                '''.format(
+                host_port=port,
+                base_model_directory=base_model_directory,
+                scale=scale,
+                angle_only=angle_only,
+                crop_percent=crop,
+                model_id=model_id,
+                epoch_id=epoch
+            )
+            process = subprocess.Popen(
+                command,
+                shell=True
+            )
+        elif device.lower() == 'pi':
+            pi_hostname = read_pi_setting(
+                host=self.application.postgres_host,
+                field_name='hostname'
+            )
+            username = read_pi_setting(
+                host=self.application.postgres_host,
+                field_name='username'
+            )
+            password = read_pi_setting(
+                host=self.application.postgres_host,
+                field_name='password'
+            )
+            model_base_directory_laptop = read_pi_setting(
+                host=self.application.postgres_host,
+                field_name='models_location_laptop'
+            )
+            model_base_directory_pi = read_pi_setting(
+                host=self.application.postgres_host,
+                field_name='models_location_pi'
+            )
+            from_path = '{model_base_directory}/{model_id}'.format(
+                model_base_directory=model_base_directory_laptop,
+                model_id=model_id
+            )
+
+            to_path = '{model_base_directory}'.format(
+                model_base_directory=model_base_directory_pi
+            )
+
+            # Add to jobs table for tracking
+            add_job(
+                postgres_host=self.application.postgres_host,
+                session_id=self.application.session_id,
+                name='model transfer',
+                detail='Model ID: {model_id}'.format(model_id=model_id),
+                status='pending'
+            )
+
+            # Ensure the destination exists on the Pi or SFTP will fail
+            stdout = execute_pi_command(
+                command='mkdir -p {to_path}'.format(to_path=to_path),
+                postgres_host=self.application.postgres_host,
+                is_printable=False
+            )
+
+            # Run the SFTP step
+            try:
+                sftp(
+                    hostname=pi_hostname,
+                    username=username,
+                    password=password,
+                    localpath=from_path,
+                    remotepath=to_path,
+                    sftp_type='put'
+                )
+
+            except:
+                print('Unable to SFTP the model {from_path} to {to_path}'.format(
+                    from_path=from_path,
+                    to_path=to_path
+                ))
+                traceback.print_exc()
+            finally:
+                # Remove the job from the jobs table, which signifies completion
+                delete_job(
+                    postgres_host=self.application.postgres_host,
+                    job_name='model transfer',
+                    job_detail='Model ID: {model_id}'.format(model_id=model_id)
+                )
+
+        else:
+            pass  # This should never happen
 
         result = {}
         return result
@@ -1223,8 +1298,9 @@ class TransferDatasetFromPiToLaptop(tornado.web.RequestHandler):
             hostname=pi_hostname,
             username=username,
             password=password,
-            from_path=from_path,
-            to_path=to_path
+            remotepath=from_path,
+            localpath=to_path,
+            sftp_type='get'
         )
 
         # Load the data into Postgres
@@ -2517,7 +2593,7 @@ def make_app():
         (r"/start-sixaxis-loop", PS3ControllerSixAxisStart),
         (r"/is-ps3-connected", IsPS3ControllerConnected),
         (r"/sudo-sixpair", PS3SudoSixPair),
-        (r"/laptop-model-api-health", LaptopModelAPIHealth),
+        (r"/laptop-model-api-health", LaptopModelAPIHealth)
     ]
     return tornado.web.Application(handlers)
 
