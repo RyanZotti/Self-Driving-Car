@@ -2525,6 +2525,80 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
         result = yield self.get_error_metrics(json_inputs=json_inputs)
         self.write(result)
 
+
+class GetNextDatasetName(tornado.web.RequestHandler):
+
+    """
+    Returns what the next dataset would be, if it were created. Not to
+    be confused with actually creating a new dataset, however. I want
+    to separate the lookup from the creation because I need to pass a
+    dataset name to the UI when the user first visits the dashboard,
+    and if the user doesn't start recording data but frequently moves
+    across pages, I don't want to end up with a bunch of empty dataset
+    folders on the Pi
+    """
+
+    executor = ThreadPoolExecutor(3)
+
+    @tornado.concurrent.run_on_executor
+    def get_next_dataset_name(self, json_input):
+        host = json_input['host']
+        port = 8093  # TODO: Look up this service's port in a DB
+        try:
+            seconds = 1.0
+            endpoint = 'http://{host}:{port}/get-next-dataset-name'.format(
+                host=host,
+                port=port
+            )
+            response = requests.get(
+                endpoint,
+                timeout=seconds
+            )
+            dataset = json.loads(response.text)
+            print(dataset)
+            return {'dataset': dataset}
+        except:
+            return {'dataset': -1}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.get_next_dataset_name(json_input=json_input)
+        self.write(result)
+
+
+class CreateNewDataset(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(10)
+
+    @tornado.concurrent.run_on_executor
+    def run_setup(self, json_input):
+        host = json_input['host']
+        port = json_input['port']
+        try:
+            seconds = 1.0
+            endpoint = 'http://{host}:{port}/create-new-dataset'.format(
+                host=host,
+                port=port
+            )
+            response = requests.get(
+                endpoint,
+                timeout=seconds
+            )
+            dataset = json.loads(response.text)
+            print(dataset)
+            return {'dataset': dataset}
+        except:
+            return {'dataset': -1}
+
+    @tornado.gen.coroutine
+    def post(self):
+        result = {}
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.run_setup(json_input=json_input)
+        self.write(result)
+
+
 def make_app():
     this_dir = os.path.dirname(os.path.realpath(__file__))
     assets_absolute_path = os.path.join(this_dir, 'dist', 'assets')
@@ -2593,7 +2667,9 @@ def make_app():
         (r"/start-sixaxis-loop", PS3ControllerSixAxisStart),
         (r"/is-ps3-connected", IsPS3ControllerConnected),
         (r"/sudo-sixpair", PS3SudoSixPair),
-        (r"/laptop-model-api-health", LaptopModelAPIHealth)
+        (r"/laptop-model-api-health", LaptopModelAPIHealth),
+        (r"/create-new-dataset", CreateNewDataset),
+        (r"/get-next-dataset-name", GetNextDatasetName)
     ]
     return tornado.web.Application(handlers)
 
