@@ -477,8 +477,8 @@ async function checkDashboardVideoReadiness(){
     off as needed in a potentially endless loop starting and
     stopping each other's setInterval() functions.
     */
+    recordingDataset = await getNextDatasetName({'host':serviceHost});
     pollVehicleAndUpdateUI();
-    await makeNewDataset();
     const datasetId = await getDatasetIdFromDataset(recordingDataset);
     const driveVehicleHeaderDatasetId = document.querySelector('span#driveVehicleHeaderDatasetId')
     driveVehicleHeaderDatasetId.textContent = datasetId;
@@ -620,6 +620,66 @@ async function pollServices(args){
             stopService(service);
         }
     }
+}
+
+function getNextDatasetName(args){
+
+    /*
+    Returns what the next dataset would be, if it were created. Not to
+    be confused with actually creating a new dataset, however. I want
+    to separate the lookup from the creation because I need to pass a
+    dataset name to the UI when the user first visits the dashboard,
+    and if the user doesn't start recording data but frequently moves
+    across pages, I don't want to end up with a bunch of empty dataset
+    folders on the Pi
+    */
+
+    const host = args['host'];
+
+    return new Promise(function(resolve, reject) {
+        const input = JSON.stringify({
+            'host': host
+        });
+        $.ajax({
+            method: 'POST',
+            url: '/get-next-dataset-name',
+            timeout: 1000,
+            data: input,
+            success: function(response) {
+                resolve(response['dataset']);
+            },
+            error: function(){
+                resolve(false);
+            }
+        });
+    });
+}
+
+function createNewDataset(args){
+
+    /*
+    Creates a new dataset and returns its name
+    */
+
+    const host = args['host'];
+
+    return new Promise(function(resolve, reject) {
+        const input = JSON.stringify({
+            'host': host
+        });
+        $.ajax({
+            method: 'POST',
+            url: '/create-new-dataset',
+            timeout: 1000,
+            data: input,
+            success: function(response) {
+                resolve(response['dataset']);
+            },
+            error: function(){
+                resolve(false);
+            }
+        });
+    });
 }
 
 document.addEventListener('DOMContentLoaded', async function() {

@@ -2554,11 +2554,10 @@ class GetNextDatasetName(tornado.web.RequestHandler):
                 endpoint,
                 timeout=seconds
             )
-            dataset = json.loads(response.text)
-            print(dataset)
-            return {'dataset': dataset}
+            dataset = json.loads(response.text)  # Return from the server as-is
+            return dataset
         except:
-            return {'dataset': -1}
+            return dataset
 
     @tornado.gen.coroutine
     def post(self):
@@ -2585,9 +2584,8 @@ class CreateNewDataset(tornado.web.RequestHandler):
                 endpoint,
                 timeout=seconds
             )
-            dataset = json.loads(response.text)
-            print(dataset)
-            return {'dataset': dataset}
+            dataset = json.loads(response.text)  # Return from the server as-is
+            return dataset
         except:
             return {'dataset': -1}
 
