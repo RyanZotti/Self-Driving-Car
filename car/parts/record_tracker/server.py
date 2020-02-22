@@ -234,7 +234,7 @@ class DatasetHandler():
         folders = next(os.walk(path))[1]
         return folders
 
-    def next_dataset_number(self, path):
+    def next_dataset_number(self):
         def get_dataset_num(dataset_name):
             try:
                 num = int(dataset_name.split('_')[1])
@@ -242,16 +242,20 @@ class DatasetHandler():
                 num = 0
             return num
 
-        folders = self.get_dataset_list(path)
+        folders = self.get_dataset_list(self.path)
         numbers = [get_dataset_num(x) for x in folders]
         # numbers = [i for i in numbers if i is not None]
         next_number = max(numbers + [0]) + 1
         return next_number
 
-    def create_dataset_path(self):
-        dataset_num = self.next_dataset_number(self.path)
+    def next_dataset_name(self):
+        dataset_num = self.next_dataset_number()
         date = datetime.now().strftime('%y-%m-%d')
         name = '_'.join(['dataset', str(dataset_num), date])
+        return name
+
+    def create_dataset_path(self):
+        name = self.next_dataset_name()
         dataset_path = os.path.join(self.path, name)
         return dataset_path
 
@@ -274,6 +278,41 @@ class WriteRecord(tornado.web.RequestHandler):
         self.application.image = None
         self.application.labels = None
         self.write({})
+
+
+class GetNextDatasetName(tornado.web.RequestHandler):
+
+    """
+    Returns what the next dataset would be, if it were created. Not to
+    be confused with actually creating a new dataset, however. I want
+    to separate the lookup from the creation because I need to pass a
+    dataset name to the UI when the user first visits the dashboard,
+    and if the user doesn't start recording data but frequently moves
+    across pages, I don't want to end up with a bunch of empty dataset
+    folders on the Pi
+    """
+
+    def get(self):
+        next_dataset_name = self.application.dataset_handler.next_dataset_name()
+        self.write({'dataset': next_dataset_name})
+
+
+class CreateNewDataset(tornado.web.RequestHandler):
+
+    """
+    Creates a new dataset
+    """
+
+    def post(self):
+        next_dataset_name = self.application.dataset_handler.next_dataset_name()
+        dataset = self.application.dataset_handler.new_dataset_writer(
+            inputs=input_names,
+            types=input_types
+        )
+        dataset.set_name('dataset')
+        self.application.dataset = dataset
+        self.write({'dataset': next_dataset_name})
+
 
 # Updates image cache
 class ImageCache(tornado.web.RequestHandler):
@@ -323,6 +362,8 @@ def make_app():
         (r"/write-record", WriteRecord),
         (r"/image", ImageCache),
         (r"/labels", RecordCache),
+        (r"/create-new-dataset", CreateNewDataset),
+        (r"/get-next-dataset-name", GetNextDatasetName),
         (r"/health", Health)
     ]
     return tornado.web.Application(handlers)
@@ -338,7 +379,7 @@ if __name__ == "__main__":
     args = vars(ap.parse_args())
     port = args['port']
     app = make_app()
-    dataset_handler = DatasetHandler(path='/datasets')
+    app.dataset_handler = DatasetHandler(path='/Users/ryanzotti/Downloads/data')
     # TODO: Make sure this always matches what's in start.py or you'll get key not found bugs
     input_names = [
         'camera/image_array',
@@ -354,11 +395,7 @@ if __name__ == "__main__":
     ]
     app.image = None
     app.record = None
-    dataset = dataset_handler.new_dataset_writer(
-        inputs=input_names,
-        types=input_types
-    )
-    dataset.set_name('dataset')
-    app.dataset = dataset
+    app.dataset = None
+
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()
