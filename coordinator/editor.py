@@ -164,7 +164,6 @@ class Memory(tornado.web.RequestHandler):
            timeout=seconds
         )
         response = json.loads(request.text)
-        print(response)
         return response
 
     @tornado.gen.coroutine
@@ -2597,6 +2596,30 @@ class CreateNewDataset(tornado.web.RequestHandler):
         self.write(result)
 
 
+class UpdateDriveState(tornado.web.RequestHandler):
+    executor = ThreadPoolExecutor(200)
+
+    @tornado.concurrent.run_on_executor
+    def send_drive_state(self, json_input):
+        seconds = 3.0
+        request = requests.post(
+            # TODO: Remove hardcoded port
+            'http://{host}:{port}/track-human-requests'.format(
+                host=self.application.pi_host,
+                port=8884
+            ),
+            data=json_input,
+            timeout=seconds
+        )
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.send_drive_state(json_input=json_input)
+        self.write(result)
+
+
 def make_app():
     this_dir = os.path.dirname(os.path.realpath(__file__))
     assets_absolute_path = os.path.join(this_dir, 'dist', 'assets')
@@ -2667,7 +2690,8 @@ def make_app():
         (r"/sudo-sixpair", PS3SudoSixPair),
         (r"/laptop-model-api-health", LaptopModelAPIHealth),
         (r"/create-new-dataset", CreateNewDataset),
-        (r"/get-next-dataset-name", GetNextDatasetName)
+        (r"/get-next-dataset-name", GetNextDatasetName),
+        (r"/update-drive-state", UpdateDriveState)
     ]
     return tornado.web.Application(handlers)
 
