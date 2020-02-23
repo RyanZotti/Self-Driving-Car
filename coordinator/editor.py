@@ -151,7 +151,7 @@ class Memory(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def get_memory(self, json_input):
-        seconds = 1
+        seconds = 3.0
         host = json_input['host']
         port = int(json_input['port'])
         # TODO: Remove hardcoded port
