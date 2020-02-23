@@ -16,6 +16,11 @@ INSERT INTO sliders (event_ts, web_page, name, amount) VALUES
 COMMIT;
 
 BEGIN;
+INSERT INTO sliders (event_ts, web_page, name, amount) VALUES
+    (now(), 'raspberry pi', 'model constant speed', 50);
+COMMIT;
+
+BEGIN;
 INSERT INTO pi_settings(
   event_ts,
   field_name,
