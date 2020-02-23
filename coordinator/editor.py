@@ -2608,7 +2608,7 @@ class UpdateDriveState(tornado.web.RequestHandler):
                 host=self.application.pi_host,
                 port=8884
             ),
-            data=json_input,
+            data=json.dumps(json_input),
             timeout=seconds
         )
         return {}
