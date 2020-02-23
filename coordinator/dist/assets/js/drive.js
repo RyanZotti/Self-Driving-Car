@@ -126,6 +126,12 @@ function releaseBrake(){
     brakeIcon.style.display = 'none';
 }
 
+function adjustSpeedBar(barId, speed){
+    const speedBar = document.querySelector("div#"+barId);
+    const speedPercent = (speed * 100).toFixed(2) + '%';
+    speedBar.style.height = speedPercent;
+}
+
 async function pollVehicleAndUpdateUI(){
 
     const userEngineToggle = document.querySelector("input#engine-toggle");
