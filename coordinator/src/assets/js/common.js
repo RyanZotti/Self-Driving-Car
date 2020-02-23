@@ -107,7 +107,7 @@ function raspberryPiConnectionTest() {
         $.ajax({
             method: 'POST',
             url: '/raspberry-pi-healthcheck',
-            timeout: 1000,
+            timeout: 3000, // 1000 was not enough and led to about 50% failed health checks
             success: function(response) {
                 resolve(response['is_able_to_connect']);
             },
@@ -123,7 +123,7 @@ function piServiceHealth(json_input){
         $.ajax({
             method: 'POST',
             url: '/pi-service-health',
-            timeout: 1000,
+            timeout: 3000,
             data: JSON.stringify(json_input),
             success: function(response) {
                 resolve(response['is_healthy']);

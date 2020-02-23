@@ -2069,7 +2069,7 @@ class PS3ControllerHealth(tornado.web.RequestHandler):
         port = 8094
 
         try:
-            seconds = 0.5
+            seconds = 3.0
             endpoint = 'http://{host}:{port}/ps3-health'.format(
                 host=host,
                 port=port
@@ -2111,7 +2111,7 @@ class PiServiceHealth(tornado.web.RequestHandler):
         }
         port = ports[service]
         try:
-            seconds = 0.5
+            seconds = 3.0
             endpoint = 'http://{host}:{port}/health'.format(
                 host=host,
                 port=port

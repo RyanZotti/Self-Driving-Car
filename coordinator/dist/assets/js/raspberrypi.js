@@ -598,6 +598,13 @@ async function osAgnosticPollServices(services){
 }
 
 async function pollServices(args){
+    /*
+    Checks services' health and calls the Docker container
+    APIs if not. I wonder if this could be consolidated with
+    the updateServiceHealth function, since they both perform
+    health checks of the service, but one sets an icon color
+    and the other calls a Docker API
+    */
     const services = args['services'];
     const dockerArgs = args['docker_args'];
     const host = args['host'];
@@ -804,7 +811,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             for (const service of services){
                 updateServiceHealth(service);
             }
-        }, 1000);
+        }, 3000);
         var resumeServicesTime = setInterval(function(){
             osAgnosticPollServices(services);
         }, 10000);
