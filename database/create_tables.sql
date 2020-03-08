@@ -93,6 +93,33 @@ CREATE TABLE IF NOT EXISTS jobs(
 COMMIT;
 
 BEGIN;
+CREATE TABLE IF NOT EXISTS service_health(
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    service VARCHAR(100),
+    host VARCHAR(100),
+    is_healthy BOOLEAN,
+PRIMARY KEY(start_time, end_time, service, host));
+COMMIT;
+
+BEGIN;
+CREATE TABLE IF NOT EXISTS service_event(
+    event_time TIMESTAMP,
+    service VARCHAR(100),
+    event VARCHAR(100),
+    host VARCHAR(100),
+PRIMARY KEY(event_time, service, event, host));
+COMMIT;
+
+BEGIN;
+CREATE TABLE IF NOT EXISTS pi_health(
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    is_healthy BOOLEAN,
+PRIMARY KEY(start_time, end_time));
+COMMIT;
+
+BEGIN;
 CREATE INDEX pi_settings_field_name ON pi_settings (field_name);
 CREATE INDEX jobs_name_detail_session_id ON jobs (name, detail, session_id);
 COMMIT;

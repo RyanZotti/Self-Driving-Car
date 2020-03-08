@@ -404,20 +404,7 @@ function updateServiceStatusIcon(args){
     }
 }
 
-function getDockerArgs(testLocally){
-    if (testLocally.checked == true){
-        return {
-          'target_host_os': 'mac',
-          'target_host_type': 'laptop'
-        };
-    } else {
-        return {
-          'target_host_os': 'linux',
-          'target_host_type': 'pi'
-        };
-    }
-}
-
+// TODO: Do I still need this?
 async function setServiceHost(){
 
     /*
@@ -518,45 +505,78 @@ async function checkDashboardVideoReadiness(){
     }
 }
 
-async function updateServiceHealth(service){
-    const testLocally = document.getElementById("toggle-test-services-locally");
-    const serviceToggle = document.querySelector("input#toggle-"+service);
-    const host = serviceHost;
-    if (serviceToggle.checked == true){
-        const isHealthy = await piServiceHealth({
-            'host':host,
-            'service':service
+function updateServiceStatusColors(services){
+    /*
+    Changes status colors for all of the services
+    */
+    for (const service of services){
+        updateServiceHealth(service);
+    }
+}
+
+function getServiceStatus(service) {
+    /*
+    Gets the status of a Pi service. This is used to determine
+    the color to assign a service's status dot. Possible statuses
+    include the following:
+        - ready-to-start
+        - starting-up
+        - healthy
+        - unhealthy
+        - ready-to-shut-down
+        - shutting-down
+        - off
+        - invincible-zombie
+        - invalid-status
+    */
+    return new Promise(function(resolve, reject) {
+        const input = JSON.stringify({'service': service});
+        $.post('/pi-service-status', input, function(output){
+            console.log(service + ": "+output['status'])
+            resolve(output['status']);
         });
-        if (isHealthy == true){
-            if (service == 'ps3-controller'){
-                const isConnected = await getPS3ControllerHealth({'host':host});
-                if (isConnected == true){
-                    updateServiceStatusIcon({
-                        'service':service,
-                        'status':'healthy'
-                    });
-                } else {
-                    updateServiceStatusIcon({
-                        'service':service,
-                        'status':'in-progress'
-                    });
-                }
-            } else{
-                updateServiceStatusIcon({
-                    'service':service,
-                    'status':'healthy'
-                });
-            }
-        } else {
-            updateServiceStatusIcon({
-                'service':service,
-                'status':'unhealthy'
-            });
-        }
-    } else {
+    });
+}
+
+async function updateServiceHealth(service){
+    /*
+    This function changes the colored dots next to each service to
+    indicate its status (whether its healthy, etc)
+    */
+    const status = await getServiceStatus(service);
+
+    // Separate statuses by color
+    const changing = ['ready-to-start', 'starting-up', 'ready-to-shut-down', 'shutting-down']
+    const bad = ['unhealthy','invincible-zombie','invalid-status']
+    const good = ['healthy']
+    const nothing = ['off']
+
+    if (changing.includes(status)){
+        updateServiceStatusIcon({
+            'service':service,
+            'status':'in-progress'
+        });
+    } else if (good.includes(status)) {
+        updateServiceStatusIcon({
+            'service':service,
+            'status':'healthy'
+        });
+    } else if (bad.includes(status)) {
+        updateServiceStatusIcon({
+            'service':service,
+            'status':'unhealthy'
+        });
+    } else if (nothing.includes(status)) {
         updateServiceStatusIcon({
             'service':service,
             'status':'inactive'
+        });
+    } else {
+        // This should never happen
+        console.log("Status of "+status+" for " + service + " service isn't valid");
+        updateServiceStatusIcon({
+            'service':service,
+            'status':'unhealthy'
         });
     }
 }
@@ -574,15 +594,19 @@ async function stopService(service){
     });
 }
 
+async function startService(service){
+    const input = JSON.stringify({'service': service});
+    $.post('/start-car-service', input);
+}
+
 async function osAgnosticPollServices(services){
     const testLocally = document.getElementById("toggle-test-services-locally");
     const host = serviceHost;
-    const dockerArgs = getDockerArgs(testLocally);
     if (testLocally.checked == true){
         pollServices({
             'services':services,
-            'host':host,
-            'docker_args':dockerArgs
+            'docker_args':dockerArgs,
+            'testLocally':testLocally.checked
         });
     } else {
         // Share Pi status among services to avoid overwhelming Pi with redundant calls
@@ -591,8 +615,37 @@ async function osAgnosticPollServices(services){
             pollServices({
                 'services':services,
                 'host':host,
-                'docker_args':dockerArgs
+                'docker_args':dockerArgs,
+                'testLocally':testLocally.checked
             });
+        } else {
+            /*
+            If this isn't a local test (meaning we expect the Pi to be turned on), and
+            if we can't reach the Pi, then we can assume that the services on the Pi
+            also are not reachable, and we can update each parts service status dot
+            accordingly. If the Pi is unreachable we don't need need to bother calling
+            the service health check API, and we can do the much less computationally
+            expensive operation of simply setting status colors. This also means that
+            we shouldn't try running the Docker commands on the Pi either
+            */
+            for (const service of services){
+                const serviceToggle = document.querySelector("input#toggle-"+service);
+                if (toggle.checked == true){
+                    updateServiceStatusIcon({
+                        'service':service,
+                        'status':'unhealthy'
+                    });
+                } else {
+                    /*
+                    If the service isn't supposed to be on, then we should set its
+                    status as inactive, regardless of the Pi's overall status
+                    */
+                    updateServiceStatusIcon({
+                        'service':service,
+                        'status':'inactive'
+                    });
+                }
+            }
         }
     }
 }
@@ -604,28 +657,21 @@ async function pollServices(args){
     the updateServiceHealth function, since they both perform
     health checks of the service, but one sets an icon color
     and the other calls a Docker API
+
+    By the time this function is called, we can already assume
+    that either we're running a local test without the Pi, in
+    which case we don't care about the Pi's status, or we do
+    care about the Pi's status and we determined it's healthy,
+    so there is no need to track the Pi's overall health status
+    in this function. We just need to track the services'
+    health
     */
     const services = args['services'];
     const dockerArgs = args['docker_args'];
     const host = args['host'];
+    const testLocally = args['testLocally'];
     for (const service of services){
-        const toggle = document.querySelector("input#toggle-"+service);
-        if (toggle.checked == true){
-            const isHealthy = await piServiceHealth({
-                'host':host,
-                'service':service
-            });
-            if (!isHealthy){
-                const input = JSON.stringify({
-                  'target_host_os': dockerArgs['target_host_os'],
-                  'target_host_type': dockerArgs['target_host_type'],
-                  'service': service
-                });
-                $.post('/start-car-service', input);
-            }
-        } else {
-            stopService(service);
-        }
+        updateServiceHealth(service);
     }
 }
 
@@ -781,7 +827,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             'detail': detail
         });
         const is_on = await readToggle(readInput);
-        osAgnosticPollServices(services);
+        //osAgnosticPollServices(services);
         testLocally.checked = is_on;
 
         const checkboxStatuses = [];
@@ -807,14 +853,28 @@ document.addEventListener('DOMContentLoaded', async function() {
         await Promise.all(checkboxStatuses)
 
         // Update Raspberry Pi service statues
-        var piServiceHealthCheckTime = setInterval(function(){
-            for (const service of services){
-                updateServiceHealth(service);
-            }
-        }, 3000);
+        /*
+        The osAgnosticPollServices function centralizes the health checks
+        to avoid slamming the Pi and editor.py, but it's also used to
+        start or restart the services. Also, when I attempt to restart a
+        service I kill any running instances of it, since Docker will
+        complain that a container of the same name exists even if the
+        container is not running. This means that if I don't allow enough
+        time between health checks for the service to start up again, then
+        a service that is in the middle of turning on might get killed
+        prematurely. I've seen this problem in the past, and it's really
+        annoying because then basically none of the services are stable and
+        the car stop functioning properly. Anyways, the downside of allowing
+        a lot of time is the health statuses aren't always accurate. What I
+        could do in the future is separate health statuses from service
+        starting / restarting, and maybe use the DB to keep track of services
+        that were told to start that might still be starting, and then the
+        health check could check that as well. That's more work than I want
+        today, so for now
+        */
         var resumeServicesTime = setInterval(function(){
-            osAgnosticPollServices(services);
-        }, 10000);
+            updateServiceStatusColors(services);
+        }, 1000);
         /*
           Show PS3 connect wizard while PS3 controller connection
           status is not healthy but service is turned on
@@ -959,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         'type':'percent',
         'min':0,
         'max':100,
-        'step':5
+        'step':10
     });
 
     const trackedToggles = document.querySelectorAll('input.tracked-toggle');

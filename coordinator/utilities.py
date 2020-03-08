@@ -1,4 +1,6 @@
+import aiopg
 import cv2
+from datetime import datetime
 import subprocess
 from os import listdir
 import numpy as np
@@ -78,6 +80,21 @@ def mkdir_tfboard_run_dir(tf_basedir,):
     new_run_dir = os.path.join(tf_basedir, str(new_dir))
     mkdir(new_run_dir)
     return new_run_dir
+
+
+async def shell_command_aio(command):
+    process = await asyncio.create_subprocess_shell(
+            command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await process.communicate()
+    if False:
+        if stderr is not None:
+            print(stderr)
+        if stdout is not None:
+            print(stdout)
+    return stdout, stderr
 
 
 def shell_command(cmd,print_to_stdout=False):
@@ -321,6 +338,623 @@ def get_sql_rows(host, sql):
     return rows
 
 
+async def execute_sql_aio(host, sql):
+    connection_string = f"host='{host}' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
+    pool = await aiopg.create_pool(connection_string)
+    async with pool.acquire() as connection:
+        async with connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+            await cursor.execute(sql)
+        cursor.close()
+        connection.close()
+
+
+async def get_sql_rows_aio(host, sql):
+    connection_string = f"host='{host}' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
+    pool = await aiopg.create_pool(connection_string)
+    rows = []
+    async with pool.acquire() as connection:
+        async with connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+            await cursor.execute(sql)
+            async for row in cursor:
+                rows.append(row)
+        cursor.close()
+        connection.close()
+    return rows
+
+
+async def read_pi_setting_aio(host, field_name):
+    sql_query = f'''
+        SELECT
+          field_value
+        FROM pi_settings
+        WHERE LOWER(field_name) LIKE LOWER('%{field_name}%')
+        ORDER BY event_ts DESC
+        LIMIT 1;
+    '''
+    rows = await get_sql_rows_aio(host=host, sql=sql_query)
+    if len(rows) > 0:
+        return rows[0]['field_value']
+
+
+async def read_toggle_aio(postgres_host, web_page, name, detail):
+    sql_query = f'''
+        SELECT
+          is_on
+        FROM toggles
+        WHERE LOWER(web_page) LIKE '%{web_page}%'
+          AND LOWER(name) LIKE '%{name}%'
+          AND LOWER(detail) LIKE '%{detail}%'
+        ORDER BY event_ts DESC
+        LIMIT 1;
+    '''
+    rows = await get_sql_rows_aio(
+        host=postgres_host,
+        sql=sql_query
+    )
+    if len(rows) > 0:
+        first_row = rows[0]
+        is_on = first_row['is_on']
+        return is_on
+    else:
+        return False
+
+
+async def get_last_service_event(postgres_host, service_host, service):
+    """
+    Get the last run attempt. Note that this doesn't track run attempts,
+    which look like `docker rm -f {service}; docker run ...`
+    """
+    query = f"""
+    SELECT
+        event_time,
+        event
+    FROM service_event
+    WHERE 
+        (LOWER(event) = 'start' OR LOWER(event) = 'stop')
+        AND LOWER(service) = LOWER('{service}')
+        AND LOWER(host) = LOWER('{service_host}')
+    ORDER BY event_time DESC
+    LIMIT 1
+    """
+    rows = await get_sql_rows_aio(
+        host=postgres_host, sql=query
+    )
+    if len(rows) > 0:
+        now = datetime.utcnow()
+        row = rows[0]
+        event_time = row['event_time']
+        event_age_seconds = (now - event_time).total_seconds()
+        event = {
+            'type': row['event'],
+            'age': event_age_seconds
+        }
+        return event
+    else:
+        return None
+
+
+
+async def get_recent_health_checks(postgres_host, service_host, service, attempts=3, fresh_threshold_seconds=15.0):
+    """
+    Returns the results of the most recent health check API calls
+    from the database
+
+    Parameters
+    ----------
+    postgres_host: str
+        Where to connect to Postgres
+    service_host: str
+        Where the service is running, e.g., "localhost"
+    service : str
+        The name of the service, e.g., "video"
+    attempts: int
+        The number of health checks to return. You won't always
+        get this number if either your service hasn't been on
+        long enough or if the health checks you do have are too
+        old. So treat this as a maximum
+    fresh_threshold_seconds: float
+        The oldest allowable health check result. Any health
+        check older than this amount will be excluded
+
+    Returns
+    -------
+    health_check_stats: dict
+        Aggregate outcome of the checks. If you requested the 3 most
+        recent checks (and the DB had 3 recent checks), but only
+        two of them were healthy, you would get a result like: {
+            "total": 3,
+            "healthy": 2
+        }
+    """
+    query = f"""
+    SELECT
+        is_healthy
+    FROM service_health
+    WHERE 
+        LOWER(service) = LOWER('{service}')
+        AND LOWER(host) = LOWER('{service_host}')
+        AND EXTRACT(SECONDS FROM (NOW() - start_time)) > {fresh_threshold_seconds}
+    ORDER BY start_time DESC
+    LIMIT {attempts}
+    """
+    rows = await get_sql_rows_aio(
+        host=postgres_host, sql=query
+    )
+    if len(rows) > 0:
+        healthy_total = 0
+        for i, row in enumerate(rows):
+            if row['is_healthy']:
+                healthy_total += 1
+        health_check_stats = {
+            'total': len(rows),
+            'healthy': healthy_total
+        }
+        return health_check_stats
+    else:
+        return {
+            'total':0,
+            'healthy':0
+        }
+
+
+async def get_service_status(postgres_host, service_host, service):
+    """
+    This is used by both the API to populate the colors in the UI
+    and also by the scheduler to restart dead services that should
+    be on
+
+    Statuses:
+    - ready-to-start
+    - starting-up
+    - healthy
+    - unhealthy
+    - ready-to-shut-down
+    - shutting-down
+    - off
+    - invincible-zombie
+    - invalid-status
+
+    """
+
+    # Constants
+    startup_grace_period_seconds = 30
+    stop_grace_period_seconds = 5.0
+    health_check_attempts = 3
+
+    """
+    Says whether a service /should/ be on, not to be confused
+    with whether the service is /actually/ on
+    """
+    is_service_toggled_on_awaitable = read_toggle_aio(
+        postgres_host=postgres_host,
+        web_page='raspberry pi',
+        name='service',
+        detail=service
+    )
+
+    """
+    Get the most recent attempt to start or stop the service, which
+    could be never or a long time ago
+    """
+    docker_event_awaitable = get_last_service_event(
+        postgres_host=postgres_host,
+        service_host=service_host,
+        service=service
+    )
+
+    health_checks_awaitable = get_recent_health_checks(
+        postgres_host=postgres_host,
+        service_host=service_host,
+        service=service,
+        attempts=health_check_attempts,
+        fresh_threshold_seconds=15.0
+    )
+
+    # Wait for all of the checks to run concurrently
+    results = await asyncio.gather(
+        is_service_toggled_on_awaitable,
+        docker_event_awaitable,
+        health_checks_awaitable
+    )
+    is_service_toggled_on = results[0]
+    docker_event = results[1]
+    health_checks = results[2]
+
+    if is_service_toggled_on:
+        if docker_event:
+            event_type = docker_event['type']
+            if event_type.lower() == 'start':
+                if health_checks['total'] >= health_check_attempts:
+                    min_healthy = int(health_check_attempts / 2) + 1
+                    healthy = health_checks['healthy']
+                    if healthy >= min_healthy:
+                        """
+                        This should be the most common occurrence. You ran the Docker
+                        run command already, and the service has been up, possibly for
+                        awhile
+                        """
+                        return 'healthy'
+                    else:
+                        age_seconds = docker_event['age']
+                        print('Unealthy ABC')
+                        if age_seconds > startup_grace_period_seconds:
+                            """
+                            I want to minimize this as much as possible, but it's important
+                            to be alerted when it occurs. Occurs when you ran the Docker
+                            command a long time ago, and somehow the service has never started
+                            or stopped responding, either because of heavy load or a bug
+                            """
+                            return 'unhealthy'
+                        else:
+                            """
+                            Occurs when the service is toggled on, you've already called
+                            the `docker run` command, but you haven't allowed enough time
+                            to know if the health checks have passed
+                            """
+                            return 'starting-up'
+                else:
+                    """
+                    The service is toggled on, you already called the `docker run` command
+                    but you haven't allowed enough time for all the health checks to complete
+                    """
+                    age_seconds = docker_event['age']
+                    if age_seconds < startup_grace_period_seconds:
+                        """
+                        This is pretty common. This occurs when the service is toggled on,
+                        you recently called the `docker run` command, but you haven't been
+                        able to run enough health checks yet
+                        """
+                        return 'starting-up'
+                    else:
+                        print(f"Your grace period of {startup_grace_period_seconds} seconds for {service} isn't long enough to run all the health checks!")
+                        return 'invalid-status'
+            elif event_type.lower() == 'stop':
+                """
+                Occurs when you toggled start-stop-start in quick succession
+                and you haven't called the `docker run` command yet 
+                """
+                return 'ready-to-start'
+            else:
+                print('Unexpected status!')
+                return 'invalid-status'
+        else:
+            """
+            Occurs when you first turn on the car or service
+            and you haven't called the `docker run` command yet 
+            """
+            return 'ready-to-start'
+    else:
+        if health_checks['healthy'] == 0:
+            return 'off'
+        else:
+            """
+            Occurs when the service is still alive even though it's
+            toggled off
+            """
+            if docker_event:
+                age_seconds = docker_event['age']
+                event_type = docker_event['type']
+                if event_type.lower() == 'stop':
+                    if age_seconds < stop_grace_period_seconds:
+                        """
+                        This should be one of the most common shut-down occurrences
+                        because it means the service was recently on, you called the
+                        `docker rm -f` command and you're still and the service is
+                        taking a reasonable amount of time to turn off
+                        """
+                        return 'shutting-down'
+                    else:
+                        """
+                        Hopefully this should never occur
+                        """
+                        print("You're probably not able to track failed heath checks frequently enough within the shutdown grace period")
+                        return 'invincible-zombie'
+                elif event_type.lower() == 'start':
+                    """
+                    Occurs when the service is up, but is toggled to get shut down
+                    and you haven't called the `docker rm -f` command yet
+                    """
+                    return 'ready-to-shut-down'
+                else:
+                    print('Unexpected status!')
+                    return 'invalid-status'
+            else:
+                """
+                Occurs when the service is up, but is toggled to get shut down
+                and you've never called the `docker rm -f` command
+                """
+                return 'ready-to-shut-down'
+
+
+async def stop_service_if_ready(
+        postgres_host, service_host, stop_on_pi, service, pi_username, pi_hostname, pi_password
+    ):
+
+    status = await get_service_status(
+        postgres_host=postgres_host,
+        service_host=service_host,
+        service=service
+    )
+
+    if status in ['ready-to-shut-down', 'invincible-zombie']:
+        command = "docker rm -f {service}".format(service=service)
+        if stop_on_pi:
+            # Ignore exceptions due to Docker not finding an image
+            try:
+                await shell_command_aio(command=command)
+            except:
+                pass
+        else:
+            await execute_pi_command_aio(
+                command=command,
+                username=pi_username,
+                hostname=pi_hostname,
+                password=pi_password
+            )
+        """
+        I record when I start and stop so that I can check if I recently start
+        or stopped the service. Hopefully this will make the services more
+        stable, and allows me to decouple the healthcheck interval from the
+        service restart interval, since some services take awhile to start up
+        """
+        service_event_sql = '''
+            INSERT INTO service_event(
+                event_time,
+                service,
+                event,
+                host
+            )
+            VALUES (
+                NOW(),
+                '{service}',
+                'stop',
+                '{host}'
+            )
+        '''
+        await execute_sql_aio(host=postgres_host, sql=service_event_sql.format(
+            service=service,
+            host=service_host
+        ))
+
+
+
+async def start_service_if_ready(
+        postgres_host, run_on_pi, service_host, service, pi_username, pi_hostname, pi_password
+    ):
+
+    """
+    This is used to start the service, but only if it should be started
+    but hasn't. I start the services from two places: 1) the API when someone
+    changes the service toggle and 2) from background jobs that maintain
+    the desired state of each service. I want to avoid calling start or stop
+    commands in quick succession unnecessarily
+    """
+    status = await get_service_status(
+        postgres_host=postgres_host,
+        service_host=service_host,
+        service=service
+    )
+
+    if status.lower() == 'ready-to-start':
+        """
+        The benefit of saving all of the Docker commands as code is that
+        I will no longer need to update a bunch of documentation references
+        when I have to change something. Also, it's a major pain starting
+        up each of these manually.
+
+        The Docker networking settings are not consistent across operating
+        systems. On the Pi, which runs Linux, I need net=host or the
+        bluetooth capability won't work for the PS3 controller. However,
+        the net=host capability leads to container to container issues
+        when I run on the Mac.
+        """
+        operating_system_config = {
+            'mac': {
+                'network': '--network car_network -p {port}:{port}',
+            },
+            'linux': {
+                'network': '--net=host',
+            }
+        }
+
+        # TODO: Figure out how to support Windows
+        if run_on_pi:
+            operating_system = 'linux'
+        else:
+            operating_system = 'mac'
+
+        if not run_on_pi:
+            """
+            Make sure the Docker network exists on the laptop
+            before attempting to create Docker containers. The
+            containers will fail if the network doesn't exist.
+            The 2>/dev/null ignores standard error, since
+            Docker complains if the network already exists
+            """
+            command = 'docker network create car_network 2>/dev/null'
+            _ = await shell_command_aio(
+                command=command
+            )
+        if service == 'record-tracker':
+            port = 8093
+            network = operating_system_config[operating_system]['network'].format(port=port)
+            if run_on_pi:
+                await execute_pi_command_aio(
+                    command='mkdir -p ~/vehicle-datasets; docker rm -f {service}; docker run -t -d -i {network} --name {service} --volume ~/vehicle-datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port}'.format(
+                        service=service,
+                        network=network,
+                        port=port
+                    ),
+                    username=pi_username,
+                    hostname=pi_hostname,
+                    password=pi_password
+                )
+            else:
+                await shell_command_aio(
+                    command='mkdir -p ~/vehicle-datasets; docker rm -f {service}; docker run -t -d -i {network} --name {service} --volume ~/vehicle-datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port}'.format(
+                        service=service,
+                        network=network,
+                        port=port
+                    )
+                )
+        elif service == 'video':
+            port = 8091
+            network = operating_system_config[operating_system]['network'].format(port=port)
+            if run_on_pi:
+                await execute_pi_command_aio(
+                    command='docker rm -f {service}; docker run -t -d -i --device=/dev/video0 {network} --name {service} ryanzotti/ffmpeg:latest'.format(
+                        service=service,
+                        network=network
+                    ),
+                    username=pi_username,
+                    hostname=pi_hostname,
+                    password=pi_password
+                )
+            else:
+                await shell_command_aio(
+                    command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/ffmpeg:latest python3 /root/tests/fake_server.py --port {port}'.format(
+                        service=service,
+                        network=network,
+                        port=port
+                    )
+                )
+        elif service == 'control-loop':
+            port = 8887
+            network = operating_system_config[operating_system]['network'].format(port=port)
+            if run_on_pi:
+                await execute_pi_command_aio(
+                    command='docker rm -f {service}; docker run -i -t -d {network} --name {service} ryanzotti/control_loop:latest python3 /root/car/start.py --port {port} --localhost'.format(
+                        service=service,
+                        network=network,
+                        port=port
+                    ),
+                    username=pi_username,
+                    hostname=pi_hostname,
+                    password=pi_password
+                )
+            else:
+                await shell_command_aio(
+                    command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/control_loop:latest python3 /root/car/start.py --port {port}'.format(
+                        service=service,
+                        network=network,
+                        port=port
+                    )
+                )
+        elif service == 'user-input':
+            port = 8884
+            network = operating_system_config[operating_system]['network'].format(port=port)
+            if run_on_pi:
+                await execute_pi_command_aio(
+                    command='docker rm -f {service}; docker run -i -t {network} --name {service} --privileged -d ryanzotti/user_input:latest python3 /root/server.py --port 8884'.format(
+                        service=service,
+                        network=network,
+                        port=port
+                    ),
+                    username=pi_username,
+                    hostname=pi_hostname,
+                    password=pi_password
+                )
+            else:
+                await shell_command_aio(
+                    command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/user_input:latest python3 /root/server.py --port {port}'.format(
+                        service=service,
+                        network=network,
+                        port=port
+                    )
+                )
+        elif service == 'engine':
+            port = 8092
+            network = operating_system_config[operating_system]['network'].format(port=port)
+            if run_on_pi:
+                await execute_pi_command_aio(
+                    command='docker rm -f {service}; docker run -t -d -i --privileged {network} --name {service} ryanzotti/vehicle-engine:latest'.format(
+                        service=service,
+                        network=network
+                    ),
+                    username=pi_username,
+                    hostname=pi_hostname,
+                    password=pi_password
+                )
+            else:
+                await shell_command_aio(
+                    command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/vehicle-engine:latest python3 /root/tests/fake_server.py --port {port}'.format(
+                        service=service,
+                        network=network,
+                        port=port
+                    )
+                )
+        elif service == 'ps3-controller':
+            port = 8094
+            network = operating_system_config[operating_system]['network'].format(port=port)
+            if run_on_pi:
+                await execute_pi_command_aio(
+                    command='docker rm -f {service}; docker run -i -t -d --name {service} {network} --volume /dev/bus/usb:/dev/bus/usb --volume /run/dbus:/run/dbus --volume /var/run/dbus:/var/run/dbus --volume /dev/input:/dev/input --privileged ryanzotti/ps3_controller:latest python /root/server.py --port {port}'.format(
+                        service=service,
+                        network=network,
+                        port=port
+                    ),
+                    username=pi_username,
+                    hostname=pi_hostname,
+                    password=pi_password
+                )
+            else:
+                await shell_command_aio(
+                    command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/ps3_controller:latest python /root/tests/fake_server.py --port {port}'.format(
+                        service=service,
+                        network=network,
+                        port=port
+                    )
+                )
+        elif service == 'memory':
+            port = 8095
+            network = operating_system_config[operating_system]['network'].format(port=port)
+            if run_on_pi:
+                await execute_pi_command_aio(
+                    command=
+                    'docker rm -f {service}; docker run -i -t -d --name {service} {network} ryanzotti/vehicle-memory:latest python /root/server.py --port {port}'.format(
+                        service=service,
+                        network=network,
+                        port=port
+                    ),
+                    username=pi_username,
+                    hostname=pi_hostname,
+                    password=pi_password
+                )
+            else:
+                await shell_command_aio(
+                    command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/vehicle-memory:latest python /root/server.py --port {port}'.format(
+                        service=service,
+                        network=network,
+                        port=port
+                    )
+                )
+        """
+        I record when I start and stop so that I can check if I recently start
+        or stopped the service. Hopefully this will make the services more
+        stable, and allows me to decouple the healthcheck interval from the
+        service restart interval, since some services take awhile to start up
+        """
+        service_event_sql = '''
+            INSERT INTO service_event(
+                event_time,
+                service,
+                event,
+                host
+            )
+            VALUES (
+                NOW(),
+                '{service}',
+                'start',
+                '{host}'
+            )
+        '''
+        await execute_sql_aio(host=postgres_host, sql=service_event_sql.format(
+            service=service,
+            host=service_host
+        ))
+    else:
+        return
+
 def read_pi_setting(host, field_name):
     connection, cursor = connect_to_postgres(host=host)
     cursor.execute(
@@ -548,6 +1182,17 @@ def execute_pi_command(command, postgres_host, is_printable=False, pi_credential
         asyncio.set_event_loop(loop)
         result = loop.run_until_complete(run_client())
         return result
+    except (OSError, asyncssh.Error) as exc:
+        pass
+
+
+async def execute_pi_command_aio(command, username, hostname, password, is_printable=False):
+    try:
+        async with asyncssh.connect(hostname, username=username, password=password) as conn:
+            result = await conn.run(command, check=True)
+            if is_printable:
+                print(result.stdout, end='')
+            return result.stdout
     except (OSError, asyncssh.Error) as exc:
         pass
 

@@ -1,3 +1,4 @@
+import asyncio
 from tornado import gen
 import argparse
 import cv2
@@ -17,6 +18,7 @@ import requests
 import json
 import signal
 import subprocess
+import threading
 from uuid import uuid4
 from coordinator.utilities import *
 import json
@@ -24,6 +26,7 @@ from shutil import rmtree
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from ai.transformations import pseduo_crop, show_resize_effect
+from coordinator.scheduler import Scheduler
 
 
 class Home(tornado.web.RequestHandler):
@@ -426,14 +429,14 @@ class WritePiField(tornado.web.RequestHandler):
         and hostname
         """
         self.application.pi_credentials = cache_pi_credentials(
-            postgres_host=app.postgres_host
+            postgres_host=self.application.postgres_host
         )
         self.application.laptop_datasets_dir = read_pi_setting(
-            host=app.postgres_host,
+            host=self.application.postgres_host,
             field_name='laptop datasets directory'
         )
         self.application.pi_datasets_dir = read_pi_setting(
-            host=app.postgres_host,
+            host=self.application.postgres_host,
             field_name='pi datasets directory'
         )
         return {}
@@ -1786,218 +1789,50 @@ class RunPS3Setup(tornado.web.RequestHandler):
 
 
 class StopService(tornado.web.RequestHandler):
-
-    executor = ThreadPoolExecutor(10)
-
-    @tornado.concurrent.run_on_executor
-    def stop_service(self, json_input):
-        host = json_input['host']
-        service = json_input['service']
-        command = "docker rm -f {service}".format(service=service)
-        if host == 'localhost':
-            # Ignore exceptions due to Docker not finding an image
-            try:
-                subprocess.run(
-                    command,
-                    shell=True,
-                    check=False,
-                    stderr=False,
-                    stdout=False
-                )
-            except:
-                pass
-        else:
-            asyncio.set_event_loop(asyncio.new_event_loop())
-            execute_pi_command(
-                postgres_host=self.application.postgres_host,
-                command=command
-            )
-        return {}
-
-    @tornado.gen.coroutine
-    def post(self):
+    """
+    Calling this class will signal to the scheduler that the service
+    should be stopped. This class does not directly call the stop
+    service, however, it only stops it indirectly
+    """
+    async def post(self):
         json_input = tornado.escape.json_decode(self.request.body)
-        result = yield self.stop_service(json_input=json_input)
-        self.write(result)
+        service = json_input['service']
+
+        self.write({})
 
 class StartCarService(tornado.web.RequestHandler):
-    executor = ThreadPoolExecutor(100)
-
-    @tornado.concurrent.run_on_executor
-    def submit_pi_command(self, command):
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        execute_pi_command(
-            postgres_host=self.application.postgres_host,
-            command=command
-        )
-
-    @tornado.concurrent.run_on_executor
-    def submit_local_shell_command(self, command):
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        return shell_command(cmd=command)
-
-    @tornado.gen.coroutine
-    def post(self):
-        """
-        The benefit of saving all of the Docker commands as code is that
-        I will no longer need to update a bunch of documentation references
-        when I have to change something. Also, it's a major pain starting
-        up each of these manually.
-
-        The Docker networking settings are not consistent across operating
-        systems. On the Pi, which runs Linux, I need net=host or the
-        bluetooth capability won't work for the PS3 controller. However,
-        the net=host capability leads to container to container issues
-        when I run on the Mac.
-        """
-        operating_system_config = {
-            'mac':{
-                'network':'--network car_network -p {port}:{port}',
-            },
-            'linux':{
-                'network': '--net=host',
-            }
-        }
+    """
+    Calling this class will signal to the scheduler that the service
+    should be started. This class does not directly call the start
+    service, however, it only start it indirectly
+    """
+    async def post(self):
         json_input = tornado.escape.json_decode(self.request.body)
-        operating_system = json_input['target_host_os'].lower()
-        target_host = json_input['target_host_type'].lower()
-        service = json_input['service'].lower()
-        # TODO: Remove hardcoded ports
-        result = {}
-
-        if target_host == 'laptop':
-            """
-            Make sure the Docker network exists on the laptop
-            before attempting to create Docker containers. The
-            containers will fail if the network doesn't exist.
-            The 2>/dev/null ignores standard error, since
-            Docker complains if the network already exists
-            """
-            command = 'docker network create car_network 2>/dev/null'
-            _ = self.submit_local_shell_command(
-                command=command
+        service = json_input['json_input']
+        """
+        I record when I start and stop so that I can check if I recently start
+        or stopped the service. Hopefully this will make the services more
+        stable, and allows me to decouple the healthcheck interval from the
+        service restart interval, since some services take awhile to start up
+        """
+        service_event_sql = '''
+            INSERT INTO service_event(
+                event_time,
+                service,
+                event,
+                host
             )
-
-        if service == 'record-tracker':
-            port = 8093
-            network = operating_system_config[operating_system]['network'].format(port=port)
-            if target_host == 'pi':
-                self.submit_pi_command(
-                    command='mkdir -p ~/vehicle-datasets; docker rm -f {service}; docker run -t -d -i {network} --name {service} --volume ~/vehicle-datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port}'.format(
-                        service=service,
-                        network=network,
-                        port=port
-                    )
-                )
-            elif target_host == 'laptop':
-                self.submit_local_shell_command(command='mkdir -p ~/vehicle-datasets; docker rm -f {service}; docker run -t -d -i {network} --name {service} --volume ~/vehicle-datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port}'.format(
-                        service=service,
-                        network=network,
-                        port=port
-                    )
-                )
-        elif service == 'video':
-            port = 8091
-            network = operating_system_config[operating_system]['network'].format(port=port)
-            if target_host == 'pi':
-                self.submit_pi_command(command='docker rm -f {service}; docker run -t -d -i --device=/dev/video0 {network} --name {service} ryanzotti/ffmpeg:latest'.format(
-                        service=service,
-                        network=network
-                    )
-                )
-            elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/ffmpeg:latest python3 /root/tests/fake_server.py --port {port}'.format(
-                        service=service,
-                        network=network,
-                        port=port
-                    )
-                )
-        elif service == 'control-loop':
-            port = 8887
-            network = operating_system_config[operating_system]['network'].format(port=port)
-            if target_host == 'pi':
-                self.submit_pi_command(command='docker rm -f {service}; docker run -i -t -d {network} --name {service} ryanzotti/control_loop:latest python3 /root/car/start.py --port {port} --localhost'.format(
-                        service=service,
-                        network=network,
-                        port=port
-                    )
-                )
-            elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/control_loop:latest python3 /root/car/start.py --port {port}'.format(
-                        service=service,
-                        network=network,
-                        port=port
-                    )
-                )
-        elif service == 'user-input':
-            port = 8884
-            network = operating_system_config[operating_system]['network'].format(port=port)
-            if target_host == 'pi':
-                self.submit_pi_command(command='docker rm -f {service}; docker run -i -t {network} --name {service} --privileged -d ryanzotti/user_input:latest python3 /root/server.py --port 8884'.format(
-                        service=service,
-                        network=network,
-                        port=port
-                    )
-                )
-            elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/user_input:latest python3 /root/server.py --port {port}'.format(
-                        service=service,
-                        network=network,
-                        port=port
-                    )
-                )
-        elif service == 'engine':
-            port = 8092
-            network = operating_system_config[operating_system]['network'].format(port=port)
-            if target_host == 'pi':
-                self.submit_pi_command(command='docker rm -f {service}; docker run -t -d -i --privileged {network} --name {service} ryanzotti/vehicle-engine:latest'.format(
-                        service=service,
-                        network=network
-                    )
-                )
-            elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/vehicle-engine:latest python3 /root/tests/fake_server.py --port {port}'.format(
-                        service=service,
-                        network=network,
-                        port=port
-                    )
-                )
-        elif service == 'ps3-controller':
-            port = 8094
-            network = operating_system_config[operating_system]['network'].format(port=port)
-            if target_host == 'pi':
-                self.submit_pi_command(command=
-                    'docker rm -f {service}; docker run -i -t -d --name {service} {network} --volume /dev/bus/usb:/dev/bus/usb --volume /run/dbus:/run/dbus --volume /var/run/dbus:/var/run/dbus --volume /dev/input:/dev/input --privileged ryanzotti/ps3_controller:latest python /root/server.py --port {port}'.format(
-                        service=service,
-                        network=network,
-                        port=port
-                    )
-                )
-            elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/ps3_controller:latest python /root/tests/fake_server.py --port {port}'.format(
-                        service=service,
-                        network=network,
-                        port=port
-                    )
-                )
-        elif service == 'memory':
-            port = 8095
-            network = operating_system_config[operating_system]['network'].format(port=port)
-            if target_host == 'pi':
-                self.submit_pi_command(command=
-                    'docker rm -f {service}; docker run -i -t -d --name {service} {network} ryanzotti/vehicle-memory:latest python /root/server.py --port {port}'.format(
-                        service=service,
-                        network=network,
-                        port=port
-                    )
-                )
-            elif target_host == 'laptop':
-                self.submit_local_shell_command(command='docker rm -f {service}; docker run -t -d -i {network} --name {service} ryanzotti/vehicle-memory:latest python /root/server.py --port {port}'.format(
-                        service=service,
-                        network=network,
-                        port=port
-                    )
-                )
+            VALUES (
+                NOW(),
+                '{service}',
+                'start',
+                '{host}'
+            )
+        '''
+        await execute_sql_aio(host=self.application.postgres_host, sql=service_event_sql.format(
+            service=service,
+            host=self.application.scheduler.service_host
+        ))
         self.write({})
 
 
@@ -2089,45 +1924,36 @@ class PS3ControllerHealth(tornado.web.RequestHandler):
         self.write(result)
 
 
-class PiServiceHealth(tornado.web.RequestHandler):
+class PiServiceStatus(tornado.web.RequestHandler):
+    """
+    Used to decouple the service startup frequency from the health
+    check frequency, since some services can take more time to
+    start up than I would like to wait for a health check update if
+    it were already running. Without the de-coupling, services that
+    are slow to start get killed prematurely. I use an independent,
+    scheduled health check loop to call health check APIs. All this
+    API does is check a bunch of asynchronously gathered metrics to
+    make a conclusion about the latest state of a given service
 
-    # Need lots of threads because there are many services
-    executor = ThreadPoolExecutor(30)
+    Returns one of several statuses:
+        - starting-up
+        - healthy
+        - unhealthy
+        - shutting-down
+        - off
+        - invincible-zombie
+    """
 
-    @tornado.concurrent.run_on_executor
-    def health_check(self,json_input):
-        service = json_input['service']
-        host = json_input['host']
-        # TODO: Remove these hardcoded ports and accept as arg in json_input
-        ports = {
-            'record-tracker':8093,
-            'video':8091,
-            'control-loop':8887,
-            'user-input':8884,
-            'engine':8092,
-            'ps3-controller':8094,
-            'memory':8095
-        }
-        port = ports[service]
-        try:
-            seconds = 3.0
-            endpoint = 'http://{host}:{port}/health'.format(
-                host=host,
-                port=port
-            )
-            _ = requests.get(
-                endpoint,
-                timeout=seconds
-            )
-            return {'is_healthy': True}
-        except:
-            return {'is_healthy': False}
-
-    @tornado.gen.coroutine
-    def post(self):
+    async def post(self):
         json_input = tornado.escape.json_decode(self.request.body)
-        result = yield self.health_check(json_input=json_input)
-        self.write(result)
+        service = json_input['service']
+        status = await get_service_status(
+            postgres_host=self.application.postgres_host,
+            service_host=self.application.scheduler.service_host,
+            service=service
+        )
+        print(f'{service} {status}')
+        self.write({'status':status})
 
 class ResumeTraining(tornado.web.RequestHandler):
 
@@ -2680,7 +2506,7 @@ def make_app():
         (r"/highest-model-epoch", HighestModelEpoch),
         (r"/start-car-service", StartCarService),
         (r"/vehicle-memory", Memory),
-        (r"/pi-service-health", PiServiceHealth),
+        (r"/pi-service-status", PiServiceStatus),
         (r"/stop-service", StopService),
         (r"/initialize-ps3-setup", InitiaizePS3Setup),
         (r"/run-ps3-setup-commands", RunPS3Setup),
@@ -2695,7 +2521,8 @@ def make_app():
     ]
     return tornado.web.Application(handlers)
 
-if __name__ == "__main__":
+
+async def main():
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--port",
@@ -2739,7 +2566,21 @@ if __name__ == "__main__":
     code has stabilized and editor.py is run inside of a container
     you'll need to use the named container instead
     """
-    app.postgres_host = 'localhost'
+    postgres_host = 'localhost'
+    app.postgres_host = postgres_host
+
+    # TODO: Remove hard-coded Pi host
+    app.pi_host = 'ryanzotti.local'
+
+    app.ports = {
+        'record-tracker': 8093,
+        'video': 8091,
+        'control-loop': 8887,
+        'user-input': 8884,
+        'engine': 8092,
+        'ps3-controller': 8094,
+        'memory': 8095
+    }
 
     # TODO: Remove this hard-coded path
     app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
@@ -2780,7 +2621,11 @@ if __name__ == "__main__":
     )
 
     app.angle_only = args['angle_only']
-    # TODO: Remove hard-coded Pi host
-    app.pi_host = 'ryanzotti.local'
+    app.scheduler = Scheduler(postgres_host=postgres_host)
     app.listen(port)
-    tornado.ioloop.IOLoop.current().start()
+
+    # Used to run a bunch of async tasks
+    await app.scheduler.start()
+
+if __name__ == "__main__":
+    asyncio.run(main())
