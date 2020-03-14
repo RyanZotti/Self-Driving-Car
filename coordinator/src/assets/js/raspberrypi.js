@@ -532,7 +532,6 @@ function getServiceStatus(service) {
     return new Promise(function(resolve, reject) {
         const input = JSON.stringify({'service': service});
         $.post('/pi-service-status', input, function(output){
-            console.log(service + ": "+output['status'])
             resolve(output['status']);
         });
     });

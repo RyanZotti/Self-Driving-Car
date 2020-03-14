@@ -89,7 +89,7 @@ async def shell_command_aio(command):
             stderr=asyncio.subprocess.PIPE
     )
     stdout, stderr = await process.communicate()
-    if False:
+    if True:
         if stderr is not None:
             print(stderr)
         if stdout is not None:
@@ -541,7 +541,7 @@ async def get_service_status(postgres_host, service_host, service):
 
     # Constants
     startup_grace_period_seconds = 30
-    stop_grace_period_seconds = 5.0
+    stop_grace_period_seconds = 30.0
     health_check_attempts = 3
 
     """
@@ -670,7 +670,7 @@ async def get_service_status(postgres_host, service_host, service):
                         """
                         Hopefully this should never occur
                         """
-                        print("You're probably not able to track failed heath checks frequently enough within the shutdown grace period")
+                        print(f"Unable to shut down {service}. You're probably not able to track failed heath checks frequently enough within the shutdown grace period of {stop_grace_period_seconds} seconds")
                         return 'invincible-zombie'
                 elif event_type.lower() == 'start':
                     """
@@ -704,16 +704,17 @@ async def stop_service_if_ready(
         if stop_on_pi:
             # Ignore exceptions due to Docker not finding an image
             try:
-                await shell_command_aio(command=command)
+                await execute_pi_command_aio(
+                    command=command,
+                    username=pi_username,
+                    hostname=pi_hostname,
+                    password=pi_password
+                )
             except:
                 pass
         else:
-            await execute_pi_command_aio(
-                command=command,
-                username=pi_username,
-                hostname=pi_hostname,
-                password=pi_password
-            )
+            await shell_command_aio(command=command)
+
         """
         I record when I start and stop so that I can check if I recently start
         or stopped the service. Hopefully this will make the services more
