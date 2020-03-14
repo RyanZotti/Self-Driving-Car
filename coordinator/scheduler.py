@@ -1,24 +1,7 @@
 from aiohttp import ClientSession, ClientTimeout
-import asyncio
 import datetime
-import tornado.ioloop
-import tornado.web
 
 from coordinator.utilities import *
-
-
-class MainHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.write("Hello, world")
-
-def make_app():
-    return tornado.web.Application([
-        (r"/", MainHandler),
-    ])
-
-async def start_tornado():
-    app = make_app()
-    app.listen(8888)
 
 
 class Scheduler(object):
@@ -107,12 +90,11 @@ class Scheduler(object):
             await asyncio.sleep(interval_seconds)
 
     async def manage_service(self, service):
-        print(f'managing service {service}!')
-
         """
         I want to resume services that are failed but that should be on
         and stop services that are on that should be off
         """
+
         while True:
             use_pi = not self.is_local_test
 
@@ -249,14 +231,14 @@ class Scheduler(object):
                 COMMIT;
             '''
             while True:
-                start_time = datetime.now()
+                start_time = datetime.utcnow()
                 try:
                     timeout = ClientTimeout(total=self.timeout_seconds)
                     async with ClientSession(timeout=timeout) as session:
                         async with session.get(endpoint) as response:
                             health = await response.json()
                             is_healthy = health['is_healthy']
-                            end_time = datetime.now()
+                            end_time = datetime.utcnow()
                             sql = sql_query.format(
                                 start_time=start_time,
                                 end_time=end_time,
@@ -269,7 +251,7 @@ class Scheduler(object):
                                 sql=sql
                             )
                 except:
-                    end_time = datetime.now()
+                    end_time = datetime.utcnow()
                     sql = sql_query.format(
                         start_time=start_time,
                         end_time=end_time,
@@ -282,18 +264,3 @@ class Scheduler(object):
                         sql=sql
                     )
                 await asyncio.sleep(interval_seconds)
-
-
-async def main():
-    # TODO: Get these constants from somewhere else
-    postgres_host = 'localhost'
-
-    await start_tornado()
-
-    # Used to run a bunch of async tasks
-    scheduler = Scheduler(postgres_host=postgres_host)
-    await scheduler.start()
-
-
-if __name__ == '__main__':
-    asyncio.run(main())

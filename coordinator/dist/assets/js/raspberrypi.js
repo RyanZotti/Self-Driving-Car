@@ -599,57 +599,6 @@ async function startService(service){
     $.post('/start-car-service', input);
 }
 
-async function osAgnosticPollServices(services){
-    const testLocally = document.getElementById("toggle-test-services-locally");
-    const host = serviceHost;
-    if (testLocally.checked == true){
-        pollServices({
-            'services':services,
-            'docker_args':dockerArgs,
-            'testLocally':testLocally.checked
-        });
-    } else {
-        // Share Pi status among services to avoid overwhelming Pi with redundant calls
-        const isHealthy = await raspberryPiConnectionTest();
-        if (isHealthy == true){
-            pollServices({
-                'services':services,
-                'host':host,
-                'docker_args':dockerArgs,
-                'testLocally':testLocally.checked
-            });
-        } else {
-            /*
-            If this isn't a local test (meaning we expect the Pi to be turned on), and
-            if we can't reach the Pi, then we can assume that the services on the Pi
-            also are not reachable, and we can update each parts service status dot
-            accordingly. If the Pi is unreachable we don't need need to bother calling
-            the service health check API, and we can do the much less computationally
-            expensive operation of simply setting status colors. This also means that
-            we shouldn't try running the Docker commands on the Pi either
-            */
-            for (const service of services){
-                const serviceToggle = document.querySelector("input#toggle-"+service);
-                if (toggle.checked == true){
-                    updateServiceStatusIcon({
-                        'service':service,
-                        'status':'unhealthy'
-                    });
-                } else {
-                    /*
-                    If the service isn't supposed to be on, then we should set its
-                    status as inactive, regardless of the Pi's overall status
-                    */
-                    updateServiceStatusIcon({
-                        'service':service,
-                        'status':'inactive'
-                    });
-                }
-            }
-        }
-    }
-}
-
 async function pollServices(args){
     /*
     Checks services' health and calls the Docker container
@@ -827,7 +776,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             'detail': detail
         });
         const is_on = await readToggle(readInput);
-        //osAgnosticPollServices(services);
         testLocally.checked = is_on;
 
         const checkboxStatuses = [];
@@ -853,25 +801,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         await Promise.all(checkboxStatuses)
 
         // Update Raspberry Pi service statues
-        /*
-        The osAgnosticPollServices function centralizes the health checks
-        to avoid slamming the Pi and editor.py, but it's also used to
-        start or restart the services. Also, when I attempt to restart a
-        service I kill any running instances of it, since Docker will
-        complain that a container of the same name exists even if the
-        container is not running. This means that if I don't allow enough
-        time between health checks for the service to start up again, then
-        a service that is in the middle of turning on might get killed
-        prematurely. I've seen this problem in the past, and it's really
-        annoying because then basically none of the services are stable and
-        the car stop functioning properly. Anyways, the downside of allowing
-        a lot of time is the health statuses aren't always accurate. What I
-        could do in the future is separate health statuses from service
-        starting / restarting, and maybe use the DB to keep track of services
-        that were told to start that might still be starting, and then the
-        health check could check that as well. That's more work than I want
-        today, so for now
-        */
         var resumeServicesTime = setInterval(function(){
             updateServiceStatusColors(services);
         }, 1000);

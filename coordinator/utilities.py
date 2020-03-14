@@ -516,6 +516,29 @@ async def get_service_status(postgres_host, service_host, service):
 
     """
 
+    """
+    Run this query if you want to see how long it takes to
+    get the first positive health check from each service
+    after the first initial Docker run command
+
+    SELECT
+        service_event.service,
+        service_event.event_time,
+        EXTRACT(
+            SECONDS FROM MIN(service_health.end_time) - service_event.event_time
+        ) AS seconds
+    FROM service_event
+    JOIN service_health
+        ON service_event.service = service_health.service
+        AND service_health.start_time > service_event.event_time
+    WHERE
+        service_event.event = 'start'
+        AND service_health.is_healthy = TRUE
+    GROUP BY
+        service_event.service,
+        service_event.event_time
+    """
+
     # Constants
     startup_grace_period_seconds = 30
     stop_grace_period_seconds = 5.0
@@ -576,8 +599,8 @@ async def get_service_status(postgres_host, service_host, service):
                         return 'healthy'
                     else:
                         age_seconds = docker_event['age']
-                        print('Unealthy ABC')
                         if age_seconds > startup_grace_period_seconds:
+                            print(f"The {service} service hasn't passed enough health checks and is past the startup grace period")
                             """
                             I want to minimize this as much as possible, but it's important
                             to be alerted when it occurs. Occurs when you ran the Docker
