@@ -598,31 +598,6 @@ async function startService(service){
     $.post('/start-car-service', input);
 }
 
-async function pollServices(args){
-    /*
-    Checks services' health and calls the Docker container
-    APIs if not. I wonder if this could be consolidated with
-    the updateServiceHealth function, since they both perform
-    health checks of the service, but one sets an icon color
-    and the other calls a Docker API
-
-    By the time this function is called, we can already assume
-    that either we're running a local test without the Pi, in
-    which case we don't care about the Pi's status, or we do
-    care about the Pi's status and we determined it's healthy,
-    so there is no need to track the Pi's overall health status
-    in this function. We just need to track the services'
-    health
-    */
-    const services = args['services'];
-    const dockerArgs = args['docker_args'];
-    const host = args['host'];
-    const testLocally = args['testLocally'];
-    for (const service of services){
-        updateServiceHealth(service);
-    }
-}
-
 function getNextDatasetName(args){
 
     /*
@@ -777,27 +752,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         const is_on = await readToggle(readInput);
         testLocally.checked = is_on;
 
-        const checkboxStatuses = [];
         for (const service of services){
             const toggle = document.querySelector("input#toggle-"+service);
-            checkboxStatuses.push(
-                updateToggleHtmlFromDB(toggle)
-            );
+            updateToggleHtmlFromDB(toggle);
         }
-
-        /*
-          Previously sometimes services that were already up get killed on
-          page load. This happened because all of the check boxes were set
-          to off when the page loads, and it takes a little while to look
-          up their statuses in the DB and update the page accordingly.
-          During this waiting period the "pollServices" function might run,
-          which checked the un-updated check boxes and thought that they're
-          supposed to be off. Forcing update all of the check boxes on page
-          load before starting the loop that checks all services fixes the
-          issue. Using async/await to block the loop will prevent the
-          service checks from running out of order
-        */
-        await Promise.all(checkboxStatuses)
 
         // Update Raspberry Pi service statues
         var resumeServicesTime = setInterval(function(){
