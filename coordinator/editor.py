@@ -2402,7 +2402,7 @@ class GetPiDatasetName(tornado.web.RequestHandler):
         async with ClientSession(timeout=timeout) as session:
             async with session.get(endpoint) as response:
                 dataset = await response.json()
-                return {'dataset': -dataset}
+                return {'dataset': dataset}
 
 class CreateNewDataset(tornado.web.RequestHandler):
 
