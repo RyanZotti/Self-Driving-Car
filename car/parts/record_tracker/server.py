@@ -311,7 +311,20 @@ class CreateNewDataset(tornado.web.RequestHandler):
         )
         dataset.set_name('dataset')
         self.application.dataset = dataset
+        app.dataset_name = next_dataset_name
         self.write({'dataset': next_dataset_name})
+
+
+class GetCurrentDatasetName(tornado.web.RequestHandler):
+
+    """
+    Returns the name of the dataset that you would end up
+    writing to if you tried to write a record
+    """
+
+    def get(self):
+        print(self.application.dataset_name)
+        self.write({'dataset': self.application.dataset_name})
 
 
 # Updates image cache
@@ -364,6 +377,7 @@ def make_app():
         (r"/labels", RecordCache),
         (r"/create-new-dataset", CreateNewDataset),
         (r"/get-next-dataset-name", GetNextDatasetName),
+        (r"/get-current-dataset-name", GetCurrentDatasetName),
         (r"/health", Health)
     ]
     return tornado.web.Application(handlers)
@@ -396,6 +410,25 @@ if __name__ == "__main__":
     app.image = None
     app.record = None
     app.dataset = None
+
+    """
+    This will always create a new dataset when the server starts
+    up, but it avoids the edge case of possibly writing to the last
+    dataset from the last time you recorded something, which could
+    have been a really long time ago (e.g., weeks). It is a bit
+    annoying to delete empty datasets if you frequently restart the
+    server, but under ideal conditions I don't expect to restart the
+    server frequently. If I do have to frequently restart the server,
+    I made it easy to delete empty datasets from the UI
+    """
+    dataset_name = app.dataset_handler.next_dataset_name()
+    dataset = app.dataset_handler.new_dataset_writer(
+        inputs=input_names,
+        types=input_types
+    )
+    dataset.set_name('dataset')
+    app.dataset = dataset
+    app.dataset_name = dataset_name
 
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()

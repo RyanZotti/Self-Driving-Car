@@ -438,6 +438,18 @@ async function setServiceHost(){
     }
 }
 
+function getServiceStatus(service) {
+    /*
+    Returns the name of the dataset that you would end up
+    writing to if you tried to write a record
+    */
+    return new Promise(function(resolve, reject) {
+        $.get('/get-pi-dataset-name', function(output){
+            resolve(output['dataset']);
+        });
+    });
+}
+
 async function checkDashboardVideoReadiness(){
     /*
     This checks if the video feed is up and running and if it

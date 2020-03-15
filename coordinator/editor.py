@@ -1,4 +1,5 @@
 import asyncio
+from aiohttp import ClientSession, ClientTimeout
 from tornado import gen
 import argparse
 import cv2
@@ -1947,7 +1948,6 @@ class PiServiceStatus(tornado.web.RequestHandler):
             service_host=self.application.scheduler.service_host,
             service=service
         )
-        print(f'{service} {status}')
         self.write({'status':status})
 
 class ResumeTraining(tornado.web.RequestHandler):
@@ -2385,6 +2385,24 @@ class GetNextDatasetName(tornado.web.RequestHandler):
         result = yield self.get_next_dataset_name(json_input=json_input)
         self.write(result)
 
+class GetPiDatasetName(tornado.web.RequestHandler):
+
+    """
+    Returns the name of the dataset that you would end up
+    writing to if you tried to write a record
+    """
+
+    async def get(self):
+        timeout_seconds = 3.0
+        timeout = ClientTimeout(total=timeout_seconds)
+        endpoint = 'http://{host}:{port}/get-current-dataset-name'.format(
+            host=self.application.scheduler.service_host,
+            port=8093  # TODO: Look up this service's port in a DB
+        )
+        with ClientSession(timeout=timeout) as session:
+            with session.get(endpoint) as response:
+                dataset = await response.json()
+                return {'dataset': -dataset}
 
 class CreateNewDataset(tornado.web.RequestHandler):
 
@@ -2512,6 +2530,7 @@ def make_app():
         (r"/laptop-model-api-health", LaptopModelAPIHealth),
         (r"/create-new-dataset", CreateNewDataset),
         (r"/get-next-dataset-name", GetNextDatasetName),
+        (r"/get-pi-dataset-name", GetPiDatasetName),
         (r"/update-drive-state", UpdateDriveState)
     ]
     return tornado.web.Application(handlers)
