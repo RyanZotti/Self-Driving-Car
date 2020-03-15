@@ -2399,8 +2399,8 @@ class GetPiDatasetName(tornado.web.RequestHandler):
             host=self.application.scheduler.service_host,
             port=8093  # TODO: Look up this service's port in a DB
         )
-        with ClientSession(timeout=timeout) as session:
-            with session.get(endpoint) as response:
+        async with ClientSession(timeout=timeout) as session:
+            async with session.get(endpoint) as response:
                 dataset = await response.json()
                 return {'dataset': -dataset}
 
