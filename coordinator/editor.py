@@ -1629,6 +1629,7 @@ class PS3ControllerSixAxisStart(tornado.web.RequestHandler):
         self.write(result)
 
 
+# TODO: Make this just a DB lookup and perform health check in the scheduler
 class IsPS3ControllerConnected(tornado.web.RequestHandler):
 
     """
@@ -1644,14 +1645,12 @@ class IsPS3ControllerConnected(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(3)
 
     @tornado.concurrent.run_on_executor
-    def is_connected(self, json_input):
-        host = json_input['host']
-        port = json_input['port']
+    def is_connected(self):
         try:
             seconds = 0.5
             endpoint = 'http://{host}:{port}/is-connected'.format(
-                host=host,
-                port=port
+                host=self.application.scheduler.service_host,
+                port=8094  # TODO: Get from the scheduler, which gets from DB
             )
             response = requests.post(
                 endpoint,
@@ -1664,9 +1663,7 @@ class IsPS3ControllerConnected(tornado.web.RequestHandler):
 
     @tornado.gen.coroutine
     def post(self):
-        result = {}
-        json_input = tornado.escape.json_decode(self.request.body)
-        result = yield self.is_connected(json_input=json_input)
+        result = yield self.is_connected()
         self.write(result)
 
 
@@ -1897,15 +1894,14 @@ class PS3ControllerHealth(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(3)
 
     @tornado.concurrent.run_on_executor
-    def health_check(self,json_input):
-        host = json_input['host']
+    def health_check(self):
         # TODO: Remove this hardcoded port
         port = 8094
 
         try:
             seconds = 3.0
             endpoint = 'http://{host}:{port}/ps3-health'.format(
-                host=host,
+                host=self.application.scheduler.service_host,
                 port=port
             )
             response = requests.get(
@@ -1919,8 +1915,7 @@ class PS3ControllerHealth(tornado.web.RequestHandler):
 
     @tornado.gen.coroutine
     def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
-        result = yield self.health_check(json_input=json_input)
+        result = yield self.health_check()
         self.write(result)
 
 

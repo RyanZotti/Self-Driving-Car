@@ -74,13 +74,9 @@ async function pairController(){
     the Pi via the cable before starting the setup
     commands
     */
-    var isConnected = await isControllerConnected(
-        apiInputJson
-    )
+    var isConnected = await isControllerConnected();
     while(isConnected == false){
-        isConnected = await isControllerConnected(
-            apiInputJson
-        )
+        isConnected = await isControllerConnected();
         await sleep(250);
     }
     console.log('Wired is connected.')
@@ -107,13 +103,9 @@ async function pairController(){
     reconnect
     */
     console.log('Checking for reconnection...')
-    var isConnected = await isControllerConnected(
-        apiInputJson
-    )
+    var isConnected = await isControllerConnected();
     while(isConnected == false){
-        isConnected = await isControllerConnected(
-            apiInputJson
-        )
+        isConnected = await isControllerConnected();
         await sleep(250);
     }
     console.log('Device reconnected.')
@@ -145,13 +137,9 @@ async function pairController(){
     the bluetooth connectivity is working even if it
     isn't
     */
-    var isConnected = await isControllerConnected(
-        apiInputJson
-    )
+    var isConnected = await isControllerConnected();
     while(isConnected != false){
-        isConnected = await isControllerConnected(
-            apiInputJson
-        )
+        isConnected = await isControllerConnected();
         await sleep(250 );
     }
     console.log('Disonnected.')
@@ -166,13 +154,9 @@ async function pairController(){
     controller and hasn't just plugged the cable back in
     */
     console.log('Checking bluetooth connection...')
-    var isConnected = await isControllerConnected(
-        apiInputJson
-    )
+    var isConnected = await isControllerConnected();
     while(isConnected != true){
-        isConnected = await isControllerConnected(
-            apiInputJson
-        )
+        isConnected = await isControllerConnected();
         await sleep(250);
     }
     console.log('Bluetooth connected')
@@ -196,7 +180,7 @@ async function pairController(){
     isWizardOn = false;
 }
 
-function isControllerConnected(args){
+function isControllerConnected(){
 
     /*
     js0 will show up either when the PS3 controller is plugged
@@ -206,18 +190,11 @@ function isControllerConnected(args){
     unplug it and plug it in again.
     */
 
-    const host = args['host'];
-    const port = args['port'];
     return new Promise(function(resolve, reject) {
-        const input = JSON.stringify({
-            'host': host,
-            'port': port
-        });
         $.ajax({
             method: 'POST',
             url: '/is-ps3-connected',
             timeout: 1000,
-            data: input,
             success: function(response) {
                 resolve(response['is_connected']);
             },
@@ -310,7 +287,7 @@ function unregisterPs3Controllers(args) {
     });
 }
 
-function getPS3ControllerHealth(args) {
+function getPS3ControllerHealth() {
     /*
       This should not be confused with the health of the
       PS3 controller service. This checks if the SixAxis
@@ -320,12 +297,8 @@ function getPS3ControllerHealth(args) {
       controller. This will always be true the before you
       have paired the controller with the service
     */
-    const host = args['host'];
     return new Promise(function(resolve, reject) {
-        const input = JSON.stringify({
-            'host': host,
-        });
-        $.post('/ps3-controller-health', input, function(output){
+        $.post('/ps3-controller-health', function(output){
             resolve(output['is_healthy']);
         });
     });
@@ -379,24 +352,35 @@ function updateServiceStatusIcon(args){
     const status = document.querySelector('span.' + args['service'] + '-status');
     if(args['status'] == 'healthy'){
         status.classList.remove('text-danger');
+        status.classList.remove('text-primary');
         status.classList.remove('text-light');
         status.classList.remove('text-warning');
         status.classList.add('text-success');
         status.style.display = 'inline';
     } else if (args['status'] == 'unhealthy') {
         status.classList.remove('text-success');
+        status.classList.remove('text-primary');
         status.classList.remove('text-light');
         status.classList.remove('text-warning');
         status.classList.add('text-danger');
         status.style.display = 'inline';
     } else if (args['status'] == 'in-progress') {
         status.classList.remove('text-success');
+        status.classList.remove('text-primary');
         status.classList.remove('text-light');
         status.classList.remove('text-danger');
         status.classList.add('text-warning');
         status.style.display = 'inline';
+    } else if (args['status'] == 'ps3-ready-to-pair') {
+        status.classList.remove('text-success');
+        status.classList.remove('text-light');
+        status.classList.remove('text-warning');
+        status.classList.remove('text-danger');
+        status.classList.add('text-primary');
+        status.style.display = 'inline';
     } else {
         status.classList.remove('text-success');
+        status.classList.remove('text-primary');
         status.classList.remove('text-danger');
         status.classList.remove('text-warning');
         status.classList.add('text-light');
@@ -556,10 +540,25 @@ async function updateServiceHealth(service){
             'status':'in-progress'
         });
     } else if (good.includes(status)) {
-        updateServiceStatusIcon({
-            'service':service,
-            'status':'healthy'
-        });
+        if (service == 'ps3-controller'){
+            const isSixAxisLooping = await getPS3ControllerHealth();
+            if (isSixAxisLooping == true){
+                updateServiceStatusIcon({
+                    'service':service,
+                    'status':'healthy'
+                });
+            } else {
+                updateServiceStatusIcon({
+                    'service':service,
+                    'status':'ps3-ready-to-pair'
+                });
+            }
+        } else {
+            updateServiceStatusIcon({
+                'service':service,
+                'status':'healthy'
+            });
+        }
     } else if (bad.includes(status)) {
         updateServiceStatusIcon({
             'service':service,
@@ -766,17 +765,29 @@ document.addEventListener('DOMContentLoaded', async function() {
           status is not healthy but service is turned on
         */
         ps3ControllerWizardInterval = setInterval(async function(){
-            const isConnected = await getPS3ControllerHealth({'host':serviceHost});
-            if (isConnected == true || !ps3ControllerServiceToggle.checked){
+            const isSixAxisLooping = await getPS3ControllerHealth();
+            if (isSixAxisLooping == true || !ps3ControllerServiceToggle.checked){
                 timelineWrapper.style.display = 'none';
             } else {
-                timelineWrapper.style.display = 'block';
-                if (isWizardOn == false){
-                    await pairController();
+                /*
+                The PS3 part server is what executes all of the commands
+                to pair the controller, so the server must be up and running
+                before the web app can prompt the user to start the pairing
+                process
+                */
+                const status = await getServiceStatus('ps3-controller')
+                if (status == 'healthy') {
+                    timelineWrapper.style.display = 'block';
+                    if (isWizardOn == false){
+                        await pairController();
+                    }
+                } else {
+                    timelineWrapper.style.display = 'none';
                 }
+
             }
 
-        }, 5000);
+        }, 1000);
 
         servicesWrapper.style.display = 'flex';
         servicesNav.classList.add('active');
