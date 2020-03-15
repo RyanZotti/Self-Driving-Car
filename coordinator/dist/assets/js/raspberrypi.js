@@ -438,7 +438,7 @@ async function setServiceHost(){
     }
 }
 
-function getServiceStatus(service) {
+function getPiDatasetName() {
     /*
     Returns the name of the dataset that you would end up
     writing to if you tried to write a record
@@ -460,11 +460,7 @@ async function checkDashboardVideoReadiness(){
     off as needed in a potentially endless loop starting and
     stopping each other's setInterval() functions.
     */
-    recordingDataset = await getNextDatasetName({'host':serviceHost});
     pollVehicleAndUpdateUI();
-    const datasetId = await getDatasetIdFromDataset(recordingDataset);
-    const driveVehicleHeaderDatasetId = document.querySelector('span#driveVehicleHeaderDatasetId')
-    driveVehicleHeaderDatasetId.textContent = datasetId;
     dashboardVideoWhileOffInterval = setInterval(async function(){
         const videoSpinner = document.querySelector("div#video-loader");
         const metricsHeader = document.querySelector('div#drive-metrics-header');
@@ -741,7 +737,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // Stop updating video data if video is no longer shown
         clearInterval(dashboardVideoWhileOffInterval);
-
+        clearInterval(dashboardDatasetIdInterval);
     }
 
     const servicesNav = document.querySelector("#services-nav");
@@ -809,6 +805,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // Stop updating video data if video is no longer shown
         clearInterval(dashboardVideoWhileOffInterval);
+        clearInterval(dashboardDatasetIdInterval);
     }
 
     const dashboardNav = document.querySelector("#dashboard-nav");
@@ -826,6 +823,21 @@ document.addEventListener('DOMContentLoaded', async function() {
         testLocallyToggleWrapper.style.display = 'none';
 
         checkDashboardVideoReadiness();
+
+        // Checks that the dataset ID in the dashboard is up to date
+        const dashboardDatasetIdInterval = setInterval(async function(){
+            const status = await getServiceStatus('record-tracker');
+            /*
+            You won't be able to the dataset unless the part server that
+            provides it is up and running
+            */
+            if (status == 'healthy'){
+                recordingDataset = await getPiDatasetName();
+                const datasetId = await getDatasetIdFromDataset(recordingDataset);
+                const driveVehicleHeaderDatasetId = document.querySelector('span#driveVehicleHeaderDatasetId')
+                driveVehicleHeaderDatasetId.textContent = datasetId;
+            }
+        }, 1000);
 
     }
 
@@ -962,6 +974,8 @@ in the services nav
 */
 var dashboardVideoWhileOffInterval = null;
 var dashboardVideoWhileOnInterval = null;
+
+var dashboardDatasetIdInterval = null
 
 /*
 Need these donuts to be set in the DOMContentLoaded
