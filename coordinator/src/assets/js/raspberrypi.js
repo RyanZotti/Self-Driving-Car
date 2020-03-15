@@ -458,11 +458,8 @@ async function checkDashboardVideoReadiness(){
         const metricsHeader = document.querySelector('div#drive-metrics-header');
         const metricsGraphics = document.querySelector('div#drive-metrics-graphics');
         const metricsText = document.querySelector('div#drive-metrics-text');
-        const isHealthy = await piServiceHealth({
-            'host':serviceHost,
-            'service':'video'
-        });
-        if(isHealthy == true){
+        const videoServiceStatus = await getServiceStatus('video');
+        if(videoServiceStatus == 'healthy'){
             clearInterval(dashboardVideoWhileOffInterval);
             const videoImage = showLiveVideo({
                 'host':serviceHost,
@@ -697,7 +694,6 @@ document.addEventListener('DOMContentLoaded', async function() {
       at the top so that they're both in scope of the <nav>.onclick
       functions, which are responsible for turning them on and off
     */
-    var piServiceHealthCheckTime = null;
     var resumeServicesTime = null;
     var ps3ControllerWizardInterval = null
 
@@ -717,7 +713,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     settingsNav.onclick = function () {
 
         // Stop polling the services when not on the services page
-        clearInterval(piServiceHealthCheckTime);
         clearInterval(ps3ControllerWizardInterval);
         clearInterval(resumeServicesTime);
 
