@@ -444,8 +444,16 @@ function getPiDatasetName() {
     writing to if you tried to write a record
     */
     return new Promise(function(resolve, reject) {
-        $.get('/get-pi-dataset-name', function(output){
-            resolve(output['dataset']);
+        $.ajax({
+            method: 'POST',
+            url: '/get-pi-dataset-name',
+            timeout: 1000, // milliseconds,
+            success: function(response) {
+                resolve(response['dataset']);
+            },
+            error: function(){
+                resolve(false);
+            }
         });
     });
 }
@@ -488,10 +496,6 @@ async function checkDashboardVideoReadiness(){
             removeVideoSafely();
         }
     }, 1000);
-    // Check if device supports orientation (ie is a phone vs laptop)
-    if (window.DeviceOrientationEvent) {
-        window.addEventListener("deviceorientation", captureDeviceOrientation);
-    }
 }
 
 function updateServiceStatusColors(services){
@@ -520,8 +524,17 @@ function getServiceStatus(service) {
     */
     return new Promise(function(resolve, reject) {
         const input = JSON.stringify({'service': service});
-        $.post('/pi-service-status', input, function(output){
-            resolve(output['status']);
+        $.ajax({
+            method: 'POST',
+            url: '/pi-service-status',
+            timeout: 2500,
+            data: input,
+            success: function(output) {
+                resolve(output['status']);
+            },
+            error: function(){
+                resolve('unhealthy');
+            }
         });
     });
 }
@@ -790,7 +803,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             }
 
-        }, 1000);
+        }, 3000);
 
         servicesWrapper.style.display = 'flex';
         servicesNav.classList.add('active');
@@ -837,7 +850,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const driveVehicleHeaderDatasetId = document.querySelector('span#driveVehicleHeaderDatasetId')
                 driveVehicleHeaderDatasetId.textContent = datasetId;
             }
-        }, 1000);
+        }, 5000);
 
     }
 
@@ -874,12 +887,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     */
     const serviceHostInterval = setInterval(async function(){
         serviceHost = await setServiceHost();
-    }, 500);
+    }, 1000);
 
     // Update Raspberry Pi statues
     const piHealthCheckTime = setInterval(async function(){
         isPiHealthy = await updatePiConnectionStatuses();
-    }, 1000);
+    }, 5000);
 
     // Periodically check that Pi hostname hasn't changed
     const piHostNameTime = setInterval(async function(){
