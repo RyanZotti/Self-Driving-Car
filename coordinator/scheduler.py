@@ -131,7 +131,7 @@ class Scheduler(object):
         """
         postgres_host = self.postgres_host
         connection_string = f"host='{postgres_host}' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
-        self.aiopg_pool = await aiopg.create_pool(connection_string, maxsize=20)
+        self.aiopg_pool = await aiopg.create_pool(connection_string)
 
         self.is_local_test = await read_toggle_aio(
             postgres_host=self.postgres_host,
