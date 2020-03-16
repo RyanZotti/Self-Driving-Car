@@ -13,6 +13,7 @@ import re
 import urllib.request
 import tensorflow as tf
 import asyncio, asyncssh, sys
+import warnings
 
 
 # Used to save space. Keeping all model checkpoint epochs can eat up many GB of disk space
@@ -338,31 +339,33 @@ def get_sql_rows(host, sql):
     return rows
 
 
-async def execute_sql_aio(host, sql):
-    connection_string = f"host='{host}' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
-    pool = await aiopg.create_pool(connection_string)
-    async with pool.acquire() as connection:
+async def execute_sql_aio(host, sql, aiopg_pool=None):
+    if aiopg_pool is None:
+        connection_string = f"host='{host}' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
+        aiopg_pool = await aiopg.create_pool(connection_string)
+    async with aiopg_pool.acquire() as connection:
         async with connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
             await cursor.execute(sql)
         cursor.close()
-        connection.close()
 
 
-async def get_sql_rows_aio(host, sql):
-    connection_string = f"host='{host}' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
-    pool = await aiopg.create_pool(connection_string)
+async def get_sql_rows_aio(host, sql, aiopg_pool=None):
+    if aiopg_pool is None:
+        connection_string = f"host='{host}' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
+        aiopg_pool = await aiopg.create_pool(connection_string)
     rows = []
-    async with pool.acquire() as connection:
-        async with connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
-            await cursor.execute(sql)
-            async for row in cursor:
-                rows.append(row)
-        cursor.close()
-        connection.close()
-    return rows
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        async with aiopg_pool.acquire() as connection:
+            async with connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+                await cursor.execute(sql)
+                async for row in cursor:
+                    rows.append(row)
+            cursor.close()
+        return rows
 
 
-async def read_pi_setting_aio(host, field_name):
+async def read_pi_setting_aio(host, field_name, aiopg_pool=None):
     sql_query = f'''
         SELECT
           field_value
@@ -371,12 +374,12 @@ async def read_pi_setting_aio(host, field_name):
         ORDER BY event_ts DESC
         LIMIT 1;
     '''
-    rows = await get_sql_rows_aio(host=host, sql=sql_query)
+    rows = await get_sql_rows_aio(host=host, sql=sql_query, aiopg_pool=aiopg_pool)
     if len(rows) > 0:
         return rows[0]['field_value']
 
 
-async def read_toggle_aio(postgres_host, web_page, name, detail):
+async def read_toggle_aio(postgres_host, web_page, name, detail, aiopg_pool=None):
     sql_query = f'''
         SELECT
           is_on
@@ -389,7 +392,8 @@ async def read_toggle_aio(postgres_host, web_page, name, detail):
     '''
     rows = await get_sql_rows_aio(
         host=postgres_host,
-        sql=sql_query
+        sql=sql_query,
+        aiopg_pool=aiopg_pool
     )
     if len(rows) > 0:
         first_row = rows[0]
@@ -399,7 +403,7 @@ async def read_toggle_aio(postgres_host, web_page, name, detail):
         return False
 
 
-async def get_last_service_event(postgres_host, service_host, service):
+async def get_last_service_event(postgres_host, service_host, service, aiopg_pool=None):
     """
     Get the last run attempt. Note that this doesn't track run attempts,
     which look like `docker rm -f {service}; docker run ...`
@@ -417,7 +421,8 @@ async def get_last_service_event(postgres_host, service_host, service):
     LIMIT 1
     """
     rows = await get_sql_rows_aio(
-        host=postgres_host, sql=query
+        host=postgres_host, sql=query,
+        aiopg_pool=aiopg_pool
     )
     if len(rows) > 0:
         now = datetime.utcnow()
@@ -434,7 +439,7 @@ async def get_last_service_event(postgres_host, service_host, service):
 
 
 
-async def get_recent_health_checks(postgres_host, service_host, service, attempts=3, fresh_threshold_seconds=15.0):
+async def get_recent_health_checks(postgres_host, service_host, service, attempts=3, fresh_threshold_seconds=15.0, aiopg_pool=None):
     """
     Returns the results of the most recent health check API calls
     from the database
@@ -478,7 +483,7 @@ async def get_recent_health_checks(postgres_host, service_host, service, attempt
     LIMIT {attempts}
     """
     rows = await get_sql_rows_aio(
-        host=postgres_host, sql=query
+        host=postgres_host, sql=query, aiopg_pool=aiopg_pool
     )
     if len(rows) > 0:
         healthy_total = 0
@@ -497,7 +502,7 @@ async def get_recent_health_checks(postgres_host, service_host, service, attempt
         }
 
 
-async def get_service_status(postgres_host, service_host, service):
+async def get_service_status(postgres_host, service_host, service, aiopg_pool=None):
     """
     This is used by both the API to populate the colors in the UI
     and also by the scheduler to restart dead services that should
@@ -552,7 +557,8 @@ async def get_service_status(postgres_host, service_host, service):
         postgres_host=postgres_host,
         web_page='raspberry pi',
         name='service',
-        detail=service
+        detail=service,
+        aiopg_pool=aiopg_pool
     )
 
     """
@@ -562,7 +568,8 @@ async def get_service_status(postgres_host, service_host, service):
     docker_event_awaitable = get_last_service_event(
         postgres_host=postgres_host,
         service_host=service_host,
-        service=service
+        service=service,
+        aiopg_pool=aiopg_pool
     )
 
     health_checks_awaitable = get_recent_health_checks(
@@ -570,7 +577,8 @@ async def get_service_status(postgres_host, service_host, service):
         service_host=service_host,
         service=service,
         attempts=health_check_attempts,
-        fresh_threshold_seconds=15.0
+        fresh_threshold_seconds=15.0,
+        aiopg_pool=aiopg_pool
     )
 
     # Wait for all of the checks to run concurrently
@@ -690,13 +698,14 @@ async def get_service_status(postgres_host, service_host, service):
 
 
 async def stop_service_if_ready(
-        postgres_host, service_host, stop_on_pi, service, pi_username, pi_hostname, pi_password
+        postgres_host, service_host, stop_on_pi, service, pi_username, pi_hostname, pi_password, aiopg_pool=None
     ):
 
     status = await get_service_status(
         postgres_host=postgres_host,
         service_host=service_host,
-        service=service
+        service=service,
+        aiopg_pool=aiopg_pool
     )
 
     if status in ['ready-to-shut-down', 'invincible-zombie']:
@@ -737,13 +746,14 @@ async def stop_service_if_ready(
         '''
         await execute_sql_aio(host=postgres_host, sql=service_event_sql.format(
             service=service,
-            host=service_host
+            host=service_host,
+            aiopg_pool=aiopg_pool
         ))
 
 
 
 async def start_service_if_ready(
-        postgres_host, run_on_pi, service_host, service, pi_username, pi_hostname, pi_password
+        postgres_host, run_on_pi, service_host, service, pi_username, pi_hostname, pi_password, aiopg_pool=None
     ):
 
     """
@@ -756,7 +766,8 @@ async def start_service_if_ready(
     status = await get_service_status(
         postgres_host=postgres_host,
         service_host=service_host,
-        service=service
+        service=service,
+        aiopg_pool=aiopg_pool
     )
 
     if status.lower() == 'ready-to-start':

@@ -1828,9 +1828,10 @@ class StartCarService(tornado.web.RequestHandler):
             )
         '''
         await execute_sql_aio(host=self.application.postgres_host, sql=service_event_sql.format(
-            service=service,
-            host=self.application.scheduler.service_host
-        ))
+                service=service,
+                host=self.application.scheduler.service_host
+            ),
+            aiopg_pool=self.application.scheduler.aiopg_pool)
         self.write({})
 
 

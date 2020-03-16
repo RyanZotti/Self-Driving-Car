@@ -44,6 +44,8 @@ class Scheduler(object):
         self.interval_seconds = interval_seconds
         self.timeout_seconds = 1.0
 
+        self.aiopg_pool = None
+
         """
         These are the fields that will get updated by the scheduler that
         might also be useful to other scheduled tasks. However, I update
@@ -75,9 +77,9 @@ class Scheduler(object):
 
     async def refresh_pi_credentials(self):
         results = await asyncio.gather(
-            read_pi_setting_aio(host=self.postgres_host, field_name='hostname'),
-            read_pi_setting_aio(host=self.postgres_host, field_name='username'),
-            read_pi_setting_aio(host=self.postgres_host, field_name='password')
+            read_pi_setting_aio(host=self.postgres_host, field_name='hostname', aiopg_pool=self.aiopg_pool),
+            read_pi_setting_aio(host=self.postgres_host, field_name='username', aiopg_pool=self.aiopg_pool),
+            read_pi_setting_aio(host=self.postgres_host, field_name='password', aiopg_pool=self.aiopg_pool)
         )
         self.pi_hostname = results[0]
         self.pi_username = results[1]
@@ -106,7 +108,8 @@ class Scheduler(object):
                 service=service,
                 pi_username=self.pi_username,
                 pi_hostname=self.pi_hostname,
-                pi_password=self.pi_password
+                pi_password=self.pi_password,
+                aiopg_pool=self.aiopg_pool
             )
 
             # Stop but only if it should stop and has not been told to stop by something else
@@ -126,12 +129,16 @@ class Scheduler(object):
         """
         This is the main entry point to the scheduler
         """
+        postgres_host = self.postgres_host
+        connection_string = f"host='{postgres_host}' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
+        self.aiopg_pool = await aiopg.create_pool(connection_string, maxsize=20)
 
         self.is_local_test = await read_toggle_aio(
             postgres_host=self.postgres_host,
             web_page='raspberry pi',
             name='test locally',
-            detail='test locally'
+            detail='test locally',
+            aiopg_pool=self.aiopg_pool
         )
 
         """
@@ -142,7 +149,7 @@ class Scheduler(object):
         bugs that could be introduced
         """
         print('Clearing service_event table')
-        await execute_sql_aio(host=self.postgres_host, sql='DELETE FROM service_event')
+        await execute_sql_aio(host=self.postgres_host, sql='DELETE FROM service_event',aiopg_pool=self.aiopg_pool)
 
         """
         Clear out old health checks not because it will change
@@ -150,7 +157,7 @@ class Scheduler(object):
         the long run
         """
         print('Clearing service_health table')
-        await execute_sql_aio(host=self.postgres_host, sql='DELETE FROM service_health')
+        await execute_sql_aio(host=self.postgres_host, sql='DELETE FROM service_health',aiopg_pool=self.aiopg_pool)
 
         # Class fields are assigned values within the method
         await self.refresh_pi_credentials()
@@ -248,7 +255,8 @@ class Scheduler(object):
                             )
                             await execute_sql_aio(
                                 host=self.postgres_host,
-                                sql=sql
+                                sql=sql,
+                                aiopg_pool=self.aiopg_pool
                             )
                 except:
                     end_time = datetime.utcnow()
@@ -261,6 +269,7 @@ class Scheduler(object):
                     )
                     await execute_sql_aio(
                         host=self.postgres_host,
-                        sql=sql
+                        sql=sql,
+                        aiopg_pool=self.aiopg_pool
                     )
                 await asyncio.sleep(interval_seconds)
