@@ -10,6 +10,7 @@ from ai.record_reader import RecordReader
 import os
 from os.path import dirname, join
 import numpy as np
+from psycopg2 import pool
 import tornado.gen
 import tornado.ioloop
 import tornado.web
@@ -46,7 +47,8 @@ class NewDatasetName(tornado.web.RequestHandler):
         '''
         rows = get_sql_rows(
             host=self.application.postgres_host,
-            sql=sql_query
+            sql=sql_query,
+            postgres_pool=self.application.postgres_pool
         )
         if len(rows) > 0:
             ids = []
@@ -139,7 +141,8 @@ class ListModels(tornado.web.RequestHandler):
         '''
         rows = get_sql_rows(
             host=self.application.postgres_host,
-            sql=sql_query
+            sql=sql_query,
+            postgres_pool=self.application.postgres_pool
         )
         result = {'models':rows}
         return result
@@ -199,7 +202,8 @@ class ReadSlider(tornado.web.RequestHandler):
         )
         rows = get_sql_rows(
             host=self.application.postgres_host,
-            sql=sql_query
+            sql=sql_query,
+            postgres_pool=self.application.postgres_pool
         )
         if len(rows) > 0:
             first_row = rows[0]
@@ -246,7 +250,8 @@ class WriteSlider(tornado.web.RequestHandler):
         )
         execute_sql(
             host=self.application.postgres_host,
-            sql=sql_query
+            sql=sql_query,
+            postgres_pool=self.application.postgres_pool
         )
         return {}
 
@@ -284,7 +289,8 @@ class ListModelDeployments(tornado.web.RequestHandler):
             )
             rows = get_sql_rows(
                 host=self.application.postgres_host,
-                sql=sql_query
+                sql=sql_query,
+                postgres_pool=self.application.postgres_pool
             )
             if len(rows) > 0:
                 first_row = rows[0]
@@ -332,7 +338,8 @@ class ReadToggle(tornado.web.RequestHandler):
         )
         rows = get_sql_rows(
             host=self.application.postgres_host,
-            sql=sql_query
+            sql=sql_query,
+            postgres_pool=self.application.postgres_pool
         )
         if len(rows) > 0:
             first_row = rows[0]
@@ -382,7 +389,8 @@ class WriteToggle(tornado.web.RequestHandler):
         )
         execute_sql(
             host=self.application.postgres_host,
-            sql=sql_query
+            sql=sql_query,
+            postgres_pool=self.application.postgres_pool
         )
         return {}
 
@@ -415,7 +423,8 @@ class WritePiField(tornado.web.RequestHandler):
         )
         execute_sql(
             host=self.application.postgres_host,
-            sql=sql_query
+            sql=sql_query,
+            postgres_pool=self.application.postgres_pool
         )
 
         """
@@ -545,7 +554,8 @@ class DatasetRecordIdsAPIFileSystem(tornado.web.RequestHandler):
                 '''.format(dataset=dataset_name)
             rows = get_sql_rows(
                 host=self.application.postgres_host,
-                sql=sql_query
+                sql=sql_query,
+                postgres_pool=self.application.postgres_pool
             )
             for row in rows:
                 record_id = row['record_id']
@@ -616,7 +626,8 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
                 '''.format(dataset=dataset_name)
             rows = get_sql_rows(
                 host=self.application.postgres_host,
-                sql=sql_query
+                sql=sql_query,
+                postgres_pool=self.application.postgres_pool
             )
             for row in rows:
                 record_id = row['record_id']
@@ -668,7 +679,8 @@ class IsDatasetPredictionFromLatestDeployedModel(tornado.web.RequestHandler):
             '''.format(dataset=dataset_name)
         first_row = get_sql_rows(
             host=self.application.postgres_host,
-            sql=sql_query
+            sql=sql_query,
+            postgres_pool=self.application.postgres_pool
         )[0]
         is_up_to_date = first_row['is_up_to_date']
         result = {
@@ -732,7 +744,8 @@ class SaveRecordToDB(tornado.web.RequestHandler):
             )
             execute_sql(
                 host=self.application.postgres_host,
-                sql=sql_query
+                sql=sql_query,
+                postgres_pool=self.application.postgres_pool
             )
             return {}
         except:
@@ -841,7 +854,8 @@ class DeployModel(tornado.web.RequestHandler):
         )
         first_row = get_sql_rows(
             host=self.application.postgres_host,
-            sql=sql_query
+            sql=sql_query,
+            postgres_pool=self.application.postgres_pool
         )[0]
         model_id = first_row['model_id']
         epoch = first_row['epoch_id']
@@ -1049,7 +1063,8 @@ class UpdateDeploymentsTable(tornado.web.RequestHandler):
         )
         epoch_id = get_sql_rows(
             host=self.application.postgres_host,
-            sql=sql_epoch_query
+            sql=sql_epoch_query,
+            postgres_pool=self.application.postgres_pool
         )[0]['epoch_id']
 
         insert_deployment_record_sql = """
@@ -1071,7 +1086,8 @@ class UpdateDeploymentsTable(tornado.web.RequestHandler):
         )
         execute_sql(
             host=self.application.postgres_host,
-            sql=insert_deployment_record_sql
+            sql=insert_deployment_record_sql,
+            postgres_pool=self.application.postgres_pool
         )
 
     @tornado.gen.coroutine
@@ -1106,7 +1122,8 @@ class DeleteModel(tornado.web.RequestHandler):
         )
         execute_sql(
             host=self.application.postgres_host,
-            sql=delete_records_sql
+            sql=delete_records_sql,
+            postgres_pool=self.application.postgres_pool
         )
 
     @tornado.gen.coroutine
@@ -1141,7 +1158,8 @@ class DeleteRecord(tornado.web.RequestHandler):
         )
         execute_sql(
             host=self.application.postgres_host,
-            sql=delete_records_sql
+            sql=delete_records_sql,
+            postgres_pool=self.application.postgres_pool
         )
         delete_predictions_sql = """
             DELETE FROM predictions
@@ -1153,7 +1171,8 @@ class DeleteRecord(tornado.web.RequestHandler):
         )
         execute_sql(
             host=self.application.postgres_host,
-            sql=delete_predictions_sql
+            sql=delete_predictions_sql,
+            postgres_pool=self.application.postgres_pool
         )
         os.remove(label_path)
         os.remove(image_path)
@@ -1593,6 +1612,73 @@ class VideoAPI(tornado.web.RequestHandler):
                 yield tornado.gen.Task(ioloop.add_timeout, ioloop.time() + interval)
 
 
+class VideoAPINoAargs(tornado.web.RequestHandler):
+    '''
+    Serves a MJPEG of the images posted from the vehicle.
+    '''
+
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
+    def get(self):
+
+        """
+        This does a decent job explaining what the "boundary" means
+        https://blog.miguelgrinberg.com/post/video-streaming-with-flask
+
+            HTTP/1.1 200 OK
+            Content-Type: multipart/x-mixed-replace; boundary=frame
+
+            --frame
+            Content-Type: image/jpeg
+
+            <jpeg data here>
+            --frame
+            Content-Type: image/jpeg
+
+            <jpeg data here>
+            ...
+        """
+
+        ioloop = tornado.ioloop.IOLoop.current()
+        self.set_header("Content-type", "multipart/x-mixed-replace;boundary=--boundarydonotcross")
+
+        self.served_image_timestamp = time.time()
+        my_boundary = "--boundarydonotcross"
+
+        i = 0
+
+        # TODO: Get this hardcoded port from the scheduler, which should get it from the DB
+        for frame in live_video_stream(ip=self.application.scheduler.service_host,port=8091):
+
+            '''
+            i+= 1
+            print(i)
+            if i > 10:
+                break
+            '''
+
+            interval = .1
+            if self.served_image_timestamp + interval < time.time():
+
+                # Can't serve the OpenCV numpy array
+                # Tornando: "... only accepts bytes, unicode, and dict objects" (from Tornado error Traceback)
+                # The result of cv2.imencode is a tuple like: (True, some_image), but I have no idea what True refers to
+                img = cv2.imencode('.jpg', frame)[1].tostring()
+
+                # I have no idea what these lines do, but other people seem to use them, they
+                # came with this copied code and I don't want to break something by removing
+                self.write(my_boundary)
+                self.write("Content-type: image/jpeg\r\n")
+                self.write("Content-length: %s\r\n\r\n" % len(img))
+
+                # Serve the image
+                self.write(img)
+
+                self.served_image_timestamp = time.time()
+                yield tornado.gen.Task(self.flush)
+            else:
+                yield tornado.gen.Task(ioloop.add_timeout, ioloop.time() + interval)
+
 
 class PS3ControllerSixAxisStart(tornado.web.RequestHandler):
 
@@ -1829,7 +1915,8 @@ class StartCarService(tornado.web.RequestHandler):
         '''
         await execute_sql_aio(host=self.application.postgres_host, sql=service_event_sql.format(
                 service=service,
-                host=self.application.scheduler.service_host
+                host=self.application.scheduler.service_host,
+                postgres_pool=self.application.postgres_pool
             ),
             aiopg_pool=self.application.scheduler.aiopg_pool)
         self.write({})
@@ -1947,7 +2034,8 @@ class PiServiceStatus(tornado.web.RequestHandler):
         status = await get_service_status(
             postgres_host=self.application.postgres_host,
             service_host=self.application.scheduler.service_host,
-            service=service
+            service=service,
+            aiopg_pool=self.application.scheduler.aiopg_pool
         )
         self.write({'status':status})
 
@@ -2112,7 +2200,8 @@ class IsDatasetPredictionSyncing(tornado.web.RequestHandler):
         )
         rows = get_sql_rows(
             host=self.application.postgres_host,
-            sql=sql_query
+            sql=sql_query,
+            postgres_pool=self.application.postgres_pool
         )
         first_row = rows[0]
         return {
@@ -2153,7 +2242,8 @@ class NewEpochs(tornado.web.RequestHandler):
         )
         epochs = get_sql_rows(
             host=self.application.postgres_host,
-            sql=sql_query
+            sql=sql_query,
+            postgres_pool=self.application.postgres_pool
         )
         result = {
             'epochs':epochs
@@ -2190,7 +2280,8 @@ class HighestModelEpoch(tornado.web.RequestHandler):
         )
         max_epoch = get_sql_rows(
             host=self.application.postgres_host,
-            sql=sql_query
+            sql=sql_query,
+            postgres_pool=self.application.postgres_pool
         )[0]['max_epoch']
         result = {
             'max_epoch':max_epoch
@@ -2254,7 +2345,8 @@ class DatasetPredictionSyncPercent(tornado.web.RequestHandler):
         )
         rows = get_sql_rows(
             host=self.application.postgres_host,
-            sql=sql_query
+            sql=sql_query,
+            postgres_pool=self.application.postgres_pool
         )
         first_row = rows[0]
         result = {
@@ -2317,7 +2409,8 @@ class GetDatasetErrorMetrics(tornado.web.RequestHandler):
             )
             rows = get_sql_rows(
                 host=self.application.postgres_host,
-                sql=sql_query
+                sql=sql_query,
+                postgres_pool=self.application.postgres_pool
             )
             first_row = rows[0]
             if first_row['prediction_count'] > 0:
@@ -2472,6 +2565,7 @@ def make_app():
         (r"/user-labels", UserLabelsAPI),
         (r"/image", ImageAPI),
         (r"/video", VideoAPI),
+        (r"/video-no-args", VideoAPINoAargs),
         (r"/new-dataset-name", NewDatasetName),
         (r"/video-health-check", VideoHealthCheck),
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
@@ -2584,6 +2678,16 @@ async def main():
     """
     postgres_host = 'localhost'
     app.postgres_host = postgres_host
+
+    app.postgres_pool = psycopg2.pool.ThreadedConnectionPool(
+        minconn=1,
+        maxconn=10,
+        user="postgres",
+        password="",
+        host=app.postgres_host,
+        port="5432",
+        database="autonomous_vehicle"
+    )
 
     # TODO: Remove hard-coded Pi host
     app.pi_host = 'ryanzotti.local'
