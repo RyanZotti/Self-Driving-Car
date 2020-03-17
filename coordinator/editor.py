@@ -2681,7 +2681,7 @@ async def main():
 
     app.postgres_pool = psycopg2.pool.ThreadedConnectionPool(
         minconn=1,
-        maxconn=10,
+        maxconn=25,
         user="postgres",
         password="",
         host=app.postgres_host,

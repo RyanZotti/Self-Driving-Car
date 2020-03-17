@@ -89,13 +89,20 @@ def connect_to_postgres(host):
     return connection, cursor
 
 
-def execute_sql(host, sql):
-    connection, cursor = connect_to_postgres(host=host)
-    cursor.execute(sql)
-    connection.commit()
-    cursor.close()
-    connection.close()
-
+def execute_sql(host, sql, postgres_pool=None):
+    if postgres_pool:
+        connection = postgres_pool.getconn()
+        cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute(sql)
+        cursor.close()
+        # Use this method to release the connection object and send back to the connection pool
+        postgres_pool.putconn(connection)
+    else:
+        connection, cursor = connect_to_postgres(host=host)
+        cursor.execute(sql)
+        connection.commit()
+        cursor.close()
+        connection.close()
 
 # Reads last epoch from checkpoint path
 def get_prev_epoch(checkpoint_dir_path):
@@ -164,13 +171,23 @@ def delete_old_model_backups(checkpoint_dir):
             shell_command(cmd)
 
 
-def get_sql_rows(host, sql):
-    connection, cursor = connect_to_postgres(host=host)
-    cursor.execute(sql)
-    rows = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    return rows
+def get_sql_rows(host, sql, postgres_pool=None):
+    if postgres_pool:
+        connection = postgres_pool.getconn()
+        cursor = connection.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        cursor.close()
+        # Use this method to release the connection object and send back to the connection pool
+        postgres_pool.putconn(connection)
+        return rows
+    else:
+        connection, cursor = connect_to_postgres(host=host)
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        return rows
 
 # This is used to stream video live for the self-driving sessions
 # The syntax is super ugly and I don't understand how it works
