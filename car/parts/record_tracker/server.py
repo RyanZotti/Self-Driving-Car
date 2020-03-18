@@ -206,9 +206,6 @@ class DatasetWriter(Dataset):
     def __init__(self, *args, **kwargs):
         super(DatasetWriter, self).__init__(*args, **kwargs)
 
-    def set_name(self,name):
-        self.name = name
-
     def run(self, *args):
         '''
         API function needed to use as a Donkey part.
@@ -254,15 +251,9 @@ class DatasetHandler():
         name = '_'.join(['dataset', str(dataset_num), date])
         return name
 
-    def create_dataset_path(self):
-        name = self.next_dataset_name()
-        dataset_path = os.path.join(self.path, name)
-        return dataset_path
-
-    def new_dataset_writer(self, inputs, types):
-        dataset_path = self.create_dataset_path()
-        tw = DatasetWriter(path=dataset_path, inputs=inputs, types=types)
-        return tw
+    def new_dataset_writer(self, inputs, types, path):
+        dataset_writer = DatasetWriter(path=path, inputs=inputs, types=types)
+        return dataset_writer
 
 
 class WriteRecord(tornado.web.RequestHandler):
@@ -273,7 +264,7 @@ class WriteRecord(tornado.web.RequestHandler):
         ))
         data = self.application.labels.copy()
         data['camera/image_array'] = self.application.image
-        self.application.dataset.put_record(data=data)
+        self.application.dataset_writer.put_record(data=data)
         # Clear the cache:
         self.application.image = None
         self.application.labels = None
@@ -305,12 +296,13 @@ class CreateNewDataset(tornado.web.RequestHandler):
 
     def post(self):
         next_dataset_name = self.application.dataset_handler.next_dataset_name()
-        dataset = self.application.dataset_handler.new_dataset_writer(
+        dataset_path_and_name = os.path.join(self.application.dataset_base_directory, next_dataset_name)
+        dataset_writer = self.application.dataset_handler.new_dataset_writer(
             inputs=input_names,
-            types=input_types
+            types=input_types,
+            path=dataset_path_and_name
         )
-        dataset.set_name('dataset')
-        self.application.dataset = dataset
+        self.application.dataset_writer = dataset_writer
         app.dataset_name = next_dataset_name
         self.write({'dataset': next_dataset_name})
 
@@ -354,6 +346,46 @@ class RecordCache(tornado.web.RequestHandler):
         self.application.labels = json_input
         self.write({})
 
+class SetDatasetBaseDirectory(tornado.web.RequestHandler):
+    """
+    Updates the directory that will contain all of the
+    dataset folders
+    """
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        """
+        Increment and create a new dataset folder if the parent
+        directory changes, but make sure you increment the dataset
+        name while you can still look at the dataset IDs that
+        already exist. You want to avoid a situation that looks
+        like old/dir/dataset-1 new/dir/dataset-1 when instead the
+        new dataset should look like new/dir/dataset-2
+        """
+        dataset_name = self.application.dataset_handler.next_dataset_name()
+        self.application.dataset_base_directory = json_input['directory']
+        os.makedirs(self.application.dataset_base_directory, exist_ok=True)
+        self.application.dataset_handler = DatasetHandler(
+            path=self.application.dataset_base_directory
+        )
+        new_datset_path = os.path.join(self.application.dataset_base_directory, dataset_name)
+        dataset_writer = self.application.dataset_handler.new_dataset_writer(
+            inputs=input_names,
+            types=input_types,
+            path=new_datset_path
+        )
+        self.application.dataset_writer = dataset_writer
+        self.application.dataset_name = dataset_name
+        self.write({})
+
+class GetDatasetBaseDirectory(tornado.web.RequestHandler):
+    """
+    Returns the directory that contains all of the dataset
+    folders
+    """
+    def get(self):
+        self.write({'directory': self.application.dataset_base_directory})
+
+
 class Health(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -378,6 +410,8 @@ def make_app():
         (r"/create-new-dataset", CreateNewDataset),
         (r"/get-next-dataset-name", GetNextDatasetName),
         (r"/get-current-dataset-name", GetCurrentDatasetName),
+        (r"/set-dataset-base-directory", SetDatasetBaseDirectory),
+        (r"/get-dataset-base-directory", GetDatasetBaseDirectory),
         (r"/health", Health)
     ]
     return tornado.web.Application(handlers)
@@ -390,10 +424,20 @@ if __name__ == "__main__":
         help="Server port to use",
         default=8093
     )
+    ap.add_argument(
+        "--directory",
+        required=False,
+        help="Directory for all datesets. Can be updated via API too",
+        default='~/vehicle-datasets'
+    )
     args = vars(ap.parse_args())
     port = args['port']
+    dataset_base_directory = args['directory']
+    os.makedirs(dataset_base_directory, exist_ok=True)
+
     app = make_app()
-    app.dataset_handler = DatasetHandler(path='/Users/ryanzotti/Downloads/data')
+    app.dataset_base_directory = dataset_base_directory
+    app.dataset_handler = DatasetHandler(path=app.dataset_base_directory)
     # TODO: Make sure this always matches what's in start.py or you'll get key not found bugs
     input_names = [
         'camera/image_array',
@@ -422,13 +466,15 @@ if __name__ == "__main__":
     I made it easy to delete empty datasets from the UI
     """
     dataset_name = app.dataset_handler.next_dataset_name()
-    dataset = app.dataset_handler.new_dataset_writer(
-        inputs=input_names,
-        types=input_types
-    )
-    dataset.set_name('dataset')
-    app.dataset = dataset
     app.dataset_name = dataset_name
+    new_datset_path = os.path.join(app.dataset_base_directory, app.dataset_name)
+    dataset_writer = app.dataset_handler.new_dataset_writer(
+        inputs=input_names,
+        types=input_types,
+        path=new_datset_path
+    )
+    app.dataset_writer = dataset_writer
+
 
     app.listen(port)
     tornado.ioloop.IOLoop.current().start()

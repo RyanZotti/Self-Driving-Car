@@ -832,11 +832,15 @@ async def start_service_if_ready(
             port = 8093
             network = operating_system_config[operating_system]['network'].format(port=port)
             if run_on_pi:
+                dataset_base_directory = await read_pi_setting_aio(
+                    host=postgres_host, field_name='pi datasets directory', aiopg_pool=aiopg_pool
+                )
                 await execute_pi_command_aio(
-                    command='mkdir -p ~/vehicle-datasets; docker rm -f {service}; docker run -t -d -i {network} --name {service} --volume ~/vehicle-datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port}'.format(
+                    command='mkdir -p ~/vehicle-datasets; docker rm -f {service}; docker run -t -d -i {network} --name {service} --volume ~/vehicle-datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port} --directory {directory}'.format(
                         service=service,
                         network=network,
-                        port=port
+                        port=port,
+                        directory=dataset_base_directory
                     ),
                     username=pi_username,
                     hostname=pi_hostname,
