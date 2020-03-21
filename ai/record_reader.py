@@ -211,7 +211,7 @@ class RecordReader(object):
                 contents = json.load(f)
 
             # Extract file contents
-            angle = contents['user/angle']
+            angle = self.get_user_value(contents=contents, value_type='angle')
             image_path = self.image_path_from_label_path(label_path)
 
             # Append the pair
@@ -605,6 +605,34 @@ class RecordReader(object):
         image_path = join(folder_path, image_file)
         return image_path
 
+    def get_user_value(self, contents, value_type):
+        """
+        Maintains backwards compatibility with older datasets
+        that support modular names of user-specified commands
+        and makes it easier to support multiple kinds of user
+        sources (e.g., keypad, phone) instead of just ps3
+
+        Parameters
+        ----------
+        contents: dict
+            Data that hopefully has some kind of user input
+            data
+        value_type: str
+            Must be either "angle" or "throttle"
+
+        Returns
+        -------
+        user_value: float
+            The value of the angle or throttle
+        """
+        assert(value_type in ['angle', 'throttle'])
+        if f'ps3_controller/{value_type}' in contents:
+            return contents[f'ps3_controller/{value_type}']
+        elif f'user/{value_type}' in contents:
+            return contents[f'user/{value_type}']
+        else:
+            return None
+
     # Read both labels and image data.
     # This is written as a function so that it can
     # be parallelized in a map for speed
@@ -615,8 +643,8 @@ class RecordReader(object):
             contents = json.load(f)
 
         # Extract file contents
-        angle = contents['user/angle']
-        throttle = contents['user/throttle']
+        angle = self.get_user_value(contents=contents, value_type='angle')
+        throttle = self.get_user_value(contents=contents, value_type='throttle')
         image_path = self.image_path_from_label_path(label_path)
 
         # Read image. OpenCV interprets 1 as RGB
