@@ -1232,6 +1232,11 @@ class DeleteLaptopDataset(tornado.web.RequestHandler):
         self.application.record_reader.delete_dataset(
             dataset_name=dataset_name,
         )
+        execute_sql(
+            host=None,
+            sql=f"BEGIN; DELETE FROM records WHERE dataset = '{dataset_name}'; COMMIT;",
+            postgres_pool=self.application.postgres_pool
+        )
         return {}
 
     @tornado.gen.coroutine
