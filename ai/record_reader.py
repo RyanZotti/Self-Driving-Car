@@ -292,16 +292,12 @@ class RecordReader(object):
         # to datasets. Assumes dataset is not elsewhere in the file path
         self.folders = [folder for folder in self.folders if 'dataset' in folder]
 
-    def write_new_record_to_db(self,dataset_name, record_id, angle, throttle):
-        dataset_path = join(self.base_directory, dataset_name)
-        image_file = '{record_id}_cam-image_array_.png'.format(
-            record_id=record_id
-        )
-        image_path = join(dataset_path, image_file)
-        label_file = 'record_{id}.json'.format(
-            id=record_id
-        )
-        label_path = join(dataset_path, label_file)
+    def write_new_record_to_db(self,dataset_name, record_id, angle, throttle, label_file_path):
+        with open(label_file_path, 'r') as f:
+            contents = json.load(f)
+        image_file_name = self.get_image_file_name(contents=contents)
+        dataset_path = dirname(label_file_path)
+        image_path = join(dataset_path, image_file_name)
         sql_query = '''
             BEGIN;
             INSERT INTO records (
@@ -324,7 +320,7 @@ class RecordReader(object):
         '''.format(
             dataset=dataset_name,
             record_id=record_id,
-            label_path=label_path,
+            label_path=label_file_path,
             image_path=image_path,
             angle=angle,
             throttle=throttle
@@ -587,11 +583,30 @@ class RecordReader(object):
             record_id=record_id))
         return image_path
 
+    def get_image_path_from_db(self, dataset_name, record_id):
+        """
+        Gets the image path from the Postgres database. Probably not
+        helpful if you're importing a dataset and the dataset therefore
+        isn't already in the database. This is helpful when you're
+        consuming the image later, for example during review
+        """
+        sql = f"""
+            SELECT
+                image_path
+            FROM records
+            WHERE
+                dataset = '{dataset_name}'
+                AND record_id = {record_id}
+        """
+        rows = get_sql_rows(host=None, sql=sql, postgres_pool=self.postgres_pool)
+        if len(rows) > 0:
+            return rows[0]['image_path']
+        else:
+            return None
+
     # Used by the editor API
     def get_image(self,dataset_name,record_id):
-        dataset_path = join(self.base_directory, dataset_name)
-        image_path = join(dataset_path,'{record_id}_cam-image_array_.png'.format(
-            record_id=record_id))
+        image_path = self.get_image_path_from_db(dataset_name=dataset_name, record_id=record_id)
         frame = cv2.imread(image_path)
         return frame
 
@@ -600,7 +615,7 @@ class RecordReader(object):
         # Parse JSON file
         with open(label_path, 'r') as f:
             contents = json.load(f)
-        image_file = self.get_image_file_name(self, contents=contents)
+        image_file = self.get_image_file_name(contents=contents)
         folder_path = dirname(label_path)
         image_path = join(folder_path, image_file)
         return image_path

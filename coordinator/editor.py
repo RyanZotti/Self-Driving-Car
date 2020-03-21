@@ -1337,7 +1337,8 @@ class TransferDatasetFromPiToLaptop(tornado.web.RequestHandler):
                 dataset_name=dataset_name,
                 record_id=record_id,
                 angle=angle,
-                throttle=throttle
+                throttle=throttle,
+                label_file_path=file_path
             )
 
         # Remove the job from the jobs table, which signifies completion
