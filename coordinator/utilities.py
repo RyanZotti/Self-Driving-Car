@@ -788,7 +788,7 @@ async def start_service_if_ready(
         aiopg_pool=aiopg_pool
     )
 
-    if status.lower() == 'ready-to-start':
+    if status.lower() in ['ready-to-start', 'unhealthy']:
         """
         The benefit of saving all of the Docker commands as code is that
         I will no longer need to update a bunch of documentation references
