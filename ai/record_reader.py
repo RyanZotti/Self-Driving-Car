@@ -600,7 +600,7 @@ class RecordReader(object):
         # Parse JSON file
         with open(label_path, 'r') as f:
             contents = json.load(f)
-        image_file = contents['cam/image_array']
+        image_file = self.get_image_file_name(self, contents=contents)
         folder_path = dirname(label_path)
         image_path = join(folder_path, image_file)
         return image_path
@@ -630,6 +630,29 @@ class RecordReader(object):
             return contents[f'ps3_controller/{value_type}']
         elif f'user/{value_type}' in contents:
             return contents[f'user/{value_type}']
+        else:
+            return None
+
+    def get_image_file_name(self, contents):
+        """
+        Maintains backwards compatibility with older datasets.
+        The old version was called 'cam/image_array', and the
+        new one is called 'camera/image_array'
+
+        Parameters
+        ----------
+        contents: dict
+            Data that hopefully has an image file name
+
+        Returns
+        -------
+        image_file: str
+            Example: 5_camera-image_array_.png
+        """
+        if 'cam/image_array' in contents:
+            return contents['cam/image_array']
+        elif 'camera/image_array' in contents:
+            return contents['camera/image_array']
         else:
             return None
 
