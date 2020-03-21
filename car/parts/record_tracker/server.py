@@ -350,6 +350,14 @@ class SetDatasetBaseDirectory(tornado.web.RequestHandler):
     """
     Updates the directory that will contain all of the
     dataset folders
+
+    WARNING:
+    I realized after writing this API that I should never
+    use this endpoint because the Docker host volume is
+    mounted to a static container location, so if you write
+    to a different location in the container the host will
+    never see the records and when the container eventually
+    dies it will be as if you never recorded anything
     """
     def post(self):
         json_input = tornado.escape.json_decode(self.request.body)
@@ -381,6 +389,14 @@ class GetDatasetBaseDirectory(tornado.web.RequestHandler):
     """
     Returns the directory that contains all of the dataset
     folders
+
+    WARNING:
+    I realized after writing this API that I should never
+    use this endpoint because the Docker host volume is
+    mounted to a static container location, so if you write
+    to a different location in the container the host will
+    never see the records and when the container eventually
+    dies it will be as if you never recorded anything
     """
     def get(self):
         self.write({'directory': self.application.dataset_base_directory})
@@ -424,10 +440,22 @@ if __name__ == "__main__":
         help="Server port to use",
         default=8093
     )
+
+    """
+    It's important that you leave the default as ~/vehicle-datasets so
+    that you have compatibility between running in a container and
+    running it out of a container during local development on your
+    laptop. You don't ever want to change the path in the container
+    because that gets mapped to a static path on the Docker host file
+    system, however, ideally the same path would exist on the laptop so
+    that you don't have ever change the hardcoded path during local
+    development. The best compromise is to use the home directory, at
+    ~, since that symbol is recognized on both systems
+    """
     ap.add_argument(
         "--directory",
         required=False,
-        help="Directory for all datesets. Can be updated via API too",
+        help="This should never change because it points to a static path in the Docker container",
         default='~/vehicle-datasets'
     )
     args = vars(ap.parse_args())

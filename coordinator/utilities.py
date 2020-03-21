@@ -836,7 +836,7 @@ async def start_service_if_ready(
                     host=postgres_host, field_name='pi datasets directory', aiopg_pool=aiopg_pool
                 )
                 await execute_pi_command_aio(
-                    command='mkdir -p ~/vehicle-datasets; docker rm -f {service}; docker run -t -d -i {network} --name {service} --volume ~/vehicle-datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port} --directory {directory}'.format(
+                    command='mkdir -p ~/vehicle-datasets; docker rm -f {service}; docker run -t -d -i {network} --name {service} --volume {directory}:/home/pi/vehicle-datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port} --directory /home/pi/vehicle-datasets'.format(
                         service=service,
                         network=network,
                         port=port,
@@ -848,7 +848,7 @@ async def start_service_if_ready(
                 )
             else:
                 await shell_command_aio(
-                    command='mkdir -p ~/vehicle-datasets; docker rm -f {service}; docker run -t -d -i {network} --name {service} --volume ~/vehicle-datasets:/datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port}'.format(
+                    command='mkdir -p ~/vehicle-datasets; docker rm -f {service}; docker run -t -d -i {network} --name {service} --volume ~/vehicle-datasets:/home/pi/vehicle-datasets ryanzotti/record-tracker:latest python3 /root/server.py --port {port}'.format(
                         service=service,
                         network=network,
                         port=port
