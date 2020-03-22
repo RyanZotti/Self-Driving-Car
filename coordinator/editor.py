@@ -157,14 +157,12 @@ class Memory(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
     @tornado.concurrent.run_on_executor
-    def get_memory(self, json_input):
+    def get_memory(self):
         seconds = 3.0
-        host = json_input['host']
-        port = int(json_input['port'])
         # TODO: Remove hardcoded port
         endpoint = 'http://{host}:{port}/output'.format(
-           host=host,
-           port=port
+           host=self.application.scheduler.service_host,
+           port=self.application.ports['memory']
         )
         request = requests.get(
            endpoint,
@@ -176,7 +174,7 @@ class Memory(tornado.web.RequestHandler):
     @tornado.gen.coroutine
     def post(self):
         json_input = tornado.escape.json_decode(self.request.body)
-        result = yield self.get_memory(json_input=json_input)
+        result = yield self.get_memory()
         self.write(result)
 
 
@@ -466,7 +464,8 @@ class ReadPiField(tornado.web.RequestHandler):
         column_name = json_input['column_name']
         column_value = read_pi_setting(
             host=self.application.postgres_host,
-            field_name=column_name
+            field_name=column_name,
+            postgres_pool=self.application.postgres_pool
         )
         result = {
             'column_value':column_value
@@ -2581,8 +2580,8 @@ async def main():
     app.postgres_host = postgres_host
 
     app.postgres_pool = psycopg2.pool.ThreadedConnectionPool(
-        minconn=25,
-        maxconn=25,
+        minconn=10,
+        maxconn=10,
         user="postgres",
         password="",
         host=app.postgres_host,

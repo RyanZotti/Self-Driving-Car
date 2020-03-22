@@ -65,7 +65,7 @@ class RecordReader(object):
         self.base_directory = base_directory
         self.postgres_host = postgres_host
         self.postgres_pool = psycopg2.pool.ThreadedConnectionPool(
-            minconn=1,
+            minconn=10,
             maxconn=10,
             user="postgres",
             password="",
