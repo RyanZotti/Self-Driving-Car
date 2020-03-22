@@ -151,14 +151,6 @@ function deleteDataset(machine_type, dataset) {
     });
 }
 
-function videoHealthCheck() {
-    return new Promise(function(resolve, reject) {
-        $.post('/video-health-check', function(response){
-            resolve(response['is_running']);
-        });
-    });
-}
-
 async function addDatasetReviewRows() {
     await refreshRecordReader();
     const bulkActionRemoveFlagsButton = document.querySelector('button#remove-flags-bulk-action');

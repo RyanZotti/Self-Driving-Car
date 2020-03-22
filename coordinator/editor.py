@@ -1833,30 +1833,6 @@ class StartCarService(tornado.web.RequestHandler):
         self.write({})
 
 
-# Checks if ffserver and ffmpeg are running. Assumes
-# ffmpeg can't run w/o ffserver, so only bothers to
-# check ffmpeg
-class VideoHealthCheck(tornado.web.RequestHandler):
-
-    executor = ThreadPoolExecutor(5)
-
-    @tornado.concurrent.run_on_executor
-    def is_video_available(self):
-        try:
-            # Check if ffmpeg is accepting connections
-            # TODO: Remove hard-coded IP
-            ip = 'ryanzotti.local'
-            stream = urllib.request.urlopen('http://{ip}:8091/video'.format(ip=self.application.pi_host))
-            return {'is_running': True}
-        except:
-            return {'is_running': False}
-
-    @tornado.gen.coroutine
-    def post(self):
-        result = yield self.is_video_available()
-        self.write(result)
-
-
 class PiHealthCheck(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -2476,9 +2452,7 @@ def make_app():
         (r"/user-labels", UserLabelsAPI),
         (r"/image", ImageAPI),
         (r"/video", VideoAPI),
-        (r"/video-no-args", VideoAPINoAargs),
         (r"/new-dataset-name", NewDatasetName),
-        (r"/video-health-check", VideoHealthCheck),
         (r"/dataset-record-ids",DatasetRecordIdsAPI),
         (r"/dataset-record-ids-filesystem", DatasetRecordIdsAPIFileSystem),
         (r"/deployment-health", DeploymentHealth),
