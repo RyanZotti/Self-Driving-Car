@@ -2399,7 +2399,13 @@ class GetPiDatasetName(tornado.web.RequestHandler):
             async with session.get(endpoint) as response:
                 result = await response.json()
                 dataset = result['dataset']
-                self.write({'dataset': dataset})
+                dataset_id = self.application.record_reader.get_dataset_id_from_dataset_name(
+                    dataset_name=dataset
+                )
+                self.write({
+                    'dataset': dataset,
+                    'dataset_id': dataset_id
+                })
 
 class CreateNewDataset(tornado.web.RequestHandler):
 

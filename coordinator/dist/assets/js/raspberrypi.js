@@ -438,21 +438,18 @@ async function setServiceHost(){
     }
 }
 
-function getPiDatasetName() {
+function getPiDataset() {
     /*
     Returns the name of the dataset that you would end up
     writing to if you tried to write a record
     */
     return new Promise(function(resolve, reject) {
         $.ajax({
-            method: 'POST',
+            method: 'GET',
             url: '/get-pi-dataset-name',
-            timeout: 1000, // milliseconds,
+            timeout: 3000, // milliseconds,
             success: function(response) {
-                resolve(response['dataset']);
-            },
-            error: function(){
-                resolve(false);
+                resolve(response);
             }
         });
     });
@@ -471,6 +468,7 @@ async function checkDashboardVideoReadiness(){
     pollVehicleAndUpdateUI();
     dashboardVideoWhileOffInterval = setInterval(async function(){
         const videoSpinner = document.querySelector("div#video-loader");
+        const applyBrakeButton = document.querySelector("span#applyBrakeButton");
         const metricsHeader = document.querySelector('div#drive-metrics-header');
         const metricsGraphics = document.querySelector('div#drive-metrics-graphics');
         const metricsText = document.querySelector('div#drive-metrics-text');
@@ -486,6 +484,7 @@ async function checkDashboardVideoReadiness(){
                 metricsHeader.style.display = 'flex';
                 metricsGraphics.style.display = 'flex';
                 metricsText.style.display = 'flex';
+                applyBrakeButton.style.display = 'flex';
             }
         } else {
             // Turn spinner back on and hide the video content
@@ -493,6 +492,7 @@ async function checkDashboardVideoReadiness(){
             metricsHeader.style.display = 'none';
             metricsGraphics.style.display = 'none';
             metricsText.style.display = 'none';
+            applyBrakeButton.style.display = 'none';
             removeVideoSafely();
         }
     }, 1000);
@@ -845,8 +845,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             provides it is up and running
             */
             if (status == 'healthy'){
-                recordingDataset = await getPiDatasetName();
-                const datasetId = await getDatasetIdFromDataset(recordingDataset);
+                piDataset = await getPiDataset();
+                datasetId = piDataset['dataset_id']
                 const driveVehicleHeaderDatasetId = document.querySelector('span#driveVehicleHeaderDatasetId')
                 driveVehicleHeaderDatasetId.textContent = datasetId;
             }
@@ -887,7 +887,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     */
     const serviceHostInterval = setInterval(async function(){
         serviceHost = await setServiceHost();
-    }, 1000);
+    }, 3000);
 
     // Update Raspberry Pi statues
     const piHealthCheckTime = setInterval(async function(){
