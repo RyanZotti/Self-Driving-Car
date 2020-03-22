@@ -1,4 +1,5 @@
 import aiopg
+
 import cv2
 from datetime import datetime
 import subprocess
@@ -6,6 +7,7 @@ from os import listdir
 import json
 import numpy as np
 import os
+from functools import partial
 import psycopg2
 import psycopg2.extras
 import boto3

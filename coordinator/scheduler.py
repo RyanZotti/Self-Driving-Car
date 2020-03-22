@@ -1,4 +1,5 @@
 from aiohttp import ClientSession, ClientTimeout
+import concurrent
 import datetime
 
 from coordinator.utilities import *
@@ -61,6 +62,10 @@ class Scheduler(object):
         self.pi_hostname = None
         self.pi_username = None
         self.pi_password = None
+
+        # These two variables are used to track if the video cache should be on or not
+        self.raw_dash_frame = None
+        self.is_video_cache_loop_running = False
 
     async def refresh_service_host(self):
         """
@@ -125,13 +130,85 @@ class Scheduler(object):
 
             await asyncio.sleep(self.interval_seconds)
 
+    async def manage_video_cache_loop(self):
+        """
+        Basically this runs in a loop to constantly check if the video
+        caching loop needs to be restarted
+        """
+        while True:
+            video_status = await get_service_status(
+                postgres_host=self.postgres_host,
+                service_host=self.service_host,
+                service='video',
+                aiopg_pool=self.aiopg_pool
+            )
+            if video_status == 'healthy':
+                if self.is_video_cache_loop_running is False:
+                    self.is_video_cache_loop_running = True
+                    await asyncio.create_task(self.start_live_video_stream_aio())
+            else:
+                if self.is_video_cache_loop_running is True:
+                    self.is_video_cache_loop_running = False
+            await asyncio.sleep(self.interval_seconds * 5)
+
+    async def start_live_video_stream_aio(self):
+        video_port = self.get_services()['video']['port']
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(
+                pool, partial(self.get_video, self.service_host, port=video_port)
+            )
+
+    # This is used to stream video live for the self-driving sessions
+    # The syntax is super ugly and I don't understand how it works
+    # This is where I got this code from here, which comes with an explanation:
+    # https://stackoverflow.com/questions/21702477/how-to-parse-mjpeg-http-stream-from-ip-camera
+    def get_video(self, ip, port):
+        stream = urllib.request.urlopen('http://{ip}:{port}/video'.format(ip=ip, port=port))
+        opencv_bytes = bytes()
+        """
+        When the video is streaming well, about 1 of every 15
+        iterations of this loop produces an image. When the
+        video is killed and there is nothing to show, the else
+        part of the loop gets called consecutively indefinitely.
+        I can avoid the zombie threads that take over my entire
+        Tornado server (99% of CPU) if I check a consecutive
+        failure count exceeding some arbitrarily high threshold
+        """
+        count_threshold = 50
+        consecutive_no_image_count = 0
+        was_available = False
+        while self.is_video_cache_loop_running:
+            opencv_bytes += stream.read(1024)
+            a = opencv_bytes.find(b'\xff\xd8')
+            b = opencv_bytes.find(b'\xff\xd9')
+            if a != -1 and b != -1:
+                jpg = opencv_bytes[a:b + 2]
+                opencv_bytes = opencv_bytes[b + 2:]
+                frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
+                if cv2.waitKey(1) == 27:
+                    exit(0)
+                consecutive_no_image_count = 0
+                was_available = True
+                self.raw_dash_frame = frame
+            else:
+                if was_available:
+                    consecutive_no_image_count = 1
+                else:
+                    consecutive_no_image_count += 1
+                if consecutive_no_image_count > count_threshold:
+                    self.is_video_cache_loop_running = False
+                was_available = False
+        stream.close()
+
     async def start(self):
         """
         This is the main entry point to the scheduler
         """
         postgres_host = self.postgres_host
         connection_string = f"host='{postgres_host}' dbname='autonomous_vehicle' user='postgres' password='' port=5432"
-        self.aiopg_pool = await aiopg.create_pool(connection_string)
+
+        self.aiopg_pool = await aiopg.create_pool(connection_string, minsize=25, maxsize=25)
 
         self.is_local_test = await read_toggle_aio(
             postgres_host=self.postgres_host,
@@ -167,6 +244,9 @@ class Scheduler(object):
 
         # Refresh the Pi's credentials
         asyncio.create_task(self.refresh_pi_credentials_loop())
+
+        # Set up the video cache loop checker
+        asyncio.create_task(self.manage_video_cache_loop())
 
         services = self.get_services()
         manage_service_tasks = []

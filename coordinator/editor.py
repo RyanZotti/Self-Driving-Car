@@ -1557,12 +1557,8 @@ class VideoAPI(tornado.web.RequestHandler):
     Serves a MJPEG of the images posted from the vehicle.
     '''
 
-    @tornado.web.asynchronous
     @tornado.gen.coroutine
     def get(self):
-
-        host = self.get_argument("host")
-        port = int(self.get_argument("port"))
 
         ioloop = tornado.ioloop.IOLoop.current()
         self.set_header("Content-type", "multipart/x-mixed-replace;boundary=--boundarydonotcross")
@@ -1570,7 +1566,7 @@ class VideoAPI(tornado.web.RequestHandler):
         self.served_image_timestamp = time.time()
         my_boundary = "--boundarydonotcross"
 
-        for frame in live_video_stream(host,port=port):
+        while True:
 
             interval = .1
             if self.served_image_timestamp + interval < time.time():
@@ -1578,75 +1574,7 @@ class VideoAPI(tornado.web.RequestHandler):
                 # Can't serve the OpenCV numpy array
                 # Tornando: "... only accepts bytes, unicode, and dict objects" (from Tornado error Traceback)
                 # The result of cv2.imencode is a tuple like: (True, some_image), but I have no idea what True refers to
-                img = cv2.imencode('.jpg', frame)[1].tostring()
-
-                # I have no idea what these lines do, but other people seem to use them, they
-                # came with this copied code and I don't want to break something by removing
-                self.write(my_boundary)
-                self.write("Content-type: image/jpeg\r\n")
-                self.write("Content-length: %s\r\n\r\n" % len(img))
-
-                # Serve the image
-                self.write(img)
-
-                self.served_image_timestamp = time.time()
-                yield tornado.gen.Task(self.flush)
-            else:
-                yield tornado.gen.Task(ioloop.add_timeout, ioloop.time() + interval)
-
-
-class VideoAPINoAargs(tornado.web.RequestHandler):
-    '''
-    Serves a MJPEG of the images posted from the vehicle.
-    '''
-
-    @tornado.web.asynchronous
-    @tornado.gen.coroutine
-    def get(self):
-
-        """
-        This does a decent job explaining what the "boundary" means
-        https://blog.miguelgrinberg.com/post/video-streaming-with-flask
-
-            HTTP/1.1 200 OK
-            Content-Type: multipart/x-mixed-replace; boundary=frame
-
-            --frame
-            Content-Type: image/jpeg
-
-            <jpeg data here>
-            --frame
-            Content-Type: image/jpeg
-
-            <jpeg data here>
-            ...
-        """
-
-        ioloop = tornado.ioloop.IOLoop.current()
-        self.set_header("Content-type", "multipart/x-mixed-replace;boundary=--boundarydonotcross")
-
-        self.served_image_timestamp = time.time()
-        my_boundary = "--boundarydonotcross"
-
-        i = 0
-
-        # TODO: Get this hardcoded port from the scheduler, which should get it from the DB
-        for frame in live_video_stream(ip=self.application.scheduler.service_host,port=8091):
-
-            '''
-            i+= 1
-            print(i)
-            if i > 10:
-                break
-            '''
-
-            interval = .1
-            if self.served_image_timestamp + interval < time.time():
-
-                # Can't serve the OpenCV numpy array
-                # Tornando: "... only accepts bytes, unicode, and dict objects" (from Tornado error Traceback)
-                # The result of cv2.imencode is a tuple like: (True, some_image), but I have no idea what True refers to
-                img = cv2.imencode('.jpg', frame)[1].tostring()
+                img = cv2.imencode('.jpg', self.application.scheduler.raw_dash_frame)[1].tostring()
 
                 # I have no idea what these lines do, but other people seem to use them, they
                 # came with this copied code and I don't want to break something by removing
