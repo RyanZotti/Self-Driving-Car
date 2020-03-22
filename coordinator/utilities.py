@@ -3,6 +3,7 @@ import cv2
 from datetime import datetime
 import subprocess
 from os import listdir
+import json
 import numpy as np
 import os
 import psycopg2
@@ -11,6 +12,7 @@ import boto3
 from pathlib import Path
 import re
 import urllib.request
+import requests
 import tensorflow as tf
 import asyncio, asyncssh, sys
 import warnings
@@ -1275,25 +1277,6 @@ def is_pi_healthy(command, postgres_host, is_printable=False, return_first_line=
         return False
 
 
-def list_pi_datasets(datasets_dir, postgres_host):
-    command = 'ls {datasets_dir}'.format(
-        datasets_dir=datasets_dir
-    )
-    std_out = execute_pi_command(
-        command=command,
-        postgres_host=postgres_host
-    )
-    datasets = []
-    if std_out is not None:
-        for line in std_out.split(os.linesep):
-            """
-            There is a newline at the end of the stdout that you
-            can avoid adding by checking the length of the split
-            """
-            if len(line) > 0:
-                datasets.append(line)
-    return datasets
-
 def sftp(hostname, username, password, remotepath, localpath, sftp_type):
     assert sftp_type in ['get', 'put']
     async def run_client():
@@ -1600,7 +1583,10 @@ def dataset_import_percent(db_record_count, is_job_available, laptop_file_count,
             return -1
 
 
-def get_pi_dataset_import_stats(pi_datasets_dir, laptop_dataset_dir, postgres_host, session_id):
+def get_pi_dataset_import_stats(
+    pi_datasets_dir, laptop_dataset_dir, postgres_host, session_id,
+    service_host, record_tracker_port
+):
 
     """
     Used to report JSON file counts from each of the Pi dataset
@@ -1624,6 +1610,22 @@ def get_pi_dataset_import_stats(pi_datasets_dir, laptop_dataset_dir, postgres_ho
     session_id: string
         The random uuid assigned to a given run of editor.py. This
         is used to identify active jobs from stale jobs
+    service_host: str
+        The host of the record-tracker service on the Pi. I use
+        this to check if the record-tracker service is up so that
+        I don't show live recording datasets. The record-tracker
+        service is designed to always point to a dataset while its
+        on (and it creates a new dataset when it starts up), so
+        I want to avoid a situation where all of the parts get
+        turned on, I go to the Pi datasets / import page and see a
+        dataset with 0 records and think it's old and delete it,
+        only to get an error when I eventually start recording and
+        the record-tracker service fails because its folder has
+        been removed
+    record_tracker_port: int
+        The port of the record-tracker service on the Pi. See the
+        description of service_host for an explanation of why this
+        is needed
 
     Returns
     ----------
@@ -1717,9 +1719,44 @@ def get_pi_dataset_import_stats(pi_datasets_dir, laptop_dataset_dir, postgres_ho
         stdout=pi_stdout
     )
 
+    """
+    I use this to check if the record-tracker service is up so that
+    I don't show live recording datasets. The record-tracker service
+    is designed to always point to a dataset while its on (and it
+    creates a new dataset when it starts up), so I want to avoid a
+    situation where all of the parts get turned on, I go to the Pi
+    datasets / import page and see a dataset with 0 records and think
+    it's old and delete it, only to get an error when I eventually
+    start recording and the record-tracker service fails because its
+    folder has been removed.
+    """
+    live_dataset = ''
+    timeout_seconds = 1.0
+    endpoint = 'http://{host}:{port}/get-current-dataset-name'.format(
+        host=service_host,
+        port=record_tracker_port
+    )
+    try:
+        response = requests.get(
+            endpoint,
+            timeout=timeout_seconds
+        )
+        print(response.content)
+        if str(response.status_code)[0] == '2':
+            live_dataset = json.loads(response.text)['dataset']
+    except:
+        """
+        If the record-tracker service isn't available, then we don't need
+        to worry about deleting an actively recorded dataset, so no need
+        to remove anything from the datasets list
+        """
+        pass
+
     # Join everything together
     records = []
     for dataset_name, metadata in pi_metadata.items():
+        if dataset_name == live_dataset:
+            continue  # Don't show datasets that could still be written to
         laptop_file_count = 0
         if dataset_name in laptop_metadata:
             laptop_file_count = laptop_metadata[dataset_name]['count']

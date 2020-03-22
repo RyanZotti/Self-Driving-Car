@@ -1464,7 +1464,9 @@ class GetImportRows(tornado.web.RequestHandler):
             pi_datasets_dir=self.application.pi_datasets_dir,
             laptop_dataset_dir=self.application.laptop_datasets_dir,
             postgres_host=self.application.postgres_host,
-            session_id=self.application.session_id
+            session_id=self.application.session_id,
+            service_host=self.application.scheduler.service_host,
+            record_tracker_port=self.application.ports['record-tracker']
         )
         return reocrds
 
@@ -1472,31 +1474,6 @@ class GetImportRows(tornado.web.RequestHandler):
     def get(self):
         records = yield self.get_import_datasets()
         self.write({'records':records})
-
-
-class ListPiDatasets(tornado.web.RequestHandler):
-
-    executor = ThreadPoolExecutor(5)
-
-    @tornado.concurrent.run_on_executor
-    def list_datasets(self):
-        datasets_dir = read_pi_setting(
-            host=self.application.postgres_host,
-            field_name='pi datasets directory'
-        )
-        dataset_names = list_pi_datasets(
-            datasets_dir=datasets_dir,
-            postgres_host=self.application.postgres_host
-        )
-        results = {
-            'datasets': dataset_names
-        }
-        return results
-
-    @tornado.gen.coroutine
-    def get(self):
-        results = yield self.list_datasets()
-        self.write(results)
 
 
 class ListReviewDatasetsFileSystem(tornado.web.RequestHandler):
