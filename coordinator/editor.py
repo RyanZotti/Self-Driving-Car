@@ -443,7 +443,8 @@ class WritePiField(tornado.web.RequestHandler):
         )
         self.application.laptop_datasets_dir = read_pi_setting(
             host=self.application.postgres_host,
-            field_name='laptop datasets directory'
+            field_name='laptop datasets directory',
+            postgres_pool=self.application.postgres_pool
         )
         self.application.pi_datasets_dir = read_pi_setting(
             host=self.application.postgres_host,
@@ -820,7 +821,8 @@ class DeployModel(tornado.web.RequestHandler):
         device = json_input['device']
         base_model_directory = read_pi_setting(
             host=self.application.postgres_host,
-            field_name='models_location_laptop'
+            field_name='models_location_laptop',
+            postgres_pool=self.application.postgres_pool
         )
 
         # TODO: Don't hardcode any of these things
@@ -893,27 +895,32 @@ class DeployModel(tornado.web.RequestHandler):
         elif device.lower() == 'pi':
             pi_hostname = read_pi_setting(
                 host=self.application.postgres_host,
-                field_name='hostname'
+                field_name='hostname',
+                postgres_pool=self.application.postgres_pool
             )
             username = read_pi_setting(
                 host=self.application.postgres_host,
-                field_name='username'
+                field_name='username',
+                postgres_pool=self.application.postgres_pool
             )
             password = read_pi_setting(
                 host=self.application.postgres_host,
-                field_name='password'
+                field_name='password',
+                postgres_pool=self.application.postgres_pool
             )
             model_base_directory_laptop = read_pi_setting(
                 host=self.application.postgres_host,
-                field_name='models_location_laptop'
+                field_name='models_location_laptop',
+                postgres_pool=self.application.postgres_pool
             )
             model_base_directory_pi = read_pi_setting(
                 host=self.application.postgres_host,
-                field_name='models_location_pi'
+                field_name='models_location_pi',
+                postgres_pool=self.application.postgres_pool
             )
             from_path = '{model_base_directory}/{model_id}'.format(
                 model_base_directory=model_base_directory_laptop,
-                model_id=model_id
+                model_id=model_id,
             )
 
             to_path = '{model_base_directory}'.format(
@@ -1106,7 +1113,8 @@ class DeleteModel(tornado.web.RequestHandler):
         # Delete the model folder and files
         base_model_directory = read_pi_setting(
             host=self.application.postgres_host,
-            field_name='models_location_laptop'
+            field_name='models_location_laptop',
+            postgres_pool=self.application.postgres_pool
         )
         full_path = os.path.join(base_model_directory,str(model_id))
         rmtree(full_path)
@@ -1255,7 +1263,8 @@ class DeletePiDataset(tornado.web.RequestHandler):
         dataset_name = json_input['dataset']
         datasets_dir = read_pi_setting(
             host=self.application.postgres_host,
-            field_name='pi datasets directory'
+            field_name='pi datasets directory',
+            postgres_pool=self.application.postgres_pool
         )
         command = 'sudo rm -rf {datasets_dir}/{dataset_name}'.format(
             datasets_dir=datasets_dir,
@@ -1284,11 +1293,13 @@ class TransferDatasetFromPiToLaptop(tornado.web.RequestHandler):
         dataset_name = json_input['dataset']
         datasets_dir = read_pi_setting(
             host=self.application.postgres_host,
-            field_name='pi datasets directory'
+            field_name='pi datasets directory',
+            postgres_pool=self.application.postgres_pool
         )
         pi_hostname = read_pi_setting(
             host=self.application.postgres_host,
-            field_name='hostname'
+            field_name='hostname',
+            postgres_pool=self.application.postgres_pool
         )
         username = read_pi_setting(
             host=self.application.postgres_host,
@@ -1296,7 +1307,8 @@ class TransferDatasetFromPiToLaptop(tornado.web.RequestHandler):
         )
         password = read_pi_setting(
             host=self.application.postgres_host,
-            field_name='password'
+            field_name='password',
+            postgres_pool=self.application.postgres_pool
         )
         laptop_datasets_directory = read_pi_setting(
             host=self.application.postgres_host,
@@ -1935,11 +1947,13 @@ class ResumeTraining(tornado.web.RequestHandler):
         model_id = json_input['model_id']
         datasets_path = read_pi_setting(
             host=self.application.postgres_host,
-            field_name='laptop datasets directory'
+            field_name='laptop datasets directory',
+            postgres_pool=self.application.postgres_pool
         )
         model_base_directory = read_pi_setting(
             host=self.application.postgres_host,
-            field_name='models_location_laptop'
+            field_name='models_location_laptop',
+            postgres_pool=self.application.postgres_pool
         )
         resume_training(
             postgres_host=self.application.postgres_host,
@@ -1980,11 +1994,13 @@ class TrainNewModel(tornado.web.RequestHandler):
     def train_new_model(self, json_input):
         data_path = read_pi_setting(
             host=self.application.postgres_host,
-            field_name='laptop datasets directory'
+            field_name='laptop datasets directory',
+            postgres_pool=self.application.postgres_pool
         )
         model_base_directory = read_pi_setting(
             host=self.application.postgres_host,
-            field_name='models_location_laptop'
+            field_name='models_location_laptop',
+            postgres_pool=self.application.postgres_pool
         )
         train_new_model(
             postgres_host=self.application.postgres_host,
@@ -2565,7 +2581,7 @@ async def main():
     app.postgres_host = postgres_host
 
     app.postgres_pool = psycopg2.pool.ThreadedConnectionPool(
-        minconn=1,
+        minconn=25,
         maxconn=25,
         user="postgres",
         password="",
@@ -2618,11 +2634,13 @@ async def main():
     )
     app.laptop_datasets_dir = read_pi_setting(
         host=app.postgres_host,
-        field_name='laptop datasets directory'
+        field_name='laptop datasets directory',
+        postgres_pool=app.postgres_pool
     )
     app.pi_datasets_dir = read_pi_setting(
         host=app.postgres_host,
-        field_name='pi datasets directory'
+        field_name='pi datasets directory',
+        postgres_pool=app.postgres_pool
     )
 
     app.angle_only = args['angle_only']

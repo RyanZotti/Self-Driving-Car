@@ -1016,25 +1016,48 @@ async def start_service_if_ready(
     else:
         return
 
-def read_pi_setting(host, field_name):
-    connection, cursor = connect_to_postgres(host=host)
-    cursor.execute(
-        """
-        SELECT
-          field_value
-        FROM pi_settings
-        WHERE LOWER(field_name) LIKE LOWER('%{field_name}%')
-        ORDER BY event_ts DESC
-        LIMIT 1;
+
+def read_pi_setting(host, field_name, postgres_pool=None):
+
+    if postgres_pool:
+        connection = postgres_pool.getconn()
+        cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        sql = """
+            SELECT
+              field_value
+            FROM pi_settings
+            WHERE LOWER(field_name) LIKE LOWER('%{field_name}%')
+            ORDER BY event_ts DESC
+            LIMIT 1;
         """.format(
             field_name=field_name
         )
-    )
-    rows = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    if len(rows) > 0:
-        return rows[0]['field_value']
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        cursor.close()
+        # Use this method to release the connection object and send back to the connection pool
+        postgres_pool.putconn(connection)
+        if len(rows) > 0:
+            return rows[0]['field_value']
+    else:
+        connection, cursor = connect_to_postgres(host=host)
+        cursor.execute(
+            """
+            SELECT
+              field_value
+            FROM pi_settings
+            WHERE LOWER(field_name) LIKE LOWER('%{field_name}%')
+            ORDER BY event_ts DESC
+            LIMIT 1;
+            """.format(
+                field_name=field_name
+            )
+        )
+        rows = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        if len(rows) > 0:
+            return rows[0]['field_value']
 
 def stop_training():
     scripts = [
