@@ -1,0 +1,37 @@
+FROM raspbian/stretch:041518
+
+RUN apt-get update
+RUN apt-get install -y ffmpeg python3-pip unzip
+
+###############################################################
+##### Install OpenCV
+###############################################################
+
+# Install a bunch of opencv dependencies
+RUN apt-get update -y && apt-get install -y libjpeg-dev libtiff5-dev libjasper-dev libilmbase-dev libopenexr-dev libgstreamer1.0-dev libqtgui4 libqt4-test libatlas-base-dev
+
+# Install the binary, which takes < 30 seconds. Installing from source takes 4-5 hours
+RUN python3 -m pip install opencv-python
+
+###############################################################
+##### Install other dependencies
+###############################################################
+
+# Install Tensorflow
+RUN python3 -m pip install tensorflow==1.14.0
+
+# scipy is a dependency of Keras, if and if you don't install the binary
+# this way the default pip install tries to compile from source and it takes
+# 4+ hours
+RUN wget https://www.piwheels.org/simple/scipy/scipy-1.2.1-cp35-cp35m-linux_armv7l.whl#sha256=270be300233af556e6ee3f55a0ae237df0cb65ac85d47559010d7a9071f2e878
+RUN python3 -m pip install scipy-1.2.1-cp35-cp35m-linux_armv7l.whl
+
+# Install Tornado
+RUN python3 -m pip install tornado==5.1.1
+
+###############################################################
+##### Add application code
+###############################################################
+
+# Copy files at end to minimize iterative build time
+COPY ./ /root/ai/
