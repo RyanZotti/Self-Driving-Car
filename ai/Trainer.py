@@ -447,19 +447,20 @@ class ProgressCallBack(Callback):
         epoch : int
             The ID of the epoch. Starts at 0.
         logs: dict
-            Contains loss metrics about the epoch. Looks like this: {
-                'val_loss': 0.07307642698287964,
-                'val_mse': 0.07091525197029114,
-                'val_mae': 0.18278947472572327,
-                'loss': 0.10936613730630096,
-                'mse': 0.10936612,
-                'mae': 0.22850043
+            Contains loss metrics about the epoch. Looks like this
+            on Tensorflow 1.14: {
+                'val_loss': 0.18719840546449026,
+                'val_mean_squared_error': 0.18719840546449026,
+                'val_mean_absolute_error': 0.35986443360646564,
+                'loss': 0.1599808633327484,
+                'mean_squared_error': 0.1599808633327484,
+                'mean_absolute_error': 0.3124811053276062
             }
-        """
 
+        """
         self.epoch_id = epoch
-        train_mean_absolute_error = logs['mae']
-        validation_mean_absolute_error = logs['val_mae']
+        train_mean_absolute_error = logs['mean_absolute_error']
+        validation_mean_absolute_error = logs['val_mean_absolute_error']
         sql_query = '''
                 INSERT INTO epochs(model_id, epoch, train, validation)
                 VALUES ({model_id},{epoch},{train},{validation});
@@ -484,12 +485,13 @@ class ProgressCallBack(Callback):
         batch : int
             The ID of the batch. Starts at 0.
         logs: dict
-            Contains loss metrics about the training batch. Looks like this: {
+            Contains loss metrics about the training batch. Looks like this
+            in Tensorflow 1.14: {
                 'batch': 48,
                 'size': 50,
-                'loss': 0.12477378,
-                'mse': 0.11125242,
-                'mae': 0.22997361
+                'loss': 0.07812668,
+                'mean_squared_error': 0.07812668,
+                'mean_absolute_error': 0.19482332
             }
         """
 
