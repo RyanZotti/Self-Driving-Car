@@ -17,6 +17,7 @@ import urllib.request
 import requests
 import tensorflow as tf
 import asyncio, asyncssh, sys
+import traceback
 import warnings
 
 
@@ -773,10 +774,177 @@ async def stop_service_if_ready(
         ))
 
 
+async def start_model_service(
+    pi_hostname, pi_username, pi_password, host_port,
+    device, session_id, aiopg_pool
+):
+    """
+    I want to make this its own function so that I can call it
+    from the services page or from the ML page
+    """
+
+    sql_query = f"""
+        SELECT
+          deployments.model_id,
+          deployments.epoch_id,
+          models.scale,
+          models.crop
+        FROM deployments
+        JOIN models
+          ON deployments.model_id = models.model_id
+        WHERE LOWER(device) LIKE LOWER('%{device}%')
+        ORDER BY event_ts DESC
+        LIMIT 1;
+    """
+    rows = await get_sql_rows_aio(
+        host=None,
+        sql=sql_query,
+        aiopg_pool=aiopg_pool
+    )
+    first_row = rows[0]
+    model_id = first_row['model_id']
+    epoch_id = first_row['epoch_id']
+    scale = first_row['scale']
+    crop_percent = first_row['crop']
+
+    base_model_directory_laptop = await read_pi_setting_aio(
+        host=None,
+        field_name='models_location_laptop',
+        aiopg_pool=aiopg_pool
+    )
+
+    if device.lower() == 'laptop':
+
+        # Kill any currently running model API
+        try:
+            await shell_command_aio('docker rm -f laptop-predict')
+        except:
+            # Most likely means API is not up
+            print('Failed: docker rm -f laptop-predict')
+
+        # Run the command to start
+        command = f'''
+        docker run -i -t -d -p {host_port}:{host_port} \
+            --volume {base_model_directory_laptop}:/root/ai/models \
+            --name laptop-predict \
+            --network app_network \
+            ryanzotti/ai-laptop:latest \
+            python /root/ai/microservices/predict.py \
+                --port {host_port} \
+                --image_scale {scale} \
+                --model_base_directory /root/ai/models \
+                --angle_only y \
+                --crop_percent {crop_percent} \
+                --model_id {model_id} \
+                --epoch {epoch_id}
+        '''
+        await shell_command_aio(command)
+    elif device.lower() == 'pi':
+        model_base_directory_pi = await read_pi_setting_aio(
+            host=None,
+            field_name='models_location_pi',
+            aiopg_pool=aiopg_pool
+        )
+        from_path = '{model_base_directory}/{model_id}'.format(
+            model_base_directory=base_model_directory_laptop,
+            model_id=model_id,
+        )
+        to_path = '{model_base_directory}'.format(
+            model_base_directory=model_base_directory_pi
+        )
+
+        # Add to jobs table for tracking
+        await add_job_aio(
+            aiopg_pool=aiopg_pool,
+            session_id=session_id,
+            name='model transfer',
+            detail='Model ID: {model_id}'.format(model_id=model_id),
+            status='pending'
+        )
+
+        # Ensure the destination exists on the Pi or SFTP will fail
+        stdout = await execute_pi_command_aio(
+            command='mkdir -p {to_path}'.format(to_path=to_path),
+            is_printable=False,
+            username=pi_username, hostname=pi_hostname, password=pi_password
+        )
+
+        # Run the SFTP step
+        try:
+            await sftp_aio(
+                hostname=pi_hostname,
+                username=pi_username,
+                password=pi_password,
+                localpath=from_path,
+                remotepath=to_path,
+                sftp_type='put'
+            )
+        except:
+            print('Unable to SFTP the model {from_path} to {to_path}'.format(
+                from_path=from_path,
+                to_path=to_path
+            ))
+            traceback.print_exc()
+        finally:
+            # Remove the job from the jobs table, which signifies completion
+            await delete_job_aio(
+                aiopg_pool=aiopg_pool,
+                job_name='model transfer',
+                job_detail='Model ID: {model_id}'.format(model_id=model_id)
+            )
+
+        command = f'''
+        docker run -i -t -d -p {host_port}:{host_port} \
+            --volume {model_base_directory_pi}:/root/ai/models \
+            --name laptop-predict \
+            --net=host \
+            ryanzotti/ai-pi:latest \
+            python /root/ai/microservices/predict.py \
+                --port {host_port} \
+                --image_scale {scale} \
+                --model_base_directory /root/ai/models \
+                --angle_only 'y' \
+                --crop_percent {crop_percent} \
+                --model_id {model_id} \
+                --epoch {epoch_id}
+        '''
+        await execute_pi_command_aio(
+            command=command,
+            username=pi_username,
+            hostname=pi_hostname,
+            password=pi_password
+        )
+
+    """
+    I record when I start and stop so that I can check if I recently start
+    or stopped the service. Hopefully this will make the services more
+    stable, and allows me to decouple the healthcheck interval from the
+    service restart interval, since some services take awhile to start up
+    """
+    service_event_sql = '''
+        INSERT INTO service_event(
+            event_time,
+            service,
+            event,
+            host
+        )
+        VALUES (
+            NOW(),
+            '{service}',
+            'start',
+            '{host}'
+        )
+    '''.format(
+        service='model',
+        host=pi_hostname
+    )
+    await execute_sql_aio(host=None, sql=service_event_sql, aiopg_pool=aiopg_pool)
+
 
 async def start_service_if_ready(
-        postgres_host, run_on_pi, service_host, service, pi_username, pi_hostname, pi_password, aiopg_pool=None
-    ):
+    postgres_host, run_on_pi, service_host, service, pi_username, pi_hostname,
+    pi_password, aiopg_pool=None
+):
 
     """
     This is used to start the service, but only if it should be started
@@ -1328,6 +1496,29 @@ def sftp(hostname, username, password, remotepath, localpath, sftp_type):
         sys.exit('SFTP operation failed: ' + str(exc))
 
 
+def sftp_aio(hostname, username, password, remotepath, localpath, sftp_type):
+    assert sftp_type in ['get', 'put']
+    async def run_client():
+        async with asyncssh.connect(hostname, username=username, password=password) as conn:
+            async with conn.start_sftp_client() as sftp:
+                if sftp_type == 'get':
+                    await sftp.get(
+                        remotepaths=remotepath,
+                        localpath=localpath,
+                        recurse=True
+                    )
+                elif sftp_type == 'put':
+                    await sftp.put(
+                        remotepath=remotepath,
+                        localpaths=localpath,
+                        recurse=True
+                    )
+    try:
+        await run_client()
+    except (OSError, asyncssh.Error) as exc:
+        sys.exit('SFTP operation failed: ' + str(exc))
+
+
 def get_pi_total_file_count(postgres_host, dataset_name, pi_credentials=None):
     """
     Lists the total number of files on the Pi for a
@@ -1441,6 +1632,34 @@ def add_job(postgres_host, session_id, name, detail, status):
         sql=insert_sql
     )
 
+def add_job_aio(aiopg_pool, session_id, name, detail, status):
+    """
+    Used to check SFTP file transfers from the Pi to the laptop
+    during the dataset import process.
+    """
+    insert_sql = '''
+    INSERT INTO jobs(
+      created_at,
+      session_id,
+      name,
+      detail,
+      status
+    )
+    VALUES (
+      NOW(),
+      '{session_id}',
+      '{name}',
+      '{detail}',
+      '{status}'
+    )
+    '''.format(
+        session_id=session_id,
+        name=name,
+        detail=detail,
+        status=status
+    )
+    await execute_sql_aio(host=None, sql=insert_sql, aiopg_pool=aiopg_pool)
+
 
 def get_is_job_availbale(postgres_host, session_id, name, detail):
     """
@@ -1517,6 +1736,32 @@ def delete_job(postgres_host, job_name, job_detail):
     )
     execute_sql(
         host=postgres_host,
+        sql=delete_sql
+    )
+
+
+def delete_job_aio(aiopg_pool, job_name, job_detail):
+    """
+    I created the jobs table to track the status of
+    SFTP jobs during the "import data" process. Each
+    time the editor.py script runs I generate a new
+    UUID that serves as the session_id. I should run
+    this script if an import has ended, which could
+    mean it was a success, it failed,
+    """
+
+    delete_sql = '''
+        DELETE FROM jobs
+        WHERE
+            LOWER(name) = LOWER('{job_name}')
+            AND LOWER(detail) = LOWER('{job_detail}')
+        '''.format(
+        job_name=job_name,
+        job_detail=job_detail
+    )
+    await execute_sql_aio(
+        host=None,
+        aiopg_pool=aiopg_pool,
         sql=delete_sql
     )
 
