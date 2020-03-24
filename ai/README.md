@@ -34,3 +34,9 @@ There are two separate images: one for the laptop and another for the Pi. Unfort
 
 	# Build the pi image (only for predicting)
 	docker build -t ryanzotti/ai-pi:latest . -f Dockerfile.pi
+
+	# Push the Pi's version
+	docker push ryanzotti/ai-pi:latest
+
+	# Pull the image down onto the pi
+	docker pull ryanzotti/ai-pi:latest
