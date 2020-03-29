@@ -19,6 +19,7 @@ import tensorflow as tf
 import asyncio, asyncssh, sys
 import traceback
 import warnings
+import sys
 
 
 # Used to save space. Keeping all model checkpoint epochs can eat up many GB of disk space
@@ -893,13 +894,23 @@ async def start_model_service(
                 job_detail='Model ID: {model_id}'.format(model_id=model_id)
             )
 
+        try:
+            # Ensure the destination exists on the Pi or SFTP will fail
+            stdout = await execute_pi_command_aio(
+                command='docker rm -f angle-model',
+                is_printable=False,
+                username=pi_username, hostname=pi_hostname, password=pi_password
+            )
+        except:
+            pass  # Ignore the exception if the container doesn't exist
+
         command = f'''
         docker run -i -t -d -p {host_port}:{host_port} \
             --volume {model_base_directory_pi}:/root/ai/models \
-            --name laptop-predict \
+            --name angle-model \
             --net=host \
             ryanzotti/ai-pi:latest \
-            python /root/ai/microservices/predict.py \
+            python3 /root/ai/microservices/predict.py \
                 --port {host_port} \
                 --image_scale {scale} \
                 --model_base_directory /root/ai/models \
@@ -1446,7 +1457,7 @@ async def execute_pi_command_aio(command, username, hostname, password, is_print
                 print(result.stdout, end='')
             return result.stdout
     except (OSError, asyncssh.Error) as exc:
-        pass
+        traceback.print_exc()
 
 
 def is_pi_healthy(command, postgres_host, is_printable=False, return_first_line=False, pi_credentials=None):
