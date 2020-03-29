@@ -922,6 +922,7 @@ class UpdateDeploymentsTable(tornado.web.RequestHandler):
         )[0]['epoch_id']
 
         insert_deployment_record_sql = """
+            BEGIN;
             INSERT INTO deployments (
                 device,
                 model_id,
@@ -933,6 +934,7 @@ class UpdateDeploymentsTable(tornado.web.RequestHandler):
                  {epoch_id},
                  NOW()
             );
+            COMMIT;
         """.format(
             device=device,
             model_id=model_id,
@@ -967,11 +969,13 @@ class DeleteModel(tornado.web.RequestHandler):
         rmtree(full_path)
         # Delete the model from the table
         delete_records_sql = """
+            BEGIN;
             DELETE FROM models
             WHERE model_id = {model_id};
 
             DELETE FROm epochs
             WHERE model_id = {model_id};
+            COMMIT;
         """.format(
             model_id=model_id
         )
@@ -1004,9 +1008,11 @@ class DeleteRecord(tornado.web.RequestHandler):
             record_id=record_id
         )
         delete_records_sql = """
+            BEGIN;
             DELETE FROM records
             WHERE record_id = {record_id}
               AND LOWER(dataset) LIKE '{dataset}';
+            COMMIT;
         """.format(
             record_id=record_id,
             dataset=dataset_name
@@ -1017,9 +1023,11 @@ class DeleteRecord(tornado.web.RequestHandler):
             postgres_pool=self.application.postgres_pool
         )
         delete_predictions_sql = """
+            BEGIN;
             DELETE FROM predictions
             WHERE record_id = {record_id}
               AND LOWER(dataset) LIKE '{dataset}';
+            COMMIT;
         """.format(
             record_id=record_id,
             dataset=dataset_name
@@ -1670,6 +1678,7 @@ class StartCarService(tornado.web.RequestHandler):
         service restart interval, since some services take awhile to start up
         """
         service_event_sql = '''
+            BEGIN;
             INSERT INTO service_event(
                 event_time,
                 service,
@@ -1681,7 +1690,8 @@ class StartCarService(tornado.web.RequestHandler):
                 '{service}',
                 'start',
                 '{host}'
-            )
+            );
+            COMMIT;
         '''
         await execute_sql_aio(host=self.application.postgres_host, sql=service_event_sql.format(
                 service=service,
