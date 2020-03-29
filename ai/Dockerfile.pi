@@ -35,3 +35,6 @@ RUN python3 -m pip install tornado==5.1.1
 
 # Copy files at end to minimize iterative build time
 COPY ./ /root/ai/
+
+# Make sure the app can find the various custom modules
+ENV PYTHONPATH=$PYTHONPATH:/root/
