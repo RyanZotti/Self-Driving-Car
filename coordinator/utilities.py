@@ -1514,7 +1514,7 @@ def sftp_aio(hostname, username, password, remotepath, localpath, sftp_type):
                         recurse=True
                     )
     try:
-        await run_client()
+        run_client()
     except (OSError, asyncssh.Error) as exc:
         sys.exit('SFTP operation failed: ' + str(exc))
 
@@ -1632,7 +1632,7 @@ def add_job(postgres_host, session_id, name, detail, status):
         sql=insert_sql
     )
 
-def add_job_aio(aiopg_pool, session_id, name, detail, status):
+async def add_job_aio(aiopg_pool, session_id, name, detail, status):
     """
     Used to check SFTP file transfers from the Pi to the laptop
     during the dataset import process.
@@ -1740,7 +1740,7 @@ def delete_job(postgres_host, job_name, job_detail):
     )
 
 
-def delete_job_aio(aiopg_pool, job_name, job_detail):
+async def delete_job_aio(aiopg_pool, job_name, job_detail):
     """
     I created the jobs table to track the status of
     SFTP jobs during the "import data" process. Each
