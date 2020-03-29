@@ -823,7 +823,7 @@ class DeployModel(tornado.web.RequestHandler):
             host_port = self.application.ports['model'],
             device=device,
             session_id=self.application.session_id,
-            aiopg_pool=self.application.scheduler.paiopg_pool
+            aiopg_pool=self.application.scheduler.aiopg_pool
         )
         self.write({})
 
