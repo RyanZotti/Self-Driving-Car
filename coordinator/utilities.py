@@ -826,14 +826,14 @@ async def start_model_service(
         # Run the command to start
         command = f'''
         docker run -i -t -d -p {host_port}:{host_port} \
-            --volume {base_model_directory_laptop}:/root/ai/models \
+            --volume {base_model_directory_laptop}:/root/model \
             --name laptop-predict \
             --network app_network \
             ryanzotti/ai-laptop:latest \
             python /root/ai/microservices/predict.py \
                 --port {host_port} \
                 --image_scale {scale} \
-                --model_base_directory /root/ai/models \
+                --model_base_directory /root/model \
                 --angle_only y \
                 --crop_percent {crop_percent} \
                 --model_id {model_id} \
