@@ -28,6 +28,9 @@ RUN python3 -m pip install scipy-1.2.1-cp35-cp35m-linux_armv7l.whl
 
 RUN python3 -m pip install Keras==2.2.5
 
+# Required to load models saved in the .h5 format
+RUN apt-get install libhdf5-dev -y
+
 # Install Tornado
 RUN python3 -m pip install tornado==5.1.1
 
