@@ -26,8 +26,14 @@ RUN python3 -m pip install tensorflow==1.14.0
 RUN wget https://www.piwheels.org/simple/scipy/scipy-1.2.1-cp35-cp35m-linux_armv7l.whl#sha256=270be300233af556e6ee3f55a0ae237df0cb65ac85d47559010d7a9071f2e878
 RUN python3 -m pip install scipy-1.2.1-cp35-cp35m-linux_armv7l.whl
 
+RUN python3 -m pip install Keras==2.2.5
+
 # Install Tornado
 RUN python3 -m pip install tornado==5.1.1
+
+# Install psycopg2
+RUN apt-get install libpq-dev -y
+RUN python3 -m pip install psycopg2
 
 ###############################################################
 ##### Add application code
