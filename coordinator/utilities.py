@@ -1496,7 +1496,7 @@ def sftp(hostname, username, password, remotepath, localpath, sftp_type):
         sys.exit('SFTP operation failed: ' + str(exc))
 
 
-def sftp_aio(hostname, username, password, remotepath, localpath, sftp_type):
+async def sftp_aio(hostname, username, password, remotepath, localpath, sftp_type):
     assert sftp_type in ['get', 'put']
     async def run_client():
         async with asyncssh.connect(hostname, username=username, password=password) as conn:
@@ -1514,7 +1514,7 @@ def sftp_aio(hostname, username, password, remotepath, localpath, sftp_type):
                         recurse=True
                     )
     try:
-        run_client()
+        await run_client()
     except (OSError, asyncssh.Error) as exc:
         sys.exit('SFTP operation failed: ' + str(exc))
 
