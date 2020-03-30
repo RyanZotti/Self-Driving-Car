@@ -1983,7 +1983,7 @@ class NewEpochs(tornado.web.RequestHandler):
     def get_epochs(self,json_inputs):
         model_id = json_inputs['model_id']
         sql_query = '''
-            CREATE TEMP TABLE recent_epochs AS (
+            WITH recent_epochs AS (
                 SELECT
                   epochs.epoch,
                   epochs.train,
@@ -1992,7 +1992,8 @@ class NewEpochs(tornado.web.RequestHandler):
                 WHERE epochs.model_id = {model_id}
                 ORDER BY epochs.epoch DESC
                 LIMIT 10
-            );
+            )
+
             SELECT
               *
             FROM recent_epochs
