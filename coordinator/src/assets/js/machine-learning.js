@@ -483,6 +483,16 @@ document.addEventListener('DOMContentLoaded', function() {
         deployModel({
             'device':device
         });
+
+        // Show a green "deployment started" notice, to give the user feedback
+        const deploymentStarted = document.querySelector('button#deployment-started');
+        deployButton.style.display = 'none';
+        deploymentStarted.style.display = 'block';
+
+        // Then change back to the original button, in case the user wants to do another deployment
+        await sleep(5000);
+        deployButton.style.display = 'block';
+        deploymentStarted.style.display = 'none';
     }
 
     populateModelIdDeploymentOptions();
