@@ -14,22 +14,25 @@ RUN apt-get update -y && apt-get install -y libjpeg-dev libtiff5-dev libjasper-d
 RUN python3 -m pip install opencv-python
 
 ###############################################################
-##### Install other dependencies
+##### Install Tensorflow
 ###############################################################
 
+# Required to avoid "fatal error: pybind11/pybind11.h: No such file or directory"
+# error in scipy at compile time. Scipy is a requirement for Tensorflow, and though
+# it takes hour to build from source, if you don't build it from source you get
+# segment fault errors that cause code to crash when you try to import a model
+RUN python3 -m pip install pybind11
+
 # Install Tensorflow
-RUN python3 -m pip install tensorflow==1.14.0
-
-# scipy is a dependency of Keras, if and if you don't install the binary
-# this way the default pip install tries to compile from source and it takes
-# 4+ hours
-RUN wget https://www.piwheels.org/simple/scipy/scipy-1.2.1-cp35-cp35m-linux_armv7l.whl#sha256=270be300233af556e6ee3f55a0ae237df0cb65ac85d47559010d7a9071f2e878
-RUN python3 -m pip install scipy-1.2.1-cp35-cp35m-linux_armv7l.whl
-
+RUN python3 -m pip -vv --retries 100 install https://storage.googleapis.com/tensorflow/raspberrypi/tensorflow-2.1.0-cp35-none-linux_armv7l.whl
 RUN python3 -m pip install Keras==2.2.5
 
 # Required to load models saved in the .h5 format
 RUN apt-get install libhdf5-dev -y
+
+###############################################################
+##### Install other dependencies
+###############################################################
 
 # Install Tornado
 RUN python3 -m pip install tornado==5.1.1
