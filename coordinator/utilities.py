@@ -909,7 +909,7 @@ async def start_model_service(
             --volume {model_base_directory_pi}:/root/ai/models \
             --name angle-model \
             --net=host \
-            ryanzotti/ai-pi:latest \
+            ryanzotti/ai-pi-python3-7-buster:latest \
             python3 /root/ai/microservices/predict.py \
                 --port {host_port} \
                 --image_scale {scale} \

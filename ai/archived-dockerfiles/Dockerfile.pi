@@ -24,7 +24,24 @@ RUN python3 -m pip install opencv-python
 RUN python3 -m pip install pybind11
 
 # Install Tensorflow
+# Got this wheel from here (has non-Pi wheels too):
+# https://github.com/lhelontra/tensorflow-on-arm/releases/tag/v1.8.0
 RUN python3 -m pip -vv --retries 100 install https://storage.googleapis.com/tensorflow/raspberrypi/tensorflow-2.1.0-cp35-none-linux_armv7l.whl
+
+# A site the specializes in wheels for the Raspberry Pi. Note
+# for future self: maybe try getting the Tensorflow wheel from
+# here instead of from some one-off site that might not support
+# future versions. The piwheels site sounds mature and will
+# probably be around for awhile.
+# https://www.piwheels.org/
+
+# Need to update this file for piwheels to get recognized,
+# otherwise pip won't be able to find opencv-python
+RUN rm /etc/pip.conf
+RUN echo [global] >> /etc/pip.conf
+RUN echo extra-index-url=https://www.piwheels.org/simple >> /etc/pip.conf
+RUN python3 -m pip install tensorflow==2.1
+
 RUN python3 -m pip install Keras==2.2.5
 
 # Required to load models saved in the .h5 format

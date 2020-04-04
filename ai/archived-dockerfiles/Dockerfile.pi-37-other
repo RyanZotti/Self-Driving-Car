@@ -1,0 +1,36 @@
+FROM arm32v7/python:3.7.7-buster
+# https://hub.docker.com/r/arm32v7/python/
+
+# Steps from here:
+# https://maker.pro/raspberry-pi/projects/how-to-set-up-the-machine-learning-software-tensorflow-on-raspberry-pi
+RUN apt-get update -y && \
+    apt-get install -y \
+        gfortran \
+        libatlas-base-dev \
+        libblas-dev \
+        libhdf5-dev \
+        liblapack-dev
+
+RUN wget https://github.com/lhelontra/tensorflow-on-arm/releases/download/v2.0.0/tensorflow-2.0.0-cp37-none-linux_armv7l.whl
+RUN python3 -m pip install tensorflow-2.0.0-cp37-none-linux_armv7l.whl
+RUN python3 -m pip install Keras
+
+# Required to load models saved in the .h5 format
+RUN apt-get install libhdf5-dev -y
+
+# Install Tornado
+RUN python3 -m pip install tornado==5.1.1
+
+# Install psycopg2
+RUN apt-get install libpq-dev -y
+RUN python3 -m pip install psycopg2
+
+###############################################################
+##### Add application code
+###############################################################
+
+# Copy files at end to minimize iterative build time
+COPY ./ /root/ai/
+
+# Make sure the app can find the various custom modules
+ENV PYTHONPATH=$PYTHONPATH:/root/

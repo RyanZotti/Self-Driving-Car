@@ -1,0 +1,93 @@
+FROM arm32v7/python:3.7.7-buster
+# https://hub.docker.com/r/arm32v7/python/
+
+# Required for scipy, which is required for Tensorflow
+RUN apt-get update -y && apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran libhdf5-dev -y
+
+# Install Tensorflow
+RUN wget https://github.com/Qengineering/Tensorflow-Raspberry-Pi/raw/master/tensorflow-2.1.0-cp37-cp37m-linux_armv7l.whl
+RUN pip3 install tensorflow-2.1.0-cp37-cp37m-linux_armv7l.whl
+
+RUN python3 -m pip install Keras
+
+# Install Tornado
+RUN python3 -m pip install tornado==5.1.1
+
+# Install psycopg2
+RUN apt-get install libpq-dev -y
+RUN python3 -m pip install psycopg2
+
+###############################################################
+##### Install OpenCV
+###############################################################
+
+# Because I use vim and didn't realize it wasn't installed until
+# after I wait 8 hours for Tensorflow's scipy to compile from
+# source
+RUN apt-get install vim -y
+
+# A site the specializes in wheels for the Raspberry Pi. Note
+# for future self: maybe try getting the Tensorflow wheel from
+# here instead of from some one-off site that might not support
+# future versions. The piwheels site sounds mature and will
+# probably be around for awhile.
+# https://www.piwheels.org/
+
+# Need to update this file for piwheels to get recognized,
+# otherwise pip won't be able to find opencv-python
+RUN echo [global] >> /etc/pip.conf
+RUN echo extra-index-url=https://www.piwheels.org/simple >> /etc/pip.conf
+
+# Now you can easily install OpenCV!
+# Version 4.1.0.26 (the next minor version) had minor import issues, as
+# noted in the link below.
+# https://github.com/piwheels/packages/issues/59#issuecomment-554767058
+RUN pip install opencv-contrib-python==4.1.0.25
+
+# Install a bunch of OpenCV dependencies
+
+# The original Docker image has repository lists that point to
+# places unrelated to the Pi. The `apt-get update` command won't
+# make a change this drammatic, so you have to do it yourself
+RUN rm /etc/apt/sources.list
+RUN echo "deb http://archive.raspbian.org/raspbian buster main contrib non-free rpi firmware" >> /etc/apt/sources.list
+RUN echo "deb-src http://archive.raspbian.org/raspbian buster main contrib non-free rpi firmware" >> /etc/apt/sources.list
+RUN echo "deb http://archive.raspberrypi.org/debian buster main" >> /etc/apt/sources.list
+
+# Turns out if you can find a package you can just add older archives
+RUN echo "deb http://mirrordirector.raspbian.org/raspbian/ stretch main contrib non-free rpi" >> /etc/apt/sources.list
+
+# Update the public key associated with the Pi archives. It is
+# weird that I get these values
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys \
+    82B129927FA3303E \
+    9165938D90FDDD2E
+
+RUN apt-get update -y
+RUN apt-get update -y && apt-get install -y \
+    libatlas3-base \
+    libavcodec57 \
+    libavformat58 \
+    libavutil55 \
+    libgstreamer1.0-0 \
+    libharfbuzz0b \
+    libilmbase23 \
+    libjasper1 \
+    libjasper-dev \
+    libopenexr23 \
+    libqtgui4 \
+    libqt4-test \
+    libqtcore4 \
+    libsz2 \
+    libtiff5 \
+    libswscale5
+
+###############################################################
+##### Add application code
+###############################################################
+
+# Copy files at end to minimize iterative build time
+COPY ./ /root/ai/
+
+# Make sure the app can find the various custom modules
+ENV PYTHONPATH=$PYTHONPATH:/root/
