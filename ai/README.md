@@ -32,6 +32,9 @@ There are two separate images: one for the laptop and another for the Pi. Unfort
 	# Build the laptop image (for training or predicting)
 	docker build -t ryanzotti/ai-laptop:latest . -f Dockerfile.laptop
 
+	# Push the laptop image to Docker Hub
+	docker push ryanzotti/ai-laptop:latest
+
 	# Build the pi image (only for predicting)
 	docker build -t ryanzotti/ai-pi-python3-7-buster:latest . -f Dockerfile.pi-buster-python3-7
 

@@ -20,7 +20,7 @@ RUN pip install \
     Keras==2.2.5 \
     Keras-Applications==1.0.8 \
     Keras-Preprocessing==1.1.0 \
-    tensorflow==1.14.0 \
+    tensorflow==2.1 \
     tornado==5.1.1
 
 # Copy files at end to minimize iterative build time
