@@ -413,11 +413,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updatePiConnectionStatuses()
     }, 1000);
 
-    // Deploy the prediction microservices if they're not running
-    const deploymentTime = setInterval(function(){
-        pollDeployment();
-    }, 5000);
-
     const trainModelButton = document.querySelector("button#train-model-button");
     trainModelButton.onclick = async function(){
         if(isTrainingLastState == true){

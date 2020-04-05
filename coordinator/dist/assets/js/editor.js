@@ -1212,11 +1212,6 @@ document.addEventListener('DOMContentLoaded', function() {
         'step':5
     });
 
-    // Deploy the prediction microservices if they're not running
-    const deploymentTime = setInterval(function(){
-        pollDeployment();
-    }, 5000);
-
 }, false);
 
 // Global variables
