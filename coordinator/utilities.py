@@ -89,14 +89,14 @@ def mkdir_tfboard_run_dir(tf_basedir,):
     return new_run_dir
 
 
-async def shell_command_aio(command):
+async def shell_command_aio(command, verbose=False):
     process = await asyncio.create_subprocess_shell(
             command,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
     )
     stdout, stderr = await process.communicate()
-    if True:
+    if verbose:
         if stderr is not None:
             print(stderr)
         if stdout is not None:
@@ -526,7 +526,58 @@ async def get_recent_health_checks(postgres_host, service_host, service, attempt
         }
 
 
-async def get_service_status(postgres_host, service_host, service, aiopg_pool=None):
+async def get_is_model_deployable(device, aiopg_pool):
+
+    """
+    Both models (Pi driver and laptop dataset reviewer) should be marked
+    as not deployable if there isn't a model. Other types of services are
+    simpler to work with because all you need to check is their toggle
+    status, but with models you must also check whether the model exists,
+    and that's what this function is for. This function doesn't actually
+    return which model /should/ be deployed, since that's taken care of
+    in the model deployment related functions elsewhere. All this function
+    checks is whether it would be possible to deploy a model service is
+    its toggle were on
+
+    Parameters
+    ----------
+    device: str
+        Either 'pi' or 'laptop', which indicates whether this model is
+        to be used for the driving the Pi or the laptop dataset reviewer
+    aiopg_pool: object
+        Asyncio Postgres connection pool
+
+    Returns
+    -------
+    is_deployable: boolean
+        Whether you could do a deployment if you wanted to
+    """
+
+    sql_query = f"""
+            SELECT
+              deployments.model_id,
+              deployments.epoch_id,
+              models.scale,
+              models.crop
+            FROM deployments
+            JOIN models
+              ON deployments.model_id = models.model_id
+            WHERE LOWER(device) LIKE LOWER('%{device}%')
+            ORDER BY event_ts DESC
+            LIMIT 1;
+        """
+    rows = await get_sql_rows_aio(
+        host=None,
+        sql=sql_query,
+        aiopg_pool=aiopg_pool
+    )
+    if len(rows) > 0:
+        return True
+    else:
+        return False
+
+
+async def get_service_status(postgres_host, service_host, service, aiopg_pool):
     """
     This is used by both the API to populate the colors in the UI
     and also by the scheduler to restart dead services that should
@@ -570,6 +621,9 @@ async def get_service_status(postgres_host, service_host, service, aiopg_pool=No
 
     # Constants
     startup_grace_period_seconds = 30
+    if service == 'angle-model-pi':
+        # The model on the Pi takes a really long time to turn on
+        startup_grace_period_seconds = 60
     stop_grace_period_seconds = 30.0
     health_check_attempts = 3
 
@@ -615,7 +669,44 @@ async def get_service_status(postgres_host, service_host, service, aiopg_pool=No
     docker_event = results[1]
     health_checks = results[2]
 
-    if is_service_toggled_on:
+    """
+    For most services it's simple enough to say that if the toggle
+    is set to `on` for that service that the service should be on,
+    but for model related services you also need a model. I don't
+    want to conflate toggles with being deployable, so I made
+    separate variables.
+    
+    The default assumption however is that the service is not for
+    a model, so `should_service_be_on` defaults to `is_service_toggled_on`
+    """
+    should_service_be_on = is_service_toggled_on
+
+    # TODO: Return off if there is no laptop model deployment
+    if service == 'model-laptop':
+        """
+        You should always want the dataset reviewing model to
+        be on assuming you have a model that could be deployed
+        """
+        is_model_deployable = await get_is_model_deployable(
+            device='laptop', aiopg_pool=aiopg_pool
+        )
+        should_service_be_on = is_model_deployable
+
+    # TODO: Return off if there is no Pi model deployment
+    if service == 'model-pi':
+        """
+        You should try to deploy the Pi model if the service is toggled
+        on and if there is a model to deploy
+        """
+        is_model_deployable = await get_is_model_deployable(
+            device='pi', aiopg_pool=aiopg_pool
+        )
+        if is_service_toggled_on and is_model_deployable:
+            should_service_be_on = True
+        else:
+            should_service_be_on = False
+
+    if should_service_be_on:
         if docker_event:
             event_type = docker_event['type']
             if event_type.lower() == 'start':
@@ -722,7 +813,7 @@ async def get_service_status(postgres_host, service_host, service, aiopg_pool=No
 
 
 async def stop_service_if_ready(
-        postgres_host, service_host, stop_on_pi, service, pi_username, pi_hostname, pi_password, aiopg_pool=None
+        postgres_host, service_host, stop_on_pi, service, pi_username, pi_hostname, pi_password, aiopg_pool
     ):
 
     status = await get_service_status(
@@ -777,8 +868,50 @@ async def stop_service_if_ready(
 
 async def start_model_service(
     pi_hostname, pi_username, pi_password, host_port,
-    device, session_id, aiopg_pool
+    device, session_id, aiopg_pool, is_local_test=False
 ):
+    """
+    Used to start a model on container on the Pi (or laptop
+    if this is a local test) or on the laptop if the model
+    is to be used for dataset reviews, which are compute
+    intensive and not great for the Pi's very weak CPU
+
+    Parameters
+    ----------
+    pi_hostname: str
+        The Pi's hostname
+    pi_username: str
+        The Pi's username
+    pi_password: str
+        The Pi's password
+    host_port: int
+        Port of the model service and also of the Docker host
+        (they're treated the same)
+    device: str
+        Indicates where the model should be run before considering
+        whether you're running a test. Valid values are 'pi' or
+        'laptop'. If you pick 'pi' and is_local_test evaluates to
+        True, then I'll run the model on the laptop but give the
+        container a different name so as not to confuse it with the
+        laptop model container, which is used to generate predictions
+        for review datasets, etc
+    session_id: uuid4
+        ID generated by the editor.py script that is used to clean
+        out the jobs table from previous server runs
+    aiopg_pool: object
+        Asynchronous Postgres connection pool to avoid CPU-heavy
+        connections everytime you run a query
+    is_local_test: boolean
+        Used with the `device` variable to check whether I should
+        run a model intended for the Pi on the laptop. I want to
+        avoid name container name collisions during local tests
+        because that could lead to docker run commands that interfere
+        with each other, causing instability and containers that keep
+        getting killed
+    """
+
+    service = f'angle-model-{device}'
+
     """
     I want to make this its own function so that I can call it
     from the services page or from the ML page
@@ -814,22 +947,32 @@ async def start_model_service(
         aiopg_pool=aiopg_pool
     )
 
-    if device.lower() == 'laptop':
+    if device.lower() == 'laptop' or (device.lower() == 'pi' and is_local_test is True):
+
+        """
+        Avoid name collisions between the two separate model containers
+        when running local tests. During a local test you'll run the Pi
+        container on the laptop and also the dataset reviewer container
+        """
+        image_name = 'ryanzotti/ai-laptop:latest'
+        if is_local_test:
+            # There is an emulator that lets you run Pi/ARM images on your laptop
+            image_name = 'ryanzotti/ai-pi-python3-7-buster:latest'
 
         # Kill any currently running model API
         try:
-            await shell_command_aio('docker rm -f laptop-predict')
+            await shell_command_aio(f'docker rm -f {service}')
         except:
             # Most likely means API is not up
-            print('Failed: docker rm -f laptop-predict')
+            pass  # This will happen frequently and it's ok, so ignore
 
         # Run the command to start
         command = f'''
         docker run -i -t -d -p {host_port}:{host_port} \
             --volume {base_model_directory_laptop}:/root/model \
-            --name laptop-predict \
+            --name {service} \
             --network app_network \
-            ryanzotti/ai-laptop:latest \
+            {image_name} \
             python /root/ai/microservices/predict.py \
                 --port {host_port} \
                 --image_scale {scale} \
@@ -840,7 +983,7 @@ async def start_model_service(
                 --epoch {epoch_id}
         '''
         await shell_command_aio(command)
-    elif device.lower() == 'pi':
+    elif device.lower() == 'pi' and is_local_test is False:
         model_base_directory_pi = await read_pi_setting_aio(
             host=None,
             field_name='models_location_pi',
@@ -897,7 +1040,7 @@ async def start_model_service(
         try:
             # Ensure the destination exists on the Pi or SFTP will fail
             stdout = await execute_pi_command_aio(
-                command='docker rm -f angle-model',
+                command='docker rm -f {service}',
                 is_printable=False,
                 username=pi_username, hostname=pi_hostname, password=pi_password
             )
@@ -907,7 +1050,7 @@ async def start_model_service(
         command = f'''
         docker run -i -t -d -p {host_port}:{host_port} \
             --volume {model_base_directory_pi}:/root/ai/models \
-            --name angle-model \
+            --name {service} \
             --net=host \
             ryanzotti/ai-pi-python3-7-buster:latest \
             python3 /root/ai/microservices/predict.py \
@@ -925,6 +1068,8 @@ async def start_model_service(
             hostname=pi_hostname,
             password=pi_password
         )
+    else:
+        print('Invalid model setup inside of start_model_service()!')
 
     """
     I record when I start and stop so that I can check if I recently start
@@ -946,7 +1091,7 @@ async def start_model_service(
             '{host}'
         )
     '''.format(
-        service='model',
+        service=service,
         host=pi_hostname
     )
     await execute_sql_aio(host=None, sql=service_event_sql, aiopg_pool=aiopg_pool)
@@ -954,7 +1099,7 @@ async def start_model_service(
 
 async def start_service_if_ready(
     postgres_host, run_on_pi, service_host, service, pi_username, pi_hostname,
-    pi_password, aiopg_pool=None
+    pi_password, session_id, aiopg_pool
 ):
 
     """
@@ -1168,6 +1313,41 @@ async def start_service_if_ready(
                         port=port
                     )
                 )
+        elif service == 'angle-model-pi':
+            """
+            Used to drive the car. This could also be the laptop if you're
+            running local tests. The `start_model_service` function reads the
+            `run_on_pi` variable to know whether to deploy to the Pi or laptop.
+            It's possible to have two identical models running on the laptop
+            during local unit tets: one for the Pi the other for the laptop
+            dataset reviewer.
+            """
+            is_local_test = not run_on_pi
+            await start_model_service(
+                pi_hostname=pi_hostname,
+                pi_username=pi_username,
+                pi_password=pi_password,
+                host_port=8885,
+                device='pi',
+                session_id=session_id,
+                aiopg_pool=aiopg_pool,
+                is_local_test=is_local_test
+            )
+        elif service == 'angle-model-laptop':
+            """
+            This is the model container that is used to review datasets
+            """
+            await start_model_service(
+                pi_hostname=pi_hostname,
+                pi_username=pi_username,
+                pi_password=pi_password,
+                host_port=8886,
+                device='laptop',
+                session_id=session_id,
+                aiopg_pool=aiopg_pool,
+                is_local_test=False
+            )
+
         """
         I record when I start and stop so that I can check if I recently start
         or stopped the service. Hopefully this will make the services more
@@ -1457,7 +1637,8 @@ async def execute_pi_command_aio(command, username, hostname, password, is_print
                 print(result.stdout, end='')
             return result.stdout
     except (OSError, asyncssh.Error) as exc:
-        traceback.print_exc()
+        if is_printable:
+            traceback.print_exc()
 
 
 def is_pi_healthy(command, postgres_host, is_printable=False, return_first_line=False, pi_credentials=None):

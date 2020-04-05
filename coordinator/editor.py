@@ -2465,7 +2465,8 @@ async def main():
         'engine': 8092,
         'ps3-controller': 8094,
         'memory': 8095,
-        'model': 8885
+        'angle-model-pi': 8885,
+        'angle-model-laptop': 8886
     }
 
     # TODO: Remove this hard-coded path
@@ -2509,7 +2510,10 @@ async def main():
     )
 
     app.angle_only = args['angle_only']
-    app.scheduler = Scheduler(postgres_host=postgres_host)
+    app.scheduler = Scheduler(
+        postgres_host=postgres_host,
+        session_id=app.session_id
+    )
     app.listen(port)
 
     # Used to run a bunch of async tasks

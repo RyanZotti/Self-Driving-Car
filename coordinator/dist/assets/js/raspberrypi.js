@@ -692,7 +692,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         "user-input",
         "engine",
         "ps3-controller",
-        "model",
+        "angle-model-pi",
         "memory"
     ]
 

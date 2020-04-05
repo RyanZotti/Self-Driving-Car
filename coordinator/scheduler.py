@@ -38,12 +38,21 @@ class Scheduler(object):
     the shared variables, like service host, postgres host, etc
     """
 
-    def __init__(self, postgres_host, interval_seconds=1.0):
+    def __init__(self, postgres_host, session_id, interval_seconds=1.0):
 
         # This should never change after startup
         self.postgres_host = postgres_host
         self.interval_seconds = interval_seconds
         self.timeout_seconds = 1.0
+
+        """
+        I created the jobs table to track the status of SFTP jobs during
+        the "import data" process. Each time the editor.py script runs I
+        generate a new UUID that serves as the session_id. Any rows in the
+        job table that do not match this value are from past runs and be
+        ignored, which is why this function deletes them
+        """
+        self.session_id = session_id
 
         self.aiopg_pool = None
 
@@ -114,7 +123,8 @@ class Scheduler(object):
                 pi_username=self.pi_username,
                 pi_hostname=self.pi_hostname,
                 pi_password=self.pi_password,
-                aiopg_pool=self.aiopg_pool
+                aiopg_pool=self.aiopg_pool,
+                session_id=self.session_id
             )
 
             # Stop but only if it should stop and has not been told to stop by something else
@@ -125,7 +135,8 @@ class Scheduler(object):
                 service=service,
                 pi_username=self.pi_username,
                 pi_hostname=self.pi_hostname,
-                pi_password=self.pi_password
+                pi_password=self.pi_password,
+                aiopg_pool=self.aiopg_pool,
             )
 
             await asyncio.sleep(self.interval_seconds)
@@ -287,14 +298,19 @@ class Scheduler(object):
             'user-input': {'port': 8884},
             'engine': {'port': 8092},
             'ps3-controller': {'port': 8094},
-            'memory': {'port': 8095}
+            'memory': {'port': 8095},
+            'angle-model-pi': {'port': 8885},  # Used for driving the car
+            'angle-model-laptop': {'port': 8886}  # Used for data set reviewer
         }
         return services
 
     async def check_service_health(self, service, port, interval_seconds=1.0):
         """
         Runs every `interval_seconds` to check the service health and records
-        the health in a table
+        the health in a table. It's important that I always check for the
+        health of the service even if I don't expect the service code to be
+        on because some of th get_status code in other functions depends on
+        this assumption
         """
         host = self.service_host
         endpoint = f'http://{host}:{port}/health'
