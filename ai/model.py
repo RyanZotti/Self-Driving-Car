@@ -1,6 +1,6 @@
-from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D, Lambda, Dense, Dropout, Flatten
-from keras.backend.tensorflow_backend import clip
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Lambda, Dense, Dropout, Flatten
+from tensorflow.keras import Sequential
+from tensorflow.keras.backend import clip
 
 
 class Architecture(object):
