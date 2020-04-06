@@ -637,7 +637,7 @@ async def get_service_status(postgres_host, service_host, service, aiopg_pool):
     startup_grace_period_seconds = 30
     if service == 'angle-model-pi':
         # The model on the Pi takes a really long time to turn on
-        startup_grace_period_seconds = 60
+        startup_grace_period_seconds = 45
     stop_grace_period_seconds = 30.0
     health_check_attempts = 3
 
@@ -962,7 +962,6 @@ async def start_model_service(
     )
 
     if device.lower() == 'laptop' or (device.lower() == 'pi' and is_local_test is True):
-
         """
         Avoid name collisions between the two separate model containers
         when running local tests. During a local test you'll run the Pi
@@ -1052,11 +1051,12 @@ async def start_model_service(
             )
 
         try:
-            # Ensure the destination exists on the Pi or SFTP will fail
             stdout = await execute_pi_command_aio(
-                command='docker rm -f {service}',
+                command=f'docker rm -f {service}',
                 is_printable=False,
-                username=pi_username, hostname=pi_hostname, password=pi_password
+                username=pi_username,
+                hostname=pi_hostname,
+                password=pi_password
             )
         except:
             pass  # Ignore the exception if the container doesn't exist
@@ -1080,7 +1080,8 @@ async def start_model_service(
             command=command,
             username=pi_username,
             hostname=pi_hostname,
-            password=pi_password
+            password=pi_password,
+            is_printable=True
         )
     else:
         print('Invalid model setup inside of start_model_service()!')
@@ -1641,6 +1642,7 @@ async def execute_pi_command_aio(command, username, hostname, password, is_print
     except (OSError, asyncssh.Error) as exc:
         if is_printable:
             traceback.print_exc()
+            print(f'Failed to run {command}')
 
 
 def is_pi_healthy(command, postgres_host, is_printable=False, return_first_line=False, pi_credentials=None):
