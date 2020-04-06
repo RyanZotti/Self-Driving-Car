@@ -313,6 +313,14 @@ class Scheduler(object):
         this assumption
         """
         host = self.service_host
+
+        """
+        The review model on the laptop will always be 'localhost' even if
+        you're running everything else on the Pi
+        """
+        if service == 'angle-model-laptop':
+            host = 'localhost'
+
         endpoint = f'http://{host}:{port}/health'
         while True:
             sql_query = '''
@@ -346,7 +354,7 @@ class Scheduler(object):
                                 start_time=start_time,
                                 end_time=end_time,
                                 service=service,
-                                host=self.service_host,
+                                host=host,
                                 is_healthy=is_healthy
                             )
                             await execute_sql_aio(
