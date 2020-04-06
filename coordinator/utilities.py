@@ -1078,44 +1078,6 @@ async def start_model_service(
     service restart interval, since some services take awhile to start up
     """
 
-    def get_service_host(device, is_local_test, pi_hostname):
-        if device == 'pi':
-            if is_local_test:
-                return 'localhost'
-            else:
-                return pi_hostname
-        elif device == 'laptop':
-            return 'localhost'
-        else:
-            return None  # This should never happen
-
-    service_host = get_service_host(
-        device=device,
-        is_local_test=is_local_test,
-        pi_hostname=pi_hostname
-    )
-
-    service_event_sql = '''
-        BEGIN;
-        INSERT INTO service_event(
-            event_time,
-            service,
-            event,
-            host
-        )
-        VALUES (
-            NOW(),
-            '{service}',
-            'start',
-            '{host}'
-        );
-        COMMIT;
-    '''.format(
-        service=service,
-        host=service_host
-    )
-    await execute_sql_aio(host=None, sql=service_event_sql, aiopg_pool=aiopg_pool)
-
 
 async def start_service_if_ready(
     postgres_host, run_on_pi, service_host, service, pi_username, pi_hostname,
@@ -1367,6 +1329,12 @@ async def start_service_if_ready(
                 aiopg_pool=aiopg_pool,
                 is_local_test=False
             )
+
+        if service == 'angle-model-laptop':
+            service_host = 'localhost'
+        elif service == 'angle-model-pi':
+            if not run_on_pi is True:
+                service_host = 'localhost'
 
         """
         I record when I start and stop so that I can check if I recently start
