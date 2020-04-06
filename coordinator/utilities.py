@@ -637,7 +637,7 @@ async def get_service_status(postgres_host, service_host, service, aiopg_pool):
     startup_grace_period_seconds = 30
     if service == 'angle-model-pi':
         # The model on the Pi takes a really long time to turn on
-        startup_grace_period_seconds = 45
+        startup_grace_period_seconds = 60
     stop_grace_period_seconds = 30.0
     health_check_attempts = 3
 
