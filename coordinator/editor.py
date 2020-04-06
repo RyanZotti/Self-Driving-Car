@@ -820,7 +820,7 @@ class DeployModel(tornado.web.RequestHandler):
             pi_hostname=self.application.scheduler.pi_hostname,
             pi_username=self.application.scheduler.pi_username,
             pi_password=self.application.scheduler.pi_password,
-            host_port = self.application.ports['model'],
+            host_port = self.application.ports['angle-model-pi'],
             device=device,
             session_id=self.application.session_id,
             aiopg_pool=self.application.scheduler.aiopg_pool

@@ -682,7 +682,7 @@ async def get_service_status(postgres_host, service_host, service, aiopg_pool):
     should_service_be_on = is_service_toggled_on
 
     # TODO: Return off if there is no laptop model deployment
-    if service == 'model-laptop':
+    if service == 'angle-model-laptop':
         """
         You should always want the dataset reviewing model to
         be on assuming you have a model that could be deployed
@@ -693,7 +693,7 @@ async def get_service_status(postgres_host, service_host, service, aiopg_pool):
         should_service_be_on = is_model_deployable
 
     # TODO: Return off if there is no Pi model deployment
-    if service == 'model-pi':
+    if service == 'angle-model-pi':
         """
         You should try to deploy the Pi model if the service is toggled
         on and if there is a model to deploy
@@ -1077,7 +1077,26 @@ async def start_model_service(
     stable, and allows me to decouple the healthcheck interval from the
     service restart interval, since some services take awhile to start up
     """
+
+    def get_service_host(device, is_local_test, pi_hostname):
+        if device == 'pi':
+            if is_local_test:
+                return 'localhost'
+            else:
+                return pi_hostname
+        elif device == 'laptop':
+            return 'localhost'
+        else:
+            return None  # This should never happen
+
+    service_host = get_service_host(
+        device=device,
+        is_local_test=is_local_test,
+        pi_hostname=pi_hostname
+    )
+
     service_event_sql = '''
+        BEGIN;
         INSERT INTO service_event(
             event_time,
             service,
@@ -1089,10 +1108,11 @@ async def start_model_service(
             '{service}',
             'start',
             '{host}'
-        )
+        );
+        COMMIT;
     '''.format(
         service=service,
-        host=pi_hostname
+        host=service_host
     )
     await execute_sql_aio(host=None, sql=service_event_sql, aiopg_pool=aiopg_pool)
 
