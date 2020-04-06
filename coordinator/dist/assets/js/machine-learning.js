@@ -258,36 +258,41 @@ It's better to look up proceesses than to save
 the state in a variable somewhere, especially
 if users are going to switch screens frequently
 */
-function isTraining() {
+function getIsTrainingJobSubmitted() {
     return new Promise(function(resolve, reject){
-        $.post('/is-training', function(result){
+        $.get('/is-training-job-submitted', function(result){
+            resolve(result['is_alive']);
+        });
+    });
+}
+
+function getTrainingMetadata() {
+    return new Promise(function(resolve, reject){
+        $.get('/get-training-metadata', function(result){
             resolve(result);
         });
     });
 }
 
 async function setTrainButtonState() {
-    if (isAttemptingTrainingStop == false){
-        const trainModelButton = document.querySelector("button#train-model-button");
-        const metadata = await isTraining();
-        isTrainingLastState = metadata['is_alive'];
-        if(isTrainingLastState == true){
-            trainModelButton.textContent = 'Stop Training'
-            if(trainModelButton.classList.contains("btn-primary")){
-                 trainModelButton.classList.remove("btn-primary");
-            }
-            if(!trainModelButton.classList.contains("btn-danger")){
-                trainModelButton.classList.add("btn-danger");
-            }
-        } else {
-            trainModelButton.textContent = 'Start Training'
-            if(trainModelButton.classList.contains("btn-danger")){
-                trainModelButton.classList.remove("btn-danger");
-            }
-            if(!trainModelButton.classList.contains("btn-primary")){
-                trainModelButton.classList.add("btn-primary");
-            }
-        };
+    const trainModelButton = document.querySelector("button#train-model-button");
+    const isTrainingExpected = await getIsTrainingJobSubmitted();
+    if(isTrainingExpected == true){
+        trainModelButton.textContent = 'Stop Training'
+        if(trainModelButton.classList.contains("btn-primary")){
+             trainModelButton.classList.remove("btn-primary");
+        }
+        if(!trainModelButton.classList.contains("btn-danger")){
+            trainModelButton.classList.add("btn-danger");
+        }
+    } else {
+        trainModelButton.textContent = 'Start Training'
+        if(trainModelButton.classList.contains("btn-danger")){
+            trainModelButton.classList.remove("btn-danger");
+        }
+        if(!trainModelButton.classList.contains("btn-primary")){
+            trainModelButton.classList.add("btn-primary");
+        }
     };
 }
 
@@ -385,14 +390,43 @@ document.addEventListener('DOMContentLoaded', function() {
     time, so make sure to check it every 5 seconds. The time
     loop can be quit with a call to clearInterval(<timevar>);
     */
+    const modelIdTextNextToButton = document.querySelector("span#model-id-training-text-next-to-stop-button");
+    const trainingErrorProgressText = document.querySelector("div#training-error-progress-text");
     const trainingStateTimer = setInterval(async function(){
         setTrainButtonState();
         const epochsTable = document.querySelector('div#epochs-table-div');
         const batchProgressCard = document.querySelector('div#batch-progress-card');
-        const metadata = await isTraining()
+        const metadata = await getTrainingMetadata()
+        const isTrainingExpected = await getIsTrainingJobSubmitted()
+        const startingUpNotice = document.querySelector("button#training-starting-up");
+        const shuttingDownNotice = document.querySelector("button#training-shutting-down");
+        isTrainingLastState = isTrainingExpected
+        if (isTrainingExpected == metadata['is_alive']){
+
+            /*
+            If training is expected, and the training service is
+            up, then get rid of the pending statuses and replace
+            them with real buttons that allow the user to stop
+            the training job.
+
+            Or if training is not expected, and the service is down,
+            then get rid of the pending statuses and replace them
+            with the button to start a new training job
+            */
+            shuttingDownNotice.style.display = 'none';
+            startingUpNotice.style.display = 'none';
+            trainModelButton.style.display = 'inline';
+        }
         if (metadata['is_alive']==true){
             fillEpochsTable(metadata['model_id']);
             epochsTable.style.display = 'block';
+
+            // Show model ID of the model being trained
+            modelId = metadata['model_id']
+            modelIdTextNextToButton.textContent = 'Training model ID: '+modelId
+            modelIdTextNextToButton.style.display = 'inline';
+            trainingErrorProgressText.textContent = 'Model ID: '+modelId;
+
             // Adjust batch progress bar
             const batchProgressBar = document.getElementById("batch-progress-bar");
             const totalBatches = metadata['batch_count'];
@@ -403,10 +437,11 @@ document.addEventListener('DOMContentLoaded', function() {
             batchProgressText.textContent = currentBatch + ' of ' + totalBatches;
             batchProgressCard.style.display = 'block';
         } else {
+            modelIdTextNextToButton.style.display = 'none';
             epochsTable.style.display = 'none';
             batchProgressCard.style.display = 'none';
         }
-    }, 1000);
+    }, 5000);
 
     // Update Raspberry Pi statues
     const piHealthCheckTime = setInterval(function(){
@@ -415,14 +450,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const trainModelButton = document.querySelector("button#train-model-button");
     trainModelButton.onclick = async function(){
+        trainModelButton.style.display = 'none';
+        const startingUpNotice = document.querySelector("button#training-starting-up");
+        const shuttingDownNotice = document.querySelector("button#training-shutting-down");
         if(isTrainingLastState == true){
+            shuttingDownNotice.style.display = 'inline';
+            startingUpNotice.style.display = 'none';
             const trainModelButton = document.querySelector("button#train-model-button");
             isAttemptingTrainingStop = true;
             trainModelButton.textContent = 'Stopping Training ...'
             await stopTraining();
-            setTrainButtonState();
-            isAttemptingTrainingStop = false;
+            isTrainingLastState = false;
         } else {
+            isTrainingLastState = true;
+            shuttingDownNotice.style.display = 'none';
+            startingUpNotice.style.display = 'inline';
             const isExistingModel = document.querySelector('option#existing-model-option').selected;
             if(isExistingModel == true){
                 const select = document.querySelector('select#resumeTrainingExistingModelId');
@@ -431,14 +473,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     'model_id':modelId
                 };
                 await trainExistingModel(config);
-                setTrainButtonState();
             } else {
                 const config = {
                     'scale':document.querySelector('input#image-scale-slider').value,
                     'crop_percent':document.querySelector('input#image-top-cut-slider').value
                 };
                 await trainNewModel(config);
-                setTrainButtonState();
             }
         }
     };

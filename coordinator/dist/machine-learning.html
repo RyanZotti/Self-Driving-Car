@@ -882,7 +882,7 @@
               <div class="card" id="epochs-table-div" data-toggle="lists" data-lists-values='["dataset-id", "created-date", "images"]'>
                 <div class="card-header">
                   <div class="row align-items-center">
-                    <div class="col">
+                    <div id="training-error-progress-text" class="col">
                       Training Error Progress
                     </div>
                   </div> <!-- / .row -->
@@ -918,51 +918,18 @@
                   <div class="col">
                     <button type="submit" id="train-model-button" class="btn btn-primary btn-md">
                           Start Training
-                      </button>
+                    </button>
+                    <button type="submit" id="training-starting-up" class="btn btn-success btn-md" style="display:none">
+                      Starting up...
+                    </button>
+                    <button type="submit" id="training-shutting-down" class="btn btn-success btn-md" style="display:none">
+                      Shutting down...
+                    </button>
+                      <span id="model-id-training-text-next-to-stop-button" class="text-muted" style="display:none; margin-left:10px">
+
+                      </span>
                   </div>
 
-              </div>
-
-              <!-- Divider -->
-              <hr class="mt-4 mb-5">
-
-              <div class="row">
-                  <div class="col">
-                      <h2>
-                         Deploy to Laptop
-                     </h2>
-                      <small class="form-text text-muted">
-                      This changes the model that is used to make predictions when playing datasets in the datasets section.
-                    </small>
-                  </div>
-              </div>
-              <div class="row mb-5">
-                  <div class="col">
-                      <button type="submit" id="deploy-model-laptop-button" class="btn btn-primary btn-md">
-                          Deploy Model
-                      </button>
-                  </div>
-              </div>
-
-              <!-- Divider -->
-              <hr class="mt-4 mb-5">
-
-              <div class="row">
-                  <div class="col">
-                      <h2>
-                         Deploy to Vehicle
-                     </h2>
-                      <small class="form-text text-muted">
-                      This creates an ssh connection to your raspberry pi, terminates any processes associated with the old model, transfers the new model, starts a new model API server, and tests that the API server is able to receive images.
-                    </small>
-                  </div>
-              </div>
-              <div class="row mb-5">
-                  <div class="col">
-                      <button type="submit" id="deploy-model-vehicle-button" class="btn btn-primary btn-md">
-                          Deploy Model
-                      </button>
-                  </div>
               </div>
 
               <!-- Divider -->

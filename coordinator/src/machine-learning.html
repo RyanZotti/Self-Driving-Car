@@ -381,7 +381,7 @@
               <div class="card" id="epochs-table-div" data-toggle="lists" data-lists-values='["dataset-id", "created-date", "images"]'>
                 <div class="card-header">
                   <div class="row align-items-center">
-                    <div class="col">
+                    <div id="training-error-progress-text" class="col">
                       Training Error Progress
                     </div>
                   </div> <!-- / .row -->
@@ -418,6 +418,14 @@
                     <button type="submit" id="train-model-button" class="btn btn-primary btn-md">
                           Start Training
                       </button>
+                      <button type="submit" id="training-starting-up" class="btn btn-success btn-md" style="display:none">
+                      Starting up...
+                      </button>
+                      <button type="submit" id="training-shutting-down" class="btn btn-success btn-md" style="display:none">
+                      Shutting down...
+                      </button>
+                      <span id="model-id-training-text-next-to-stop-button" class="text-muted" style="display:none; margin-left:10px">
+                      </span>
                   </div>
 
               </div>

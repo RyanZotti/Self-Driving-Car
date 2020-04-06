@@ -1834,6 +1834,12 @@ class StopTraining(tornado.web.RequestHandler):
 
     @tornado.concurrent.run_on_executor
     def stop_training(self):
+        delete_job(
+            session_id=self.application.session_id,
+            job_name='machine learning',
+            job_detail='training',
+            postgres_pool=self.application.postgres_pool
+        )
         stop_training()
         return {}
 
@@ -1859,6 +1865,24 @@ class TrainNewModel(tornado.web.RequestHandler):
             field_name='models_location_laptop',
             postgres_pool=self.application.postgres_pool
         )
+
+        """
+        Used to track whether a model is training or not. This is
+        much faster than calling the health check (used for the UI)
+        because it can take awhile to load the model and get
+        everything started up whereas it's quick to check if a model
+        /should/ be training. This makes the train button much
+        more responsive and gives much better user feedback
+        """
+        add_job(
+            postgres_host=None,
+            session_id=self.application.session_id,
+            name='machine learning',
+            detail='training',
+            status='started',
+            postgres_pool=self.application.postgres_pool
+        )
+
         train_new_model(
             postgres_host=self.application.postgres_host,
             model_base_directory=model_base_directory,
@@ -1877,7 +1901,32 @@ class TrainNewModel(tornado.web.RequestHandler):
         self.write(result)
 
 
-class IsTraining(tornado.web.RequestHandler):
+class IsTrainingJobSubmitted(tornado.web.RequestHandler):
+
+    async def get(self):
+
+        session_id = self.application.session_id
+        sql_query = f"""
+        SELECT
+            status
+        FROM jobs
+        WHERE
+            LOWER(name) = 'machine learning'
+            AND LOWER(detail) = 'training'
+            AND LOWER(session_id) = '{session_id}'
+        """
+        rows = await get_sql_rows_aio(
+            host=None,
+            sql=sql_query,
+            aiopg_pool=self.application.scheduler.aiopg_pool
+        )
+        if len(rows) > 0:
+            self.write({'is_alive': True})
+        else:
+            self.write({'is_alive': False})
+
+
+class GetTrainingMetadata(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
     @tornado.concurrent.run_on_executor
@@ -1898,7 +1947,7 @@ class IsTraining(tornado.web.RequestHandler):
             return {'is_alive': False}
 
     @tornado.gen.coroutine
-    def post(self):
+    def get(self):
         result = yield self.health_check()
         self.write(result)
 
@@ -2362,7 +2411,8 @@ def make_app():
         (r"/update-deployments-table", UpdateDeploymentsTable),
         (r"/deploy-model", DeployModel),
         (r"/are-dataset-predictions-updated", IsDatasetPredictionFromLatestDeployedModel),
-        (r"/is-training", IsTraining),
+        (r"/is-training-job-submitted", IsTrainingJobSubmitted),
+        (r"/get-training-metadata", GetTrainingMetadata),
         (r"/does-model-already-exist", DoesModelAlreadyExist),
         (r"/batch-predict", BatchPredict),
         (r"/is-dataset-prediction-syncing", IsDatasetPredictionSyncing),
@@ -2515,6 +2565,9 @@ async def main():
         session_id=app.session_id
     )
     app.listen(port)
+
+    # Make sure to kill any old zombie training jobs
+    await stop_training_aio()
 
     # Used to run a bunch of async tasks
     await app.scheduler.start()

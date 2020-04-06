@@ -695,7 +695,6 @@ async def get_service_status(postgres_host, service_host, service, aiopg_pool):
     """
     should_service_be_on = is_service_toggled_on
 
-    # TODO: Return off if there is no laptop model deployment
     if service == 'angle-model-laptop':
         """
         You should always want the dataset reviewing model to
@@ -706,7 +705,6 @@ async def get_service_status(postgres_host, service_host, service, aiopg_pool):
         )
         should_service_be_on = is_model_deployable
 
-    # TODO: Return off if there is no Pi model deployment
     if service == 'angle-model-pi':
         """
         You should try to deploy the Pi model if the service is toggled
@@ -1443,6 +1441,25 @@ def stop_training():
             shell=True,
         ).wait()
 
+async def stop_training_aio():
+    scripts = [
+        'docker rm -f resume-training',
+        'docker rm -f model-training'
+    ]
+    '''
+    The .wait() is at the end is required so
+    that the Popen commands are required to
+    block the function from pregressing until
+    the commands have finished. This fixed a
+    bug where I would I would run stop_training()
+    before running `Docker run ...` that would
+    fail because the `Docker run` would execute
+    before Docker was able to drop the old
+    container
+    '''
+    for command in scripts:
+        await shell_command_aio(command, verbose=False)
+
 
 def train_new_model(
     data_path, postgres_host, port, model_base_directory, epochs=10, image_scale=8,
@@ -1797,12 +1814,13 @@ def get_dataset_db_record_count(postgres_host, dataset_name):
     return rows[0]['count']
 
 
-def add_job(postgres_host, session_id, name, detail, status):
+def add_job(postgres_host, session_id, name, detail, status, postgres_pool=None):
     """
     Used to check SFTP file transfers from the Pi to the laptop
     during the dataset import process.
     """
     insert_sql = '''
+    BEGIN;
     INSERT INTO jobs(
       created_at,
       session_id,
@@ -1816,17 +1834,25 @@ def add_job(postgres_host, session_id, name, detail, status):
       '{name}',
       '{detail}',
       '{status}'
-    )
+    );
+    COMMIT;
     '''.format(
         session_id=session_id,
         name=name,
         detail=detail,
         status=status
     )
-    execute_sql(
-        host=postgres_host,
-        sql=insert_sql
-    )
+    if postgres_pool:
+        execute_sql(
+            host=None,
+            sql=insert_sql,
+            postgres_pool=postgres_pool
+        )
+    else:
+        execute_sql(
+            host=postgres_host,
+            sql=insert_sql
+        )
 
 async def add_job_aio(aiopg_pool, session_id, name, detail, status):
     """
@@ -1911,7 +1937,7 @@ def delete_stale_jobs(postgres_host, session_id):
     )
 
 
-def delete_job(postgres_host, job_name, job_detail):
+def delete_job(job_name, job_detail, session_id, postgres_pool=None):
     """
     I created the jobs table to track the status of
     SFTP jobs during the "import data" process. Each
@@ -1921,18 +1947,19 @@ def delete_job(postgres_host, job_name, job_detail):
     mean it was a success, it failed,
     """
 
-    delete_sql = '''
+    delete_sql = f'''
+        BEGIN;
         DELETE FROM jobs
         WHERE
             LOWER(name) = LOWER('{job_name}')
             AND LOWER(detail) = LOWER('{job_detail}')
-        '''.format(
-        job_name=job_name,
-        job_detail=job_detail
-    )
+            AND LOWER(session_id) = LOWER('{session_id}');
+        COMMIT;
+        '''
     execute_sql(
-        host=postgres_host,
-        sql=delete_sql
+        host=None,
+        sql=delete_sql,
+        postgres_pool=postgres_pool
     )
 
 
