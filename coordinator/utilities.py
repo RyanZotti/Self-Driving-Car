@@ -462,7 +462,6 @@ async def get_last_service_event(postgres_host, service_host, service, aiopg_poo
         return None
 
 
-
 async def get_recent_health_checks(postgres_host, service_host, service, attempts=3, fresh_threshold_seconds=15.0, aiopg_pool=None):
     """
     Returns the results of the most recent health check API calls
@@ -618,6 +617,21 @@ async def get_service_status(postgres_host, service_host, service, aiopg_pool):
         service_event.service,
         service_event.event_time
     """
+
+    """
+    All functions abide by the service host except the laptop
+    review dataset model, which will always be localhost. If
+    you don't set this to localhost for the review laptop model,
+    something upstream of this function will mark the service_host
+    as whatever is in the DB, which is the Pi's hostname if you're
+    not running a local test. Since the Docker starting service
+    lookup script uses service_host in the filter in its SQL query,
+    if you don't make this hardcoded change it will look like the
+    laptop review model service never got initialized, and so it'll
+    get restarted in a loop and will never fully come online
+    """
+    if service == 'angle-model-laptop':
+        service_host = 'localhost'
 
     # Constants
     startup_grace_period_seconds = 30
