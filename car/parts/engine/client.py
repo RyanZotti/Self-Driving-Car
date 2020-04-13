@@ -67,7 +67,7 @@ class Client(Part):
                 'ps3_controller/brake':True,
                 'dashboard/brake': True
             }
-            _ = requests.post(
+            _ = self.session.post(
                 self.endpoint,
                 data=json.dumps(emergency_inputs)
             )

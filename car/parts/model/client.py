@@ -1,6 +1,5 @@
 import cv2
 import json
-import requests
 from car.Part import Part
 
 
@@ -25,7 +24,7 @@ class Client(Part):
         img = cv2.imencode('.jpg', frame)[1].tostring()
         files = {'image': img}
         timeout_seconds = 1
-        response = requests.post(
+        response = self.session.post(
             self.endpoint,
             files=files,
             timeout=timeout_seconds

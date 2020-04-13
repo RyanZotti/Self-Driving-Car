@@ -1,6 +1,8 @@
 import abc
 from datetime import datetime
 import json
+import requests
+from requests.adapters import HTTPAdapter
 from threading import Thread
 import traceback
 
@@ -135,6 +137,16 @@ class Part:
         """
         self.latency_threshold_seconds = latency_threshold_seconds
         self.is_verbose = is_verbose
+
+        """
+        Use a session to keep open a long-lived connection.
+        In my experience this significantly reduces latency
+        and CPU usage. You can see details about HTTPAdapeters
+        in the link below
+        https://laike9m.com/blog/requests-secret-pool_connections-and-pool_maxsize,89/
+        """
+        self.session = requests.Session()
+        self.session.mount('http://', HTTPAdapter(pool_connections=1))
 
     def initialize_inputs(self):
         """

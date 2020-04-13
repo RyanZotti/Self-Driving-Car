@@ -19,7 +19,7 @@ class Client(Part):
     # Part.py runs this function in an infinite loop
     def request(self):
         timeout_seconds = 1
-        response = requests.post(
+        response = self.session.post(
             self.endpoint,
             data=json.dumps(self.inputs),
             timeout=timeout_seconds

@@ -50,7 +50,7 @@ class Client(Part):
         json_payload = self.inputs.copy()
         del json_payload['camera/image_array']
         try:
-            response = requests.post(
+            response = self.session.post(
                 self.without_image_endpoint,
                 data=json.dumps(json_payload)
             )
