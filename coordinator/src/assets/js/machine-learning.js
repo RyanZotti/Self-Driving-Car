@@ -240,7 +240,6 @@ function updateDeploymentsTable(data) {
     });
 }
 
-
 async function loadDeploymentsTable(){
     const deployments = await getModelDeployments();
     const pi = document.querySelector('tr#deployments-pi-row');
@@ -447,6 +446,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const piHealthCheckTime = setInterval(function(){
         updatePiConnectionStatuses()
     }, 1000);
+
+    // Update the deployed model statuses
+    const modelServiceStatusHealthCheckTime = setInterval(async function(){
+        updateServiceHealth('angle-model-pi')
+        updateServiceHealth('angle-model-laptop')
+    }, 3000);
 
     const trainModelButton = document.querySelector("button#train-model-button");
     trainModelButton.onclick = async function(){
