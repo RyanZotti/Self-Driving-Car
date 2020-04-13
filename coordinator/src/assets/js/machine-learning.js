@@ -479,6 +479,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     'crop_percent':document.querySelector('input#image-top-cut-slider').value
                 };
                 await trainNewModel(config);
+
+                /*
+                This is where I add a new model ID to the list of deployable
+                models and the models table. I don't think I have an API
+                that I can wait on until the model API is ready enough to
+                report back a model ID, so I just picked an arbitrarily long
+                time to wait, 8 seconds. Also, you don't want to add the
+                loadMachineLearningModels() function to some kind of timer
+                loop because it deletes all of the rows in the table before
+                adding them back, and this can get really annoying and
+                disruptive if you're trying to select a bunch of models to
+                delete them, but then the boxes get unchecked because the
+                boxes are actually getting removed and then added back
+                */
+                await sleep(8000)
+                loadMachineLearningModels()
+                populateModelIdDeploymentOptions()
             }
         }
     };
