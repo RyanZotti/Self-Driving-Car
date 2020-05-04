@@ -185,7 +185,25 @@ async function pollVehicleAndUpdateUI(){
         stopRecording();
     }
 
-    if (result["ps3_controller/brake"] == true || result["vehicle/brake"] == true || result["dashboard/brake"] == true){
+    /*
+    Turns on an orange warning octagon when there are problems
+    with parts running on the car (Pi). The control loop measures
+    slowness by checking how long ago a part's last successful
+    API request took place
+    */
+    const partSlownessIcon = document.querySelector("span#slowness-brake-icon");
+    console.log(result)
+    if (result["vehicle/brake"] == true){
+        partSlownessIcon.style.display = 'inline';
+    } else {
+        partSlownessIcon.style.display = 'none';
+    }
+
+    /*
+    TODO: Shouldn't the engine toggle serve as the indicator for the dashboard brake instead
+    of overloading the ps3 controller brake icon?
+    */
+    if (result["ps3_controller/brake"] == true || result["dashboard/brake"] == true){
         applyBrake();
     } else {
         releaseBrake();
