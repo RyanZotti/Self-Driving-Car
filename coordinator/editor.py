@@ -1215,7 +1215,7 @@ class TransferDatasetFromPiToLaptop(tornado.web.RequestHandler):
 
         # Remove the job from the jobs table, which signifies completion
         delete_job(
-            postgres_host=self.application.postgres_host,
+            postgres_pool=self.application.postgres_pool,
             job_name='dataset import',
             job_detail=dataset_name
         )
