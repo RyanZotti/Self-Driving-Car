@@ -34,3 +34,8 @@ VALUES
     (now(), 'hostname', 'raspberrypi.local'),
     (now(), 'password', 'raspberry');
 COMMIT;
+
+BEGIN;
+INSERT INTO toggles (event_ts, web_page, name, detail, is_on) VALUES
+    (now(), 'raspberry pi', 'dashboard', 'engine', TRUE);
+COMMIT;

@@ -192,18 +192,13 @@ async function pollVehicleAndUpdateUI(){
     API request took place
     */
     const partSlownessIcon = document.querySelector("span#slowness-brake-icon");
-    console.log(result)
     if (result["vehicle/brake"] == true){
         partSlownessIcon.style.display = 'inline';
     } else {
         partSlownessIcon.style.display = 'none';
     }
 
-    /*
-    TODO: Shouldn't the engine toggle serve as the indicator for the dashboard brake instead
-    of overloading the ps3 controller brake icon?
-    */
-    if (result["ps3_controller/brake"] == true || result["dashboard/brake"] == true){
+    if (result["ps3_controller/brake"] == true){
         applyBrake();
     } else {
         releaseBrake();
