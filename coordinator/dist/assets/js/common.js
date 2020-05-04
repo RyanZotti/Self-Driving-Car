@@ -306,3 +306,133 @@ function getDateTime(){
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+function updateServiceStatusIcon(args){
+    const status = document.querySelector('span.' + args['service'] + '-status');
+    if(args['status'] == 'healthy'){
+        status.classList.remove('text-danger');
+        status.classList.remove('text-primary');
+        status.classList.remove('text-light');
+        status.classList.remove('text-warning');
+        status.classList.add('text-success');
+        status.style.display = 'inline';
+    } else if (args['status'] == 'unhealthy') {
+        status.classList.remove('text-success');
+        status.classList.remove('text-primary');
+        status.classList.remove('text-light');
+        status.classList.remove('text-warning');
+        status.classList.add('text-danger');
+        status.style.display = 'inline';
+    } else if (args['status'] == 'in-progress') {
+        status.classList.remove('text-success');
+        status.classList.remove('text-primary');
+        status.classList.remove('text-light');
+        status.classList.remove('text-danger');
+        status.classList.add('text-warning');
+        status.style.display = 'inline';
+    } else if (args['status'] == 'ps3-ready-to-pair') {
+        status.classList.remove('text-success');
+        status.classList.remove('text-light');
+        status.classList.remove('text-warning');
+        status.classList.remove('text-danger');
+        status.classList.add('text-primary');
+        status.style.display = 'inline';
+    } else {
+        status.classList.remove('text-success');
+        status.classList.remove('text-primary');
+        status.classList.remove('text-danger');
+        status.classList.remove('text-warning');
+        status.classList.add('text-light');
+        status.style.display = 'inline';
+    }
+}
+
+function getServiceStatus(service) {
+    /*
+    Gets the status of a Pi service. This is used to determine
+    the color to assign a service's status dot. Possible statuses
+    include the following:
+        - ready-to-start
+        - starting-up
+        - healthy
+        - unhealthy
+        - ready-to-shut-down
+        - shutting-down
+        - off
+        - invincible-zombie
+        - invalid-status
+    */
+    return new Promise(function(resolve, reject) {
+        const input = JSON.stringify({'service': service});
+        $.ajax({
+            method: 'POST',
+            url: '/pi-service-status',
+            timeout: 2500,
+            data: input,
+            success: function(output) {
+                resolve(output['status']);
+            },
+            error: function(){
+                resolve('unhealthy');
+            }
+        });
+    });
+}
+
+async function updateServiceHealth(service){
+    /*
+    This function changes the colored dots next to each service to
+    indicate its status (whether its healthy, etc)
+    */
+    const status = await getServiceStatus(service);
+
+    // Separate statuses by color
+    const changing = ['ready-to-start', 'starting-up', 'ready-to-shut-down', 'shutting-down']
+    const bad = ['unhealthy','invincible-zombie','invalid-status']
+    const good = ['healthy']
+    const nothing = ['off']
+
+    if (changing.includes(status)){
+        updateServiceStatusIcon({
+            'service':service,
+            'status':'in-progress'
+        });
+    } else if (good.includes(status)) {
+        if (service == 'ps3-controller'){
+            const isSixAxisLooping = await getPS3ControllerHealth();
+            if (isSixAxisLooping == true){
+                updateServiceStatusIcon({
+                    'service':service,
+                    'status':'healthy'
+                });
+            } else {
+                updateServiceStatusIcon({
+                    'service':service,
+                    'status':'ps3-ready-to-pair'
+                });
+            }
+        } else {
+            updateServiceStatusIcon({
+                'service':service,
+                'status':'healthy'
+            });
+        }
+    } else if (bad.includes(status)) {
+        updateServiceStatusIcon({
+            'service':service,
+            'status':'unhealthy'
+        });
+    } else if (nothing.includes(status)) {
+        updateServiceStatusIcon({
+            'service':service,
+            'status':'inactive'
+        });
+    } else {
+        // This should never happen
+        console.log("Status of "+status+" for " + service + " service isn't valid");
+        updateServiceStatusIcon({
+            'service':service,
+            'status':'unhealthy'
+        });
+    }
+}
