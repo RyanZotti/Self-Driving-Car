@@ -2234,7 +2234,6 @@ def get_pi_dataset_import_stats(
             endpoint,
             timeout=timeout_seconds
         )
-        print(response.content)
         if str(response.status_code)[0] == '2':
             live_dataset = json.loads(response.text)['dataset']
     except:
