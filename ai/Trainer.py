@@ -193,7 +193,12 @@ class Trainer:
                     model_ids.append(model_id)
                 except:
                     pass
-            highest_folder_id = max(model_ids)
+
+            # Assign a default in case this will be the first model
+            highest_folder_id = 0
+
+            if len(model_ids) > 0:
+                highest_folder_id = max(model_ids)
 
             # Get the highest model ID from Postgres
             sql = """
