@@ -708,7 +708,7 @@ class SaveRecordToDB(tornado.web.RequestHandler):
                 dataset_name=dataset_name,
                 record_id=record_id
             )
-            image_path = self.application.record_reader.get_image_path(
+            image_path = self.application.record_reader.get_image_path_from_db(
                 dataset_name=dataset_name,
                 record_id=record_id
             )
@@ -1003,7 +1003,7 @@ class DeleteRecord(tornado.web.RequestHandler):
             dataset_name=dataset_name,
             record_id=record_id
         )
-        image_path = self.application.record_reader.get_image_path(
+        image_path = self.application.record_reader.get_image_path_from_db(
             dataset_name=dataset_name,
             record_id=record_id
         )

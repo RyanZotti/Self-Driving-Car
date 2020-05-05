@@ -576,12 +576,6 @@ class RecordReader(object):
             for file in files:
                 yield file
 
-    # Used by the editor API
-    def get_image_path(self,dataset_name,record_id):
-        dataset_path = join(self.base_directory, dataset_name)
-        image_path = join(dataset_path, '{record_id}_cam-image_array_.png'.format(
-            record_id=record_id))
-        return image_path
 
     def get_image_path_from_db(self, dataset_name, record_id):
         """
@@ -605,7 +599,7 @@ class RecordReader(object):
             return None
 
     # Used by the editor API
-    def get_image(self,dataset_name,record_id):
+    def get_image(self, dataset_name, record_id):
         image_path = self.get_image_path_from_db(dataset_name=dataset_name, record_id=record_id)
         frame = cv2.imread(image_path)
         return frame
