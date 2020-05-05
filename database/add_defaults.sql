@@ -38,5 +38,6 @@ COMMIT;
 
 BEGIN;
 INSERT INTO toggles (event_ts, web_page, name, detail, is_on) VALUES
+    (now(), 'raspberry pi', 'dashboard', 'model', FALSE),
     (now(), 'raspberry pi', 'dashboard', 'engine', TRUE);
 COMMIT;
