@@ -133,7 +133,6 @@ memoryClient = MemoryClient(
         'local_model/throttle',
         'ps3_controller/angle',
         'ps3_controller/brake',
-        'ps3_controller/new_dataset',
         'ps3_controller/recording',
         'ps3_controller/throttle',
         'remote_model/angle',
@@ -181,7 +180,6 @@ ps3_controller = PS3Controller(
     output_names=[
         'ps3_controller/angle',
         'ps3_controller/brake',
-        'ps3_controller/new_dataset',
         'ps3_controller/throttle',
         'ps3_controller/recording'
     ],
