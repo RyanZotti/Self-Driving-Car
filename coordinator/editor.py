@@ -1217,7 +1217,8 @@ class TransferDatasetFromPiToLaptop(tornado.web.RequestHandler):
         delete_job(
             postgres_pool=self.application.postgres_pool,
             job_name='dataset import',
-            job_detail=dataset_name
+            job_detail=dataset_name,
+            session_id=self.application.session_id
         )
         return {}
 
