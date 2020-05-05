@@ -2,6 +2,7 @@ import argparse
 from concurrent.futures import ThreadPoolExecutor
 import pexpect
 import re
+import requests
 import subprocess
 from threading import Thread
 import time
@@ -250,6 +251,7 @@ class GetState(tornado.web.RequestHandler):
         screen) on the PS3 controller to indicate the current
         state
         """
+        # TODO: Put these in a DB or set at startup via the CLI
         mapping = {
             'ps3_controller/recording:ON': 'BUTTON_TRIANGLE',
             'ps3_controller/recording:OFF': 'BUTTON_SQUARE',
@@ -280,9 +282,22 @@ class GetState(tornado.web.RequestHandler):
             new_state['ps3_controller/brake'] = previous_state['ps3_controller/brake']
 
         if mapping['ps3_controller/new_dataset'] in self.application.ps3_controller.pressed_buttons:
-            new_state['ps3_controller/new_dataset'] = True
-        else:
-            new_state['ps3_controller/new_dataset'] = previous_state['ps3_controller/new_dataset']
+            try:
+                # TODO: Don't hard code this service port
+                record_tracker_port = 8093
+                record_tracker_host = 'localhost'
+                seconds = 0.5
+                endpoint = 'http://{host}:{port}/create-new-dataset'.format(
+                    host=record_tracker_host,
+                    port=record_tracker_port
+                )
+                _ = requests.post(
+                    endpoint,
+                    timeout=seconds
+                )
+            except:
+                # TODO: Add exception logging here so that I can see stack trace without failing the whole server
+                print('Failed to call record tracker part to create a new dataset!')
 
         self.application.button_states = new_state
 
@@ -454,8 +469,7 @@ if __name__ == "__main__":
     # TODO: Put this in a DB. It's bad to maintain state in the API
     app.button_states = {
         'ps3_controller/recording':False,
-        'ps3_controller/brake':True,
-        'ps3_controller/new_dataset':False
+        'ps3_controller/brake':True
     }
 
     app.bluetoothctl = Bluetoothctl()

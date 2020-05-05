@@ -26,5 +26,6 @@ RUN pip install futures tornado==4.5.3
 
 # This is used to interact with bluetoothctl
 RUN pip install pexpect
+RUN pip install requests
 
 COPY ./ /root/
