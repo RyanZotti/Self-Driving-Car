@@ -170,6 +170,69 @@ class Scheduler(object):
                 pool, partial(self.get_video, self.service_host, port=video_port)
             )
 
+    async def user_input_part_loop(self):
+        """
+        Previously this ran in the UI, but I moved this to the scheduler
+        so that I wouldn't have issues if I ran multiple UIs simultaneously.
+        Basically this takes all of the inputs on the screen, like whether
+        to use the model's angle vs the PS3 (user) angle, what the constant
+        throttle should be, etc
+        """
+        while True:
+            model_toggle = await read_toggle_aio(
+                postgres_host=None,
+                web_page='raspberry pi',
+                name='dashboard',
+                detail='model',
+                aiopg_pool=self.aiopg_pool
+            )
+            driver_type = 'user'
+            """
+            Eventually I might want to allow the user to switch
+            between a remote model and local model, but that would
+            require an update to the UI, which I don't want to do
+            right now, so I'm going to assume that if the model is
+            turned on that you should use the local version, since
+            pull a prediction from the laptop would be more
+            complicated
+            """
+            if model_toggle is True:
+                driver_type = 'local_model'
+
+            engine_toggle = await read_toggle_aio(
+                postgres_host=None,
+                web_page='raspberry pi',
+                name='dashboard',
+                detail='engine',
+                aiopg_pool=self.aiopg_pool
+            )
+            constant_throttle = await read_slider_aio(
+                web_page='raspberry pi',
+                name='dashboard',
+                aiopg_pool=self.aiopg_pool
+            )
+            timeout = ClientTimeout(total=self.timeout_seconds)
+            port = 8884  # TODO: Don't hardcode this
+            host = self.service_host
+            endpoint = f'http://{host}:{port}/track-human-requests'
+            json_input = {
+                'dashboard/driver_type':driver_type,
+                'dashboard/brake': not engine_toggle,
+                'dashboard/model_constant_throttle': constant_throttle
+            }
+            try:
+                async with ClientSession(timeout=timeout) as session:
+                    async with session.post(endpoint, json=json_input) as response:
+                        output_json = await response.json()
+            except:
+                """
+                Ignore exceptions because we never know when the service will
+                be unavailable and many times it's ok for it to be unavailable
+                """
+                pass
+
+            await asyncio.sleep(self.interval_seconds * 5)
+
     # This is used to stream video live for the self-driving sessions
     # The syntax is super ugly and I don't understand how it works
     # This is where I got this code from here, which comes with an explanation:
@@ -258,6 +321,9 @@ class Scheduler(object):
 
         # Set up the video cache loop checker
         asyncio.create_task(self.manage_video_cache_loop())
+
+        # Send UI states saved in the DB to the Pi's control loop via the user_input part server
+        asyncio.create_task(self.user_input_part_loop())
 
         services = self.get_services()
         manage_service_tasks = []

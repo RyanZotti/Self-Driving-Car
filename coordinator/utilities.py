@@ -403,6 +403,24 @@ async def read_pi_setting_aio(host, field_name, aiopg_pool=None):
         return rows[0]['field_value']
 
 
+async def read_slider_aio(web_page, name, aiopg_pool=None):
+    sql_query = f'''
+        SELECT
+          amount
+        FROM sliders
+        WHERE LOWER(web_page) LIKE '%{web_page}%'
+          AND LOWER(name) LIKE '%{name}%'
+        ORDER BY event_ts DESC
+        LIMIT 1;
+    '''
+    rows = await get_sql_rows_aio(host=None, sql=sql_query, aiopg_pool=aiopg_pool)
+    if len(rows) > 0:
+        first_row = rows[0]
+        return first_row['amount']
+    else:
+        return None
+
+
 async def read_toggle_aio(postgres_host, web_page, name, detail, aiopg_pool=None):
     sql_query = f'''
         SELECT
