@@ -3,11 +3,12 @@ import argparse
 from ai.utilities import *
 
 
-# This is a script that is helpful for debugging. You can stream video from the Pi without saving it
-# First log into the raspberry pi, and then do these two things:
-# cd /usr/src/ffmpeg
-# sudo ffserver -f /etc/ff.conf_original & ffmpeg -v quiet -r 5 -s 320x240 -f video4linux2 -i /dev/video0 http://localhost/webcam.ffm
-
+"""
+# example
+export REPO=/Users/ryanzotti/Documents/repos/Self-Driving-Car
+export PYTHONPATH=$PYTHONPATH:${REPO}
+python ${REPO}/car/parts/video/tests/stream_mjpeg_video.py --ip_address ryanzotti.local --port 8091
+"""
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--ip_address", required=True, help="Raspberry Pi ip address")
 ap.add_argument("--port", required=True, help="ffmpeg port")
