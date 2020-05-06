@@ -173,7 +173,15 @@ local_model = Model(
     is_localhost=is_localhost,
     is_verbose=args['verbose-local-model']
 )
-#car.add(local_model)
+
+"""
+If the model's part server container isn't running the request
+calls will fail, but my code should be able to ignore these
+exceptions, which means that it should be safe to always run
+the part client. It's probably easier to always run the part
+client than to selectively run it when the service is available
+"""
+car.add(local_model)
 
 ps3_controller = PS3Controller(
     name='ps3-controller',

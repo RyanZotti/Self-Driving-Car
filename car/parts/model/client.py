@@ -63,10 +63,10 @@ class Client(Part):
             Boolean indicating if it is safe to continue driving
             the car given the current state of the part
         """
-        driver_type = self.inputs['user_input/driver_type']
+        driver_type = self.inputs['dashboard/driver_type']
         if driver_type is None:
             return False
-        elif self.name in driver_type:
+        elif driver_type.lower() == 'local_model':
             if self.is_responsive():
                 return True
             else:
