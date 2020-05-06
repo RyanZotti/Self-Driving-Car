@@ -146,16 +146,6 @@ async function pollVehicleAndUpdateUI(){
         }
     }
 
-    // The /update-drive-state API can be async. The result doesn't matter
-    userInputArgs = {
-        'host' : serviceHost,
-        'port' : 8884, // Don't hardcode this port
-        'dashboard/brake' : !userEngineToggle.checked,
-        'dashboard/model_constant_throttle' : constantSpeed.getAttribute("value"),
-        'dashboard/driver_type' : getDriverType(modelToggle)
-    }
-    $.post('/update-drive-state', JSON.stringify(userInputArgs));
-
     memoryArgs = {
         'host' : serviceHost,
         'port' : 8095 // Don't hardcode this port
