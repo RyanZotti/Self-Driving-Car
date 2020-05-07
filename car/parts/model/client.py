@@ -40,8 +40,7 @@ class Client(Part):
         laptop in this case, but that required skipping the
         update_outputs() function
         """
-        prediction = json.loads(response.text)['prediction']
-        predicted_angle = prediction[0]
+        predicted_angle = json.loads(response.text)['prediction']
         self.outputs = predicted_angle
 
     # This is how the main control loop interacts with the part
