@@ -1439,6 +1439,19 @@ class VideoAPI(tornado.web.RequestHandler):
             interval = .1
             if self.served_image_timestamp + interval < time.time():
 
+                """
+                Sometimes when the Pi is under heavy load (e.g., when you deploy
+                the Tensorlfow model service), the video part has timeouts, which
+                leads to images that are None, and this leads to OpenCV empty jpeg
+                errors like this:
+                    (-10:Unknown error code -10) Raw image encoder error: Empty JPEG image
+                The best fix is to make the services perform better under load, but
+                it's nice to address the symptom too by asking OpenCV to skip
+                encoding of empty images
+                """
+                if self.application.scheduler.raw_dash_frame is None:
+                    continue
+
                 # Can't serve the OpenCV numpy array
                 # Tornando: "... only accepts bytes, unicode, and dict objects" (from Tornado error Traceback)
                 # The result of cv2.imencode is a tuple like: (True, some_image), but I have no idea what True refers to
