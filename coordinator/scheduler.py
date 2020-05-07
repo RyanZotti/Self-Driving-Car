@@ -208,7 +208,7 @@ class Scheduler(object):
             )
             constant_throttle = await read_slider_aio(
                 web_page='raspberry pi',
-                name='dashboard',
+                name='model constant speed',
                 aiopg_pool=self.aiopg_pool
             )
             timeout = ClientTimeout(total=self.timeout_seconds)
