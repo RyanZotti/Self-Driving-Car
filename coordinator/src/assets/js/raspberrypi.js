@@ -430,6 +430,7 @@ async function checkDashboardVideoReadiness(){
     dashboardVideoWhileOffInterval = setInterval(async function(){
         const videoSpinner = document.querySelector("div#video-loader");
         const applyBrakeButton = document.querySelector("span#applyBrakeButton");
+        const slownessBrakeIcon = document.querySelector("span#slowness-brake-icon")
         const metricsHeader = document.querySelector('div#drive-metrics-header');
         const metricsGraphics = document.querySelector('div#drive-metrics-graphics');
         const metricsText = document.querySelector('div#drive-metrics-text');
@@ -440,12 +441,27 @@ async function checkDashboardVideoReadiness(){
                 'host':serviceHost,
                 'port':8091 // TODO: Don't hard code this port
             });
+
+            /*
+            Sometimes the video API is healthy but (e.g., due to performance load)
+            the video images aren't shown. I want to avoid showing the brake and
+            warning buttons when the video isn't showing, since otherwise the
+            buttons are weirdly floating in the middle of the page and the page
+            looks broken. The if-statement below checks if the image has finished
+            loading
+            */
+            if(!videoImage.complete) {
+                applyBrakeButton.style.display = 'none';
+                slownessBrakeIcon.style.display = 'none';
+            }
+
             videoImage.onload = function(){
                 videoSpinner.style.display = 'none';
                 metricsHeader.style.display = 'flex';
                 metricsGraphics.style.display = 'flex';
                 metricsText.style.display = 'flex';
                 applyBrakeButton.style.display = 'flex';
+                slownessBrakeIcon.style.display = 'flex';
             }
         } else {
             // Turn spinner back on and hide the video content
@@ -454,6 +470,7 @@ async function checkDashboardVideoReadiness(){
             metricsGraphics.style.display = 'none';
             metricsText.style.display = 'none';
             applyBrakeButton.style.display = 'none';
+            slownessBrakeIcon.style.display = 'none';
             removeVideoSafely();
         }
     }, 1000);
