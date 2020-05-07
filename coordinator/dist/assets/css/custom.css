@@ -236,3 +236,76 @@ End slider CSS
 .timeline-compact > li.complete:before {
   background-color: #f6c163;
 }
+
+
+/*------------------------------------------------------------------
+  Machine learning deployment driver (remote vs local model) radio buttons
+  I got the CSS code from here: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_custom_radio
+*/
+
+.ml-driver-container {
+  display: block;
+  position: relative;
+  padding-left: 18px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Hide the browser's default radio button */
+.ml-driver-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Create a custom radio button */
+.checkmark {
+  position: absolute;
+  top: 3px;
+  left: 0;
+  height: 14px;
+  width: 14px;
+  background-color: #eee;
+  border-radius: 50%;
+}
+
+/* On mouse-over, add a grey background color */
+.ml-driver-container:hover input ~ .checkmark {
+  background-color: #ccc;
+}
+
+/* When the radio button is checked, add a blue background */
+.ml-driver-container input:checked ~ .checkmark {
+  background-color: #2c7be5;
+}
+
+/* Create the indicator (the dot/circle - hidden when not checked) */
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Show the indicator (dot/circle) when checked */
+.ml-driver-container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+/* Style the indicator (dot/circle) */
+.ml-driver-container .checkmark:after {
+    top: 5px;
+    left: 5px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: white;
+}
+
+/*------------------------------------------------------------------
+  End of machine learning deployment driver (remote vs local model) CSS for radio buttons
+*/

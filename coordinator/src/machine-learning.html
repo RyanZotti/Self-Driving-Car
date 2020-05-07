@@ -489,28 +489,33 @@
                     <thead>
                       <tr>
                           <th>
-                              <a href="#" class="text-muted sort" data-sort="deployments-device">
+                              <a href="#" class="text-muted sort">
                                 Device
                               </a>
                           </th>
                           <th>
-                              <a href="#" class="text-muted sort" data-sort="deployments-model-id">
+                              <a href="#" class="text-muted sort">
                                 Model ID
                               </a>
                           </th>
                           <th>
-                              <a href="#" class="text-muted sort" data-sort="deployments-epoch-id">
+                              <a href="#" class="text-muted sort">
                                 Epoch ID
                               </a>
                           </th>
                           <th>
-                              <a href="#" class="text-muted sort" data-sort="deployments-latency">
+                              <a href="#" class="text-muted sort">
                                 Latency (ms)
                               </a>
                           </th>
                           <th>
-                              <a href="#" class="text-muted sort" data-sort="deployments-health">
+                              <a href="#" class="text-muted sort">
                                 Health (%)
+                              </a>
+                          </th>
+                          <th>
+                              <a href="#" class="text-muted sort">
+                                Driver
                               </a>
                           </th>
                       </tr>
@@ -525,7 +530,13 @@
                             <td class="deployments-epoch-id"></td>
                             <td class="deployments-latency"></td>
                             <td class="deployments-health">
-                                <span class="angle-model-laptop-status" style="display:none">&nbsp; ●</span>
+                              <span class="angle-model-laptop-status" style="display:none">&nbsp; ●</span>
+                            </td>
+                            <td class="deployments-driver-radio">
+                              <label class="ml-driver-container">
+                                <input type="radio" class="tracked-radio-group" name="radio" toggle-web-page="machine learning" toggle-name="driver-device-type" toggle-detail="laptop">
+                                <span class="checkmark"></span>
+                              </label>
                             </td>
                         </tr>
                         <tr id="deployments-pi-row">
@@ -537,7 +548,13 @@
                             <td class="deployments-epoch-id"></td>
                             <td class="deployments-latency"></td>
                             <td class="deployments-health">
-                                <span class="angle-model-pi-status" style="display:none">&nbsp; ●</span>
+                              <span class="angle-model-pi-status" style="display:none">&nbsp; ●</span>
+                            </td>
+                            <td class="deployments-driver-radio">
+                              <label class="ml-driver-container">
+                                <input type="radio" class="tracked-radio-group" name="radio" toggle-web-page="machine learning" toggle-name="driver-device-type" toggle-detail="pi">
+                                <span class="checkmark"></span>
+                              </label>
                             </td>
                         </tr>
                     </tbody>

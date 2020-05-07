@@ -150,6 +150,64 @@ function configureToggle(checkbox){
 
 }
 
+function configureRadioGroup(checkbox){
+    /*
+    In Javascript, a "radio group" is a collection of radio
+    buttons where only one radio of the group of radios can
+    be selected at a given time. For example, I use radio
+    groups so that the user can select whether to use the
+    model on the Pi or on the laptop for driving the car in
+    real-time. The car can't use angles from both services,
+    so if you select one, the other(s) must be unselected
+    automatically.
+
+    However, it seems javascript doesn't support onchange
+    events for the radio buttons that aren't clicked. So as
+    a hack, when a user selects a radio button I trigger a
+    function that checks for all buttons of the same group
+    (inputs of the same "toggle-name" value that also
+    belong to the "tracked-radio-group" class), and loop
+    through each, updating the DB accordingly. There might
+    be a more elegant way to do this, but I think this is
+    the most readable and easiest to understand for my
+    future self
+    */
+
+    /*
+    These attributes will be the same for all radios belonging
+    to the same group
+    */
+    const webPage = checkbox.getAttribute('toggle-web-page');
+    const name = checkbox.getAttribute('toggle-name');
+
+    checkbox.addEventListener('change', function(){
+
+        /*
+        This will select all radios belonging to the group, which
+        is convenient because then you don't need separate code
+        for the selected vs unselected radios. You just loop
+        through each and examine whether it's checked or not
+        */
+        const radios = document.querySelectorAll('input.tracked-radio-group, '+'[toggle-name='+name+']');
+
+        // Go through all of the radios in the group
+        for (const radio of radios){
+            const detail = radio.getAttribute('toggle-detail');
+            const radioDetails = JSON.stringify({
+                'web_page': webPage,
+                'name': name,
+                'detail': detail,
+                'is_on': radio.checked
+            });
+            writeToggle(radioDetails);
+        }
+    });
+    const checkToggleTime = setInterval(function(){
+        updateToggleHtmlFromDB(checkbox);
+    }, 5000);
+
+}
+
 async function updatePiConnectionStatuses(){
     const statuses = document.querySelectorAll('span.raspberry-pi-connection-status');
     const isHealthy = await raspberryPiConnectionTest();

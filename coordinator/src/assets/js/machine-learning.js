@@ -510,6 +510,11 @@ document.addEventListener('DOMContentLoaded', function() {
         configureToggle(toggle);
     }
 
+    const trackedRadioGroups = document.querySelectorAll('input.tracked-radio-group');
+    for (const radio of trackedRadioGroups){
+        configureRadioGroup(radio);
+    }
+
     const newOrExistingModelTrainSelect = document.querySelector('select#newOrExistingModel');
     const existingModelOption = document.querySelector('option#existing-model-option');
     const trainExistingModelIdSelectDiv = document.querySelector('div#train-existing-model-id-option-div');
