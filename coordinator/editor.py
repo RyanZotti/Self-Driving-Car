@@ -2057,6 +2057,13 @@ class DatasetPredictionUpdateStatuses(tornado.web.RequestHandler):
     the datasets review table. The predecessor to this endpoint got
     called for each dataset separately, and this led to awful performance
     as the number of datasets grew
+
+    Shows the "analyze metrics" for the device that you selected in the
+    machine learning page that should steer the car (could be laptop
+    "remote_model" or pi "local_model"). The distinction by device type is
+    important because the model version on the Pi could be different from
+    the model version on the laptop, since the services are deployed
+    separately
     """
 
     executor = ThreadPoolExecutor(5)
@@ -2064,21 +2071,39 @@ class DatasetPredictionUpdateStatuses(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def get_data(self):
         sql_query = '''
-            
-        WITH latest_deployment AS (
+        WITH radio_model_device_type AS (
+            SELECT
+              detail AS device_type
+            FROM toggles
+            WHERE LOWER(web_page) = 'machine learning'
+              AND LOWER(name) = 'driver-device-type'
+              AND is_on = TRUE
+            ORDER BY event_ts DESC
+        ),
+
+        device_deployments AS (
           SELECT
             model_id,
-            epoch
-          FROM predictions
-          ORDER BY created_timestamp DESC
-          LIMIT 1
+            epoch_id,
+            ROW_NUMBER() OVER(PARTITION BY device ORDER BY event_ts DESC) AS latest_rank
+          FROM deployments
+          JOIN radio_model_device_type
+              ON LOWER(deployments.device) = LOWER(radio_model_device_type.device_type)
+        ),
+
+        latest_deployment AS (
+          SELECT
+              model_id,
+              epoch_id
+            FROM device_deployments
+            WHERE latest_rank = 1
         ),
 
         metrics AS (
           SELECT
             records.dataset,
             AVG(CASE
-              WHEN deploy.epoch IS NOT NULL
+              WHEN predictions.epoch IS NOT NULL
                 THEN 100.0
               ELSE 0.0 END) = 100 AS is_up_to_date,
             AVG(CASE
@@ -2092,12 +2117,13 @@ class DatasetPredictionUpdateStatuses(tornado.web.RequestHandler):
             AVG(ABS(records.angle - predictions.angle)) AS avg_abs_error,
             COUNT(*) AS prediction_count
         FROM records
+        JOIN latest_deployment AS deploy
+          ON TRUE
         LEFT JOIN predictions
           ON records.dataset = predictions.dataset
             AND records.record_id = predictions.record_id
-        LEFT JOIN latest_deployment AS deploy
-          ON predictions.model_id = deploy.model_id
-            AND predictions.epoch = deploy.epoch
+            AND deploy.model_id = predictions.model_id
+            AND deploy.epoch_id = predictions.epoch
         GROUP BY records.dataset
         ORDER BY dataset
         ),
