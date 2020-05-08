@@ -94,7 +94,8 @@ user_input = UserInput(
     output_names=[
         'dashboard/brake',
         'dashboard/driver_type',
-        'dashboard/model_constant_throttle'
+        'dashboard/model_constant_throttle',
+        'remote_model/angle'
     ],
     is_localhost=is_localhost,
     is_verbose=args['verbose-user-input']
@@ -143,22 +144,6 @@ memoryClient = MemoryClient(
     is_verbose=args['verbose-memory']
 )
 car.add(memoryClient)
-
-# Optionally consume driving predictions from a remote model
-remote_model = Model(
-    name='remote-model',
-    host=remote_host,
-    input_names=[
-        'camera/image_array',
-        'dashboard/driver_type'
-    ],
-    output_names=[
-        'remote_model/angle'
-    ],
-    is_localhost=False,
-    is_verbose=args['verbose-remote-model']
-)
-#car.add(remote_model)
 
 # Optionally consume driving predictions from a local model
 local_model = Model(

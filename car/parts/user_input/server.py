@@ -24,6 +24,23 @@ class TrackHumanRequests(tornado.web.RequestHandler):
         self.write(result)
 
 
+class TrackRemoteModel(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(5)
+
+    @tornado.concurrent.run_on_executor
+    def update(self,data):
+        print(data)
+        self.application.remote_model_angle = data['remote_model/angle']
+        return {}
+
+    @tornado.gen.coroutine
+    def post(self):
+        json_input = tornado.escape.json_decode(self.request.body)
+        result = yield self.update(data=json_input)
+        self.write(result)
+
+
 class GetInput(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -33,7 +50,8 @@ class GetInput(tornado.web.RequestHandler):
         state = {
             'dashboard/driver_type': self.application.driver_type,
             'dashboard/brake': self.application.brake,
-            'dashboard/model_constant_throttle': self.application.model_constant_throttle
+            'dashboard/model_constant_throttle': self.application.model_constant_throttle,
+            'remote_model/angle': self.application.remote_model_angle
         }
         self.write(state)
 
@@ -57,6 +75,7 @@ class Health(tornado.web.RequestHandler):
 def make_app():
     handlers = [
         (r"/track-human-requests", TrackHumanRequests),
+        (r"/track-remote-model", TrackRemoteModel),
         (r"/get-input", GetInput),
         (r"/health", Health)
     ]

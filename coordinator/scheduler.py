@@ -1,6 +1,7 @@
 from aiohttp import ClientSession, ClientTimeout
 import concurrent
 import datetime
+import traceback
 
 from coordinator.utilities import *
 
@@ -105,6 +106,75 @@ class Scheduler(object):
             await self.refresh_pi_credentials()
             await asyncio.sleep(interval_seconds)
 
+    async def call_model_api(self, is_verbose=False):
+        """
+        Calls the remote model (remote from the car/Pi's point of
+        view). This function is ultimately used to end predictions
+        to the car from the laptop. I created this because even a
+        tiny model was too slow and resource intensive to run on
+        the Pi
+        """
+        try:
+            img = cv2.imencode('.jpg', self.raw_dash_frame)[1].tostring()
+            port = 8886  # TODO: Don't hardcode this
+            host = 'localhost'
+            endpoint = f'http://{host}:{port}/predict'
+            files = {'image': img}
+            timeout = ClientTimeout(total=self.timeout_seconds)
+            async with ClientSession(timeout=timeout) as session:
+                async with session.post(endpoint, data=files) as response:
+                    output_json = await response.json()
+                    return output_json['prediction']
+        except:
+            if is_verbose:
+                traceback.print_exc()
+
+    async def call_user_input_remote_model_api(self, model_angle):
+        """
+        Populates the remote_model field of the user_input API
+
+        Parameters
+        ----------
+        json_input : dict
+            Dictionary of the data to pass the API
+        """
+        timeout = ClientTimeout(total=self.timeout_seconds)
+        port = 8884  # TODO: Don't hardcode this
+        host = self.service_host
+        endpoint = f'http://{host}:{port}/track-remote-model'
+        json_input = {'remote_model/angle': model_angle}
+        try:
+            async with ClientSession(timeout=timeout) as session:
+                async with session.post(endpoint, json=json_input) as response:
+                    _ = await response.json()
+        except:
+            """
+            Ignore exceptions because we never know when the service will
+            be unavailable and many times it's ok for it to be unavailable
+            """
+            pass
+
+    async def loop_remote_model(self):
+        """
+        This should run in a loop without waiting because I don't want
+        any latency between model calls
+        """
+        while True:
+            if self.raw_dash_frame is not None:
+                model_angle = await self.call_model_api()
+                if model_angle is not None:
+                    await self.call_user_input_remote_model_api(model_angle=model_angle)
+
+            """
+            From trial an error I learned that if you don't include some sort
+            of sleep, even very short, then this function will block when the
+            image is None. I think this occurs because the asyncio event loop
+            requires an `await` to know when it can shift its attention, but
+            if you keep skipping the part that runs `await`, then you'll just
+            end up running regular blocking python code
+            """
+            await asyncio.sleep(0.001)
+
     async def manage_service(self, service):
         """
         I want to resume services that are failed but that should be on
@@ -179,6 +249,8 @@ class Scheduler(object):
         throttle should be, etc
         """
         while True:
+
+            # Check the toggle on the Raspberry Pi dashboard page
             model_toggle = await read_toggle_aio(
                 postgres_host=None,
                 web_page='raspberry pi',
@@ -186,18 +258,33 @@ class Scheduler(object):
                 detail='model',
                 aiopg_pool=self.aiopg_pool
             )
+
+            # Check the radio button on the machine learning page
+            is_remote_model = await read_toggle_aio(
+                postgres_host=None,
+                web_page='machine learning',
+                name='driver-device-type',
+                detail='laptop',
+                aiopg_pool=self.aiopg_pool
+            )
+
+            # Check the radio button on the machine learning page
+            is_local_model = await read_toggle_aio(
+                postgres_host=None,
+                web_page='machine learning',
+                name='driver-device-type',
+                detail='pi',
+                aiopg_pool=self.aiopg_pool
+            )
+
             driver_type = 'user'
-            """
-            Eventually I might want to allow the user to switch
-            between a remote model and local model, but that would
-            require an update to the UI, which I don't want to do
-            right now, so I'm going to assume that if the model is
-            turned on that you should use the local version, since
-            pull a prediction from the laptop would be more
-            complicated
-            """
             if model_toggle is True:
-                driver_type = 'local_model'
+                if is_remote_model is True:
+                    driver_type = 'remote_model'
+                elif is_local_model is True:
+                    driver_type = 'local_model'
+                else:
+                    driver_type = 'user'
 
             engine_toggle = await read_toggle_aio(
                 postgres_host=None,
@@ -324,6 +411,9 @@ class Scheduler(object):
 
         # Send UI states saved in the DB to the Pi's control loop via the user_input part server
         asyncio.create_task(self.user_input_part_loop())
+
+        # Send remote model angles to the user_input part
+        asyncio.create_task(self.loop_remote_model())
 
         services = self.get_services()
         manage_service_tasks = []
