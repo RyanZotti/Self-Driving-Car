@@ -153,7 +153,10 @@ async function pollVehicleAndUpdateUI(){
     const result = await getMemory(memoryArgs);
 
     // Set speed
-    const speed = result['ps3_controller/throttle'];
+    var speed = result['ps3_controller/throttle'];
+    if (modelToggle.checked){
+        speed = result['dashboard/model_constant_throttle'] / 100
+    }
     adjustSpeedBar('driveSpeedBar',speed);
     const speedText = document.querySelector("div#driveSpeedText");
     speedText.textContent = (speed * 100).toFixed(0) + '%';
