@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS predictions(
   model_id INT,
   epoch INT,
   angle float8,
-  created_timestamp TIMESTAMP,
+  created_timestamp TIMESTAMP NOT NULL DEFAULT now(),
 PRIMARY KEY(dataset, record_id, model_id, epoch));
 COMMIT;
 
