@@ -138,33 +138,80 @@ async function pollVehicleAndUpdateUI(){
     const modelToggle = document.querySelector("input#model-toggle");
     const constantSpeed = document.querySelector("input#model-constant-speed-slider");
 
-    function getDriverType(modelToggle){
-        if (constantSpeed.checked){
-            return 'model'
-        } else {
-            return 'user'
-        }
-    }
-
     memoryArgs = {
         'host' : serviceHost,
         'port' : 8095 // Don't hardcode this port
     }
     const result = await getMemory(memoryArgs);
 
-    // Set speed
-    var speed = result['ps3_controller/throttle'];
-    if (modelToggle.checked){
-        speed = result['dashboard/model_constant_throttle'] / 100
+    function getSpeed(result){
+        if (result['dashboard/driver_type']=='user'){
+            return result['ps3_controller/throttle']
+        } else {
+            return result['dashboard/model_constant_throttle'] / 100
+        }
     }
+
+    // Set speed
+    const speed = getSpeed(result);
     adjustSpeedBar('driveSpeedBar',speed);
     const speedText = document.querySelector("div#driveSpeedText");
     speedText.textContent = (speed * 100).toFixed(0) + '%';
-    // Set steering
-    const steering = result['ps3_controller/angle'];
-    updateDonut(donuts.drive,steering);
-    const steeringText = document.querySelector("div#driveHumanSteeringText");
-    steeringText.textContent = (steering * 100).toFixed(0) + '%';
+
+    // Show either the human steering or the model steering but not both simultaneously
+    if (result['dashboard/driver_type']=='user') {
+        const steering = result['ps3_controller/angle'];
+        updateDonut(donuts.human,steering);
+        const steeringText = document.querySelector("div#driveHumanSteeringText");
+        steeringText.textContent = (steering * 100).toFixed(0) + '%';
+
+        /*
+        I only want to show either the model steering or the human steering,
+        so if the model is turned on I should hide all of the human steering
+        elements. The elements include the text that says "model", as well
+        as the donut for the human steering, and the steering percentage text
+        */
+        // Hide all the model elements
+        const modelSteeringElements = document.querySelectorAll("div.model-angle-col");
+        for (const element of modelSteeringElements){
+            element.style.display = 'none';
+        }
+        // Show all the human elements
+        const humanSteeringElements = document.querySelectorAll("div.human-angle-col");
+        for (const element of humanSteeringElements){
+            element.style.display = 'block';
+        }
+    } else {
+
+        /*
+        I only want to show either the model steering or the human steering,
+        so if the model is turned on I should hide all of the human steering
+        elements. The elements include the text that says "human", as well
+        as the donut for the human steering, and the steering percentage text
+        */
+        // Hide all of the human elements
+        const humanSteeringElements = document.querySelectorAll("div.human-angle-col");
+        for (const element of humanSteeringElements){
+            element.style.display = 'none';
+        }
+        // Show all of the model elements
+        const modelSteeringElements = document.querySelectorAll("div.model-angle-col");
+        for (const element of modelSteeringElements){
+            element.style.display = 'block';
+        }
+
+        function getModelSteering(result){
+            if (result['dashboard/driver_type']=='remote_model') {
+                return result['remote_model/angle']
+            } else if(result['dashboard/driver_type']=='local_model') {
+                return result['local_model/angle']
+            }
+        }
+        const modelSteering = getModelSteering(result);
+        updateDonut(donuts.ai,modelSteering);
+        const modelSteeringText = document.querySelector("div#driveModelSteeringText");
+        modelSteeringText.textContent = (modelSteering * 100).toFixed(0) + '%';
+    }
 
     // Show the video when viewing the dashboard
     const dashboardWrapper = document.querySelector("#dashboard-wrapper");

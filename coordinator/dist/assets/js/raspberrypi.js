@@ -572,7 +572,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     */
     donuts.ai = makeDonut('aiAngleDonut');
     donuts.human = makeDonut('humanAngleDonut');
-    donuts.drive = makeDonut('driveHumanAngleDonut');
 
     const services = [
         "video",
