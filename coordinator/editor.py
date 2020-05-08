@@ -645,56 +645,6 @@ class DatasetRecordIdsAPI(tornado.web.RequestHandler):
         result = yield self.get_record_ids(json_input=json_input)
         self.write(result)
 
-class IsDatasetPredictionFromLatestDeployedModel(tornado.web.RequestHandler):
-
-    executor = ThreadPoolExecutor(5)
-
-    @tornado.concurrent.run_on_executor
-    def are_predictions_from_deployed_model(self, json_input):
-        dataset_name = json_input['dataset']
-        sql_query = '''
-            DROP TABLE IF EXISTS latest_deployment;
-            CREATE TEMP TABLE latest_deployment AS (
-              SELECT
-                model_id,
-                epoch
-              FROM predictions
-              ORDER BY created_timestamp DESC
-              LIMIT 1
-            );
-
-            SELECT
-              AVG(CASE
-                WHEN deploy.epoch IS NOT NULL
-                  THEN 100.0
-                ELSE 0.0 END) = 100 AS is_up_to_date
-            FROM records
-            LEFT JOIN predictions
-              ON records.dataset = predictions.dataset
-                AND records.record_id = predictions.record_id
-            LEFT JOIN latest_deployment AS deploy
-              ON predictions.model_id = deploy.model_id
-                AND predictions.epoch = deploy.epoch
-            WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%')
-            '''.format(dataset=dataset_name)
-        first_row = get_sql_rows(
-            host=self.application.postgres_host,
-            sql=sql_query,
-            postgres_pool=self.application.postgres_pool
-        )[0]
-        is_up_to_date = first_row['is_up_to_date']
-        result = {
-            'is_up_to_date': is_up_to_date
-        }
-        return result
-
-    @tornado.gen.coroutine
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
-        result = yield self.are_predictions_from_deployed_model(json_input=json_input)
-        self.write(result)
-
-
 class SaveRecordToDB(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -2005,39 +1955,6 @@ class BatchPredict(tornado.web.RequestHandler):
         result = yield self.batch_predict(json_input=json_input)
         self.write(result)
 
-
-class IsDatasetPredictionSyncing(tornado.web.RequestHandler):
-
-    executor = ThreadPoolExecutor(5)
-
-    @tornado.concurrent.run_on_executor
-    def is_prediction_syncing(self,json_input):
-        dataset_name = json_input['dataset']
-        sql_query = '''
-            SELECT
-              COUNT(*) > 0 AS answer
-            FROM live_prediction_sync
-            WHERE LOWER(dataset) LIKE LOWER('%{dataset}%')
-        '''.format(
-            dataset=dataset_name
-        )
-        rows = get_sql_rows(
-            host=self.application.postgres_host,
-            sql=sql_query,
-            postgres_pool=self.application.postgres_pool
-        )
-        first_row = rows[0]
-        return {
-            'is_syncing': first_row['answer']
-        }
-
-    @tornado.gen.coroutine
-    def post(self):
-        json_input = tornado.escape.json_decode(self.request.body)
-        result = yield self.is_prediction_syncing(json_input=json_input)
-        self.write(result)
-
-
 class NewEpochs(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
@@ -2133,134 +2050,92 @@ class RefreshRecordReader(tornado.web.RequestHandler):
         self.write(result)
 
 
-class DatasetPredictionSyncPercent(tornado.web.RequestHandler):
+class DatasetPredictionUpdateStatuses(tornado.web.RequestHandler):
+
+    """
+    Gets the "analyze", "error", and "critical" fields for each row in
+    the datasets review table. The predecessor to this endpoint got
+    called for each dataset separately, and this led to awful performance
+    as the number of datasets grew
+    """
 
     executor = ThreadPoolExecutor(5)
 
     @tornado.concurrent.run_on_executor
-    def get_sync_percent(self,json_inputs):
-        dataset_name = json_inputs['dataset']
+    def get_data(self):
         sql_query = '''
-            DROP TABLE IF EXISTS latest_deployment;
-            CREATE TEMP TABLE latest_deployment AS (
-              SELECT
-                model_id,
-                epoch
-              FROM predictions
-              ORDER BY created_timestamp DESC
-              LIMIT 1
-            );
+            
+        WITH latest_deployment AS (
+          SELECT
+            model_id,
+            epoch
+          FROM predictions
+          ORDER BY created_timestamp DESC
+          LIMIT 1
+        ),
 
-            SELECT
-              AVG(CASE
-                WHEN predictions.angle IS NOT NULL
-                  THEN 100.0
-                ELSE 0.0 END) AS completion_percent
-            FROM records
-            LEFT JOIN predictions
-              ON records.dataset = predictions.dataset
-                AND records.record_id = predictions.record_id
-            LEFT JOIN latest_deployment AS deploy
-              ON predictions.model_id = deploy.model_id
-                AND predictions.epoch = deploy.epoch
-            WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%')
-        '''.format(
-            dataset=dataset_name
+        metrics AS (
+          SELECT
+            records.dataset,
+            AVG(CASE
+              WHEN deploy.epoch IS NOT NULL
+                THEN 100.0
+              ELSE 0.0 END) = 100 AS is_up_to_date,
+            AVG(CASE
+              WHEN predictions.angle IS NOT NULL
+                THEN 100.0
+              ELSE 0.0 END) AS completion_percent,
+            SUM(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
+                THEN 1 ELSE 0 END) AS critical_count,
+            AVG(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
+              THEN 100.0 ELSE 0.0 END)::FLOAT AS critical_percent,
+            AVG(ABS(records.angle - predictions.angle)) AS avg_abs_error,
+            COUNT(*) AS prediction_count
+        FROM records
+        LEFT JOIN predictions
+          ON records.dataset = predictions.dataset
+            AND records.record_id = predictions.record_id
+        LEFT JOIN latest_deployment AS deploy
+          ON predictions.model_id = deploy.model_id
+            AND predictions.epoch = deploy.epoch
+        GROUP BY records.dataset
+        ORDER BY dataset
+        ),
+
+        prediction_syncs AS (
+          SELECT
+            dataset,
+            COUNT(*) > 0 AS answer
+          FROM live_prediction_sync
+          GROUP BY dataset
         )
+
+        SELECT
+          metrics.dataset,
+          metrics.is_up_to_date,
+          metrics.completion_percent::FLOAT AS completion_percent,
+          metrics.critical_count::FLOAT AS critical_count,
+          metrics.critical_percent::FLOAT AS critical_percent,
+          metrics.avg_abs_error::FLOAT AS avg_abs_error,
+          metrics.prediction_count::FLOAT AS prediction_count,
+          COALESCE(prediction_syncs.answer,FALSE) AS is_syncing
+        FROM metrics
+        LEFT JOIN prediction_syncs
+          ON metrics.dataset = prediction_syncs.dataset
+        '''
         rows = get_sql_rows(
             host=self.application.postgres_host,
             sql=sql_query,
             postgres_pool=self.application.postgres_pool
         )
-        first_row = rows[0]
         result = {
-            'percent':float(first_row['completion_percent'])
+            'rows': rows
         }
         return result
 
     @tornado.gen.coroutine
-    def post(self):
-        json_inputs = tornado.escape.json_decode(self.request.body)
-        result = yield self.get_sync_percent(json_inputs=json_inputs)
-        self.write(result)
-
-
-class GetDatasetErrorMetrics(tornado.web.RequestHandler):
-
-    executor = ThreadPoolExecutor(5)
-
-    def get_latest_deployment(self,dataset):
-
-        seconds = 1
-        try:
-            request = requests.post(
-                # TODO: Remove hardcoded port
-                'http://{host}:8885/model-metadata'.format(host='localhost'),
-                timeout=seconds
-            )
-            response = json.loads(request.text)
-            return response
-        except:
-            return None
-
-
-    @tornado.concurrent.run_on_executor
-    def get_error_metrics(self,json_inputs):
-        dataset_name = json_inputs['dataset']
-        latest_deployment = self.get_latest_deployment(dataset=dataset_name)
-        if latest_deployment is not None:
-            model_id = latest_deployment['model_id']
-            epoch = latest_deployment['epoch_id']
-            sql_query = '''
-                SELECT
-                  SUM(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
-                    THEN 1 ELSE 0 END) AS critical_count,
-                  AVG(CASE WHEN ABS(records.angle - predictions.angle) >= 0.8
-                    THEN 100.0 ELSE 0.0 END)::FLOAT AS critical_percent,
-                  AVG(ABS(records.angle - predictions.angle)) AS avg_abs_error,
-                  COUNT(*) AS prediction_count
-                FROM records
-                LEFT JOIN predictions
-                  ON records.dataset = predictions.dataset
-                    AND records.record_id = predictions.record_id
-                WHERE LOWER(records.dataset) LIKE LOWER('%{dataset}%')
-                  AND model_id = {model_id}
-                  AND epoch = {epoch};
-            '''.format(
-                dataset=dataset_name,
-                model_id=model_id,
-                epoch=epoch
-            )
-            rows = get_sql_rows(
-                host=self.application.postgres_host,
-                sql=sql_query,
-                postgres_pool=self.application.postgres_pool
-            )
-            first_row = rows[0]
-            if first_row['prediction_count'] > 0:
-                result = {
-                    'critical_count': float(first_row['critical_count']),
-                    'critical_percent': str(round(float(first_row['critical_percent']), 1)) + '%',
-                    'avg_abs_error': round(float(first_row['avg_abs_error']), 2)
-                }
-                return result
-            else:
-                return {
-                    'critical_count': 'N/A',
-                    'critical_percent': 'N/A',
-                    'avg_abs_error': 'N/A'
-                }
-        else:
-            return {
-                'critical_count': 'N/A',
-                'critical_percent': 'N/A',
-                'avg_abs_error': 'N/A'
-            }
-
-    @tornado.gen.coroutine
-    def post(self):
-        json_inputs = tornado.escape.json_decode(self.request.body)
-        result = yield self.get_error_metrics(json_inputs=json_inputs)
+    def get(self):
+        result = yield self.get_data()
         self.write(result)
 
 
@@ -2400,14 +2275,11 @@ def make_app():
         (r"/list-model-deployments", ListModelDeployments),
         (r"/update-deployments-table", UpdateDeploymentsTable),
         (r"/deploy-model", DeployModel),
-        (r"/are-dataset-predictions-updated", IsDatasetPredictionFromLatestDeployedModel),
         (r"/is-training-job-submitted", IsTrainingJobSubmitted),
         (r"/get-training-metadata", GetTrainingMetadata),
         (r"/does-model-already-exist", DoesModelAlreadyExist),
         (r"/batch-predict", BatchPredict),
-        (r"/is-dataset-prediction-syncing", IsDatasetPredictionSyncing),
-        (r"/dataset-prediction-sync-percent", DatasetPredictionSyncPercent),
-        (r"/get-dataset-error-metrics", GetDatasetErrorMetrics),
+        (r"/get-dataset-prediction-update-statuses", DatasetPredictionUpdateStatuses),
         (r"/get-new-epochs", NewEpochs),
         (r"/write-toggle", WriteToggle),
         (r"/read-toggle", ReadToggle),

@@ -25,37 +25,21 @@ function getDatasetIdFromDataset(dataset) {
     });
 }
 
-function getDatasetErrorMetrics(dataset) {
-    return new Promise(function(resolve, reject) {
-        data = JSON.stringify({'dataset': dataset})
-        $.post('/get-dataset-error-metrics', data, function(result){
-           resolve(result)
-        });
-    });
-}
-
 function getDatasetMetadata(datasetType, dataset) {
     const apiResults = [
         getDatasetIdFromDataset(dataset),
         getDateFromDataset(dataset),
         getImageCountFromDataset(datasetType, dataset),
         Promise.resolve(dataset),
-        getImageCountFromDataset('mistake', dataset),
-        getDatasetErrorMetrics(dataset)
+        getImageCountFromDataset('mistake', dataset)
     ]
     return Promise.all(apiResults).then(function(apiResults){
-        const criticalCount = apiResults[5]['critical_count'];
-        const criticalPercent = apiResults[5]['critical_percent'];
-        const error = apiResults[5]['avg_abs_error'];
         const result = {
                 'id' : apiResults[0],
                 'date' : apiResults[1],
                 'images' : apiResults[2],
                 'name' : apiResults[3],
-                'flags' : apiResults[4],
-                'criticalCount' : criticalCount,
-                'criticalPercent' : criticalPercent,
-                'error' : error,
+                'flags' : apiResults[4]
         }
         return result
     });

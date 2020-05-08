@@ -195,8 +195,8 @@ async function addDatasetReviewRows() {
                 tr.querySelector('td.created-date').textContent = dataset.date;
                 tr.querySelector('td.images').textContent = dataset.images;
                 tr.querySelector('td.flagged').textContent = dataset.flags;
-                tr.querySelector('td.dataset-error').textContent = dataset.error;
-                tr.querySelector('td.dataset-critical-percent').textContent = dataset.criticalPercent;
+                //tr.querySelector('td.dataset-error').textContent = dataset.error;
+                //tr.querySelector('td.dataset-critical-percent').textContent = dataset.criticalPercent;
                 tr.querySelector('button.play-dataset-button').setAttribute("dataset",datasetText);
                 tr.querySelector('button.delete-dataset-action').setAttribute("dataset",datasetText);
                 const removeFlagsButton = tr.querySelector('button.remove-flags-action');
@@ -347,27 +347,6 @@ function startCar(){
     });
 }
 
-function isDatasetPredictionSyncing(dataset){
-    const data = JSON.stringify({
-        'dataset': dataset
-    });
-    return new Promise(resolve => {
-        $.post('/is-dataset-prediction-syncing', data, (response) => {
-            resolve(response['is_syncing']);
-        });
-    });
-}
-
-function datasetPredictionSyncPercent(dataset){
-    const data = JSON.stringify({
-        'dataset': dataset
-    });
-    return new Promise(resolve => {
-        $.post('/dataset-prediction-sync-percent', data, (response) => {
-            resolve(response['percent']);
-        });
-    });
-}
 
 // This migt not be necessary if I save all datasets
 // incrementally as they're imported. I loop through
@@ -444,16 +423,6 @@ function getHumanAngleAndThrottle(dataset, recordId) {
     });
 }
 
-function areDatasetPredictionsUpdated(dataset) {
-    return new Promise(function(resolve, reject) {
-        data = JSON.stringify({ 'dataset': dataset})
-        $.post('/are-dataset-predictions-updated', data, function(result){
-           resolve(result['is_up_to_date'])
-        });
-    });
-}
-
-
 async function checkAllDatasetsImportProgress(){
     if (getActiveDatasetType() == 'import'){
         const rows = document.querySelectorAll('tbody#datasetsTbody > tr');
@@ -474,40 +443,56 @@ async function checkAllDatasetsImportProgress(){
     }
 }
 
-async function checkPredictionUpdateStatuses(){
+function getPredictionUpdateStatusesBulk(){
+    return new Promise(resolve => {
+        $.get("/get-dataset-prediction-update-statuses",(response) => {
+            const dict = {};
+            for (const row of response.rows){
+                const dataset = row['dataset'];
+                dict[dataset] = row;
+            }
+            resolve(dict);
+        });
+    });
+}
+
+async function refreshPredictionUpdateStatusesBulk(){
+    /*
+    This is supposed to be the much faster (more efficient) version
+    of checkPredictionUpdateStatuses() that gets data for all datasets
+    at once instead of making a separate call for each, which leads to
+    terrible performance as the number of datasets grows
+    */
     if (getActiveDatasetType() == 'review'){
-        const rows = document.querySelectorAll('tbody#datasetsTbody > tr')
+        const results = await getPredictionUpdateStatusesBulk();
+        const rows = document.querySelectorAll('tbody#datasetsTbody > tr');
         for (const row of rows){
             const dataset = row.getAttribute("dataset");
-            const isUpdated = await areDatasetPredictionsUpdated(dataset);
+            const isUpdated = results[dataset]['is_up_to_date'];
             const analyzeDatasetButton = row.querySelector('button.analyze-dataset-button');
             const progressCircle = row.querySelector('svg.analyze-progress-circle');
             if (isUpdated == true){
-                const errorMetrics = await getDatasetErrorMetrics(dataset);
-                row.querySelector('td.dataset-error').textContent = errorMetrics['avg_abs_error'];
-                row.querySelector('td.dataset-critical-percent').textContent = errorMetrics['critical_percent'];
+                row.querySelector('td.dataset-error').textContent = results[dataset]['avg_abs_error'].toFixed(2);
+                row.querySelector('td.dataset-critical-percent').textContent = results[dataset]['critical_percent'].toFixed(2);
+                row.querySelector('td.dataset-critical-percent').textContent = results[dataset]['critical_percent'].toFixed(2);
                 analyzeDatasetButton.style.display = 'none';
                 progressCircle.style.display = 'block';
                 updateProgressCircle(progressCircle,100);
             } else {
-                const isSyncing = await isDatasetPredictionSyncing(dataset);
+                const isSyncing = results[dataset]['is_syncing'];
                 if (isSyncing == true){
-                    const syncPercent = await datasetPredictionSyncPercent(dataset);
+                    const syncPercent = results[dataset]['completion_percent'].toFixed(2);
                     updateProgressCircle(progressCircle,syncPercent);
                     analyzeDatasetButton.style.display = 'none';
                     progressCircle.style.display = 'block';
                 } else {
                     analyzeDatasetButton.style.display = 'block';
                     progressCircle.style.display = 'none';
+                    row.querySelector('td.dataset-error').textContent = 'N/A';
+                    row.querySelector('td.dataset-critical-percent').textContent = 'N/A';
                 }
             }
         }
-    } else {
-        /*
-        Do nothing because I only apply model inference to records on the
-        laptop. I don't apply inference to records that are only on the Pi
-        and not yet imported onto the laptop
-        */
     }
 }
 
@@ -1078,8 +1063,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const trainingStateTimer = setInterval(function(){
-      checkPredictionUpdateStatuses()
-    }, 1000);
+      refreshPredictionUpdateStatusesBulk()
+    }, 3000);
 
     const importProgressTimer = setInterval(function(){
         /*
