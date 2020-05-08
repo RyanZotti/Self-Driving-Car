@@ -481,7 +481,7 @@ async function refreshPredictionUpdateStatusesBulk(){
             } else {
                 const isSyncing = results[dataset]['is_syncing'];
                 if (isSyncing == true){
-                    const syncPercent = results[dataset]['completion_percent'].toFixed(2);
+                    const syncPercent = results[dataset]['completion_percent'];
                     updateProgressCircle(progressCircle,syncPercent);
                     analyzeDatasetButton.style.display = 'none';
                     progressCircle.style.display = 'block';
