@@ -293,11 +293,19 @@ class Scheduler(object):
                 detail='engine',
                 aiopg_pool=self.aiopg_pool
             )
-            constant_throttle = await read_slider_aio(
+            constant_throttle_db = await read_slider_aio(
                 web_page='raspberry pi',
                 name='model constant speed',
                 aiopg_pool=self.aiopg_pool
             )
+
+            """
+            The UI and DB saves throttle as an integer, but the engine
+            expects it as a float between 0.0 and 1.0, so I have to
+            convert accordingly
+            """
+            constant_throttle = constant_throttle_db / 100.0
+
             timeout = ClientTimeout(total=self.timeout_seconds)
             port = 8884  # TODO: Don't hardcode this
             host = self.service_host
