@@ -273,7 +273,7 @@ class ListModelDeployments(tornado.web.RequestHandler):
                   SELECT
                     model_id,
                     epoch_id,
-                    ROW_NUMBER() OVER(PARTITION BY model_id ORDER BY event_ts DESC) AS latest_rank
+                    ROW_NUMBER() OVER(PARTITION BY device ORDER BY event_ts DESC) AS latest_rank
                   FROM deployments
                   WHERE LOWER(device) LIKE LOWER('%{device}%')
                 )
