@@ -1776,6 +1776,24 @@ class ResumeTraining(tornado.web.RequestHandler):
             field_name='models_location_laptop',
             postgres_pool=self.application.postgres_pool
         )
+
+        """
+        Used to track whether a model is training or not. This is
+        much faster than calling the health check (used for the UI)
+        because it can take awhile to load the model and get
+        everything started up whereas it's quick to check if a model
+        /should/ be training. This makes the train button much
+        more responsive and gives much better user feedback
+        """
+        add_job(
+            postgres_host=None,
+            session_id=self.application.session_id,
+            name='machine learning',
+            detail='training',
+            status='started',
+            postgres_pool=self.application.postgres_pool
+        )
+
         resume_training(
             postgres_host=self.application.postgres_host,
             model_id=model_id,

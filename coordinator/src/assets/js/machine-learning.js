@@ -520,7 +520,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const trainExistingModelIdSelectDiv = document.querySelector('div#train-existing-model-id-option-div');
     const trainSliders = document.querySelector('div#train-sliders');
     newOrExistingModelTrainSelect.onchange = function(){
-        console.log(newOrExistingModelTrainSelect.options[newOrExistingModelTrainSelect.selectedIndex].text)
         if (existingModelOption.selected == true){
             populateModelIdOptions();
             trainExistingModelIdSelectDiv.style.display = 'block';
