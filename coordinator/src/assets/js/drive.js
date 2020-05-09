@@ -136,7 +136,6 @@ async function pollVehicleAndUpdateUI(){
 
     const userEngineToggle = document.querySelector("input#engine-toggle");
     const modelToggle = document.querySelector("input#model-toggle");
-    const constantSpeed = document.querySelector("input#model-constant-speed-slider");
 
     memoryArgs = {
         'host' : serviceHost,
@@ -148,7 +147,7 @@ async function pollVehicleAndUpdateUI(){
         if (result['dashboard/driver_type']=='user'){
             return result['ps3_controller/throttle']
         } else {
-            return result['dashboard/model_constant_throttle'] / 100
+            return result['dashboard/model_constant_throttle']
         }
     }
 
