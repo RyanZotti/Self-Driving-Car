@@ -626,7 +626,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         clearInterval(resumeServicesTime);
 
         settingsNav.classList.add("active");
-        settingsWrapper.style.display = 'flex';
+        settingsWrapper.style.display = 'block';
 
         servicesWrapper.style.display = 'none';
         servicesNav.classList.remove('active');
