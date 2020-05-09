@@ -86,9 +86,25 @@ async function addDatasetImportRows(){
                 label.setAttribute('for','dataset-id-'+record.id);
                 tbody.appendChild(tr);
                 const deleteDatasetButton = tr.querySelector('button.delete-dataset-button');
-                deleteDatasetButton.onclick = function(){
+                deleteDatasetButton.onclick = async function(){
                     const dataset = this.getAttribute("dataset");
-                    deleteDataset("pi", dataset);
+
+                    /*
+                    This fixes a super annoying sporadic bug where sometimes I
+                    would delete a dataset's row only for it to reappear shortly
+                    after. I realized that this happened because the
+                    importProgressTimer interval runs every second and calls
+                    addDatasetImportRows, which adds back rows if they don't
+                    exist. So basically there is a race condition. My workaround
+                    is to take advantage of the interval's cadence of 1000 ms. I
+                    first hide the dataset so that it looks deleted to the user,
+                    then I call the delete API so that future addDatasetImportRows
+                    calls won't pick up the dataset, and then I wait a little over
+                    a full cadence, 1500 ms, before I delete the tr html element
+                    */
+                    tr.style.display = 'none';
+                    await deleteDataset("pi", dataset);
+                    await sleep(1500);
                     tr.parentNode.removeChild(tr);
                 }
             } else {
