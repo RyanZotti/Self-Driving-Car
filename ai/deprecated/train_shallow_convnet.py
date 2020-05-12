@@ -43,7 +43,7 @@ model_file = os.path.dirname(os.path.realpath(__file__)) + '/' + os.path.basenam
 trainer = Trainer(data_path=data_path,
                   model_file=model_file,
                   s3_bucket=s3_bucket,
-                  epochs=epochs,
+                  total_epochs=epochs,
                   max_sample_records=100,
                   show_speed=show_speed,
                   s3_sync=s3_sync)
