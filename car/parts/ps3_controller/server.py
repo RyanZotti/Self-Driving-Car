@@ -401,12 +401,22 @@ class SudoSixpair(tornado.web.RequestHandler):
 
 class PS3Controller():
 
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, force_start=False):
         self.angle = 0.0
         self.throttle = 0.0
         self.is_loop_on = False
         self.verbose = verbose
         self.pressed_buttons = set()
+        self.force_start = force_start
+
+        """
+        Use this if you want to start the part loop using the
+        editor.py UI to tell call the part server to tell it
+        to start. I only use this when I want to start server
+        manually for debugging
+        """
+        if self.force_start is True:
+            self.start_loop()
 
     def loop(self):
         with SixAxisResource(bind_defaults=True) as self.joystick:
@@ -469,12 +479,31 @@ if __name__ == "__main__":
         dest='verbose',
         action='store_true',
         default=False)
+
+    """
+    Use this if I want to start the loop outside of Tornado or
+    the normal workflow. In the traditional workflow I use a
+    post request to Tornado to start the loop, but I start the
+    part with tornado I can't see verbose logs. If can see logs
+    if I start manually, but until I added this CLI flag I
+    couldn't start the part loop if I went the manual route
+    """
+    ap.add_argument(
+        "--force-start",
+        required=False,
+        dest='force_start',
+        action='store_true',
+        default=False)
+
     args = vars(ap.parse_args())
     port = args['port']
 
     app = make_app()
     app.listen(port)
-    app.ps3_controller = PS3Controller(verbose=args['verbose'])
+    app.ps3_controller = PS3Controller(
+        verbose=args['verbose'],
+        force_start=args['force_start']
+    )
 
     # TODO: Put this in a DB. It's bad to maintain state in the API
     app.button_states = {
