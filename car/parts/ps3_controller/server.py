@@ -439,7 +439,7 @@ class PS3Controller():
                         print(pressed_buttons)
 
                     if self.verbose is True:
-                        print('angle: '+str(self.angle)+' throttle: '+str(self.throttle))
+                        print('raw angle: '+str(self.joystick.axes[0].value)+' angle: '+str(self.angle)+' raw throttle '+str(self.joystick.axes[1].value)+' throttle: '+str(self.throttle))
 
                     self.pressed_buttons = self.pressed_buttons.union(pressed_buttons)
                     self.is_loop_on = True
