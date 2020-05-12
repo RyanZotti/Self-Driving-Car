@@ -401,10 +401,11 @@ class SudoSixpair(tornado.web.RequestHandler):
 
 class PS3Controller():
 
-    def __init__(self):
+    def __init__(self, verbose=False):
         self.angle = 0.0
         self.throttle = 0.0
         self.is_loop_on = False
+        self.verbose = verbose
         self.pressed_buttons = set()
 
     def loop(self):
@@ -426,6 +427,9 @@ class PS3Controller():
                     """
                     if len(pressed_buttons) > 0:
                         print(pressed_buttons)
+
+                    if self.verbose is True:
+                        print('angle: '+str(self.angle)+' throttle: '+str(self.throttle))
 
                     self.pressed_buttons = self.pressed_buttons.union(pressed_buttons)
                     self.is_loop_on = True
@@ -459,12 +463,18 @@ if __name__ == "__main__":
         required=False,
         help="Server port to use",
         default=8094)
+    ap.add_argument(
+        "--verbose",
+        required=False,
+        dest='verbose',
+        action='store_true',
+        default=False)
     args = vars(ap.parse_args())
     port = args['port']
 
     app = make_app()
     app.listen(port)
-    app.ps3_controller = PS3Controller()
+    app.ps3_controller = PS3Controller(verbose=args['verbose'])
 
     # TODO: Put this in a DB. It's bad to maintain state in the API
     app.button_states = {
