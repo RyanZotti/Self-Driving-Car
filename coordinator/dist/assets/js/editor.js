@@ -229,7 +229,24 @@ async function addDatasetReviewRows() {
                 const analyzeDatasetButton = tr.querySelector("button.analyze-dataset-button");
                 analyzeDatasetButton.setAttribute("dataset",datasetText);
                 analyzeDatasetButton.onclick = function() {
+
+                    // Acknowledge the user clicked the button
+                    const progressCircle = tr.querySelector('svg.analyze-progress-circle');
+                    updateProgressCircle(progressCircle,0);
+                    analyzeDatasetButton.style.display = 'none';
+                    progressCircle.style.display = 'block';
+
+                    /*
+                    Protect the progress circle from briefly reverting back to
+                    the button if there is a race condition with the timer that
+                    updates rows and resets the circle and button states. The
+                    clickTime attribute is checked in the timer
+                    */
                     const dataset = this.getAttribute("dataset");
+                    const clickTime = new Date().getTime();
+                    analyzeDatasetButton.setAttribute("clickTime",clickTime);
+
+                    // Start the analyze job
                     batchPredict(dataset);
                 }
                 const deleteDatasetButton = tr.querySelector('button.delete-dataset-action');
@@ -502,8 +519,29 @@ async function refreshPredictionUpdateStatusesBulk(){
                     analyzeDatasetButton.style.display = 'none';
                     progressCircle.style.display = 'block';
                 } else {
-                    analyzeDatasetButton.style.display = 'block';
-                    progressCircle.style.display = 'none';
+                    if(analyzeDatasetButton.hasAttribute('clickTime')){
+                        const nowTime = new Date().getTime()
+                        const clickTime = analyzeDatasetButton.getAttribute('clickTime');
+                        const secondsDiff = (nowTime - clickTime) / 1000;
+                        if (secondsDiff > 10){
+                            /*
+                            If the analyze button was clicked but the dataset is neither
+                            in progress nor completed, then there was clearly a bug.
+                            Hopefully the bug is temporary, and if you show the button
+                            again the user will be able to restart the analyze job
+                            */
+                            analyzeDatasetButton.style.display = 'block';
+                            progressCircle.style.display = 'none';
+                        }
+                    } else {
+                        /*
+                        Shows the analyze dataset button on startup. If you take
+                        away these lines the datasets that haven't been analyzed
+                        will stay blank after page load
+                        */
+                        analyzeDatasetButton.style.display = 'block';
+                        progressCircle.style.display = 'none';
+                    }
                     row.querySelector('td.dataset-error').textContent = 'N/A';
                     row.querySelector('td.dataset-critical-percent').textContent = 'N/A';
                 }
