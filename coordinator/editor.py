@@ -833,7 +833,7 @@ class AIAngleAPI(tornado.web.RequestHandler):
         img = cv2.imencode('.jpg', frame)[1].tostring()
         files = {'image': img}
         # TODO: Remove hard-coded model API
-        request = requests.post('http://localhost:8885/predict', files=files)
+        request = requests.post('http://localhost:8886/predict', files=files)
         response = json.loads(request.text)
         prediction = response['prediction']
         predicted_angle = prediction

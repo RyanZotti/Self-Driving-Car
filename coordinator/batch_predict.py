@@ -107,8 +107,9 @@ record_ids = get_record_ids(
     port=datasets_port
 )
 
+# TODO: Make host and port configurable
 request = requests.post(
-    'http://localhost:8885/model-metadata'
+    'http://localhost:8886/model-metadata'
 )
 response = json.loads(request.text)
 model_id = response['model_id']
