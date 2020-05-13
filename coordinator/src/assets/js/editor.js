@@ -78,6 +78,15 @@ async function addDatasetImportRows(){
                     const progressPercent = 0;
                     updateProgressCircle(progressCircle, progressPercent);
                     transferDataset(datasetText);
+
+                    /*
+                    Protect the progress circle from briefly reverting back to
+                    the button if there is a race condition with the timer that
+                    updates rows and resets the circle and button states. The
+                    clickTime attribute is checked in the timer
+                    */
+                    const clickTime = new Date().getTime();
+                    downloadButton.setAttribute("clickTime",clickTime);
                 });
                 tr.querySelector('button.delete-dataset-button').setAttribute("dataset",datasetText);
                 const input = tr.querySelector('input[name="datasetsSelect"]');
@@ -113,8 +122,30 @@ async function addDatasetImportRows(){
                 const progressCircle = row.querySelector('svg.import-progress-circle');
                 percent = record.percent
                 if (percent < 0){
-                    progressCircle.style.display = 'none';
-                    importDatasetButton.style.display = 'inline';
+                    if(importDatasetButton.hasAttribute('clickTime')){
+                        const nowTime = new Date().getTime()
+                        const clickTime = importDatasetButton.getAttribute('clickTime');
+                        const secondsDiff = (nowTime - clickTime) / 1000;
+                        if (secondsDiff > 10){
+                            /*
+                            If you clicked the button and don't see progress for a long time,
+                            that means the import job probably failed. This should never happen,
+                            but if it does, hopefully it's sporadic, so showing the download
+                            button again after a long time allows you to retry the job
+                            */
+                            progressCircle.style.display = 'none';
+                            importDatasetButton.style.display = 'inline';
+                        }
+                    } else {
+                        /*
+                        If the button doesn't have record of when it was last
+                        clicked, then we can assume it was never clicked, in
+                        which case it's ok to show the clickable button
+                        */
+                        progressCircle.style.display = 'none';
+                        importDatasetButton.style.display = 'inline';
+                    }
+
                 } else {
                     importDatasetButton.style.display = 'none';
                     progressCircle.style.display = 'inline';
