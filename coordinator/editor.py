@@ -749,7 +749,7 @@ class LaptopModelAPIHealth(tornado.web.RequestHandler):
     def get_health(self):
         try:
             timeout_seconds = 1
-            request = requests.get('http://localhost:8885/health',timeout=timeout_seconds)
+            request = requests.get('http://localhost:8886/health',timeout=timeout_seconds)
             response = json.loads(request.text)
             return {'is_healthy': response['is_healthy']}
         except:
