@@ -1,5 +1,6 @@
 import argparse
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 import pexpect
 import re
 import requests
@@ -424,7 +425,11 @@ class PS3Controller():
             # self.joystick.register_button_handler(handler, SixAxis.BUTTON_SQUARE)
             print('starting loop')
             try:
+                before = datetime.now()
                 while True:
+
+                    after = datetime.now()
+
                     # Read the x and y axes of the left hand stick, the right hand stick has axes 2 and 3
                     self.angle = self.joystick.axes[0].corrected_value()
                     self.throttle = self.joystick.axes[1].corrected_value()
@@ -439,7 +444,7 @@ class PS3Controller():
                         print(pressed_buttons)
 
                     if self.verbose is True:
-                        print('raw angle: '+str(self.joystick.axes[0].value)+' angle: '+str(self.angle)+' raw throttle '+str(self.joystick.axes[1].value)+' throttle: '+str(self.throttle))
+                        print(str(after) + ' raw angle: '+str(self.joystick.axes[0].raw_value)+' angle: '+str(self.angle)+' raw throttle '+str(self.joystick.axes[1].raw_value)+' throttle: '+str(self.throttle))
 
                     self.pressed_buttons = self.pressed_buttons.union(pressed_buttons)
                     self.is_loop_on = True

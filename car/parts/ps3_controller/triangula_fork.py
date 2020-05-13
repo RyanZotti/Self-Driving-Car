@@ -123,6 +123,9 @@ class SixAxis:
         if connect:
             self.connect()
 
+        # For Ryan's debugging only
+        self.raw_value = None
+
     def is_connected(self):
         """
         Check whether we have a connection
@@ -243,6 +246,10 @@ class SixAxis:
         """
         if event.type == ecodes.EV_ABS:
             value = float(event.value) / 255.0
+
+            # For Ryan's debugging only
+            self.raw_value = value
+
             if value < 0:
                 value = 0
             elif value > 1.0:
@@ -250,9 +257,11 @@ class SixAxis:
             if event.code == 0:
                 # Left stick, X axis
                 self.axes[0]._set(value)
+                self.axes[0].raw_value = self.raw_value
             elif event.code == 1:
                 # Left stick, Y axis
                 self.axes[1]._set(value)
+                self.axes[1].raw_value = self.raw_value
             elif event.code == 2:
                 # Right stick, X axis
                 self.axes[2]._set(value)
@@ -317,6 +326,9 @@ class SixAxis:
             self.invert = invert
             self.dead_zone = dead_zone
             self.hot_zone = hot_zone
+
+            # For Ryan's debugging
+            self.raw_value = None
 
         def corrected_value(self):
             """
