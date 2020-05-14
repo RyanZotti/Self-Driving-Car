@@ -89,7 +89,8 @@ async function loadMachineLearningModels() {
         deleteButton.onclick = async function(){
             await deleteModel(model['model_id']);
             // Update the models UI table once the delete has gone through
-            loadMachineLearningModels()
+            loadMachineLearningModels();
+            populateModelIdDeploymentOptions();
         }
         // Make sure model select buttons are functional
         const modelSelectInput = row.querySelector('input[name="modelSelect"]');
@@ -602,6 +603,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         await Promise.all(promises);
         loadMachineLearningModels();
+        populateModelIdDeploymentOptions();
     };
 
 }, false);
