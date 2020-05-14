@@ -4,7 +4,5 @@ __pycache__/
 output.mov
 video_timestamps.txt
 *.tmp/*
-data-proc/dist/assets/libs
 data-proc/src/.tmp/
-node_modules
 *.DS_Store
