@@ -956,6 +956,34 @@ function hideDriveButtonsRow(){
     driveButtonsRow.style.display = 'none';
 }
 
+async function updateDisplayOfTableElementsRequiringModel(){
+    /*
+    Used to hide or show table elements that require the laptop
+    model to exist. Used in two places, one on page load, and
+    second in a timer loop
+    */
+    const elementsRequiringLaptopModel = document.querySelectorAll('.requires-laptop-model-table-cell');
+    isLaptopDockerModelHealthy = await getLaptopModelApiHealth();
+    if (isLaptopDockerModelHealthy == true){
+        /*
+        Update the stats first so that when you unhide, you don't
+        see blanks
+        */
+        await refreshPredictionUpdateStatusesBulk()
+        // Show the analyze buttons
+        for (const element of elementsRequiringLaptopModel){
+            element.style.display = 'table-cell';
+        }
+
+    } else {
+        // Hide the analyze buttons
+        for (const element of elementsRequiringLaptopModel){
+            element.style.display = 'none';
+        }
+    }
+}
+
+
 document.addEventListener('DOMContentLoaded', function() {
     loadReviewDatasetsTable();
     // TODO: Replace with plain javascript instead of jquery
@@ -1147,8 +1175,14 @@ document.addEventListener('DOMContentLoaded', function() {
         hideDriveButtonsRow();
     }
 
-    const trainingStateTimer = setInterval(function(){
-      refreshPredictionUpdateStatusesBulk()
+    /*
+    Check if the Docker container model is healthy on the laptop. If not,
+    set a global variable to tell modal UI window not to show model
+    related stats or show the "analyze" buttons
+    */
+    updateDisplayOfTableElementsRequiringModel();
+    const laptopModelHealthTimer = setInterval(function(){
+        updateDisplayOfTableElementsRequiringModel()
     }, 3000);
 
     const importProgressTimer = setInterval(function(){

@@ -309,3 +309,11 @@ End slider CSS
 /*------------------------------------------------------------------
   End of machine learning deployment driver (remote vs local model) CSS for radio buttons
 */
+
+/*
+Makes it easy to show or hide things that require a laptop model to be
+deloyed. Right now I only use this in the datasets review table
+*/
+.requires-laptop-model-table-cell {
+    display: none;
+}
