@@ -118,7 +118,14 @@ function stopRecording(){
 
 function applyBrake(){
     const brakeIcon = document.querySelector('span#applyBrakeButton');
-    brakeIcon.style.display = 'inline';
+    /*
+    Don't show the icon if the video spinner icon is visible, otherwise
+    you'll get a weird looking floating icon in the middle of the page
+    */
+    const videoLoadingSpinner = document.querySelector("div#video-loader");
+    if (videoLoadingSpinner.style.display == 'none'){
+        brakeIcon.style.display = 'inline';
+    }
 }
 
 function releaseBrake(){
@@ -232,7 +239,14 @@ async function pollVehicleAndUpdateUI(){
     */
     const partSlownessIcon = document.querySelector("span#slowness-brake-icon");
     if (result["vehicle/brake"] == true){
-        partSlownessIcon.style.display = 'inline';
+        /*
+        Don't show the icon if the video spinner icon is visible, otherwise
+        you'll get a weird looking floating icon in the middle of the page
+        */
+        const videoLoadingSpinner = document.querySelector("div#video-loader");
+        if (videoLoadingSpinner.style.display == 'none'){
+            partSlownessIcon.style.display = 'inline';
+        }
     } else {
         partSlownessIcon.style.display = 'none';
     }
