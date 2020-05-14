@@ -1110,46 +1110,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateImage(datasetPlaying, recordId, cropPercent, scaleFactor);
     }
 
-    const driveVehicleButton = document.getElementById("drive-vehicle-button");
-    driveVehicleButton.onclick = async function(){
-        isDriveModalOpen = true // Used to start updating modal w/ vehicle state
-        pollVehicleAndUpdateUI();
-        await makeNewDataset();
-        const datasetId = await getDatasetIdFromDataset(recordingDataset);
-        const driveVehicleHeaderDatasetId = document.querySelector('span#driveVehicleHeaderDatasetId')
-        driveVehicleHeaderDatasetId.textContent = datasetId;
-        const videoHeathCheckLoop = setInterval(async function(){
-
-            /*
-            Remove this deprecated type of video health check
-            and replace it with the one that is also compatible
-            with the test / local video server
-            */
-            //const isHealthy = await videoHealthCheck();
-            isHealthy = true;
-
-            if(isHealthy == true){
-                clearInterval(videoHeathCheckLoop);
-                const videoImage = showVideo();
-                videoImage.onload = function(){
-                    const videoSpinner = document.querySelector("div#video-loader");
-                    videoSpinner.style.display = 'none';
-                    const metricsHeader = document.querySelector('div#drive-metrics-header');
-                    const metricsGraphics = document.querySelector('div#drive-metrics-graphics');
-                    const metricsText = document.querySelector('div#drive-metrics-text');
-                    metricsHeader.style.display = 'flex';
-                    metricsGraphics.style.display = 'flex';
-                    metricsText.style.display = 'flex';
-                    showDriveButtonsRow();
-                }
-            }
-        }, 1000);
-        // Check if device supports orientation (ie is a phone vs laptop)
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener("deviceorientation", captureDeviceOrientation);
-        }
-    }
-
     const driveVehicleCloseButton = document.getElementById("closeDriveVehicleModal");
     driveVehicleCloseButton.onclick = function(){
         isDriveModalOpen = false // Used to stop updating modal w/ vehicle state
