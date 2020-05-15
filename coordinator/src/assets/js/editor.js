@@ -105,15 +105,15 @@ async function addDatasetImportRows(){
                     importProgressTimer interval runs every second and calls
                     addDatasetImportRows, which adds back rows if they don't
                     exist. So basically there is a race condition. My workaround
-                    is to take advantage of the interval's cadence of 1000 ms. I
+                    is to take advantage of the interval's cadence of 3000 ms. I
                     first hide the dataset so that it looks deleted to the user,
                     then I call the delete API so that future addDatasetImportRows
                     calls won't pick up the dataset, and then I wait a little over
-                    a full cadence, 1500 ms, before I delete the tr html element
+                    a full cadence, 3000 ms, before I delete the tr html element
                     */
                     tr.style.display = 'none';
                     await deleteDataset("pi", dataset);
-                    await sleep(1500);
+                    await sleep(3500);
                     tr.parentNode.removeChild(tr);
                 }
             } else {
@@ -1185,7 +1185,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(getActiveDatasetType() == 'import'){
             addDatasetImportRows()
         }
-    }, 1000);
+    }, 3000);
 
     // Update Raspberry Pi statues and disable Pi connection calls if Pi is unavailable
     const piHealthCheckTime = setInterval(async function(){

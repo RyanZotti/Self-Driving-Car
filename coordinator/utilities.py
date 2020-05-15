@@ -2130,7 +2130,7 @@ def dataset_import_percent(db_record_count, is_job_available, laptop_file_count,
 
 def get_pi_dataset_import_stats(
     pi_datasets_dir, laptop_dataset_dir, postgres_host, session_id,
-    service_host, record_tracker_port
+    service_host, record_tracker_port, pi_settings
 ):
 
     """
@@ -2171,6 +2171,9 @@ def get_pi_dataset_import_stats(
         The port of the record-tracker service on the Pi. See the
         description of service_host for an explanation of why this
         is needed
+    pi_settings: dict
+        A local cache of the pi settings, required for the Pi
+        credentials
 
     Returns
     ----------
@@ -2258,7 +2261,8 @@ def get_pi_dataset_import_stats(
     # Get Pi file stats
     pi_stdout = execute_pi_command(
         command=command.format(dir=pi_datasets_dir),
-        postgres_host=postgres_host
+        postgres_host=postgres_host,
+        pi_credentials=pi_settings
     )
     pi_metadata = parse_file_counts(
         stdout=pi_stdout

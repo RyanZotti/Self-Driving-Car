@@ -1279,7 +1279,8 @@ class GetImportRows(tornado.web.RequestHandler):
             postgres_host=self.application.postgres_host,
             session_id=self.application.session_id,
             service_host=self.application.scheduler.service_host,
-            record_tracker_port=self.application.ports['record-tracker']
+            record_tracker_port=self.application.ports['record-tracker'],
+            pi_settings=self.application.scheduler.pi_settings
         )
         return reocrds
 
