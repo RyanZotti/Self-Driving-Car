@@ -189,21 +189,6 @@
               </div>
 
               <div class="card" id="datasets-table-div" data-toggle="lists" data-lists-values='["dataset-id", "images"]'>
-                <div class="card-header">
-                  <div class="row align-items-center">
-                    <div class="col">
-                      <!-- Search -->
-                      <form class="row align-items-center">
-                        <div class="col-auto pr-0">
-                          <span class="fe fe-search text-muted"></span>
-                        </div>
-                        <div class="col">
-                            <input type="search" class="form-control form-control-flush search" placeholder="Search">
-                        </div>
-                      </form>
-                    </div>
-                  </div> <!-- / .row -->
-                </div>
                 <div class="table-responsive">
                   <table class="table table-sm table-nowrap card-table">
                     <thead>
@@ -224,15 +209,11 @@
                             </label>
                           </div>
                         </th>
-                        <th>
-                          <a href="#" class="text-muted sort" data-sort="dataset-id">
-                            Dataset ID
-                          </a>
+                        <th class="text-muted">
+                          Dataset ID
                         </th>
-                        <th>
-                          <a href="#" class="text-muted sort" data-sort="images">
-                            Images
-                          </a>
+                        <th class="text-muted">
+                          Images
                         </th>
                       </tr>
                     </thead>
@@ -306,33 +287,23 @@
                             </label>
                           </div>
                         </th>
-                        <th>
-                          <a href="#" class="text-muted sort" data-sort="model-id">
-                            Model ID
-                          </a>
+                        <th class="text-muted">
+                          Model ID
                         </th>
-                        <th>
-                          <a href="#" class="text-muted sort" data-sort="model-created-ts">
-                            Created
-                          </a>
+                        <th class="text-muted">
+                          Created
                         </th>
-                        <th>
-                          <a href="#" class="text-muted sort" data-sort="model-top-crop-percent">
-                            Top Crop %
-                          </a>
+                        <th class="text-muted">
+                          Top Crop %
                         </th>
-                        <th>
-                          <a href="#" class="text-muted sort" data-sort="model-image-scale">
-                            Image Scale
-                          </a>
+                        <th class="text-muted">
+                          Image Scale
                         </th>
-                        <th>
-                          <a href="#" class="text-muted sort" data-sort="highest-model-epoch">
-                            Epochs
-                          </a>
+                        <th class="text-muted">
+                          Epochs
                         </th>
-                          <th colspan="1">
-                          </th>
+                        <th colspan="1">
+                        </th>
                       </tr>
                     </thead>
                     <tbody class="list" id="modelsTbody">
@@ -445,20 +416,14 @@
                   <table class="table table-sm table-nowrap card-table">
                     <thead>
                       <tr>
-                        <th>
-                          <a href="#" class="text-muted sort" data-sort="epoch">
-                            Epoch
-                          </a>
+                        <th class="text-muted">
+                          Epoch
                         </th>
-                        <th>
-                          <a href="#" class="text-muted sort" data-sort="training">
-                            Training
-                          </a>
+                        <th class="text-muted">
+                          Training
                         </th>
-                        <th>
-                          <a href="#" class="text-muted sort" data-sort="validation">
-                            Validation
-                          </a>
+                        <th class="text-muted">
+                          Validation
                         </th>
                     </thead>
                     <tbody class="list" id="epochs-tbody">
@@ -524,54 +489,27 @@
               </div>
 
             <div class="card" id="deployments-table-div" data-toggle="lists" data-lists-values='["dataset-id", "images"]'>
-                <div class="card-header">
-                  <div class="row align-items-center">
-                    <div class="col">
-                      <!-- Search -->
-                      <form class="row align-items-center">
-                        <div class="col-auto pr-0">
-                          <span class="fe fe-search text-muted"></span>
-                        </div>
-                        <div class="col">
-                            <input type="search" class="form-control form-control-flush search" placeholder="Search">
-                        </div>
-                      </form>
-                    </div>
-                  </div> <!-- / .row -->
-                </div>
                 <div class="table-responsive">
                   <table class="table table-sm table-nowrap card-table">
                     <thead>
                       <tr>
-                          <th>
-                              <a href="#" class="text-muted sort">
-                                Device
-                              </a>
+                          <th class="text-muted">
+                            Device
                           </th>
-                          <th>
-                              <a href="#" class="text-muted sort">
-                                Model ID
-                              </a>
+                          <th class="text-muted">
+                            Model ID
                           </th>
-                          <th>
-                              <a href="#" class="text-muted sort">
-                                Epoch ID
-                              </a>
+                          <th class="text-muted">
+                            Epoch ID
                           </th>
-                          <th>
-                              <a href="#" class="text-muted sort">
-                                Latency (ms)
-                              </a>
+                          <th class="text-muted">
+                            Latency (ms)
                           </th>
-                          <th>
-                              <a href="#" class="text-muted sort">
-                                Health (%)
-                              </a>
+                          <th class="text-muted">
+                            Health (%)
                           </th>
-                          <th>
-                              <a href="#" class="text-muted sort">
-                                Driver
-                              </a>
+                          <th class="text-muted">
+                            Driver
                           </th>
                       </tr>
                     </thead>
