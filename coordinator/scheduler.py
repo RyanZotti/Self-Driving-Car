@@ -139,7 +139,7 @@ class Scheduler(object):
             Dictionary of the data to pass the API
         """
         timeout = ClientTimeout(total=self.timeout_seconds)
-        port = 8884  # TODO: Don't hardcode this
+        port = self.get_services()['user-input']['port']
         host = self.service_host
         endpoint = f'http://{host}:{port}/track-remote-model'
         json_input = {'remote_model/angle': model_angle}
@@ -239,6 +239,27 @@ class Scheduler(object):
             await loop.run_in_executor(
                 pool, partial(self.get_video, self.service_host, port=video_port)
             )
+
+    async def periodic_pi_dataset_cleanup(self):
+        """
+        Used to clean up empty, unused datasets on the Pi
+        """
+        while True:
+            pi_datasets_dir = await read_pi_setting_aio(
+                host=self.postgres_host,
+                field_name='pi datasets directory',
+                aiopg_pool=self.aiopg_pool
+            )
+            seconds = 30
+            await remove_empty_pi_datasets(
+                pi_datasets_dir=pi_datasets_dir,
+                pi_username=self.pi_username,
+                pi_password=self.pi_password,
+                service_host=self.service_host,
+                record_tracker_port=self.get_services()['record-tracker']['port']
+            )
+            await asyncio.sleep(seconds)
+    pass
 
     async def user_input_part_loop(self):
         """
@@ -422,6 +443,9 @@ class Scheduler(object):
 
         # Send remote model angles to the user_input part
         asyncio.create_task(self.loop_remote_model())
+
+        # Clean up empty datasets on the Pi
+        asyncio.create_task(self.periodic_pi_dataset_cleanup())
 
         services = self.get_services()
         manage_service_tasks = []

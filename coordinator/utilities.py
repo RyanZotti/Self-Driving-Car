@@ -1,5 +1,5 @@
 import aiopg
-
+from aiohttp import ClientSession, ClientTimeout
 import cv2
 from datetime import datetime
 import subprocess
@@ -2210,7 +2210,7 @@ def get_pi_dataset_import_stats(
         return records
 
     # Get file counts from multiple directories: https://stackoverflow.com/a/39622947/554481
-    command = 'cd {dir}; du -a | grep -i .json | cut -d/ -f2 | sort | uniq -c | sort -nr'
+    command = 'cd {dir}; du -a | grep -i .json | grep -v meta.json | cut -d/ -f2 | sort | uniq -c | sort -nr'
 
     # Get laptop file stats
     laptop_stdout = subprocess.check_output(
@@ -2297,3 +2297,100 @@ def get_pi_dataset_import_stats(
     """
     records = sorted(records, key = lambda i: i['id'])
     return records
+
+
+async def remove_empty_pi_datasets(
+    pi_datasets_dir, pi_username, pi_password, service_host, record_tracker_port
+):
+
+    """
+    Deletes empty datasets on the Pi to keep things tidy. Makes
+    sure to not delete datasets that are being actively recorded
+
+    Parameters
+    ----------
+    pi_datasets_dir : string
+        Full path to the datasets directory on the pi. For example:
+        /home/pi/vehicle-datasets
+    pi_username: string
+        User name to log into the Pi
+    pi_password: string
+        Password to log into the Pi
+    service_host: str
+        The hostname for the Pi
+    """
+
+    def parse_file_counts(stdout):
+        raw_lines = stdout.split('\n')
+        records = {}
+        for raw_line in raw_lines:
+            line = raw_line.strip()
+            if 'dataset' in line:
+                json_file_count, dataset_name = line.split(' ')
+                _, id, date = dataset_name.split('_')
+                year, month, day = date.split('-')
+                new_date = '20{year}-{month}-{day}'.format(
+                    year=year, month=month, day=day
+                )
+                records[dataset_name] = {
+                    'id': id,
+                    'date': new_date,
+                    'count': int(json_file_count)
+                }
+        return records
+
+    # Get file counts from multiple directories: https://stackoverflow.com/a/39622947/554481
+    command = 'cd {dir}; du -a | grep -i .json | cut -d/ -f2 | sort | uniq -c | sort -nr'
+
+    # Get Pi file stats
+    pi_stdout = await execute_pi_command_aio(
+        command=command.format(dir=pi_datasets_dir),
+        username=pi_username,
+        hostname=service_host,
+        password=pi_password
+    )
+    pi_metadata = parse_file_counts(
+        stdout=pi_stdout
+    )
+
+    """
+    I use this to check if the record-tracker service is up so that
+    I don't show live recording datasets. The record-tracker service
+    is designed to always point to a dataset while its on (and it
+    creates a new dataset when it starts up), so I want to avoid a
+    situation where all of the parts get turned on, I go to the Pi
+    datasets / import page and see a dataset with 0 records and think
+    it's old and delete it, only to get an error when I eventually
+    start recording and the record-tracker service fails because its
+    folder has been removed.
+    """
+    live_dataset = ''
+    timeout_seconds = 1.0
+    endpoint = 'http://{host}:{port}/get-current-dataset-name'.format(
+        host=service_host,
+        port=record_tracker_port
+    )
+    try:
+        timeout = ClientTimeout(total=timeout_seconds)
+        async with ClientSession(timeout=timeout) as session:
+            async with session.get(endpoint) as response:
+                if str(response.status)[0] == '2':
+                    json_output = await response.json()
+                    live_dataset = json_output['dataset']
+    except:
+        """
+        If the record-tracker service isn't available, then we don't need
+        to worry about deleting an actively recorded dataset, so no need
+        to remove anything from the datasets list
+        """
+        pass
+
+    for dataset_name, row in pi_metadata.items():
+        if dataset_name != live_dataset and row['count'] <= 1:
+            command = f'sudo rm -rf {pi_datasets_dir}/{dataset_name}'
+            _ = await execute_pi_command_aio(
+                command=command,
+                username=pi_username,
+                hostname=service_host,
+                password=pi_password
+            )
