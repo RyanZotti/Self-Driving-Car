@@ -424,30 +424,6 @@ class WritePiField(tornado.web.RequestHandler):
             sql=sql_query,
             postgres_pool=self.application.postgres_pool
         )
-
-        """
-        Update the cache of Pi credentials this API updated
-        in case the credentials being updated is the hostname,
-        password, or username. Normally this would be an expensive
-        operation, but updating Pi fields happens infrequently.
-        It's important to cache the credentials because reading
-        the credentials caused a lot of load Postgres DB. In
-        some cases I would call it for every dataset, and each
-        dataset required 3 separate calls, one for password, user
-        and hostname
-        """
-        self.application.pi_credentials = cache_pi_credentials(
-            postgres_host=self.application.postgres_host
-        )
-        self.application.laptop_datasets_dir = read_pi_setting(
-            host=self.application.postgres_host,
-            field_name='laptop datasets directory',
-            postgres_pool=self.application.postgres_pool
-        )
-        self.application.pi_datasets_dir = read_pi_setting(
-            host=self.application.postgres_host,
-            field_name='pi datasets directory'
-        )
         return {}
 
     @tornado.gen.coroutine
@@ -1073,7 +1049,7 @@ class DeletePiDataset(tornado.web.RequestHandler):
         execute_pi_command(
             postgres_host=self.application.postgres_host,
             command=command,
-            pi_credentials=self.application.pi_credentials
+            pi_credentials=self.application.scheduler.pi_settings
         )
         return {}
 
@@ -1274,8 +1250,8 @@ class GetImportRows(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def get_import_datasets(self):
         reocrds = get_pi_dataset_import_stats(
-            pi_datasets_dir=self.application.pi_datasets_dir,
-            laptop_dataset_dir=self.application.laptop_datasets_dir,
+            pi_datasets_dir=self.application.scheduler.pi_settings['pi datasets directory'],
+            laptop_dataset_dir=self.application.scheduler.pi_settings['laptop datasets directory'],
             postgres_host=self.application.postgres_host,
             session_id=self.application.session_id,
             service_host=self.application.scheduler.service_host,
@@ -1673,7 +1649,7 @@ class PiHealthCheck(tornado.web.RequestHandler):
             'is_able_to_connect':is_pi_healthy(
                 postgres_host=self.application.postgres_host,
                 command='ls -ltr',
-                pi_credentials=self.application.pi_credentials
+                pi_credentials=self.application.scheduler.pi_settings
             )
         }
 
@@ -2443,21 +2419,6 @@ async def main():
     delete_stale_jobs(
         postgres_host=app.postgres_host,
         session_id=app.session_id
-    )
-
-    # Cache fields to reduce strain on PG
-    app.pi_credentials = cache_pi_credentials(
-        postgres_host=app.postgres_host
-    )
-    app.laptop_datasets_dir = read_pi_setting(
-        host=app.postgres_host,
-        field_name='laptop datasets directory',
-        postgres_pool=app.postgres_pool
-    )
-    app.pi_datasets_dir = read_pi_setting(
-        host=app.postgres_host,
-        field_name='pi datasets directory',
-        postgres_pool=app.postgres_pool
     )
 
     app.angle_only = args['angle_only']
