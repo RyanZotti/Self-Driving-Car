@@ -116,7 +116,7 @@ class Scheduler(object):
         """
         try:
             img = cv2.imencode('.jpg', self.raw_dash_frame)[1].tostring()
-            port = 8886  # TODO: Don't hardcode this
+            port = self.get_services()['angle-model-laptop']['port']
             host = 'localhost'
             endpoint = f'http://{host}:{port}/predict'
             files = {'image': img}
