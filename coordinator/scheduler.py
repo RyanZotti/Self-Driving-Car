@@ -328,7 +328,7 @@ class Scheduler(object):
             constant_throttle = constant_throttle_db / 100.0
 
             timeout = ClientTimeout(total=self.timeout_seconds)
-            port = 8884  # TODO: Don't hardcode this
+            port = self.get_services()['user-input']['port']
             host = self.service_host
             endpoint = f'http://{host}:{port}/track-human-requests'
             json_input = {
