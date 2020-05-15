@@ -403,6 +403,40 @@ async def read_pi_setting_aio(host, field_name, aiopg_pool=None):
         return rows[0]['field_value']
 
 
+async def read_all_pi_settings_aio(aiopg_pool):
+    """
+
+    Returns all of the Pi fields. I created this because there
+    aren't that many different Pi fields, and I noticed that I
+    could probably see meaningful performance gains if I ran
+    all Pi settings through a single DB call that gets cached
+    in the scheduler
+    """
+
+    sql_query = '''
+        WITH latest_values AS (
+            SELECT
+                field_name,
+                field_value,
+                ROW_NUMBER() OVER(
+                    PARTITION BY field_name
+                    ORDER BY event_ts DESC
+                ) AS recency_rank
+            FROM pi_settings
+        )
+
+        SELECT
+            field_name,
+            field_value
+        FROM latest_values
+        WHERE recency_rank = 1
+    '''
+    rows = await get_sql_rows_aio(host=None, sql=sql_query, aiopg_pool=aiopg_pool)
+    results = {}
+    for row in rows:
+        results[row['field_name']] = row['field_value']
+    return results
+
 async def read_slider_aio(web_page, name, aiopg_pool=None):
     sql_query = f'''
         SELECT

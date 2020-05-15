@@ -73,6 +73,9 @@ class Scheduler(object):
         self.pi_username = None
         self.pi_password = None
 
+        # Local cache of all Pi settings, used for performance efficiency
+        self.pi_settings = {}
+
         # These two variables are used to track if the video cache should be on or not
         self.raw_dash_frame = None
         self.is_video_cache_loop_running = False
@@ -90,21 +93,22 @@ class Scheduler(object):
                 self.service_host = self.pi_hostname
             await asyncio.sleep(self.interval_seconds)
 
-    async def refresh_pi_credentials(self):
-        results = await asyncio.gather(
-            read_pi_setting_aio(host=self.postgres_host, field_name='hostname', aiopg_pool=self.aiopg_pool),
-            read_pi_setting_aio(host=self.postgres_host, field_name='username', aiopg_pool=self.aiopg_pool),
-            read_pi_setting_aio(host=self.postgres_host, field_name='password', aiopg_pool=self.aiopg_pool)
-        )
-        self.pi_hostname = results[0]
-        self.pi_username = results[1]
-        self.pi_password = results[2]
-
-    async def refresh_pi_credentials_loop(self):
+    async def refresh_all_pi_settings_loop(self):
         interval_seconds = 3.0
         while True:
-            await self.refresh_pi_credentials()
+            await self.refresh_all_pi_settings()
             await asyncio.sleep(interval_seconds)
+
+    async def refresh_all_pi_settings(self):
+        self.pi_settings = await read_all_pi_settings_aio(aiopg_pool=self.aiopg_pool)
+
+        """
+        These are redundant but are set for backwards compatibility with
+        old legacy code that expect these fields
+        """
+        self.pi_hostname = self.pi_settings['hostname']
+        self.pi_username = self.pi_settings['username']
+        self.pi_password = self.pi_settings['password']
 
     async def call_model_api(self, is_verbose=False):
         """
@@ -245,11 +249,7 @@ class Scheduler(object):
         Used to clean up empty, unused datasets on the Pi
         """
         while True:
-            pi_datasets_dir = await read_pi_setting_aio(
-                host=self.postgres_host,
-                field_name='pi datasets directory',
-                aiopg_pool=self.aiopg_pool
-            )
+            pi_datasets_dir = self.pi_settings['pi datasets directory']
             seconds = 30
             await remove_empty_pi_datasets(
                 pi_datasets_dir=pi_datasets_dir,
@@ -426,14 +426,14 @@ class Scheduler(object):
         print('Clearing service_health table')
         await execute_sql_aio(host=self.postgres_host, sql='DELETE FROM service_health',aiopg_pool=self.aiopg_pool)
 
-        # Class fields are assigned values within the method
-        await self.refresh_pi_credentials()
+        # Refresh all Pi settings
+        await self.refresh_all_pi_settings()
 
         # Checks for either localhost or the Pi's host at regular intervals
         asyncio.create_task(self.refresh_service_host())
 
-        # Refresh the Pi's credentials
-        asyncio.create_task(self.refresh_pi_credentials_loop())
+        # Refresh all the Pi settings in a loop
+        asyncio.create_task(self.refresh_all_pi_settings_loop())
 
         # Set up the video cache loop checker
         asyncio.create_task(self.manage_video_cache_loop())
