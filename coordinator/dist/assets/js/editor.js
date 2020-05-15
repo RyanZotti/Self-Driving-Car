@@ -159,6 +159,20 @@ async function addDatasetImportRows(){
                 row.querySelector('td.images').textContent = record.count;
             }
         }
+        /*
+        Make the import datasets table sortable. I got the docs from
+        here:
+            - https://codepen.io/javve/pen/zpuKF
+            - https://codepen.io/javve/pen/cLdfw
+            - https://listjs.com/docs/
+        Each <th> element needs a data-sort="images" attribute corresponding to
+        <td> elements with classes of the same name, e.g, <td class="images">,
+        and then those class names are mentioned in the list below
+        */
+        const importTableOptions = {
+          valueNames: ['dataset-id', 'created-date', 'images']
+        };
+        const listJsImportTable = new List('datasets-table-div', importTableOptions);
     }
 }
 
