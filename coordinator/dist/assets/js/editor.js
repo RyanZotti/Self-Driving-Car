@@ -578,6 +578,20 @@ async function refreshPredictionUpdateStatusesBulk(){
                 }
             }
         }
+        /*
+        Make the review datasets table sortable. I got the docs from
+        here:
+            - https://codepen.io/javve/pen/zpuKF
+            - https://codepen.io/javve/pen/cLdfw
+            - https://listjs.com/docs/
+        Each <th> element needs a data-sort="images" attribute corresponding to
+        <td> elements with classes of the same name, e.g, <td class="images">,
+        and then those class names are mentioned in the list below
+        */
+        const reviewTableOptions = {
+          valueNames: ['dataset-id', 'created-date', 'images', 'flags', 'errors', 'critical']
+        };
+        const listJsReviewTable = new List('datasets-table-div', reviewTableOptions);
     }
 }
 
