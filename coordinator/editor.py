@@ -462,13 +462,8 @@ class ReadPiField(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def read_pi_field(self, json_input):
         column_name = json_input['column_name']
-        column_value = read_pi_setting(
-            host=self.application.postgres_host,
-            field_name=column_name,
-            postgres_pool=self.application.postgres_pool
-        )
         result = {
-            'column_value':column_value
+            'column_value': self.application.scheduler.pi_settings[column_name]
         }
         return result
 

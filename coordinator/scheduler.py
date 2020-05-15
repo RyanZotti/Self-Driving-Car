@@ -94,7 +94,7 @@ class Scheduler(object):
             await asyncio.sleep(self.interval_seconds)
 
     async def refresh_all_pi_settings_loop(self):
-        interval_seconds = 3.0
+        interval_seconds = 1.0
         while True:
             await self.refresh_all_pi_settings()
             await asyncio.sleep(interval_seconds)
