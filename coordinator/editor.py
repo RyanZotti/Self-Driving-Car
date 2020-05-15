@@ -162,7 +162,7 @@ class Memory(tornado.web.RequestHandler):
         # TODO: Remove hardcoded port
         endpoint = 'http://{host}:{port}/output'.format(
            host=self.application.scheduler.service_host,
-           port=self.application.ports['memory']
+           port=self.application.scheduler.get_services()['memory']['port']
         )
         request = requests.get(
            endpoint,
@@ -741,7 +741,7 @@ class DeployModel(tornado.web.RequestHandler):
             pi_hostname=self.application.scheduler.pi_hostname,
             pi_username=self.application.scheduler.pi_username,
             pi_password=self.application.scheduler.pi_password,
-            host_port = self.application.ports['angle-model-pi'],
+            host_port = self.application.scheduler.get_services()['angle-model-pi']['port'],
             device=device,
             session_id=self.application.session_id,
             aiopg_pool=self.application.scheduler.aiopg_pool
@@ -1255,7 +1255,7 @@ class GetImportRows(tornado.web.RequestHandler):
             postgres_host=self.application.postgres_host,
             session_id=self.application.session_id,
             service_host=self.application.scheduler.service_host,
-            record_tracker_port=self.application.ports['record-tracker'],
+            record_tracker_port=self.application.scheduler.get_services()['record-tracker']['port'],
             pi_settings=self.application.scheduler.pi_settings
         )
         return reocrds
@@ -2383,18 +2383,6 @@ async def main():
 
     # TODO: Remove hard-coded Pi host
     app.pi_host = 'ryanzotti.local'
-
-    app.ports = {
-        'record-tracker': 8093,
-        'video': 8091,
-        'control-loop': 8887,
-        'user-input': 8884,
-        'engine': 8092,
-        'ps3-controller': 8094,
-        'memory': 8095,
-        'angle-model-pi': 8885,
-        'angle-model-laptop': 8886
-    }
 
     # TODO: Remove this hard-coded path
     app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
