@@ -2387,6 +2387,17 @@ async def remove_empty_pi_datasets(
         hostname=service_host,
         password=pi_password
     )
+
+    """
+    The scheduler should exit this function gracefully if it can't
+    connect to the Pi (which would happen if the stdout is None).
+    This happens the first time you start the server with a new
+    setup because you won't be able to connect to the Pi with its
+    default settings
+    """
+    if pi_stdout is None:
+        return
+
     pi_metadata = parse_file_counts(
         stdout=pi_stdout
     )
