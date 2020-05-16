@@ -523,7 +523,8 @@ class Scheduler(object):
             'ps3-controller': {'port': 8094},
             'memory': {'port': 8095},
             'angle-model-pi': {'port': 8885},  # Used for driving the car
-            'angle-model-laptop': {'port': 8886}  # Used for data set reviewer
+            'angle-model-laptop': {'port': 8886},  # Used for data set reviewer
+            'model-training': {'port': 8096}  # Used for training models on the laptop
         }
         return services
 
