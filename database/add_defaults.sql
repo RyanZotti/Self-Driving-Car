@@ -30,6 +30,7 @@ VALUES
     (now(), 'laptop datasets directory', '~/Self-Driving-Car/car/templates/data/'),
     (now(), 'pi datasets directory', '/home/pi/vehicle-datasets'),
     (now(), 'models_location_pi', '/home/pi/model'),
+    (now(), 'models_location_laptop', '~/model'),
     (now(), 'laptop git repo directory', '~/'),
     (now(), 'username', 'pi'),
     (now(), 'hostname', 'raspberrypi.local'),
