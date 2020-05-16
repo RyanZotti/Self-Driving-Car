@@ -2381,9 +2381,6 @@ async def main():
         database="autonomous_vehicle"
     )
 
-    # TODO: Remove hard-coded Pi host
-    app.pi_host = 'ryanzotti.local'
-
     # TODO: Remove this hard-coded path
     app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
     app.model_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data/tf_visual_data/runs/1'
