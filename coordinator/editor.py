@@ -1104,12 +1104,7 @@ class TransferDatasetFromPiToLaptop(tornado.web.RequestHandler):
         )
 
         # Load the data into Postgres
-        folder = os.path.join(
-            self.application.record_reader.base_directory,
-            dataset_name
-        )
-        for file_path, record_id in self.application.record_reader.ordered_label_files(folder=folder):
-            dataset_name = folder.split('/')[-1]
+        for file_path, record_id in self.application.record_reader.ordered_label_files(folder=to_path):
             _, angle, throttle = self.application.record_reader.read_record(label_path=file_path)
             self.application.record_reader.write_new_record_to_db(
                 dataset_name=dataset_name,
