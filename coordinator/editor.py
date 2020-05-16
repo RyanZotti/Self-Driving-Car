@@ -755,11 +755,26 @@ class UserLabelsAPI(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(5)
 
+    def get_label_path(self, dataset_name, record_id):
+        sql = f"""
+            SELECT
+                label_path
+            FROM records
+            WHERE
+                dataset = '{dataset_name}'
+                AND record_id = {record_id}
+        """
+        rows = get_sql_rows(host=None, sql=sql, postgres_pool=self.application.postgres_pool)
+        if len(rows) > 0:
+            return rows[0]['label_path']
+        else:
+            return None
+
     @tornado.concurrent.run_on_executor
     def get_user_babels(self,json_input):
         dataset_name = json_input['dataset']
         record_id = int(json_input['record_id'])
-        label_file_path = self.application.record_reader.get_label_path(
+        label_file_path = self.get_label_path(
             dataset_name=dataset_name,
             record_id=record_id
         )
