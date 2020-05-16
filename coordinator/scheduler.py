@@ -528,7 +528,7 @@ class Scheduler(object):
         }
         return services
 
-    async def check_service_health(self, service, port, interval_seconds=1.0):
+    async def check_service_health(self, service, port, interval_seconds=1.0, is_verbose=False):
         """
         Runs every `interval_seconds` to check the service health and records
         the health in a table. It's important that I always check for the
@@ -536,68 +536,76 @@ class Scheduler(object):
         on because some of th get_status code in other functions depends on
         this assumption
         """
-        host = self.service_host
 
-        """
-        The review model on the laptop will always be 'localhost' even if
-        you're running everything else on the Pi
-        """
-        if service == 'angle-model-laptop':
-            host = 'localhost'
+        sql_query = '''
+            BEGIN;
+            INSERT INTO service_health (
+                start_time,
+                end_time,
+                service,
+                host,
+                is_healthy
+            )
+            VALUES (
+                '{start_time}',
+                '{end_time}',
+                '{service}',
+                '{host}',
+                '{is_healthy}'
+            );
+            COMMIT;
+        '''
 
-        endpoint = f'http://{host}:{port}/health'
         while True:
-            sql_query = '''
-                BEGIN;
-                INSERT INTO service_health (
-                    start_time,
-                    end_time,
-                    service,
-                    host,
-                    is_healthy
+
+            """
+            The host needs to be defined in the while loop so that it can change
+            over time if the user changes the Pi host name in the Pi settings
+            page
+            """
+            host = self.service_host
+            """
+            The review model on the laptop will always be 'localhost' even if
+            you're running everything else on the Pi
+            """
+            if service == 'angle-model-laptop':
+                host = 'localhost'
+            endpoint = f'http://{host}:{port}/health'
+
+            start_time = datetime.utcnow()
+            try:
+                timeout = ClientTimeout(total=self.timeout_seconds)
+                async with ClientSession(timeout=timeout) as session:
+                    async with session.get(endpoint) as response:
+                        health = await response.json()
+                        is_healthy = health['is_healthy']
+                        end_time = datetime.utcnow()
+                        sql = sql_query.format(
+                            start_time=start_time,
+                            end_time=end_time,
+                            service=service,
+                            host=host,
+                            is_healthy=is_healthy
+                        )
+                        await execute_sql_aio(
+                            host=self.postgres_host,
+                            sql=sql,
+                            aiopg_pool=self.aiopg_pool
+                        )
+            except:
+                if is_verbose:
+                    traceback.print_exc()
+                end_time = datetime.utcnow()
+                sql = sql_query.format(
+                    start_time=start_time,
+                    end_time=end_time,
+                    service=service,
+                    host=self.service_host,
+                    is_healthy=False
                 )
-                VALUES (
-                    '{start_time}',
-                    '{end_time}',
-                    '{service}',
-                    '{host}',
-                    '{is_healthy}'
-                );
-                COMMIT;
-            '''
-            while True:
-                start_time = datetime.utcnow()
-                try:
-                    timeout = ClientTimeout(total=self.timeout_seconds)
-                    async with ClientSession(timeout=timeout) as session:
-                        async with session.get(endpoint) as response:
-                            health = await response.json()
-                            is_healthy = health['is_healthy']
-                            end_time = datetime.utcnow()
-                            sql = sql_query.format(
-                                start_time=start_time,
-                                end_time=end_time,
-                                service=service,
-                                host=host,
-                                is_healthy=is_healthy
-                            )
-                            await execute_sql_aio(
-                                host=self.postgres_host,
-                                sql=sql,
-                                aiopg_pool=self.aiopg_pool
-                            )
-                except:
-                    end_time = datetime.utcnow()
-                    sql = sql_query.format(
-                        start_time=start_time,
-                        end_time=end_time,
-                        service=service,
-                        host=self.service_host,
-                        is_healthy=False
-                    )
-                    await execute_sql_aio(
-                        host=self.postgres_host,
-                        sql=sql,
-                        aiopg_pool=self.aiopg_pool
-                    )
-                await asyncio.sleep(interval_seconds)
+                await execute_sql_aio(
+                    host=self.postgres_host,
+                    sql=sql,
+                    aiopg_pool=self.aiopg_pool
+                )
+            await asyncio.sleep(interval_seconds)
