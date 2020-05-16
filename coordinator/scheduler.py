@@ -99,6 +99,38 @@ class Scheduler(object):
             await self.refresh_all_pi_settings()
             await asyncio.sleep(interval_seconds)
 
+    async def make_all_directories_loop(self):
+        """
+        I created this so if a user updates a directory in the Pi
+        settings page that directory exists for future use, whether
+        it's on the laptop or on the Pi
+        """
+        interval_seconds = 3.0
+        while True:
+
+            # Make all of the Pi directories
+            pi_directory_field_names = ['pi datasets directory', 'models_location_pi']
+            for field_name in pi_directory_field_names:
+                directory = self.pi_settings[field_name]
+                command = f'mkdir -p {directory}'
+                await execute_pi_command_aio(
+                    command=command,
+                    username=self.pi_settings['username'],
+                    hostname=self.pi_settings['hostname'],
+                    password=self.pi_settings['password']
+                )
+
+            # Make all of the laptop directories
+            laptop_directory_field_names = ['laptop datasets directory', 'models_location_laptop']
+            for field_name in laptop_directory_field_names:
+                directory = self.pi_settings[field_name]
+                command = f'mkdir -p {directory}'
+                await shell_command_aio(
+                    command=command
+                )
+
+            await asyncio.sleep(interval_seconds)
+
     async def refresh_all_pi_settings(self):
         self.pi_settings = await read_all_pi_settings_aio(aiopg_pool=self.aiopg_pool)
 
@@ -446,6 +478,9 @@ class Scheduler(object):
 
         # Clean up empty datasets on the Pi
         asyncio.create_task(self.periodic_pi_dataset_cleanup())
+
+        # Regularly check, and if necessary create, all directories that should exist
+        asyncio.create_task(self.make_all_directories_loop())
 
         services = self.get_services()
         manage_service_tasks = []
