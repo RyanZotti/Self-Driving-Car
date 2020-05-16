@@ -2256,7 +2256,7 @@ def make_app():
     assets_absolute_path = os.path.join(this_dir, 'dist', 'assets')
     html_absolute_path = os.path.join(this_dir, 'dist')
     handlers = [
-        (r"/", tornado.web.RedirectHandler, dict(url="/index.html")),
+        (r"/", tornado.web.RedirectHandler, dict(url="/raspberry-pi.html")),
         (r"/home", Home),
         (r"/ai-angle", AIAngleAPI),
         (r"/user-labels", UserLabelsAPI),
