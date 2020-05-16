@@ -1067,29 +1067,14 @@ class TransferDatasetFromPiToLaptop(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def transfer_dataset(self,json_input):
         dataset_name = json_input['dataset']
-        datasets_dir = read_pi_setting(
-            host=self.application.postgres_host,
-            field_name='pi datasets directory',
-            postgres_pool=self.application.postgres_pool
-        )
-        pi_hostname = read_pi_setting(
-            host=self.application.postgres_host,
-            field_name='hostname',
-            postgres_pool=self.application.postgres_pool
-        )
-        username = read_pi_setting(
-            host=self.application.postgres_host,
-            field_name='username'
-        )
-        password = read_pi_setting(
-            host=self.application.postgres_host,
-            field_name='password',
-            postgres_pool=self.application.postgres_pool
-        )
-        laptop_datasets_directory = read_pi_setting(
-            host=self.application.postgres_host,
-            field_name='laptop datasets directory'
-        )
+
+        # Get cached Pi fields from the scheduler
+        datasets_dir = self.application.scheduler.pi_settings['pi datasets directory']
+        pi_hostname = self.application.scheduler.pi_settings['hostname']
+        username = self.application.scheduler.pi_settings['username']
+        password = self.application.scheduler.pi_settings['password']
+        laptop_datasets_directory = self.application.scheduler.pi_settings['laptop datasets directory']
+
         from_path = '{datasets_dir}/{dataset_name}'.format(
             datasets_dir=datasets_dir,
             dataset_name=dataset_name
