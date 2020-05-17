@@ -1,8 +1,5 @@
 .idea/
 __pycache__/
-*.pyc
 output.mov
 video_timestamps.txt
-*.tmp/*
-data-proc/src/.tmp/
-*.DS_Store
+*.pyc
