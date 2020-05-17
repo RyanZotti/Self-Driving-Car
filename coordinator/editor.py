@@ -1933,7 +1933,7 @@ class BatchPredict(tornado.web.RequestHandler):
         process = batch_predict(
             dataset=dataset_name,
             # TODO: Remove this hardcoded port
-            predictions_port='8885',
+            predictions_port=self.application.scheduler.get_services()['angle-model-laptop']['port'],
             datasets_port=self.application.port
         )
         result = {}
