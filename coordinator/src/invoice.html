@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    @@include("partials/head.html", {
+      "title": "Dashkit"
+    })
+  </head>
+  <body>
+
+    <!-- MODALS
+    ================================================== -->
+    @@include("partials/modals.html")
+
+    <!-- SIDEBAR
+    ================================================== -->
+    @@include("partials/sidebar.html", {
+      "category": "pages",
+      "subcategory": "",
+      "page": "invoice.html",
+      "user": true
+    })
+
+    <!-- MAIN CONTENT
+    ================================================== -->
+    <div class="main-content">
+      <div class="container-fluid">
+        <div class="row justify-content-center">
+          <div class="col-12 col-lg-10 col-xl-8">
+            
+            <!-- Header -->
+            <div class="header mt-md-5">
+              <div class="header-body">
+                <div class="row align-items-center">
+                  <div class="col">
+                    
+                    <!-- Pretitle -->
+                    <h6 class="header-pretitle">
+                      Payments
+                    </h6>
+
+                    <!-- Title -->
+                    <h1 class="header-title">
+                      Invoice #SDF9823KD
+                    </h1>
+
+                  </div>
+                  <div class="col-auto">
+                    
+                    <!-- Buttons -->
+                    <a href="#!" class="btn btn-white">
+                      Download
+                    </a>
+                    <a href="#!" class="btn btn-primary ml-2">
+                      Pay
+                    </a>
+
+                  </div>
+                </div> <!-- / .row -->
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="card card-body p-5">
+              <div class="row">
+                <div class="col text-right">
+
+                  <!-- Badge -->
+                  <div class="badge badge-danger">
+                    Overdue
+                  </div>
+
+                </div>
+              </div> <!-- / .row -->
+              <div class="row">
+                <div class="col text-center">
+                  
+                  <!-- Logo -->
+                  <img src="assets/img/logo.svg" alt="..." class="img-fluid mb-4" style="max-width: 2.5rem;">
+
+                  <!-- Title -->
+                  <h2 class="mb-2">
+                    Invoice from Dashkit
+                  </h2>
+
+                  <!-- Text -->
+                  <p class="text-muted mb-6">
+                    Invoice #SDF9823KD
+                  </p>
+
+                </div>
+              </div> <!-- / .row -->
+              <div class="row">
+                <div class="col-12 col-md-6">
+                  
+                  <h6 class="text-uppercase text-muted">
+                    Invoiced from
+                  </h6>
+
+                  <p class="text-muted mb-4">
+                    <strong class="text-body">Kenny Blankenship</strong> <br>
+                    CEO of Good Themes <br>
+                    123 Happy Walk Way <br>
+                    San Francisco, CA
+                  </p>
+
+                  <h6 class="text-uppercase text-muted">
+                    Invoiced ID
+                  </h6>
+
+                  <p class="mb-4">
+                    #SDF9823KD
+                  </p>
+
+                </div>
+                <div class="col-12 col-md-6 text-md-right">
+
+                  <h6 class="text-uppercase text-muted">
+                    Invoiced to
+                  </h6>
+
+                  <p class="text-muted mb-4">
+                    <strong class="text-body">Jimmy LeBuyer</strong> <br>
+                    Acquisitions at Themers <br>
+                    236 Main St., #201 <br>
+                    Los Angeles, CA
+                  </p>
+
+                  <h6 class="text-uppercase text-muted">
+                    Due date
+                  </h6>
+
+                  <p class="mb-4">
+                    <time datetime="2018-04-23">Apr 23, 2018</time>
+                  </p>
+                  
+                </div>
+              </div> <!-- / .row -->
+              <div class="row">
+                <div class="col-12">
+                  
+                  <!-- Table -->
+                  <div class="table-responsive">
+                    <table class="table my-4">
+                      <thead>
+                        <tr>
+                          <th class="px-0 bg-white border-top-0">
+                            <span class="h6">Description</span>
+                          </th>
+                          <th class="px-0 bg-white border-top-0">
+                            <span class="h6">Hours</span>
+                          </th>
+                          <th class="px-0 bg-white border-top-0 text-right">
+                            <span class="h6">Cost</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td class="px-0">
+                            Custom theme development
+                          </td>
+                          <td class="px-0">
+                            125
+                          </td>
+                          <td class="px-0 text-right">
+                            $6,250
+                          </td>
+                        </tr>
+                        <tr>
+                          <td class="px-0">
+                            Logo design
+                          </td>
+                          <td class="px-0">
+                            15
+                          </td>
+                          <td class="px-0 text-right">
+                            $750
+                          </td>
+                        </tr>
+                        <tr>
+                          <td class="px-0 border-top-2">
+                           <strong>Total amount due</strong>
+                          </td>
+                          <td colspan="2" class="px-0 text-right border-top-2">
+                            <span class="h3">
+                              $7,000
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <hr class="my-5">
+                  
+                  <!-- Title -->
+                  <h6 class="text-uppercase">
+                    Notes
+                  </h6>
+
+                  <!-- Text -->
+                  <p class="text-muted mb-0">
+                    We really appreciate your business and if there’s anything else we can do, please let us know! Also, should you need us to add VAT or anything else to this order, it’s super easy since this is a template, so just ask!
+                  </p>
+
+                </div>
+              </div> <!-- / .row -->
+            </div>
+
+          </div>
+        </div> <!-- / .row -->
+      </div> <!-- / .container-fluid -->
+    </div> <!-- / .main-content -->
+
+    <!-- JAVASCRIPT
+    ================================================== -->
+    @@include("partials/scripts.html")
+
+  </body>
+</html>

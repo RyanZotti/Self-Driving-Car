@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    @@include("partials/head.html", {
+      "title": "Dashkit"
+    })
+  </head>
+  <body>
+
+    <!-- MODALS
+    ================================================== -->
+    @@include("partials/modals.html")
+
+    <!-- SIDEBAR
+    ================================================== -->
+    @@include("partials/sidebar.html", {
+      "category": "",
+      "subcategory": "",
+      "page": "getting-started.html",
+      "user": true
+    })
+
+    <!-- MAIN CONTENT
+    ================================================== -->
+    <div class="main-content pb-6">
+      <div class="container-fluid">
+        <div class="row justify-content-center">
+          <div class="col-12 col-lg-10 col-xl-8">
+
+              <!-- Header -->
+              <div class="header mt-md-5">
+                <div class="header-body">
+
+                  
+                  <!-- Pretitle -->
+                  <h6 class="header-pretitle">
+                    Documentation
+                  </h6>
+                  
+                  <!-- Title -->
+                  <h1 class="header-title display-4">
+                    Getting Started
+                  </h1>
+
+                </div>
+              </div>
+
+              <p>
+                This guide will help you get started with Dashkit! All the important stuff – compiling the source, file structure, build tools, file includes – is documented here, but should you have any questions, always feel free to reach out to support@goodthemes.co. 
+              </p>
+
+              <!-- Header -->
+              <div class="header mt-md-5">
+                <div class="header-body">
+
+                  <!-- Title -->
+                  <h1 class="header-title">
+                    New &amp; Extended Components
+                  </h1>
+
+                </div>
+              </div>
+
+              <p>
+                Dashkit extends Bootstrap by not only building on top of its existing components, but also introducing entirely new components and plugins. The best way to get an overview of this is to run through the <code><a href="#">components.html</a></code> page.
+              </p>
+
+
+              <!-- Header -->
+              <div class="header mt-md-5">
+                <div class="header-body">
+
+                  <!-- Title -->
+                  <h1 class="header-title">
+                    Dev Setup
+                  </h1>
+
+                </div>
+              </div>
+
+              <p>
+                To get started, you need to do the following: 
+              </p>
+
+              <ol>
+                <li><strong>Make sure you have Node installed</strong> since Dashkit uses npm to manage dependencies. If you don't, installing is quite easy, just visit the <a href="https://nodejs.org/en/download/">Node Downloads page</a> and install it.  </li>
+                <li><strong>Unzip your theme and open your command line</strong>, making sure your command line prompt is at the root of the unzipped theme directory. </li>
+                <li><strong class="badge badge-soft-primary"><code>npm install gulp-cli -g</code></strong>: If you don't have the Gulp command line interface, you need to install it.</li>
+                <li><strong class="badge badge-soft-primary"><code>npm install</code></strong>: Open your command line to the root directory of your unzipped theme and run to install all of Dashkit's dependencies.</li>
+              </ol>
+
+              <p>It's that simple! If you're not used to using terminal, don't worry, this is as advanced as it gets. If you want to kill the server and stop Gulp, just hit <code>Control + C</code>.</p>
+
+
+              <!-- Header -->
+              <div class="header mt-md-5">
+                <div class="header-body">
+
+                  <!-- Title -->
+                  <h1 class="header-title">
+                    Compiling
+                  </h1>
+
+                </div>
+              </div>
+
+              <p>Gulp is used to manage Dashkit development. Open your command line to the root directory of the theme to use the following commands:</p>
+
+              <ul>
+                <li>
+                  <strong class="badge badge-soft-primary"><code>gulp</code></strong>: Compile and watch the SCSS/JS/HTML, use Live Reload to update browsers instantly, start a server, and pop a tab in your default browser. Any changes made to the source files will be compiled as soon as you save the file.
+                </li>
+                <li>
+                    <strong class="badge badge-soft-primary"><code>gulp build</code></strong>: Generates a <code>/dist</code> directory with all the production files. 
+                  </li>
+              </ul>
+
+  
+              <!-- Header -->
+              <div class="header mt-md-5">
+                <div class="header-body">
+
+                  <!-- Title -->
+                  <h1 class="header-title">
+                    File Structure
+                  </h1>
+
+                </div>
+              </div>
+
+              <ul>
+                <li>
+                  <strong>📁 dist</strong> - Generated production files
+                </li>
+                <li>
+                  <strong>📁 node_modules</strong> - Directory where <code>npm</code> installs dependencies.
+                </li>
+                <li>
+                  <strong>📁 src</strong>
+                  <ul>
+                    <li>
+                      <strong>📁 assets</strong>
+                      <ul>
+                        <li>
+                          <strong>📁 css</strong> - Compiled CSS
+                        </li>
+                        <li>
+                          <strong>📁 fonts</strong> - Cerebri font and Feather Icon font
+                        </li>
+                        <li>
+                          <strong>📁 img</strong> - Image assets
+                        </li>
+                        <li>
+                          <strong>📁 js</strong> - Javascript source
+                        </li>
+                        <li>
+                          <strong>📁 libs</strong> - Third party plugins
+                        </li>
+                        <li>
+                          <strong>📁 scss</strong> - SCSS source for theme
+                        </li>
+                      </ul>
+                    </li>
+                    <li>
+                      <strong>📁 partials</strong> - HTML partials
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <strong>📄 gulpfile.js</strong> - All the build commands
+                </li>
+                <li>
+                  <strong>📄 package.json</strong> - List of dependencies and npm information
+                </li>
+                <li>
+                  <strong>📄 .gitignore</strong> - Hide all unnecessary files from Git
+                </li>
+              </ul>
+
+              <!-- Header -->
+              <div class="header mt-md-5">
+                <div class="header-body">
+
+                  <!-- Title -->
+                  <h1 class="header-title">
+                    Gulp File Includes
+                  </h1>
+
+                </div>
+              </div>
+
+              <p>
+                The <a href="https://www.npmjs.com/package/gulp-file-include" target="_blank">gulp-file-include</a> package is used to make partials easier to use for initial development. For Dashkit, we only use it for a handful of components that are found on most pages. The following partials are available:
+              </p>
+
+              <ul>
+                <li>
+                  <code>head.html</code>
+                  <ul>
+                    <li>
+                      <code>@@title (string)</code> - Parameter for the page title
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <code>sidebar.html</code>
+                  <ul>
+                    <li>
+                      <code>@@category (string)</code> - Parameter for which category of the sidebar should be open.
+                    </li>
+                    <li>
+                      <code>@@subcategory (string)</code> - Parameter for which subcategory of the sidebar should be open.
+                    </li>
+                    <li>
+                      <code>@@page (string)</code> - Parameter for which page of the sidebar should be given an active state.
+                    </li>
+                    <li>
+                      <code>@@user (boolean)</code> - Parameter to determine if the footer containing search, the user, and notifications should be rendered.
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <code>topbar.html</code>
+                </li>
+                <li>
+                  <code>topnav.html</code>
+                  <ul>
+                    <li>
+                      <code>@@page (string)</code> - Parameter for which page of the topnav should be given an active state.
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <code>script.html</code> 
+                </li>
+              </ul>
+
+              <p>
+                Easily create new <code>.html</code> partials inside the <code>/partials</code> folder and point to them from any file by specifying the path to the partial file and using the <code>@@include</code> keyword.
+              </p>
+
+              <p>
+                Please read the <a href="https://www.npmjs.com/package/gulp-file-include" target="_blank">official package documentation</a> for more info.
+              </p>
+
+               <!-- Header -->
+               <div class="header mt-md-5">
+                <div class="header-body">
+
+                  <!-- Title -->
+                  <h1 class="header-title">
+                    Customizing SCSS
+                  </h1>
+
+                </div>
+              </div>
+
+              <p>
+                There are 2 basic ways to customize your theme...
+              </p>
+
+              <ol>
+                <li>
+                  <strong>Customizing SCSS.</strong> This is more versatile and sustainable way to customize Dashkit, but requires the <code>gulp</code> compilation steps outlined above. The 2 major benefits of this strategy are using variable overrides to easily customize theme styles, plus you never have to touch Bootstrap or Dashkit's source, meaning future updates will be much, much, simpler. There are 2 provided files that make this strategy simple to implement:
+                  <ul>
+                    <li>
+                      <code>user-variables.scss</code>: This file can be used override Bootstrap core and Dashkit variables for customizing elements that have been tied to variables. 
+                    </li>
+                    <li>
+                      <code>user.scss</code>: This file can be used for writing custom SCSS that will be compiled alongside Bootstrap and Dashkit's core files.
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <strong>Compiled CSS.</strong> If you plan on using Dashkit "as is", or only need limited customization, feel free to simply attach the compiled <code>theme.css</code> or <code>theme.min.css</code> file in the <code>dist/assets/css</code> directory.</li>
+              </ol>
+
+
+
+          </div>
+        </div> <!-- / .row -->
+      </div> <!-- / .container-fluid -->
+    </div> <!-- / .main-content -->
+
+    <!-- JAVASCRIPT
+    ================================================== -->
+    @@include("partials/scripts.html")
+
+  </body>
+</html>

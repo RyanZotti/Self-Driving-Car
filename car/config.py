@@ -1,9 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Sep 13 21:27:44 2017
-@author: wroscoe
-"""
+from datetime import datetime
 import os
 import types
 import functools
@@ -49,9 +44,20 @@ def load_config(config_path=None):
         main_path = os.path.dirname(os.path.realpath(main.__file__))
         config_path = functools.reduce(
             os.path.join, [main_path, 'templates','config_defaults.py'])
-
-    print('loading config file: {}'.format(config_path))
+    print('{timestamp} - Loading config file: {config_path}'.format(
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
+        config_path=config_path
+    ))
     cfg = Config()
     cfg.from_pyfile(config_path)
-    print('config loaded')
+
+    # Set complicated paths
+    main_path = os.path.dirname(os.path.realpath(__file__))
+    cfg.UI_SERVER_PATH = functools.reduce(os.path.join, [main_path,'parts','web','server','server.py'])
+    cfg.AI_SERVER_PATH = functools.reduce(os.path.join, [main_path, 'parts', 'web', 'server', 'ai.py'])
+    cfg.MODEL_PATH = functools.reduce(os.path.join, [main_path, 'parts', 'model'])
+
+    print('{timestamp} - config loaded'.format(
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+    ))
     return cfg

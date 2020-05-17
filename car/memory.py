@@ -1,9 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Jun 25 11:07:48 2017
-@author: wroscoe
-"""
+import copy
 
 
 class Memory:
@@ -22,6 +17,13 @@ class Memory:
 
         for i, k in enumerate(key):
             self.d[k] = value[i]
+
+    def print(self):
+        simple_contents = copy.deepcopy(self.d)
+        if 'camera/image_array' in simple_contents:
+            image_sum = simple_contents['camera/image_array'].sum()
+            simple_contents['camera/image_array'] = 'image.sum(): '+str(image_sum)
+        print(simple_contents)
 
     def __getitem__(self, key):
         if type(key) is tuple:
@@ -42,6 +44,9 @@ class Memory:
                     raise IndexError(error)
 
         else:
+            # For some baffling reason using inputs[0] for
+            # consistency will break the image shown in
+            # tornado
             self.d[keys[0]] = inputs
 
     def get(self, keys):

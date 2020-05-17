@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    @@include("partials/head.html", {
+      "title": "Dashkit"
+    })
+  </head>
+  <body>
+
+    <!-- SIDEBAR
+    ================================================== -->
+    @@include("partials/sidebar.html", {
+      "category": "pages",
+      "subcategory": "",
+      "page": "orders.html",
+      "user": true
+    })
+
+    <!-- MAIN CONTENT
+    ================================================== -->
+    <div class="main-content">
+      <div class="container-fluid">
+        <div class="row justify-content-center">
+          <div class="col-12 col-lg-10 col-xl-8">
+
+            <!-- Header -->
+            <div class="header mt-md-5">
+              <div class="header-body">
+                <div class="row align-items-center">
+                  <div class="col">
+
+                    <!-- Title -->
+                    <h1 class="header-title">
+                      Raspberry Pi
+                      <span class="raspberry-pi-connection-status text-danger" style="display:none">&nbsp; ●</span>
+                    </h1>
+
+                  </div>
+                </div> <!-- / .row -->
+                <div class="row align-items-center">
+                  <div class="col">
+                    <!-- Nav -->
+                    <ul class="nav nav-tabs nav-overflow header-tabs">
+                      <li class="nav-item">
+                        <a href="#!" class="nav-link active" id="settings-nav">
+                          Settings
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a href="#!" class="nav-link" id="services-nav">
+                          Services
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a href="#!" class="nav-link" id="dashboard-nav">
+                          Dashboard
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+
+                   <div class="col-auto" id="toggle-test-services-locally-wrapper" style="display: none">
+                    <div class="row">
+                      <div class="col-auto" style="color: #95aac9; padding-top: 1.5rem; margin-right: -1rem;">
+                        Test Locally
+                      </div>
+                      <div class="col" style="padding-top: 1.5rem;">
+                        <div class="custom-control custom-checkbox-toggle">
+                          <input type="checkbox" class="custom-control-input" id="toggle-test-services-locally">
+                          <label class="custom-control-label" for="toggle-test-services-locally"></label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div><!-- / .row -->
+              </div>
+            </div>
+
+            <div class="row justify-content-center" id="dashboard-wrapper" style="display:none">
+              <div class="col-12">
+
+                <div class="card" id="drive-vehicle-modal">
+                  <div class="card-header">
+                    <div class="row align-items-center">
+                      <div class="col">
+
+                        <!-- Title -->
+                        <p class="card-header-title" >
+                          <b>Dataset ID:</b>
+                          <span id="driveVehicleHeaderDatasetId"></span>
+                        </p>
+                      </div>
+                      <div class="col text-right">
+                          <span class="text-muted">
+                            Show Image Effects:
+                          </span>
+                      </div>
+                      <div>
+                        <!-- Toggle -->
+                        <div class="custom-control custom-checkbox-toggle">
+                          <input type="checkbox" class="custom-control-input tracked-toggle" id="show-image-effects" toggle-web-page="raspberry pi" toggle-name="dashboard" toggle-detail="show image effects">
+                          <label class="custom-control-label" for="show-image-effects"></label>
+                        </div>
+                      </div>
+                    </div> <!-- / .row -->
+                  </div>
+                  <div class="card-body" style="padding-top: 1.5rem; padding-bottom: 0rem;">
+                    <div class="row">
+                      <div class="col">
+                        <div id="video-loader">
+                        </div>
+                      </div>
+                    </div>
+                    <div id='drive-metrics-header' class="row" style="display:none;">
+                      <div class="col padding-col"></div>
+                      <div class="col text-center">
+                        Speed
+                      </div>
+                      <div class="col text-center human-angle-col">
+                        Human
+                      </div>
+                      <div class="col text-center model-angle-col" id="model-angle-label">
+                        Model
+                      </div>
+                      <div class="col padding-col"></div>
+                    </div>
+
+                    <div id='drive-metrics-graphics' class="row align-items-center" style="display:none; padding: 0.5rem">
+                      <div class="col padding-col"></div>
+                      <div class="col">
+                        <div class="progress progress-bar-vertical">
+                          <div id="driveSpeedBar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="chart-container col human-angle-col" style="position: relative; height:5vh; width:10vw">
+                        <canvas id="humanAngleDonut" class="chart-canvas"></canvas>
+                      </div>
+                      <div id="aiAngleDonutCol" class="chart-container col model-angle-col" style="position: relative; height:5vh; width:10vw; display:none">
+                        <canvas id="aiAngleDonut" class="chart-canvas"></canvas>
+                      </div>
+                      <div class="col padding-col"></div>
+                    </div>
+
+                    <div id="drive-metrics-text" class="row" style="display:none;">
+                      <div class="col padding-col"></div>
+                      <div id="driveSpeedText" class="col text-center"></div>
+                      <div id="driveHumanSteeringText" class="col text-center human-angle-col"></div>
+                      <div id="driveModelSteeringText" class="col text-center model-angle-col"></div>
+                      <div class="col padding-col"></div>
+                    </div>
+
+                  </div>
+                  <div class="card-body">
+                    <div class="row justify-content-md-center">
+                      <div id="video-image-container" class="col-md-auto">
+                        <span id='recordingDotAndText' class="text-success" style="position: absolute;margin-right: 1em;margin-top: 1em;right: 1em;display: none;">● Recording</span>
+                        <span id="applyBrakeButton" style="transform: scale(1.25); width:1em; position: absolute; margin-left: 1.5em; margin-top: 1em; display: none;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#E53757" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather feather-octagon">
+                            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                            <text x="0.7em" dx="0.0em" stroke="#ffffff" y="1.8em" dy="0.5em" stroke-width="0.2" fill="#ffffff" style="font-size:0.4em; font-family:Arial" viewBox="0 0 24 24">
+                              STOP
+                            </text>
+                          </svg>
+                            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                          </svg>
+                        </span>
+                        <span id="slowness-brake-icon" style="transform: scale(1.25); width: 1em; position: absolute; margin-left: 3.5em; margin-top: 1em; display: none;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFA502" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-octagon">
+                            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                            <line x1="12" y1="8" x2="12" y2="12"stroke="#ffffff" stroke-width="2"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16" stroke="#ffffff" stroke-width="2"></line>
+                          </svg>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div> <!-- / .card -->
+              </div>
+              <div class="col-12">
+                <div class="row">
+
+                  <div class="col-6">
+                    <!-- Card -->
+                    <div class="card">
+                      <div class="card-body">
+                        <div class="row align-items-center">
+                          <div class="col">
+                            <text class="text">
+                              Engine:
+                            </text>
+                          </div>
+                          <div class="col-right">
+                            <!-- Toggle -->
+                            <div class="custom-control custom-checkbox-toggle">
+                              <input type="checkbox" class="custom-control-input tracked-toggle" id="engine-toggle" checked="" toggle-web-page="raspberry pi" toggle-name="dashboard" toggle-detail="engine">
+                              <label class="custom-control-label" for="engine-toggle"></label>
+                            </div>
+                          </div>
+                        </div> <!-- / .row -->
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-6">
+                    <!-- Card -->
+                    <div class="card">
+                      <div class="card-body">
+                        <div class="row align-items-center">
+                          <div class="col">
+                            <text class="text">
+                              Model:
+                            </text>
+                          </div>
+                          <div class="col-right">
+                            <!-- Toggle -->
+                            <div class="custom-control custom-checkbox-toggle">
+                              <input type="checkbox" class="custom-control-input tracked-toggle" id="model-toggle" checked="" toggle-web-page="raspberry pi" toggle-name="dashboard" toggle-detail="model">
+                              <label class="custom-control-label" for="model-toggle"></label>
+                            </div>
+                          </div>
+                        </div> <!-- / .row -->
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="row">
+                  <div class="col-12">
+                    <div class="card">
+                      <div class="card-body">
+                        <div class="row align-items-center">
+                          <div class="col">
+                            <div class="row">
+                              <div class="col">
+                                <p class="card-header-title">
+                                  <b>Model Constant Speed:&nbsp;</b>
+                                  <span id="model-constant-speed-slider-text"></span>
+                                </p>
+                                <input id="model-constant-speed-slider" class="bslider form-control" type="text" value="">
+                              </div>
+                            </div>
+                          </div>
+                        </div> <!-- / .row -->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row justify-content-center" id="services-wrapper" style="display:none">
+              <div class="col-12">
+
+                <div class="card">
+                  <div class="card-header">
+                    <h4 class="card-header-title">
+                      Video
+                      <span class="video-status text-danger" style="display:none">&nbsp; ●</span>
+                    </h4>
+
+                    <div class="col col-no-padding">
+                      <div class="custom-control custom-checkbox-toggle pull-right medium-toggle">
+                        <input type="checkbox" class="custom-control-input" id="toggle-video">
+                        <label class="custom-control-label" for="toggle-video"></label>
+                      </div>
+                    </div>
+
+                  </div>
+
+
+
+                  <div class="card-body">
+                    <div class="card-text">
+                    </div>
+                  </div>
+                </div> <!-- / .card -->
+
+                <div class="card">
+                  <div class="card-header">
+                    <h4 class="card-header-title">
+                      Record Tracker
+                      <span class="record-tracker-status text-danger" style="display:none">&nbsp; ●</span>
+                    </h4>
+
+                    <div class="col col-no-padding">
+                      <div class="custom-control custom-checkbox-toggle pull-right medium-toggle">
+                        <input type="checkbox" class="custom-control-input" id="toggle-record-tracker">
+                        <label class="custom-control-label" for="toggle-record-tracker"></label>
+                      </div>
+                    </div>
+
+                  </div>
+                  <div class="card-body">
+                    <div class="card-text">
+                    </div>
+                  </div>
+                </div> <!-- / .card -->
+
+                <div class="card">
+                  <div class="card-header">
+                    <h4 class="card-header-title">
+                      Control Loop
+                      <span class="control-loop-status text-danger" style="display:none">&nbsp; ●</span>
+                    </h4>
+
+                    <div class="col col-no-padding">
+                      <div class="custom-control custom-checkbox-toggle pull-right medium-toggle">
+                        <input type="checkbox" class="custom-control-input" id="toggle-control-loop">
+                        <label class="custom-control-label" for="toggle-control-loop"></label>
+                      </div>
+                    </div>
+
+                  </div>
+                  <div class="card-body">
+                    <div class="card-text">
+                    </div>
+                  </div>
+                </div> <!-- / .card -->
+
+                <div class="card">
+                  <div class="card-header">
+                    <h4 class="card-header-title">
+                      Memory
+                      <span class="memory-status text-danger" style="display:none">&nbsp; ●</span>
+                    </h4>
+
+                    <div class="col col-no-padding">
+                      <div class="custom-control custom-checkbox-toggle pull-right medium-toggle">
+                        <input type="checkbox" class="custom-control-input" id="toggle-memory">
+                        <label class="custom-control-label" for="toggle-memory"></label>
+                      </div>
+                    </div>
+
+                  </div>
+                  <div class="card-body">
+                    <div class="card-text">
+                    </div>
+                  </div>
+                </div> <!-- / .card -->
+
+                <div class="card">
+                  <div class="card-header">
+                    <h4 class="card-header-title">
+                      User Input
+                      <span class="user-input-status text-danger" style="display:none">&nbsp; ●</span>
+                    </h4>
+
+                    <div class="col col-no-padding">
+                      <div class="custom-control custom-checkbox-toggle pull-right medium-toggle">
+                        <input type="checkbox" class="custom-control-input" id="toggle-user-input">
+                        <label class="custom-control-label" for="toggle-user-input"></label>
+                      </div>
+                    </div>
+
+                  </div>
+                  <div class="card-body">
+                    <div class="card-text">
+                    </div>
+                  </div>
+                </div> <!-- / .card -->
+
+                <div class="card">
+                  <div class="card-header">
+                    <h4 class="card-header-title">
+                      Engine
+                      <span class="engine-status text-danger" style="display:none">&nbsp; ●</span>
+                    </h4>
+
+                    <div class="col col-no-padding">
+                      <div class="custom-control custom-checkbox-toggle pull-right medium-toggle">
+                        <input type="checkbox" class="custom-control-input" id="toggle-engine">
+                        <label class="custom-control-label" for="toggle-engine"></label>
+                      </div>
+                    </div>
+
+                  </div>
+                  <div class="card-body">
+                    <div class="card-text">
+                    </div>
+                  </div>
+                </div> <!-- / .card -->
+
+                <div class="card">
+                  <div class="card-header">
+                    <h4 class="card-header-title">
+                      PS3 Controller
+                      <span class="ps3-controller-status text-danger" style="display:none">&nbsp; ●</span>
+                    </h4>
+                    <div class="col col-no-padding">
+                      <div class="custom-control custom-checkbox-toggle pull-right medium-toggle">
+                        <input type="checkbox" class="custom-control-input" id="toggle-ps3-controller">
+                        <label class="custom-control-label" for="toggle-ps3-controller"></label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <ul class="timeline" id="controller-timeline-wrapper" style="display:none">
+                      <li class="latest" id="controller-timeline-finalize-service-connection" style="display:none">
+                        <div class="timeline-date">Pending...</div>
+                        <div class="timeline-title">Running connection diagnostics</div>
+                        <div class="timeline-description text-muted">You don't need to do anything here. Just wait.</div>
+                      </li>
+                      <li class="latest" id="controller-timeline-connect-bluetooth" style="display:none">
+                        <div class="timeline-date">Pending...</div>
+                        <div class="timeline-title">Connect with Bluetooth</div>
+                        <div class="timeline-description text-muted">Press the PS3 button on the controller.</div>
+                      </li>
+                      <li id="controller-timeline-cable-disconnected" style="display:none">
+                        <div class="timeline-date">Pending...</div>
+                        <div class="timeline-title">Disconnect Mini-USB Cable</div>
+                        <div class="timeline-description text-muted">This is required to check if bluetooth is working.</div>
+                      </li>
+                      <li id="controller-timeline-disconnect-and-connect" style="display:none">
+                        <div class="timeline-date">Pending...</div>
+                        <div class="timeline-title">Disconnect & Reconnect Mini-USB</div>
+                        <div class="timeline-description text-muted">The initialization software from the previous step unfortunately makes the Pi think that you unplugged the the controller, so you must pull the cable and then plug it back in again for the device to be recognized. Once the device is recognized again the Pi will run additional software.</div>
+                      </li>
+                      <li id="controller-timeline-cable-connected">
+                        <div class="timeline-date">Pending...</div>
+                        <div class="timeline-title">Connect Mini-USB Cable</div>
+                        <div class="timeline-description text-muted">If you're already connected and nothing happens for more than a few seconds try reconnecting</div>
+                      </li>
+                    </ul>
+                    <div class="card-text">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="card-header">
+                    <h4 class="card-header-title">
+                      Model
+                      <span class="angle-model-pi-status text-danger" style="display:none">&nbsp; ●</span>
+                    </h4>
+
+                    <div class="col col-no-padding">
+                      <div class="custom-control custom-checkbox-toggle pull-right medium-toggle">
+                        <input type="checkbox" class="custom-control-input" id="toggle-angle-model-pi">
+                        <label class="custom-control-label" for="toggle-angle-model-pi"></label>
+                      </div>
+                    </div>
+
+                  </div>
+                  <div class="card-body">
+                    <div class="card-text">
+                    </div>
+                  </div>
+                </div> <!-- / .card -->
+
+              </div>
+            </div> <!-- / .row -->
+
+            <div id="settings-wrapper">
+              <!-- Form -->
+              <form oninput="endpoint.value = user.value +'@'+ host.value">
+
+                <div class="row">
+                  <div class="col-3 col-md-3">
+                    <div class="form-group">
+                      <label>
+                        Login Name
+                      </label>
+                      <input name="user" type="text" class="form-control raspberry-pi-field" placeholder="pi" column-name="username">
+                    </div>
+                  </div>
+                  <div class="col-4 col-md-4">
+                    <div class="form-group">
+                      <label>
+                        Host Name
+                      </label>
+                      <input name="host" type="text" class="form-control raspberry-pi-field" placeholder="raspberrypi.local" column-name="hostname">
+                    </div>
+                  </div>
+                    <div class="col-3 col-md-3">
+                    <div class="form-group">
+                      <label>
+                        Endpoint
+                      </label>
+                        <output name="endpoint" class="form-text text-muted" style="margin-top:0.5rem">
+                        pi@raspberrypi.local
+                      </output>
+                    </div>
+                  </div>
+                </div> <!-- / .row -->
+              </form>
+              <form class="mb-5">
+                <div class="row">
+                  <div class="col-12 col-md-6">
+                    <div class="form-group">
+                      <label>
+                        Password
+                      </label>
+                      <input type="password" class="form-control raspberry-pi-field" column-name="password">
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12 col-md-12">
+                    <div class="form-group">
+                      <label>
+                        Git Repo Location (Laptop)
+                      </label>
+                      <input type="text" class="form-control raspberry-pi-field" placeholder="~/" column-name="laptop git repo directory">
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12 col-md-12">
+                    <div class="form-group">
+                      <label>
+                        Model Location (Laptop)
+                      </label>
+                      <input type="text" class="form-control raspberry-pi-field" placeholder="~/model" column-name="models_location_laptop">
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12 col-md-12">
+                    <div class="form-group">
+                      <label>
+                        Model Location (Pi)
+                      </label>
+                      <input type="text" class="form-control raspberry-pi-field" placeholder="~/model" column-name="models_location_pi">
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12 col-md-12">
+                    <div class="form-group">
+                      <label>
+                        Datasets Location (Laptop)
+                      </label>
+                      <input type="text" class="form-control raspberry-pi-field" placeholder="~/Self-Driving-Car/car/templates/data/" column-name="laptop datasets directory">
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12 col-md-12">
+                    <div class="form-group">
+                      <label>
+                        Datasets Location (Pi)
+                      </label>
+                      <input type="text" class="form-control raspberry-pi-field" placeholder="/home/pi/vehicle-datasets" column-name="pi datasets directory">
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12 col-md-6">
+                    <button id="test-pi-connection-button" type="button" class="btn btn-primary">
+                      Test Connection
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+          </div>
+        </div> <!-- / .row -->
+      </div> <!-- / .container-fluid -->
+    </div> <!-- / .main-content -->
+
+    <!-- JAVASCRIPT
+    ================================================== -->
+    @@include("partials/scripts.html")
+
+    <script src="assets/js/raspberrypi.js"></script>
+    <script src="assets/js/common.js"></script>
+    <script src="assets/js/datasets-common.js"></script>
+    <script src="assets/js/drive.js"></script>
+
+  </body>
+</html>

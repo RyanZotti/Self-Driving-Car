@@ -1,0 +1,34 @@
+//
+// icon.scss
+// Dashkit component
+//
+
+// Icon
+//
+// General styles
+
+.icon {
+  font-size: $font-size-lg;
+
+  &.active {
+    position: relative;
+
+    &:before {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 10px; height: 10px;
+      border: 2px solid $white;
+      border-radius: 50%;
+      background-color: $primary;
+    }
+  }
+}
+
+// Feather icons
+//
+// Fixes icon / font vertical alignment issue
+
+.fe {
+  line-height: inherit;
+}

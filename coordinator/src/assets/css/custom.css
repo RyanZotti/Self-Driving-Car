@@ -1,0 +1,319 @@
+.progress-bar-vertical {
+  width: 10px;
+  min-height: 28px;
+  display: flex;
+  align-items: flex-end;
+  margin: 0 auto;
+  border: 1px solid #95A9C9;
+  background-color: #fff;
+  border-radius: 0px;
+}
+
+.progress-bar-vertical .progress-bar {
+  width: 100%;
+  height: 0;
+  -webkit-transition: height 0.6s ease;
+  -o-transition: height 0.6s ease;
+  transition: height 0.6s ease;
+  border-radius: 0px;
+    background-color: #2c7be5;
+}
+
+.pretty-button {
+    background-color:transparent;
+    border: 0px;
+}
+
+.pretty-button:hover {
+  transform: scale(1.5);
+}
+
+.centered {
+    margin: 0 auto;
+}
+
+img#drive-mpeg-image {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#video-loader {
+  border: 1em solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 1em solid #2C7BE5;
+  width: 8em;
+  height: 8em;
+  -webkit-animation: spin 2s linear infinite; /* Safari */
+  animation: spin 2s linear infinite;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Begin slider styling */
+/*------------------------------------------------------------------
+  [Slider]
+*/
+/*Slider*/
+.slider.slider-vertical {
+  margin-right: 13px;
+}
+
+.slider.slider-vertical .slider-handle {
+  margin-left: -1px;
+}
+
+.slider.slider-horizontal {
+  height: 22px;
+  max-width: 100%;
+}
+
+.slider.slider-horizontal .slider-track {
+  height: 6px;
+}
+
+.slider-selection {
+  background: #4285f4;
+  border: 1px solid #4285f4;
+  -webkit-box-shadow: none;
+          box-shadow: none;
+}
+
+.slider-track {
+  background: #f2f2f2;
+  -webkit-box-shadow: none;
+          box-shadow: none;
+}
+
+.slider-handle {
+  opacity: 1;
+  background: #FFFFFF;
+  border: 1px solid #f0f0f0;
+  -webkit-box-shadow: 0 0 3px rgba(0, 0, 0, 0.12);
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.12);
+  height: 16px;
+  width: 16px;
+  -webkit-transition: -webkit-box-shadow 200ms ease-in-out;
+  transition: -webkit-box-shadow 200ms ease-in-out;
+  transition: box-shadow 200ms ease-in-out;
+  transition: box-shadow 200ms ease-in-out, -webkit-box-shadow 200ms ease-in-out;
+}
+
+/*------------------------------------------------------------------
+End slider CSS
+*/
+
+.slider.slider-horizontal {
+  width: 100%;
+}
+
+.pull-right {
+  float: right !important;
+}
+
+.medium-toggle {
+  transform: scale(.8);
+}
+
+.col-no-padding {
+  padding: 0rem !important;
+}
+
+/*------------------------------------------------------------------
+  [timeline widget]
+*/
+
+.timeline {
+  padding: 0;
+  margin: 5px 0 15px;
+  list-style: none;
+  position: relative;
+}
+
+.timeline:before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  height: 100%;
+  width: 2px;
+  background-color: #2c7be5;
+}
+
+.timeline:after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  bottom: -2px;
+  height: 8px;
+  width: 8px;
+  background-color: #2c7be5;
+  border-radius: 50%;
+}
+
+.timeline > li {
+  display: block;
+  position: relative;
+  padding-left: 30px;
+  padding-bottom: 27px;
+}
+
+.timeline > li:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  height: 12px;
+  width: 12px;
+  background-color: #FFFFFF;
+  border-radius: 50%;
+  border: 1px solid #2c7be5;
+}
+
+.timeline > li.complete:before {
+  background-color: #2c7be5;
+}
+
+.timeline-date {
+  opacity: 0.5;
+  font-size: 1.0rem;
+  color: #6e84a3
+  margin-bottom: 8px;
+}
+
+.timeline-title {
+  font-weight: 500;
+}
+
+.timeline-compact .timeline-date {
+  float: right;
+  margin-bottom: 0;
+  line-height: 22px;
+}
+
+.timeline-compact .timeline-title {
+  font-size: 0.85rem;
+  font-weight: 300;
+}
+
+.timeline .timeline-description {
+  font-size: 0.85rem;
+  color: #2c7be5;
+  margin-top: 4px;
+}
+
+.timeline-compact:before {
+  background-color: #f6c163;
+}
+
+.timeline-compact:after {
+  background-color: #f6c163;
+}
+
+.timeline-compact > li {
+  padding-bottom: 35px;
+}
+
+.timeline-compact > li:last-child {
+  padding-bottom: 25px;
+}
+
+.timeline-compact > li:before {
+  border: 1px solid #f6c163;
+}
+
+.timeline-compact > li.complete:before {
+  background-color: #f6c163;
+}
+
+
+/*------------------------------------------------------------------
+  Machine learning deployment driver (remote vs local model) radio buttons
+  I got the CSS code from here: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_custom_radio
+*/
+
+.ml-driver-container {
+  display: block;
+  position: relative;
+  padding-left: 18px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Hide the browser's default radio button */
+.ml-driver-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Create a custom radio button */
+.checkmark {
+  position: absolute;
+  top: 3px;
+  left: 0;
+  height: 14px;
+  width: 14px;
+  background-color: #eee;
+  border-radius: 50%;
+}
+
+/* On mouse-over, add a grey background color */
+.ml-driver-container:hover input ~ .checkmark {
+  background-color: #ccc;
+}
+
+/* When the radio button is checked, add a blue background */
+.ml-driver-container input:checked ~ .checkmark {
+  background-color: #2c7be5;
+}
+
+/* Create the indicator (the dot/circle - hidden when not checked) */
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Show the indicator (dot/circle) when checked */
+.ml-driver-container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+/* Style the indicator (dot/circle) */
+.ml-driver-container .checkmark:after {
+    top: 5px;
+    left: 5px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: white;
+}
+
+/*------------------------------------------------------------------
+  End of machine learning deployment driver (remote vs local model) CSS for radio buttons
+*/
+
+/*
+Makes it easy to show or hide things that require a laptop model to be
+deloyed. Right now I only use this in the datasets review table
+*/
+.requires-laptop-model-table-cell {
+    display: none;
+}

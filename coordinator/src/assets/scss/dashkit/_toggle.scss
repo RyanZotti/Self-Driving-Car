@@ -1,0 +1,38 @@
+// 
+// toggle.scss
+// Dashkit component
+//
+
+.custom-checkbox-toggle {
+  padding-left: 0;
+  width: $spacer * 2; height: $spacer;
+
+  .custom-control-label {
+    position: relative;
+    width: 100%; height: 100%;
+  }
+
+  .custom-control-label::before,
+  .custom-control-label::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    border-radius: $spacer;
+    transition: .2s ease all;
+  }
+  
+  .custom-control-label::before {
+    width: 100%; height: 100%;
+  }
+
+  .custom-control-label::after {
+    width: $spacer; height: 100%;
+    background: $white;
+    transform: scale(.8);
+  }
+  
+  .custom-control-input:checked ~ .custom-control-label::after {
+    left: $spacer; right: 0;
+  }
+  
+}

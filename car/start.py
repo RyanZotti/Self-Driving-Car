@@ -1,43 +1,214 @@
-from car.vehicle import Vehicle
+import argparse
 from car.config import load_config
-from car.parts.camera import Webcam
-from car.parts.engine import Engine
-from car.parts.web_controller.web import LocalWebController
-from car.parts.datastore import DatasetHandler
+from car.vehicle import Vehicle
+from car.Memory import Memory
+from car.parts.video.client import Client as Camera
+from car.parts.user_input.client import Client as UserInput
+from car.parts.engine.client import Client as Engine
+from car.parts.ps3_controller.client import Client as PS3Controller
+from car.parts.model.client import Client as Model
+from car.parts.record_tracker.client import Client as RecordTracker
+from car.parts.memory.client import Client as MemoryClient
 
+
+ap = argparse.ArgumentParser()
+ap.add_argument(
+    "--remote_host",
+    required=False,
+    help="The laptop's hostname",
+    default='ryans-macbook-pro.local'
+)
+ap.add_argument(
+    "--port",
+    required=False,
+    help="Port for vehicle health check",
+    default=8887
+)
+"""
+The `store_true` defaulting to False is confusing, but
+that's the way it is according to Stackoverflow:
+https://stackoverflow.com/a/15008806/554481
+"""
+ap.add_argument(
+    "--localhost",
+    action='store_true',
+    dest='is_localhost',
+    help="Indicates if control-loop clients should expect part services on localhost or named Docker container"
+)
+
+part_names = [
+    "video",
+    "record-tracker",
+    "control-loop",
+    "user-input",
+    "engine",
+    "ps3-controller",
+    "local-model",
+    "remote-model",
+    "memory"
+]
+for part_name in part_names:
+    ap.add_argument(
+        "--verbose-"+part_name,
+        action='store_true',
+        dest='verbose-'+part_name,
+        help="Indicates if the control-loop should print exceptions from this part"
+    )
+
+args = vars(ap.parse_args())
+remote_host = args['remote_host']
+port = int(args['port'])
+is_localhost = args['is_localhost']
 
 # Load default settings
 cfg = load_config()
 
+# Assign default states
+memory = Memory()
+memory.put(['ps3_controller/brake'], True)
+memory.put(['dashboard/brake'], False)
+memory.put(['dashboard/driver_type'], 'user')
+memory.put(['vehicle/brake'], True)
+
 # Initialize the car
-car = Vehicle()
+car = Vehicle(
+    mem=memory,
+    warm_up_seconds=cfg.WARM_UP_SECONDS,
+    port=port
+)
 
-# Add a webcam
-cam = Webcam(ffmpeg_host=cfg.PI_HOSTNAME)
-car.add(cam, outputs=['cam/image_array'], threaded=True)
+# Consume video from a cheap webcam
+camera = Camera(
+    name='video',
+    output_names=[
+        'camera/image_array'
+    ],
+    is_localhost=is_localhost,
+    is_verbose=args['verbose-video']
+)
+car.add(camera)
 
-# Add a local Tornado web server to receive commands
-ctr = LocalWebController()
-car.add(ctr,
-        inputs=['cam/image_array'],
-        outputs=['user/angle', 'user/throttle', 'user/mode', 'recording'],
-        threaded=True)
+# Listen for user input
+user_input = UserInput(
+    name='user-input',
+    output_names=[
+        'dashboard/brake',
+        'dashboard/driver_type',
+        'dashboard/model_constant_throttle',
+        'remote_model/angle'
+    ],
+    is_localhost=is_localhost,
+    is_verbose=args['verbose-user-input']
+)
+car.add(user_input)
 
-# Add engine
-engine = Engine(16, 18, 22, 19, 21, 23, ['user/angle', 'user/throttle'])
-car.add(engine,
-        inputs=['user/angle', 'user/throttle'],
-        threaded=True)
+# Communicate with the engine
+engine = Engine(
+    name='engine',
+    input_names=[
+        'dashboard/brake',
+        'dashboard/driver_type',
+        'dashboard/model_constant_throttle',
+        'local_model/angle',
+        'local_model/throttle',
+        'ps3_controller/angle',
+        'ps3_controller/brake',
+        'ps3_controller/throttle',
+        'remote_model/angle',
+        'remote_model/throttle',
+        'vehicle/brake'
+    ],
+    is_localhost=is_localhost,
+    is_verbose=args['verbose-engine']
+)
+car.add(engine)
 
-# Add dataset to save data
-inputs = ['cam/image_array', 'user/angle', 'user/throttle', 'user/mode']
-types = ['image_array', 'float', 'float', 'str']
-dh = DatasetHandler(path=cfg.DATA_PATH)
-print(cfg.DATA_PATH)
-dataset = dh.new_dataset_writer(inputs=inputs, types=types)
-car.add(dataset, inputs=inputs, run_condition='recording')
+# Exposes the car's data to external services
+memoryClient = MemoryClient(
+    name='memory',
+    input_names=[
+        'dashboard/brake',
+        'dashboard/driver_type',
+        'dashboard/model_constant_throttle',
+        'local_model/angle',
+        'local_model/throttle',
+        'ps3_controller/angle',
+        'ps3_controller/brake',
+        'ps3_controller/recording',
+        'ps3_controller/throttle',
+        'remote_model/angle',
+        'remote_model/throttle',
+        'vehicle/brake'
+    ],
+    is_localhost=is_localhost,
+    is_verbose=args['verbose-memory']
+)
+car.add(memoryClient)
 
-car.start(rate_hz=cfg.DRIVE_LOOP_HZ,
-          max_loop_count=cfg.MAX_LOOPS)
+# Optionally consume driving predictions from a local model
+local_model = Model(
+    name='local-model',
+    input_names=[
+        'camera/image_array',
+        'dashboard/driver_type'
+    ],
+    output_names=[
+        'local_model/angle'
+    ],
+    is_localhost=is_localhost,
+    is_verbose=args['verbose-local-model']
+)
 
-print("You can now go to <your pi ip address>:8887 to drive your car.")
+"""
+If the model's part server container isn't running the request
+calls will fail, but my code should be able to ignore these
+exceptions, which means that it should be safe to always run
+the part client. It's probably easier to always run the part
+client than to selectively run it when the service is available
+"""
+car.add(local_model)
+
+ps3_controller = PS3Controller(
+    name='ps3-controller',
+    output_names=[
+        'ps3_controller/angle',
+        'ps3_controller/brake',
+        'ps3_controller/throttle',
+        'ps3_controller/recording'
+    ],
+    is_localhost=is_localhost,
+    is_verbose=args['verbose-ps3-controller']
+)
+car.add(ps3_controller)
+
+# Track images and labels
+"""
+The input names and the input types need to
+be in the same order. If you ever change the
+names or types you'll also have to update the
+client and server parts as well, since the
+names are hard coded there
+"""
+record_tracker = RecordTracker(
+    name='record-tracker',
+    input_names=[
+        'camera/image_array',
+        'ps3_controller/angle',
+        'ps3_controller/recording',
+        'ps3_controller/throttle'
+    ],
+    input_types=[
+        'image_array',
+        'float',
+        'boolean',
+        'float'
+    ],
+    is_localhost=is_localhost,
+    is_verbose=args['verbose-record-tracker']
+)
+car.add(record_tracker)
+
+car.start(
+    rate_hz=cfg.DRIVE_LOOP_HZ,
+    max_loop_count=cfg.MAX_LOOPS
+)

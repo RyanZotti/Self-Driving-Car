@@ -1,0 +1,33 @@
+// Avatar Mixins
+//
+// This is a custom mixin for generating avatar component sizes
+
+@mixin avatar($avatarSize, $borderWidth, $borderRadius, $fontSize, $statusBorderWidth) {
+  width: $avatarSize;
+  height: $avatarSize;
+
+  // Bordered version
+
+  .border {
+    border-width: $borderWidth !important;
+  }
+
+  // Rounded version
+
+  .rounded {
+    border-radius: $borderRadius !important;
+  }
+
+  // Title
+
+  .avatar-title {
+    font-size: $fontSize;
+  }
+
+  // Status
+
+  &.avatar-online::before,
+  &.avatar-offline::before {
+    border-width: $statusBorderWidth;
+  }
+}

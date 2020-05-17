@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    @@include("partials/head.html", {
+      "title": "Dashkit"
+    })
+  </head>
+  <body>
+
+    <!-- MODALS
+    ================================================== -->
+    @@include("partials/modals.html")
+
+    <!-- SIDEBAR
+    ================================================== -->
+    @@include("partials/sidebar.html", {
+      "category": "pages",
+      "subcategory": "project",
+      "page": "project-reports.html",
+      "user": true
+    })
+
+    <!-- MAIN CONTENT
+    ================================================== -->
+    <div class="main-content">
+
+      <!-- HEADER -->
+      <div class="header">
+        <div class="container-fluid">
+          
+          <!-- Body -->
+          <div class="header-body">
+            <div class="row align-items-center">
+              <div class="col-auto">
+
+                <!-- Avatar -->
+                <div class="avatar avatar-lg avatar-4by3">
+                  <img src="assets/img/avatars/projects/project-1.jpg" alt="..." class="avatar-img rounded">
+                </div>
+
+              </div>
+              <div class="col ml--3 ml-md--2">
+                
+                <!-- Pretitle -->
+                <h6 class="header-pretitle">
+                  Projects
+                </h6>
+
+                <!-- Title -->
+                <h1 class="header-title">
+                  Homepage Redesign
+                </h1>
+
+              </div>
+              <div class="col-12 col-md-auto mt-3 mt-md-0">
+                
+                <!-- Avatar group -->
+                <div class="avatar-group">
+                  <a href="profile-posts.html" class="avatar" data-toggle="tooltip" title="Dianna Smiley">
+                    <img src="assets/img/avatars/profiles/avatar-1.jpg" alt="..." class="avatar-img rounded-circle border border-body">
+                  </a>
+                  <a href="profile-posts.html" class="avatar" data-toggle="tooltip" title="Ab Hadley">
+                    <img src="assets/img/avatars/profiles/avatar-2.jpg" alt="..." class="avatar-img rounded-circle border border-body">
+                  </a>
+                  <a href="profile-posts.html" class="avatar" data-toggle="tooltip" title="Adolfo Hess">
+                    <img src="assets/img/avatars/profiles/avatar-3.jpg" alt="..." class="avatar-img rounded-circle border border-body">
+                  </a>
+                  <a href="profile-posts.html" class="avatar" data-toggle="tooltip" title="Daniela Dewitt">
+                    <img src="assets/img/avatars/profiles/avatar-4.jpg" alt="..." class="avatar-img rounded-circle border border-body">
+                  </a>
+                </div>
+
+                <!-- Button -->
+                <a href="#modalMembers" class="btn btn-lg btn-rounded-circle btn-white" data-toggle="modal">
+                  +
+                </a>
+
+              </div>
+            </div> <!-- / .row -->
+            <div class="row align-items-center">
+              <div class="col">
+                
+                <!-- Nav -->
+                <ul class="nav nav-tabs nav-overflow header-tabs">
+                  <li class="nav-item">
+                    <a href="project-overview.html" class="nav-link">
+                      Overview
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="project-files.html" class="nav-link">
+                      Files
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="project-reports.html" class="nav-link active">
+                      Reports
+                    </a>
+                  </li>
+                </ul>
+
+              </div>
+            </div>
+          </div>
+
+        </div> <!-- / .container-fluid -->
+      </div> <!-- / .header -->
+
+      <!-- CONTENT -->
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            
+            <!-- Card -->
+            <div class="card card-inactive">
+              <div class="card-body text-center">
+
+                <!-- Image -->
+                <img src="assets/img/illustrations/scale.svg" alt="..." class="img-fluid" style="max-width: 182px;">
+                
+                <!-- Title -->
+                <h1>
+                  No reports yet.
+                </h1>
+
+                <!-- Subtitle -->
+                <p class="text-muted">
+                  Create a report to find our more about this project.
+                </p>
+
+                <!-- Button -->
+                <a href="#!" class="btn btn-primary">
+                  Create Report
+                </a>
+
+              </div>
+            </div>
+
+          </div>
+        </div> <!-- / .row -->
+      </div> <!-- / .container-fluid -->
+      
+    </div> <!-- / .main-content -->
+
+    <!-- JAVASCRIPT
+    ================================================== -->
+    @@include("partials/scripts.html")
+
+  </body>
+</html>

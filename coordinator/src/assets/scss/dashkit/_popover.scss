@@ -1,0 +1,35 @@
+// 
+// popover.scss
+// Extended from Bootstrap
+//
+
+// 
+// Bootstrap Overrides =====================================
+//
+
+.popover {
+  padding: $popover-padding-y $popover-padding-x;
+
+  &:hover {
+    display: block !important;
+  }
+}
+
+.popover-header {
+  margin-bottom: $popover-header-margin-bottom;
+  border-bottom: 0;
+}
+
+.popover-body-label {
+  margin-left: .25rem;
+}
+
+.popover-body-value {
+  margin-left: .25rem;
+}
+
+.popover-body-indicator {
+  display: inline-block;
+  width: .5rem; height: .5rem;
+  border-radius: 50%;
+}
