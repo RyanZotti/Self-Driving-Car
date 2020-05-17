@@ -21,6 +21,7 @@ import json
 import signal
 import subprocess
 import threading
+import shutil
 from uuid import uuid4
 from coordinator.utilities import *
 import json
@@ -1029,9 +1030,9 @@ class DeleteLaptopDataset(tornado.web.RequestHandler):
     @tornado.concurrent.run_on_executor
     def delete_dataset(self,json_input):
         dataset_name = json_input['dataset']
-        self.application.record_reader.delete_dataset(
-            dataset_name=dataset_name,
-        )
+        datasets_directory = self.application.scheduler.pi_settings['laptop datasets directory']
+        dataset_path = f'{datasets_directory}/{dataset_name}'
+        shutil.rmtree(dataset_path)
         execute_sql(
             host=None,
             sql=f"BEGIN; DELETE FROM records WHERE dataset = '{dataset_name}'; COMMIT;",
