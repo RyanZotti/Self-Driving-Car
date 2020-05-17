@@ -1158,9 +1158,14 @@ class ImageCountFromDataset(tornado.web.RequestHandler):
                 dataset_name=dataset_name
             )
         elif dataset_type.lower() == 'review':
-            image_count = self.application.record_reader.get_image_count_from_dataset(
-                dataset_name=dataset_name
-            )
+            sql = f'''
+                SELECT
+                    COALESCE(count(*),0) AS total
+                FROM records
+                WHERE LOWER(dataset) = '{dataset_name}'
+            '''
+            rows = get_sql_rows(sql=sql, postgres_pool=self.application.postgres_pool, host=None)
+            return {'image_count': rows[0]['total']}
         elif dataset_type.lower() == 'mistake':
             image_count = self.application.record_reader.get_flagged_record_count(
                 dataset_name=dataset_name
