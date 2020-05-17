@@ -39,6 +39,8 @@ COMMIT;
 
 BEGIN;
 INSERT INTO toggles (event_ts, web_page, name, detail, is_on) VALUES
+    (now(), 'machine learning', 'driver-device-type', 'pi', FALSE),
+    (now(), 'machine learning', 'driver-device-type', 'laptop', FALSE),
     (now(), 'raspberry pi', 'dashboard', 'model', FALSE),
     (now(), 'raspberry pi', 'dashboard', 'engine', TRUE);
 COMMIT;
