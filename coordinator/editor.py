@@ -2107,7 +2107,7 @@ class DatasetPredictionUpdateStatuses(tornado.web.RequestHandler):
             AVG(ABS(records.angle - predictions.angle)) AS avg_abs_error,
             COUNT(*) AS prediction_count
         FROM records
-        JOIN latest_deployment AS deploy
+        LEFT JOIN latest_deployment AS deploy
           ON TRUE
         LEFT JOIN predictions
           ON records.dataset = predictions.dataset
