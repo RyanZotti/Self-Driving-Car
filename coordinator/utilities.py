@@ -1570,6 +1570,25 @@ def train_new_model(
     )
 
 
+def get_label_path_from_db(dataset_name, record_id, postgres_pool):
+    """
+    Gets the label path from the Postgres database
+    """
+    sql = f"""
+        SELECT
+            label_path
+        FROM records
+        WHERE
+            dataset = '{dataset_name}'
+            AND record_id = {record_id}
+    """
+    rows = get_sql_rows(host=None, sql=sql, postgres_pool=postgres_pool)
+    if len(rows) > 0:
+        return rows[0]['label_path']
+    else:
+        return None
+
+
 def batch_predict(dataset, predictions_port, datasets_port):
     # The & is required or Tornado will get stuck
     # TODO: Remove the hardcoded script path

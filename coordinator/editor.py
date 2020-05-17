@@ -935,9 +935,10 @@ class DeleteRecord(tornado.web.RequestHandler):
     def delete_record(self,json_input):
         dataset_name = json_input['dataset']
         record_id = json_input['record_id']
-        label_path = self.application.record_reader.get_label_path(
+        label_path = get_label_path_from_db(
             dataset_name=dataset_name,
-            record_id=record_id
+            record_id=record_id,
+            postgres_pool=self.application.postgres_pool
         )
         image_path = self.application.record_reader.get_image_path_from_db(
             dataset_name=dataset_name,
