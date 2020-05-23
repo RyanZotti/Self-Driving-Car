@@ -690,6 +690,7 @@ async function playVideo(args) {
             isFlaggedButton.checked = false;
         }
         const scaleFactor = document.querySelector("input#image-scale-slider").getAttribute("data-value");
+        const cropPercent = document.querySelector("input#image-top-cut-slider").getAttribute("data-value");
         updateImage(dataset, recordId, cropPercent, scaleFactor);
         await updateDonut(donuts.ai,state.ai.angle);
         await updateDonut(donuts.human,state.human.angle);
