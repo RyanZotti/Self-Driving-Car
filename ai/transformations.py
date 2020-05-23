@@ -134,7 +134,7 @@ def crop_images(images, crop_percent):
 # https://www.pyimagesearch.com/2016/03/07/transparent-overlays-with-opencv/
 def pseduo_crop(image, crop_percent, alpha):
     shape = image.shape
-    new_top_position = int(shape[0]) - int(shape[0] * (crop_percent / 100.0))
+    new_top_position = int(shape[0] * (crop_percent / 100.0))
 
     # Create two copies of the original image -- one for
     # the overlay and one for the final output image
