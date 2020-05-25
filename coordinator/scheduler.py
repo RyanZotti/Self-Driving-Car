@@ -9,6 +9,11 @@ from coordinator.utilities import *
 class Scheduler(object):
 
     """
+    This class handles all of the backend work required of the API. It
+    also enables dramatic performance improvements by acting as a caching
+    layer for the API so that I don't have to make a ton of calls to the
+    Postgres DB
+
     This class is used to call the health API of each of the Pi services. I
     grouped all services under this same class to reduce some load on the
     Postgres database, so that each health check doesn't have to maintain
