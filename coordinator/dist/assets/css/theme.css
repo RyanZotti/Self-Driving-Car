@@ -18251,7 +18251,7 @@ button.fe-cloud-rain
     border: 0;
 }
 
-input iconcheckbox
+input.iconCheckBox
 {
     position: absolute;
 
@@ -18272,7 +18272,7 @@ input iconcheckbox
     margin: 0 auto;
 
     border: 1px solid #95a9c9;
-    border-radius: 0; 
+    border-radius: 0;
     background-color: #fff;
 
     align-items: flex-end;
