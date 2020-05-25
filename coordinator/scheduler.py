@@ -78,12 +78,68 @@ class Scheduler(object):
         self.pi_username = None
         self.pi_password = None
 
+        # Local cache of all Postgres toggles
+        self.toggles = None
+
         # Local cache of all Pi settings, used for performance efficiency
         self.pi_settings = {}
 
         # These two variables are used to track if the video cache should be on or not
         self.raw_dash_frame = None
         self.is_video_cache_loop_running = False
+
+        # Local cache of all Postgres toggles
+        self.toggles = None
+
+    async def update_all_toggles_cache_aio_loop(self, interval_seconds=3.0):
+        """
+        Maintains a local cache of toggles statuses to improve performance
+        by reducing strain on Postgres
+        """
+
+        while True:
+            sql_query = '''
+                WITH latest_values AS (
+                SELECT
+                    web_page,
+                    name,
+                    detail,
+                    is_on,
+                    ROW_NUMBER() OVER(
+                        PARTITION BY web_page, name, detail
+                        ORDER BY event_ts DESC
+                    ) AS recency_rank
+                FROM toggles
+            )
+
+            SELECT
+                web_page,
+                name,
+                detail,
+                is_on
+            FROM latest_values
+            WHERE recency_rank = 1
+            '''
+            rows = await get_sql_rows_aio(
+                host=None,
+                sql=sql_query,
+                aiopg_pool=self.aiopg_pool
+            )
+            new_dict = {}
+            for row in rows:
+                """
+                I want to avoid a nested dict lookup so I mash all
+                the keys into a single value
+                """
+                key = '{web_page}-{detail}-{name}'.format(
+                    web_page=row['web_page'],
+                    detail=row['detail'],
+                    name=row['name']
+                )
+                is_on = row['is_on']
+                new_dict[key] = is_on
+            self.toggles = new_dict
+            await asyncio.sleep(interval_seconds)
 
     async def refresh_service_host(self):
         """
@@ -462,6 +518,9 @@ class Scheduler(object):
         """
         print('Clearing service_health table')
         await execute_sql_aio(host=self.postgres_host, sql='DELETE FROM service_health',aiopg_pool=self.aiopg_pool)
+
+        # Update local cache of Postgres toggles
+        asyncio.create_task(self.update_all_toggles_cache_aio_loop())
 
         # Refresh all Pi settings
         await self.refresh_all_pi_settings()
