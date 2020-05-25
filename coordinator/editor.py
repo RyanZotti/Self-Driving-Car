@@ -2380,11 +2380,16 @@ async def main():
         database="autonomous_vehicle"
     )
 
-    # TODO: Remove this hard-coded path
-    app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
-    app.model_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data/tf_visual_data/runs/1'
+    """
+    The API only uses paths from the DB, so I pass a meaningless
+    value here. RecordReader might still need the path for model
+    training (or something else), so I haven't removed it from the
+    class entirely
+    """
+    record_reader_base_directory = '/'
+
     app.record_reader = RecordReader(
-        base_directory=app.data_path,
+        base_directory=record_reader_base_directory,
         postgres_host=app.postgres_host,
         overfit=False
     )
