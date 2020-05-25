@@ -66,7 +66,7 @@ api_process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 try:
 
     # Load model just once and store in memory for all future calls
-    sess, x, prediction = load_model(checkpoint_dir)
+    sess, x, prediction = load_keras_model(checkpoint_dir)
 
     record_reader = RecordReader(base_directory=data_path)
     image, _, _ = record_reader.read_record(label_path)
