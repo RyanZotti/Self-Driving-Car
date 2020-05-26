@@ -3,3 +3,6 @@ __pycache__/
 output.mov
 video_timestamps.txt
 *.pyc
+*.DS_Store
+*node_modules
+

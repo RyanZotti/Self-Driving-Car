@@ -3,6 +3,6 @@ import json
 
 
 while True:
-    response = requests.post('http://ryanzotti.local:8094/get-angle-and-throttle')
+    response = requests.get('http://ryanzotti.local:8095/output')
     state = json.loads(response.text)
     print(state)

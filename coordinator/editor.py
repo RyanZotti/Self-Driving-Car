@@ -312,6 +312,7 @@ class ListModelDeployments(tornado.web.RequestHandler):
         self.write(result)
 
 
+
 class ReadToggle(tornado.web.RequestHandler):
     executor = ThreadPoolExecutor(5)
 
@@ -321,29 +322,9 @@ class ReadToggle(tornado.web.RequestHandler):
         name = json_input['name']
         detail = json_input['detail']
         result = {}
-        sql_query = '''
-            SELECT
-              is_on
-            FROM toggles
-            WHERE LOWER(web_page) LIKE '%{web_page}%'
-              AND LOWER(name) LIKE '%{name}%'
-              AND LOWER(detail) LIKE '%{detail}%'
-            ORDER BY event_ts DESC
-            LIMIT 1;
-        '''.format(
-            web_page=web_page,
-            name=name,
-            detail=detail
-        )
-        rows = get_sql_rows(
-            host=self.application.postgres_host,
-            sql=sql_query,
-            postgres_pool=self.application.postgres_pool
-        )
-        if len(rows) > 0:
-            first_row = rows[0]
-            is_on = first_row['is_on']
-            result['is_on'] = is_on
+        key = f'{web_page}-{detail}-{name}'
+        if key in self.application.scheduler.toggles:
+            result['is_on'] = self.application.scheduler.toggles[key]
         else:
             result['is_on'] = False
         return result
@@ -2380,11 +2361,16 @@ async def main():
         database="autonomous_vehicle"
     )
 
-    # TODO: Remove this hard-coded path
-    app.data_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data'
-    app.model_path = '/Users/ryanzotti/Documents/Data/Self-Driving-Car/diy-robocars-carpet/data/tf_visual_data/runs/1'
+    """
+    The API only uses paths from the DB, so I pass a meaningless
+    value here. RecordReader might still need the path for model
+    training (or something else), so I haven't removed it from the
+    class entirely
+    """
+    record_reader_base_directory = '/'
+
     app.record_reader = RecordReader(
-        base_directory=app.data_path,
+        base_directory=record_reader_base_directory,
         postgres_host=app.postgres_host,
         overfit=False
     )
